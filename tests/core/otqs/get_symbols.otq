@@ -1,0 +1,30 @@
+
+[symbols]
+COMMENT = 
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = FIND_DB_SYMBOLS(PATTERN="$PATTERN",TICK_TYPE="$TT")
+ROOT_BIND_SECURITY = $DB:: 0
+ROOT_EP_PARAMETERS_FLAG = 0
+ROOT_NESTED_INPUT =  IN
+ROOT_NESTED_OUTPUT =  OUT
+ROOT_TICK_TYPE = ANY
+ROOT_X = 908
+ROOT_Y = 292
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_meta]
+app_version = OneTick Display Build tag: BUILD_update1_20191112120000 Build timestamp : 20191112120000
+ApplyTimesDaily = 0
+COMMENT = Generated Query
+end = UT1528450200.0.0
+file_version = 1.0
+RunningQuery = 0
+start = UT1528363800.0.0
+SYMBOL_DATE = 
+TZ = 
+USER_NAME = galinr

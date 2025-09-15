@@ -1,0 +1,47 @@
+[build-system]
+requires = [
+    "setuptools",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "onetick-py"
+description = "Python package that allows you to work with OneTick"
+readme = {file = "README.md", content-type = "text/markdown"}
+authors = [
+    {name = "solutions", email="solutions@onetick.com"},
+]
+dynamic = [
+    "version",
+    "scripts",
+    "dependencies",
+    "optional-dependencies",
+]
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">= 3.9"
+classifiers = [
+    "Topic :: Database :: Front-Ends",
+    "Topic :: Scientific/Engineering",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+]
+
+[project.urls]
+Documentation = "https://docs.pip.distribution.sol.onetick.com"
+OneTick = "https://onetick.com/"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["**/_per_tick_scripts/*.script"]
+
+[tool.black]
+line-length = 120
+skip-string-normalization = true

@@ -1,0 +1,15 @@
+long main()
+{
+    string[512] BENEFITING_ORDER_ID = "";
+    string[10] TRADE_ORDER_TYPE = "";
+    varstring VARSTRING1 = "";
+    nsectime LAYERING_CONDITION_TIME = 0;
+    msectime TRADE_TIME =0;
+    double TRADE_PRICE= 0.0;
+    decimal DEC = 0.0;
+    long LAYERING_PRICE_LEVELS_CANCELLED=0;
+    short SOME_SHORT = 0;
+    int SOME_INT = 0;
+    uint SOME_UINT = 0;
+    byte SOME_BYTE = 0;
+}

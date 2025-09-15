@@ -1,0 +1,26 @@
+<VERSION_INFO VERSION="2"/>
+<DATABASES>
+
+<db ID="DEMO_L1" SYMBOLOGY="TICKER" DAY_BOUNDARY_TZ="EST5EDT" TIME_SERIES_IS_COMPOSITE="YES">
+<LOCATIONS>
+<location access_method="file" location="${MAIN_ONE_TICK_DIR}/examples/data/demo_level1" start_time="20001201000000" end_time="20201231050000" />
+</LOCATIONS>
+</db>
+
+<db ID="COMMON" SYMBOLOGY="TICKER" DAY_BOUNDARY_TZ="EST5EDT" TIME_SERIES_IS_COMPOSITE="YES">
+<LOCATIONS>
+<location access_method="file" location="${MAIN_ONE_TICK_DIR}/examples/data/demo_level1" start_time="20001201000000" end_time="20201231050000" />
+</LOCATIONS>
+</db>
+
+<db ID="BESTEX" SYMBOLOGY="TICKER" DAY_BOUNDARY_TZ="EST5EDT" TIME_SERIES_IS_COMPOSITE="YES">
+<LOCATIONS>
+<location access_method="file" location="${MAIN_ONE_TICK_DIR}/examples/data/demo_level1" start_time="20001201000000" end_time="20201231050000" />
+</LOCATIONS>
+</db>
+
+
+</DATABASES>
+
+<TICK_SERVERS>
+</TICK_SERVERS>

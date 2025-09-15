@@ -1,0 +1,185 @@
+format: jb-book
+root: intro
+chapters:
+- file: static/root
+  sections:
+    - file: static/overview
+    - file: static/installation/webapi
+      sections:
+        - file: static/installation/onprem
+        - file: static/installation/webapi_onprem
+        - file: static/installation/pip
+    - file: static/getting_started/root
+      sections:
+        - file: static/getting_started/data_retrieval
+        - file: static/getting_started/filtering
+        - file: static/getting_started/aggregations
+        - file: static/getting_started/time_based_joins
+        - file: static/getting_started/order_book_analytics
+        - file: static/getting_started/real_time_processing
+        - file: static/getting_started/variables_and_data_structures
+        - file: static/getting_started/symbologies
+        - file: static/getting_started/corporate_actions
+        - file: static/getting_started/daily_OHLCV
+        - file: static/getting_started/accessing_lower_level_api
+        - file: static/getting_started/data_inspection
+        - file: static/getting_started/session
+        - file: static/getting_started/rendering_graphs
+        - file: static/getting_started/use_cases/root
+          sections:
+            - file: static/getting_started/use_cases/retrieving_tick_data
+            - file: static/getting_started/use_cases/creating_bars
+            - file: static/getting_started/use_cases/prevailing_quote
+            - file: static/getting_started/use_cases/markouts
+            - file: static/getting_started/use_cases/market_vwap
+            - file: static/getting_started/use_cases/real_time
+            - file: static/getting_started/use_cases/up_down_ticks
+            - file: static/getting_started/use_cases/realized_profit
+            - file: static/getting_started/use_cases/bestex/root
+              sections:
+                - file: static/getting_started/use_cases/bestex/arrival_prices
+                - file: static/getting_started/use_cases/bestex/effective_spread
+                - file: static/getting_started/use_cases/bestex/etq
+                - file: static/getting_started/use_cases/bestex/exit_ask_bid_prices
+                - file: static/getting_started/use_cases/bestex/far_near_touch
+                - file: static/getting_started/use_cases/bestex/implementation_shortfall
+                - file: static/getting_started/use_cases/bestex/market_impact
+                - file: static/getting_started/use_cases/bestex/notional_spread
+                - file: static/getting_started/use_cases/bestex/num_spreads
+                - file: static/getting_started/use_cases/bestex/offside_value
+                - file: static/getting_started/use_cases/bestex/opportunity_cost
+                - file: static/getting_started/use_cases/bestex/price_imrpovements
+                - file: static/getting_started/use_cases/bestex/pwp
+                - file: static/getting_started/use_cases/bestex/relative_performance_measure
+                - file: static/getting_started/use_cases/bestex/reversion
+                - file: static/getting_started/use_cases/bestex/right_way
+                - file: static/getting_started/use_cases/bestex/takeout_success
+                - file: static/getting_started/use_cases/bestex/volatility
+                - file: static/getting_started/use_cases/bestex/window_ask_bid
+                - file: static/getting_started/use_cases/bestex/windowed_nt_ft
+    - file: static/concepts/root
+      sections:
+        - file: static/concepts/data_model
+        - file: static/concepts/calc_graph
+        - file: static/concepts/schema
+        - file: static/concepts/start_end
+        - file: static/concepts/symbols
+        - file: static/concepts/python_callable_parser
+        - file: static/concepts/use_onetick_query
+        - file: static/concepts/onetick_data_processing
+        - file: static/concepts/onetick_parallelization
+        - file: static/concepts/webapi.rst
+    - file: static/test_intro
+      sections:
+        - file: static/testing/prereqs
+        - file: static/testing/first_test.rst
+        - file: static/testing/features.rst
+        - file: static/testing/debug.rst
+        - file: static/testing/performance.rst
+    - file: static/configuration/root.rst
+      sections:
+        - file: static/configuration/configuration.rst
+        - file: static/configuration/logging.rst
+    - file: static/ray/ray_remote
+      sections:
+        - file: static/ray/ray_installation
+        - file: static/ray/ray_server_guide
+        - file: static/ray/ray_examples
+        - file: static/ray/ray_troubleshooting
+    - file: static/changelog
+    - file: static/compatibility
+- file: api/root
+  sections:
+    - file: api/run
+    - file: api/sources/root
+      sections:
+        - glob: api/sources/*
+        - file: api/sources/order_book/root
+          sections:
+            - glob: api/sources/order_book/*
+    - file: api/source/root
+      sections:
+        - glob: api/source/*
+    - file: api/operation/root
+      sections:
+        - glob: api/operation/*
+        - file: api/operation/math/root
+          sections:
+            - glob: api/operation/math/*
+        - file: api/operation/dt/root
+          sections:
+            - glob: api/operation/dt/*
+        - file: api/operation/float/root
+          sections:
+            - glob: api/operation/float/*
+        - file: api/operation/decimal/root
+          sections:
+            - glob: api/operation/decimal/*
+        - file: api/operation/str/root
+          sections:
+            - glob: api/operation/str/*
+    - file: api/types/root
+      sections:
+        - glob: api/types/*
+    - file: api/datetime/root
+      sections:
+        - file: api/datetime/dt
+        - file: api/datetime/date
+        - file: api/datetime/now
+        - file: api/datetime/timedelta
+        - file: api/datetime/offsets/root
+          sections:  # Set it manually to to specify the natural order.
+            - file: api/datetime/offsets/nano
+            - file: api/datetime/offsets/milli
+            - file: api/datetime/offsets/second
+            - file: api/datetime/offsets/minute
+            - file: api/datetime/offsets/hour
+            - file: api/datetime/offsets/day
+            - file: api/datetime/offsets/week
+            - file: api/datetime/offsets/month
+            - file: api/datetime/offsets/quarter
+            - file: api/datetime/offsets/year
+    - file: api/state/root
+      sections:
+        - glob: api/state/*
+    - file: api/functions/root
+      sections:
+        - glob: api/functions/*
+        - file: api/functions/math/root
+          sections:
+            - glob: api/functions/math/*
+        - file: api/functions/misc/root
+          sections:
+            - glob: api/functions/misc/*
+        - file: api/functions/cache/root
+          sections:
+            - glob: api/functions/cache/*
+    - file: api/aggregations/root
+      sections:
+        - glob: api/aggregations/*
+    - file: api/misc/root
+      sections:
+        - glob: api/misc/*
+    - file: api/session/root
+      sections:  # Set it manually to specify the order. The session submodule updates rarely.
+        - file: api/session/session
+        - file: api/session/test_session
+        - file: api/session/config
+        - file: api/session/locator
+        - file: api/session/acl
+        - file: api/session/db
+        - file: api/session/ref_db
+        - file: api/session/remote_ts
+        - file: api/session/load_balancing
+        - file: api/session/fault_tolerance
+    - file: api/data_inspection/root
+      sections:
+        - file: api/data_inspection/databases
+        - file: api/data_inspection/derived_databases
+        - file: api/data_inspection/db
+    - file: api/oqd/root
+      sections:
+        - glob: api/oqd/*
+    - file: api/config
+    - file: api/performance
+#    - file: api/otq_api/root    # onetick.query autosummary docs

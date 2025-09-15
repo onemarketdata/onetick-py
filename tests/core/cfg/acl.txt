@@ -1,0 +1,18 @@
+<roles>
+
+<role name="Admin" >
+ <user name=${LINUX_USER} />
+</role>
+
+</roles>
+
+<databases>
+</databases>
+
+<event_processors>
+
+    <ep ID="RELOAD_CONFIG">
+     <allow role="Admin" />
+    </ep>
+
+</event_processors>

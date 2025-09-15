@@ -1,0 +1,17 @@
+<roles>
+
+<role name="Admin" >
+</role>
+
+</roles>
+
+<databases>
+</databases>
+
+<event_processors>
+
+    <ep ID="RELOAD_CONFIG">
+     <allow role="Admin" />
+    </ep>
+
+</event_processors>

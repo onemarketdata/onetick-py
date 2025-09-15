@@ -1,0 +1,4 @@
+.. _otp types:
+
+Types
+=====

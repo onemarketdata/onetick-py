@@ -1,0 +1,9 @@
+<VERSION_INFO VERSION="2"/>
+
+<DATABASES>
+    <db ID="DEMO_L1" SYMBOLOGY="TICKER_DEMO" DAY_BOUNDARY_TZ="EST5EDT" TIME_SERIES_IS_COMPOSITE="YES" >
+        <LOCATIONS>
+            <location access_method="file" location="/tmp/DEMO_L1" start_time="20000101000000" end_time="20400101000000" />
+        </LOCATIONS>
+    </db>
+</DATABASES>

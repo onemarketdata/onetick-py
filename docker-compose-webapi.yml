@@ -1,0 +1,98 @@
+version: '3.6'
+
+volumes:
+  config:
+  catalina:
+  java:
+
+services:
+  tomcat-base:
+    image: 977320806745.dkr.ecr.us-east-1.amazonaws.com/service/tomcat:8.5
+    volumes:
+        - catalina:/usr/local/tomcat
+        - java:/usr/local/openjdk-8
+    command: "true"
+
+  tickserver:
+    build:
+      context: .
+      dockerfile: webapi/onetick.Dockerfile
+      args:
+        - WEBAPI_SERVER_ONETICK_BUILD=${WEBAPI_SERVER_ONETICK_BUILD:-20250727-0}
+    # image: 977320806745.dkr.ecr.us-east-1.amazonaws.com/onetick/server:20240330-webapi
+    ports:
+        - "${MAIN_TS_PORT:-12345}:12345"
+        - "${HTTP_SERVER_PORT:-48028}:48028"
+    depends_on:
+      - tomcat-base
+    volumes:
+      - config:/shared_configs:rw
+      - catalina:/usr/local/tomcat:rw
+      - java:/usr/local/openjdk-8:rw
+      - ./webapi/initial_configs:/initial_configs:ro
+    environment:
+      - ONE_TICK_CONFIG=/shared_configs/onetick.cfg
+      - ONE_TICK_CONFIG_WEBAPI=/initial_configs/onetick-tomcat.cfg
+      - JAVA_HOME=/usr/local/openjdk-8
+      - JAVA_BASE_URL=https://github.com/AdoptOpenJDK/openjdk8-upstream-binaries/releases/download/jdk8u242-b08/OpenJDK8U-jdk_
+      - JAVA_URL_VERSION=8u242b08
+      - JAVA_VERSION=8u242
+      - TOMCAT_MAJOR=8
+      - TOMCAT_NATIVE_LIBDIR=/usr/local/tomcat/native-jni-lib
+      - TOMCAT_SHA512=bb9207d33d7b4408292186523f3556a3d1454ea172b4a6cde6e0028e2f7a5d9408615cb4ccf8d9fdb75a9f8ce227580f56f929a811eb24ef99e26f980e4bcb48
+      - TOMCAT_VERSION=8.5.51
+      - LD_LIBRARY_PATH=/usr/local/tomcat/native-jni-lib
+      - CATALINA_HOME=/usr/local/tomcat
+    command:
+      - /bin/bash
+      - -c
+      - |
+          sudo rm -rf /shared_configs/*
+          sudo cp -rf /initial_configs/* /shared_configs/
+          sudo chmod -R 777 /shared_configs
+          sudo chown onetick -R shared_configs
+          sudo cp /opt/one_market_data/one_tick/bin/omdwebapi.war /usr/local/tomcat/webapps/
+          sudo cp /shared_configs/tomcat-users.xml /usr/local/tomcat/conf/tomcat-users.xml
+          sudo chmod -R 777 /usr/local/tomcat/logs/
+          echo "copied tomcat config /usr/local/tomcat/conf/tomcat-users.xml"
+          cat /usr/local/tomcat/conf/tomcat-users.xml
+          /usr/local/tomcat/bin/startup.sh
+          /opt/one_market_data/one_tick/bin/tick_server.exe -port 12345
+
+  otpwebapi:
+    build:
+      context: .
+      dockerfile: webapi/webapi.Dockerfile
+      args:
+        - STRICT_DEPENDENCIES=1
+        - LOCAL_PIP_URL=pip.sol.onetick.com
+        - ONETICK_QUERY_WEBAPI_VERSION=${ONETICK_QUERY_WEBAPI_VERSION:-20250727.0.0}
+    environment:
+      - OTP_HTTP_ADDRESS=http://tickserver:48028
+      - OTP_WEBAPI_TEST_MODE=1
+      - OTP_BASE_FOLDER_FOR_GENERATED_RESOURCE=/shared_configs
+      - OTP_OTQ_DEBUG_MODE=1
+      - WEBAPI_TEST_MODE_SHARED_CONFIG=/shared_configs
+      - JUPYTER_PLATFORM_DIRS=1
+      - PYTHONDONTWRITEBYTECODE=1
+    volumes:
+      - config:/shared_configs:rw
+      - .:/onetick-py/:rw
+    # debugpy port 48029
+    ports:
+      - "${DEBUGPY_PORT:-48029}:48029"
+    expose:
+      - "${DEBUGPY_PORT:-48029}"
+    depends_on:
+      - tickserver
+    # infinity sleep (tail -f /dev/null) to run tests separately by calling `docker-compose exec`
+    command:
+      - /bin/bash
+      - -c
+      - |
+        cd /onetick-py/
+        export
+        sudo pip uninstall -y onetick-py
+        sudo mkdir -m 777 -p /onetick-py/.pytest_cache
+        sudo mkdir -m 777 -p /onetick-py/reports
+        tail -f /dev/null

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# to make session and resources available in notebooks
+export RESOURCES_DIR=${FILE_DIR}/notebooks_resources
+export ONE_TICK_CONFIG=${FILE_DIR}/notebooks_resources/config/main
+
+# defaults
+export OTP_DEFAULT_TZ='EST5EDT'
+export OTP_DEFAULT_DB='DEMO_L1'
+export OTP_DEFAULT_SYMBOL='AAPL'
+export OTP_DEFAULT_START_TIME="2003/12/1 00:00:00"
+export OTP_DEFAULT_END_TIME="2003/12/4 00:00:00"
+
+
+jupyter notebook --no-browser --port=$1 --ip=0.0.0.0

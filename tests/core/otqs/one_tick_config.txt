@@ -1,0 +1,1 @@
+OTQ_FILE_PATH="${MAIN_DIR},${MAIN_DIR}/otq_dir"

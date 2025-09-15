@@ -1,0 +1,121 @@
+/* this file is a python template string that, upon substitution, produces a per tick script */
+
+long main()
+{
+    /* merge sort implementation for tick lists */
+    /*
+    We iterate over powers of 2:  N=1, 2, 4, 8, etc.
+    For each N we do the following:
+        - take a new empty list
+        - iteratively take two consecutive sequences of size N from the initial list
+          and merge them (with ordering) into the new list
+        - sequences taken at step i will have items:
+            - for sequence 1, [2N(i-1), 2N(i-1) + N)
+            - for sequence 2, [2N(i-1) + N, 2Ni)
+        - note that both sequences may turn out incomplete or even empty, that's fine
+        - do this until the whole input list was split into those consecutive sequences and merged into the new list
+        - copy new list into the old one and clean the new list
+    We do this until N is greater than the size of the initial list, at which point we will have a sorted list
+    */
+	static TICK_LIST LOCAL::TARGET_TICKS;
+	long LOCAL::I = 0;
+	/* 2^K is the length of the sub-lists that we're going to merge on each iteration */
+	long LOCAL::K = 0;
+	long LOCAL::N = 0;
+	static TICK_LIST_TICK LOCAL::SUB_LIST_1;
+	static TICK_LIST_TICK LOCAL::SUB_LIST_2;
+	long LOCAL::SUB_LIST_1_CNT = 0;
+	long LOCAL::SUB_LIST_2_CNT = 0;
+	long LOCAL::SUB_LIST_1_ENDED = 0;
+	long LOCAL::SUB_LIST_2_ENDED = 0;
+	/*
+	due to implementation, it won't hurt to do an extra iteration just to be sure that log calculation rounding
+	did not lead to any funny things
+	*/
+	long LOCAL::K_MAX = LOG(${tick_list_var}.GET_SIZE())/LOG(2) + 1;
+	for ( LOCAL::K=0; LOCAL::K <= LOCAL::K_MAX; LOCAL::K+=1 )
+	{
+		/* this is the main loop, here we select sub-lists and merge them */
+		LOCAL::N = POWER(2,LOCAL::K);
+		/* first, we set first iterator to the beginning */
+		${tick_list_var}.ITERATOR(LOCAL::SUB_LIST_1);
+		/* then we continue setting the second iterator to the required amount of ticks past that */
+		while(true)
+		{
+			LOCAL::SUB_LIST_1.COPY(LOCAL::SUB_LIST_2);
+			for (LOCAL::I=0; LOCAL::I < LOCAL::N; LOCAL::I+=1)
+			{
+				LOCAL::SUB_LIST_2.NEXT();
+			}
+			/*
+			now, we start from SUB_LIST_1 and SUB_LIST_2 and iterate over both
+			and merge them with proper order into the LOCAL::TARGET_TICKS list
+			while doing this, we take care to check if any of those lists already ended
+			*/
+			LOCAL::SUB_LIST_1_CNT = 0;
+			LOCAL::SUB_LIST_2_CNT = 0;
+			LOCAL::SUB_LIST_1_ENDED = 0;
+			LOCAL::SUB_LIST_2_ENDED = 0;
+			while(true)
+			{
+				/* first, setting flags for end of sub-lists */
+				if ((LOCAL::SUB_LIST_1_CNT >= LOCAL::N) or (LOCAL.SUB_LIST_1.IS_END() == 1))
+				{
+					LOCAL::SUB_LIST_1_ENDED = 1;
+				}
+				if ((LOCAL::SUB_LIST_2_CNT >= LOCAL::N) or (LOCAL.SUB_LIST_2.IS_END() == 1))
+				{
+					LOCAL::SUB_LIST_2_ENDED = 1;
+				}
+				/* now taking next element, or breaking, depending on the flags */
+				if ((LOCAL::SUB_LIST_1_ENDED == 0) and (LOCAL::SUB_LIST_2_ENDED == 0))
+				{
+				    /* <= is important for the stability of the sort */
+					if (LOCAL::SUB_LIST_1.${field_access_function}("${field_name}") <= LOCAL::SUB_LIST_2.${field_access_function}("${field_name}"))
+					{
+						LOCAL::TARGET_TICKS.PUSH_BACK(LOCAL::SUB_LIST_1);
+						LOCAL::SUB_LIST_1_CNT += 1;
+						LOCAL::SUB_LIST_1.NEXT();
+					}
+					else
+					{
+						LOCAL::TARGET_TICKS.PUSH_BACK(LOCAL::SUB_LIST_2);
+						LOCAL::SUB_LIST_2_CNT += 1;
+						LOCAL::SUB_LIST_2.NEXT();
+					}
+					continue;
+				}
+				if (LOCAL::SUB_LIST_1_ENDED == 0)
+				{
+					LOCAL::TARGET_TICKS.PUSH_BACK(LOCAL::SUB_LIST_1);
+					LOCAL::SUB_LIST_1_CNT += 1;
+					LOCAL::SUB_LIST_1.NEXT();
+					continue;
+				}
+				if (LOCAL::SUB_LIST_2_ENDED == 0)
+				{
+					LOCAL::TARGET_TICKS.PUSH_BACK(LOCAL::SUB_LIST_2);
+					LOCAL::SUB_LIST_2_CNT += 1;
+					LOCAL::SUB_LIST_2.NEXT();
+					continue;
+				}
+				/* we fell into none of the continues above, this means that both sub-lists ended */
+				break;
+			}
+			/* for the next iteration, we start new sub-list 1 from where old sub-list 2 ended */
+			LOCAL::SUB_LIST_2.COPY(LOCAL::SUB_LIST_1);
+			if (LOCAL::SUB_LIST_1.IS_END() == 1)
+			{
+				break;
+			}
+		}
+		/* copying newer tick list into the original one */
+		/* implementation can be optimized to avoid this step but well */
+		${tick_list_var}.CLEAR();
+		for (TICK_LIST_TICK LOCAL::T : LOCAL::TARGET_TICKS)
+		{
+			${tick_list_var}.PUSH_BACK(LOCAL::T);
+		}
+		LOCAL::TARGET_TICKS.CLEAR();
+	}
+}

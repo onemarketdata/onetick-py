@@ -1,0 +1,13 @@
+prune tests
+prune sphinx
+prune onetick_py.egg-info
+
+global-exclude *.py[cod]
+exclude setup.cfg
+exclude README.md
+exclude MANIFEST.in
+
+global-exclude conftest.py
+
+include requirements.txt
+include requirements.strict.txt

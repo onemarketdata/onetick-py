@@ -1,0 +1,47 @@
+
+[no_in_pin]
+COMMENT = 
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE_3 = PASSTHROUGH
+NODE_3_EP_PARAMETERS_FLAG = -2
+NODE_3_TICK_TYPE = something
+NODE_3_X = 1344
+NODE_3_Y = 288
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = PASSTHROUGH
+ROOT_COMMENTED_OUT = 1
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_OUTPUT =  OUT
+ROOT_SOURCE =  NODE_3
+ROOT_X = 1350
+ROOT_Y = 460
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_________]
+COMMENT = 
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = PASSTHROUGH
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_X = 934
+ROOT_Y = 378
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_meta]
+app_version = OneTick Display Build tag: BUILD_update1_20191112120000 Build timestamp : 20191112120000
+ApplyTimesDaily = 0
+end = 20170613000339000
+file_version = 1.0
+RunningQuery = 0
+start = 20170613000001000
+SYMBOL_DATE = 
+TZ = GMT
+USER_NAME = test

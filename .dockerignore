@@ -1,0 +1,3 @@
+.venv/
+one_market_data/
+docker-compose-webapi.yml

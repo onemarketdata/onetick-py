@@ -1,0 +1,21 @@
+digraph {
+	"0x19909e35630" [label=PASSTHROUGH
+]
+	"0x19909e3c140" [label="MERGE(identify_input_ts=False)
+"]
+	"0x19909dcb5f0" [label="WHERE_CLAUSE(where=(X) > (2))
+"]
+	"0x19909dcb5f0" -> "0x19909e40040" [headlabel="" taillabel=ELSE]
+	"0x19909e40040" [label=PASSTHROUGH
+]
+	"0x19909e40040" -> "0x19909e3c140" [headlabel="" taillabel=""]
+	"0x19909e35e80" [label=PASSTHROUGH
+]
+	"0x19909d428b0" [label="TICK_GENERATOR(bucket_interval=0,bucket_time=BUCKET_START,fields=long X=3)
+tick_types=[DEMO_L1::TICK_GENERATOR]
+"]
+	"0x19909d428b0" -> "0x19909e35e80" [headlabel="" taillabel=""]
+	"0x19909e35e80" -> "0x19909dcb5f0" [headlabel="" taillabel=""]
+	"0x19909dcb5f0" -> "0x19909e3c140" [headlabel="" taillabel=IF]
+	"0x19909e3c140" -> "0x19909e35630" [headlabel="" taillabel=""]
+}

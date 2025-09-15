@@ -1,0 +1,1711 @@
+
+[Impl]
+COMMENT = Expected the following list of fields:\
+\
+SIZE - size of order which is left in the book after applying the current tick to the book\
+PRICE - price of the order\
+FIRM_ID - string identifier of the order submitter, used to group by layering candidate orders and detect opposite side fill with the same value\
+ID - identifier of the order, used to detect cancels and replaces\
+RECORD_TYPE - is expected to carry N for new orders, C for cancels and F for fills\
+BUY_SELL_FLAG - is expected to carry 0 for buys, 1 for sells\
+UPDATE_TIME - used by book EPs, value isn't relevant for layering logic\
+CANCELLED_SIZE - is expected to carry cancelled size for ticks with RECORD_TYPE=C, ignored otherwise\
+OMDSEQ - used to order ticks with same timestamp\
+FILLED_QTY - es expected to carry the filled size for RECORD_TYPE=F
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE_125 = NESTED_OTQ ___ME___::_layering_book_and_alert
+NODE_125_COMMENT = Expected the following list of fields:\
+\
+SIZE - size of order which is left in the book after applying the current tick to the book\
+PRICE - price of the order\
+FIRM_ID - string identifier of the order submitter, used to group by layering candidate orders and detect opposite side fill with the same value\
+ID - identifier of the order, used to detect cancels and replaces\
+RECORD_TYPE - is expected to carry N for new orders, C for cancels and F for fills\
+BUY_SELL_FLAG - is expected to carry 0 for buys, 1 for sells\
+UPDATE_TIME - used by book EPs, value isn't relevant for layering logic\
+CANCELLED_SIZE - is expected to carry cancelled size for ticks with RECORD_TYPE=C, ignored otherwise\
+OMDSEQ - used to order ticks with same timestamp\
+FILLED_QTY - es expected to carry the filled size for RECORD_TYPE=F
+NODE_125_EP_PARAMETERS_FLAG = -2
+NODE_125_MINIMIZED = 1
+NODE_125_PARAMETER = MAX_CANCEL_DELAY_SEC $MAX_CANCEL_DELAY_SEC
+NODE_125_PARAMETER = MAX_FILL_DELAY_SEC $MAX_FILL_DELAY_SEC
+NODE_125_PARAMETER = MIN_CANCEL_PCT $MIN_CANCEL_PCT
+NODE_125_PARAMETER = SIZE_IDS $SIZE_IDS
+NODE_125_SOURCE =  NODE_127.NODE_47.
+NODE_125_SOURCE_DESCRIPTION = NODE_127.NODE_47. IN.
+NODE_125_X = 2492
+NODE_125_Y = 1188
+NODE_127 = DECLARE_STATE_VARIABLES(SCOPE=QUERY,VARIABLES="TICK_SET(LATEST_TICK,GROUP_BY_FIELDS, EXPIRATION_TS, FIRST_ORDER_ID) BIG_PARTICIPANTS; \
+TICK_SET(LATEST_TICK, EXPIRATION_TS, FIRST_ORDER_ID) FILL_EXPIRATION_HORIZON, CANCEL_EXPIRATION_HORIZON;")
+NODE_127_COMMENT = Main state variables used in calculation.\
+\
+BIG_PARTICIPANTS contains orders which satisfying condition: LayeringCondition (LayeringSidePct > MIN_LAYERING_SIDE_PCT) and for each GROUP it contains marker value with FIRST_ORDER_ID="" and EXPIRATION_TS=0\
+\
+FILL_EXPIRATION_HORIZON contains info expiration time from (t = LayeringSidePct > MIN_LAYERING_SIDE_PCT)  t+MAX_FILL_DELAY_SEC\
+\
+\
+CANCEL_EXPIRATION_HORIZON  contains info about time t-MAX_CANCEL_DELAY_SEC until ( t = LayeringSideCancelPct > MIN_CANCEL_PCT)
+NODE_127_EP_PARAMETERS_FLAG = -2
+NODE_127_SOURCE =  NODE_47
+NODE_127_X = 2512
+NODE_127_Y = 750
+NODE_47 = PASSTHROUGH
+NODE_47_COMMENTED_OUT = 1
+NODE_47_EP_PARAMETERS_FLAG = -2
+NODE_47_NESTED_INPUT =  IN
+NODE_47_X = 2514
+NODE_47_Y = 428
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = PASSTHROUGH
+ROOT_COMMENTED_OUT = 1
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_OUTPUT =  OUT
+ROOT_SOURCE =  NODE_125..ROOT
+ROOT_SOURCE_DESCRIPTION = NODE_125..ROOT .OUT_ALERT
+ROOT_X = 2512
+ROOT_Y = 1592
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_enrich_with_book_state]
+COMMENT = Expected the following list of fields:\
+\
+SIZE - size of order which is left in the book after applying the current tick to the book\
+PRICE - price of the order\
+FIRM_ID - string identifier of the order submitter, used to group by layering candidate orders and detect opposite side fill with the same value\
+ID - identifier of the order, used to detect cancels and replaces\
+RECORD_TYPE - is expected to carry N for new orders, C for cancels and F for fills\
+BUY_SELL_FLAG - is expected to carry 0 for buys, 1 for sells\
+UPDATE_TIME - used by book EPs, value isn't relevant for layering logic\
+CANCELLED_SIZE - is expected to carry cancelled size for ticks with RECORD_TYPE=C, ignored otherwise\
+OMDSEQ - used to order ticks with same timestamp\
+FILLED_QTY - es expected to carry the filled size for RECORD_TYPE=F
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE6 = DECLARE_STATE_VARIABLES(SCOPE=QUERY,VARIABLES="double ASK_SIZE_THRESHOLD = 0.0; \
+double BID_SIZE_THRESHOLD = 0.0;\
+double ASK_PRICE_THRESHOLD = 0.0; \
+double BID_PRICE_THRESHOLD = 0.0; \
+double ASK_SIZE = 0.0; \
+double BID_SIZE = 0.0;")
+NODE6_COMMENT = Main state variables used in calculation.\
+\
+BIG_PARTICIPANTS contains orders which satisfying condition: LayeringCondition (LayeringSidePct > MIN_LAYERING_SIDE_PCT) and for each GROUP it contains marker value with FIRST_ORDER_ID="" and EXPIRATION_TS=0\
+\
+FILL_EXPIRATION_HORIZON contains info expiration time from (t = LayeringSidePct > MIN_LAYERING_SIDE_PCT)  t+MAX_FILL_DELAY_SEC\
+\
+\
+CANCEL_EXPIRATION_HORIZON  contains info about time t-MAX_CANCEL_DELAY_SEC until ( t = LayeringSideCancelPct > MIN_CANCEL_PCT)
+NODE6_EP_PARAMETERS_FLAG = -2
+NODE6_SOURCE =  NODE_47
+NODE6_X = 2626
+NODE6_Y = 834
+NODE_109 = ADD_FIELDS(FIELDS="ASK_PRICE_THRESHOLD=STATE::ASK_PRICE_THRESHOLD,\
+BID_PRICE_THRESHOLD=STATE::BID_PRICE_THRESHOLD,\
+\
+ASK_SIZE_THRESHOLD=STATE::ASK_SIZE_THRESHOLD,\
+BID_SIZE_THRESHOLD=STATE::BID_SIZE_THRESHOLD,\
+\
+ASK_SIZE=STATE::ASK_SIZE,\
+BID_SIZE=STATE::BID_SIZE")
+NODE_109_EP_PARAMETERS_FLAG = -2
+NODE_109_SOURCE =  NODE_147
+NODE_109_X = 2628
+NODE_109_Y = 1662
+NODE_113 = UPDATE_FIELDS(SET="ASK_PRICE_THRESHOLD=STATE::ASK_PRICE_THRESHOLD,\
+BID_PRICE_THRESHOLD=STATE::BID_PRICE_THRESHOLD,\
+\
+ASK_SIZE_THRESHOLD=STATE::ASK_SIZE_THRESHOLD,\
+BID_SIZE_THRESHOLD=STATE::BID_SIZE_THRESHOLD,\
+\
+ASK_SIZE=STATE::ASK_SIZE,\
+BID_SIZE=STATE::BID_SIZE")
+NODE_113_EP_PARAMETERS_FLAG = -2
+NODE_113_SOURCE =  NODE_109
+NODE_113_X = 2628
+NODE_113_Y = 1890
+NODE_141 = PASSTHROUGH(FIELDS="MAKER,GROUP_BY_FIELDS,UPDATE_TIME,ID,PRICE,PRICE_FILLED,QTY,FILLED_QTY,SIZE,BUY_SELL_FLAG,RECORD_TYPE,OMDSEQ,CANCELLED_SIZE,ORIG_TIME,ORIG_OMDSEQ,ASK_PRICE_THRESHOLD,BID_PRICE_THRESHOLD,ASK_SIZE_THRESHOLD,BID_SIZE_THRESHOLD,ASK_SIZE,BID_SIZE")
+NODE_141_EP_PARAMETERS_FLAG = -2
+NODE_141_SOURCE =  NODE_113
+NODE_141_X = 2630
+NODE_141_Y = 2028
+NODE_143 = WHERE_CLAUSE(WHERE=false)
+NODE_143_COMMENT = Do not need an output from auxiliary queries.
+NODE_143_EP_PARAMETERS_FLAG = -2
+NODE_143_SOURCE =  NODE_41..ROOT
+NODE_143_SOURCE_DESCRIPTION = NODE_41..ROOT .OUT_ASK_BID_SIZES
+NODE_143_X = 482
+NODE_143_Y = 2076
+NODE_145 = WHERE_CLAUSE(WHERE=false)
+NODE_145_COMMENT = Do not need an output from auxiliary queries.
+NODE_145_EP_PARAMETERS_FLAG = -2
+NODE_145_SOURCE =  NODE_41..NODE_51
+NODE_145_SOURCE_DESCRIPTION = NODE_41..NODE_51 .OUT_PRICES
+NODE_145_X = 964
+NODE_145_Y = 2070
+NODE_146 = NESTED_OTQ ___ME___::_add_orig_time
+NODE_146_COMMENT = Add timestamp for each order. In case if order not in the time window ORIG_TIMESTAMP is set to 0.
+NODE_146_EP_PARAMETERS_FLAG = -2
+NODE_146_MINIMIZED = 1
+NODE_146_PARAMETER = MAX_CANCEL_DELAY_SEC $MAX_CANCEL_DELAY_SEC
+NODE_146_PARAMETER = MAX_FILL_DELAY_SEC $MAX_FILL_DELAY_SEC
+NODE_146_SOURCE =  NODE6.NODE_40.
+NODE_146_SOURCE_DESCRIPTION = NODE6.NODE_40. IN.
+NODE_146_X = 2606
+NODE_146_Y = 1184
+NODE_147 = PASSTHROUGH
+NODE_147_EP_PARAMETERS_FLAG = -2
+NODE_147_NAME = main_branch
+NODE_147_SOURCE =  NODE_146..ROOT
+NODE_147_SOURCE_DESCRIPTION = NODE_146..ROOT .OUT
+NODE_147_X = 2626
+NODE_147_Y = 1434
+NODE_149 = MERGE(IDENTIFY_INPUT_TS=false)
+NODE_149_EP_PARAMETERS_FLAG = -2
+NODE_149_SOURCE =  NODE_141 NODE_145..IF NODE_143..IF
+NODE_149_X = 2628
+NODE_149_Y = 2430
+NODE_41 = NESTED_OTQ ___ME___::_calculate_size_price_thresholds
+NODE_41_COMMENT = Calculate thersholds by construction order book using TRIGGERING_PRICE leves
+NODE_41_EP_PARAMETERS_FLAG = -2
+NODE_41_MINIMIZED = 1
+NODE_41_PARAMETER = TRIGGERING_PRICE_LEVELS $TRIGGERING_PRICE_LEVELS
+NODE_41_PARAMETER = MIN_LAYERING_SIDE_PCT $MIN_LAYERING_SIDE_PCT
+NODE_41_SHARED_VARIABLES = ASK_SIZE_THRESHOLD,BID_SIZE_THRESHOLD,ASK_PRICE_THRESHOLD,BID_PRICE_THRESHOLD,ASK_SIZE,BID_SIZE
+NODE_41_SOURCE =  NODE_63.NODE6.
+NODE_41_SOURCE_DESCRIPTION = NODE_63.NODE6. IN.
+NODE_41_X = 728
+NODE_41_Y = 1662
+NODE_47 = PASSTHROUGH
+NODE_47_EP_PARAMETERS_FLAG = -2
+NODE_47_NESTED_INPUT =  IN
+NODE_47_X = 2630
+NODE_47_Y = 442
+NODE_63 = PASSTHROUGH
+NODE_63_EP_PARAMETERS_FLAG = -2
+NODE_63_NAME = 1_branch
+NODE_63_SOURCE =  NODE6
+NODE_63_X = 760
+NODE_63_Y = 1346
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = PASSTHROUGH
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_OUTPUT =  OUT
+ROOT_SOURCE =  NODE_149
+ROOT_X = 2630
+ROOT_Y = 2836
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_layering_book_and_alert]
+COMMENT = 
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE_114 = DECLARE_STATE_VARIABLES(SCOPE=QUERY,VARIABLES="TICK_SET(LATEST_TICK,GROUP_BY_FIELDS, EXPIRATION_TS, FIRST_ORDER_ID) BIG_PARTICIPANTS; \
+TICK_SET(LATEST_TICK, EXPIRATION_TS, FIRST_ORDER_ID) FILL_EXPIRATION_HORIZON, CANCEL_EXPIRATION_HORIZON;")
+NODE_114_COMMENT = Main state variables used in calculation.\
+\
+BIG_PARTICIPANTS contains orders which satisfying condition: LayeringCondition (LayeringSidePct > MIN_LAYERING_SIDE_PCT) and for each GROUP it contains marker value with FIRST_ORDER_ID="" and EXPIRATION_TS=0\
+\
+FILL_EXPIRATION_HORIZON contains info expiration time from (t = LayeringSidePct > MIN_LAYERING_SIDE_PCT)  t+MAX_FILL_DELAY_SEC\
+\
+\
+CANCEL_EXPIRATION_HORIZON  contains info about time t-MAX_CANCEL_DELAY_SEC until ( t = LayeringSideCancelPct > MIN_CANCEL_PCT)
+NODE_114_EP_PARAMETERS_FLAG = -2
+NODE_114_SOURCE =  NODE_47
+NODE_114_X = 2600
+NODE_114_Y = 2126
+NODE_125 = MERGE(IDENTIFY_INPUT_TS=false)
+NODE_125_EP_PARAMETERS_FLAG = -2
+NODE_125_SOURCE =  NODE_43..ROOT NODE_62..IF NODE_61..IF NODE_60..IF
+NODE_125_SOURCE_DESCRIPTION = NODE_43..ROOT .ALERT
+NODE_125_X = 2648
+NODE_125_Y = 4304
+NODE_39 = NESTED_OTQ ___ME___::_cache_big_participants
+NODE_39_COMMENT = Ccalculate thresholds values by making the book for TRIGGERING_PRICE_LEVELS for each tick and save values into the variables:
+NODE_39_EP_PARAMETERS_FLAG = -2
+NODE_39_MINIMIZED = 1
+NODE_39_PARAMETER = MAX_FILL_DELAY_SEC $MAX_FILL_DELAY_SEC
+NODE_39_PARAMETER = BUY_SELL_FLAG 1
+NODE_39_PARAMETER = SIZE_IDS $SIZE_IDS
+NODE_39_SHARED_VARIABLES = BIG_PARTICIPANTS,FILL_EXPIRATION_HORIZON
+NODE_39_SOURCE =  NODE_66.NODE_37.ROOT
+NODE_39_SOURCE_DESCRIPTION = NODE_66.NODE_37.ROOT IN.OUT
+NODE_39_X = 3114
+NODE_39_Y = 3186
+NODE_42 = NESTED_OTQ ___ME___::_monitor_participant_sizes_detect_fills
+NODE_42_COMMENT = A cache of orders per GROUP_BY_FIELDS is maintained inside STATE::PARTICIPANTS for $MAX_FILL_DELAY_SEC. \
+\
+When a firm exceedes size participation threshold an entry is added to STATE::BIG_PARTICIPANTS.  \
+Multiple entries can be added for the same GROUP_BY_FIELDS if is has different orders with different expiration (monitoring end) \
+timestamp and different combination of those orders exceed the threshold.
+NODE_42_EP_PARAMETERS_FLAG = -2
+NODE_42_MINIMIZED = 1
+NODE_42_PARAMETER = MAX_CANCEL_DELAY_SEC $MAX_CANCEL_DELAY_SEC
+NODE_42_PARAMETER = SIZE_IDS $SIZE_IDS
+NODE_42_SHARED_VARIABLES = BIG_PARTICIPANTS,CANCEL_EXPIRATION_HORIZON
+NODE_42_SOURCE =  NODE_64.NODE_43.
+NODE_42_SOURCE_DESCRIPTION = NODE_64.NODE_43. IN.
+NODE_42_X = 1124
+NODE_42_Y = 3174
+NODE_43 = NESTED_OTQ ___ME___::_finalize_monitoring_generate_alert
+NODE_43_EP_PARAMETERS_FLAG = -2
+NODE_43_MINIMIZED = 1
+NODE_43_PARAMETER = MAX_CANCEL_DELAY_SEC $MAX_CANCEL_DELAY_SEC
+NODE_43_PARAMETER = MIN_CANCEL_PCT $MIN_CANCEL_PCT
+NODE_43_PARAMETER = SIZE_IDS $SIZE_IDS
+NODE_43_SHARED_VARIABLES = BIG_PARTICIPANTS,FILL_EXPIRATION_HORIZON,CANCEL_EXPIRATION_HORIZON
+NODE_43_SOURCE =  NODE_45.NODE_47.
+NODE_43_SOURCE_DESCRIPTION = NODE_45.NODE_47. IN.
+NODE_43_X = 4350
+NODE_43_Y = 2994
+NODE_45 = PASSTHROUGH
+NODE_45_EP_PARAMETERS_FLAG = -2
+NODE_45_NAME = 4_branch
+NODE_45_SOURCE =  NODE_114
+NODE_45_X = 4064
+NODE_45_Y = 2434
+NODE_47 = PASSTHROUGH
+NODE_47_COMMENTED_OUT = 1
+NODE_47_EP_PARAMETERS_FLAG = -2
+NODE_47_NESTED_INPUT =  IN
+NODE_47_X = 2598
+NODE_47_Y = 1734
+NODE_52 = NESTED_OTQ ___ME___::_cache_big_participants
+NODE_52_COMMENT = Ccalculate thresholds values by making the book for TRIGGERING_PRICE_LEVELS for each tick and save values into the variables.
+NODE_52_EP_PARAMETERS_FLAG = -2
+NODE_52_MINIMIZED = 1
+NODE_52_PARAMETER = MAX_FILL_DELAY_SEC $MAX_FILL_DELAY_SEC
+NODE_52_PARAMETER = BUY_SELL_FLAG 0
+NODE_52_PARAMETER = SIZE_IDS $SIZE_IDS
+NODE_52_SHARED_VARIABLES = BIG_PARTICIPANTS,FILL_EXPIRATION_HORIZON
+NODE_52_SOURCE =  NODE_66.NODE_37.ROOT
+NODE_52_SOURCE_DESCRIPTION = NODE_66.NODE_37.ROOT IN.OUT
+NODE_52_X = 2224
+NODE_52_Y = 3180
+NODE_54 = TABLE(FIELDS="BENEFICIAL_FILL_TS nsectime,\
+FIRST_ORDER_TIME nsectime, \
+MONITORING_START_TS nsectime, \
+TOTAL_FILLED_SIZE,\
+TOTAL_SIZE,\
+CANCELLED_SIZE,\
+BUY_FLAG long,\
+EXPIRATION_TS long,\
+FIRST_ORDER_ID string,\
+THRESHOLD double,\
+GROUP_BY_FIELDS string,\
+IDS string[$SIZE_IDS]")
+NODE_54_EP_PARAMETERS_FLAG = -2
+NODE_54_SOURCE =  NODE_56
+NODE_54_X = 2650
+NODE_54_Y = 4824
+NODE_56 = ADD_FIELD(FIELD=BUY_FLAG,VALUE=BUY_SELL_FLAG)
+NODE_56_COMMENT = BUY_SELL_FLAG for First Order ID\
+Fill flag is oposite
+NODE_56_COMMENT_HEIGHT = 59.000
+NODE_56_COMMENT_WIDTH = 220.000
+NODE_56_EP_PARAMETERS_FLAG = -2
+NODE_56_SHOW_COMMENT = 1
+NODE_56_SOURCE =  NODE_125
+NODE_56_X = 2652
+NODE_56_Y = 4632
+NODE_60 = WHERE_CLAUSE(WHERE=false)
+NODE_60_COMMENT = Do not need an output from auxiliary queries.
+NODE_60_EP_PARAMETERS_FLAG = -2
+NODE_60_SOURCE =  NODE_42..ROOT
+NODE_60_SOURCE_DESCRIPTION = NODE_42..ROOT .PARTICIPANT_SIZE
+NODE_60_X = 1146
+NODE_60_Y = 3614
+NODE_61 = WHERE_CLAUSE(WHERE=false)
+NODE_61_COMMENT = Do not need an output from auxiliary queries.
+NODE_61_EP_PARAMETERS_FLAG = -2
+NODE_61_SOURCE =  NODE_52..ROOT
+NODE_61_SOURCE_DESCRIPTION = NODE_52..ROOT .OUT
+NODE_61_X = 2248
+NODE_61_Y = 3658
+NODE_62 = WHERE_CLAUSE(WHERE=false)
+NODE_62_COMMENT = Do not need an output from auxiliary queries.
+NODE_62_EP_PARAMETERS_FLAG = -2
+NODE_62_SOURCE =  NODE_39..ROOT
+NODE_62_SOURCE_DESCRIPTION = NODE_39..ROOT .OUT
+NODE_62_X = 3082
+NODE_62_Y = 3718
+NODE_64 = PASSTHROUGH
+NODE_64_EP_PARAMETERS_FLAG = -2
+NODE_64_NAME = 2_branch
+NODE_64_SOURCE =  NODE_114
+NODE_64_X = 1226
+NODE_64_Y = 2696
+NODE_65 = PASSTHROUGH
+NODE_65_EP_PARAMETERS_FLAG = -2
+NODE_65_NAME = 3_branch
+NODE_65_SOURCE =  NODE_114
+NODE_65_X = 2556
+NODE_65_Y = 2464
+NODE_66 = NESTED_OTQ ___ME___::_filter_orders
+NODE_66_COMMENT = layering order for a symbol listed on a NYSE Family Equities Exchang cannot be an options order or a market-making order.
+NODE_66_EP_PARAMETERS_FLAG = -2
+NODE_66_MINIMIZED = 1
+NODE_66_SOURCE =  NODE_65.NODE_2.
+NODE_66_SOURCE_DESCRIPTION = NODE_65.NODE_2. IN.
+NODE_66_X = 2634
+NODE_66_Y = 2876
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = PASSTHROUGH
+ROOT_COMMENTED_OUT = 1
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_OUTPUT =  OUT_ALERT
+ROOT_SOURCE =  NODE_54
+ROOT_X = 2652
+ROOT_Y = 5024
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_schema_prepare]
+COMMENT = 
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE_14 = PASSTHROUGH
+NODE_14_COMMENT = PRICE,LEAVESQTY,BUY_FLAG,STATE,ID,QTY,QTY_FILLED,FIRM_IDENTIFIER
+NODE_14_EP_PARAMETERS_FLAG = -2
+NODE_14_NESTED_INPUT =  IN
+NODE_14_X = 1464
+NODE_14_Y = 275.333
+NODE_15 = UPDATE_FIELDS(SET="BUY_SELL_FLAG=0",ELSE_SET="BUY_SELL_FLAG=1",WHERE="BUY_SELL_FLAG=1")
+NODE_15_EP_PARAMETERS_FLAG = -2
+NODE_15_SOURCE =  NODE_35
+NODE_15_X = 1484
+NODE_15_Y = 1406.667
+NODE_17 = RENAME_FIELDS(RENAME_FIELDS="LEAVESQTY=SIZE,BUY_FLAG=BUY_SELL_FLAG,STATE=RECORD_TYPE,QTY_FILLED=FILLED_QTY,CANCEL_QUANTITY=CANCELLED_SIZE")
+NODE_17_EP_PARAMETERS_FLAG = -2
+NODE_17_SOURCE =  NODE_14
+NODE_17_X = 1464
+NODE_17_Y = 510.667
+NODE_22 = DECLARE_STATE_VARIABLES(SCOPE=QUERY,VARIABLES="int OMDSEQ=0;")
+NODE_22_EP_PARAMETERS_FLAG = -2
+NODE_22_SOURCE =  NODE_15
+NODE_22_X = 1484
+NODE_22_Y = 1786.667
+NODE_23 = UPDATE_FIELDS(SET="STATE::OMDSEQ=STATE::OMDSEQ+1,OMDSEQ=STATE::OMDSEQ",ELSE_SET="STATE::OMDSEQ=0",WHERE="TIMESTAMP=TIMESTAMP[-1]")
+NODE_23_EP_PARAMETERS_FLAG = -2
+NODE_23_SOURCE =  NODE_22
+NODE_23_X = 1486.667
+NODE_23_Y = 2166.667
+NODE_32 = TABLE(FIELDS="MAKER byte(0), GROUP_BY_FIELDS string",KEEP_INPUT_FIELDS=true)
+NODE_32_COMMENT = Market maker orders shouldn't be considered layering candidates, MAKER stands for market maker\
+\
+GROUP_BY_FIELDS used as basic field used for groupping
+NODE_32_EP_PARAMETERS_FLAG = -2
+NODE_32_SOURCE =  NODE_23
+NODE_32_X = 1486.667
+NODE_32_Y = 2546.667
+NODE_34 = UPDATE_FIELD(FIELD=GROUP_BY_FIELDS,VALUE=_SYMBOL_NAME,WHERE="GROUP_BY_FIELDS = \"\"")
+NODE_34_EP_PARAMETERS_FLAG = -2
+NODE_34_SOURCE =  NODE_32
+NODE_34_X = 1484
+NODE_34_Y = 2926.667
+NODE_35 = TABLE(FIELDS="UPDATE_TIME nsectime, TICK_STATUS int",KEEP_INPUT_FIELDS=true)
+NODE_35_EP_PARAMETERS_FLAG = -2
+NODE_35_SOURCE =  NODE_17
+NODE_35_X = 1486
+NODE_35_Y = 1108
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = MODIFY_TS_PROPERTIES(PROPERTY_VALUE="PRICE,ID")
+ROOT_COMMENTED_OUT = 1
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_OUTPUT =  OUT
+ROOT_SOURCE =  NODE_34
+ROOT_X = 1484
+ROOT_Y = 3276
+SECURITY = DUMMY 0 No
+SECURITY = S_ORDERS_M2::FSBW 0
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_filter_orders]
+COMMENT = layering order for a symbol listed on a NYSE Family Equities Exchang cannot be an options order or a market-making order.
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE_2 = PASSTHROUGH
+NODE_2_COMMENTED_OUT = 1
+NODE_2_EP_PARAMETERS_FLAG = -2
+NODE_2_NESTED_INPUT =  IN
+NODE_2_X = 1490.333
+NODE_2_Y = 373.667
+NODE_3 = WHERE_CLAUSE(WHERE="MAKER != 1")
+NODE_3_EP_PARAMETERS_FLAG = -2
+NODE_3_SOURCE =  NODE_2
+NODE_3_X = 1493
+NODE_3_Y = 623
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = PASSTHROUGH
+ROOT_COMMENTED_OUT = 1
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_OUTPUT =  OUT
+ROOT_SOURCE =  NODE_3..IF
+ROOT_X = 1490.333
+ROOT_Y = 872.333
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_calculate_size_price_thresholds]
+COMMENT = Calculate thersholds by construction order book using TRIGGERING_PRICE leves
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE6 = DECLARE_STATE_VARIABLES(SCOPE=QUERY,VARIABLES="double ASK_SIZE_THRESHOLD = 0.0; \
+double BID_SIZE_THRESHOLD = 0.0;\
+double ASK_PRICE_THRESHOLD; \
+double BID_PRICE_THRESHOLD;\
+\
+double ASK_SIZE = 0.0; \
+double BID_SIZE = 0.0;")
+NODE6_EP_PARAMETERS_FLAG = -2
+NODE6_NESTED_INPUT =  IN
+NODE6_SINK =  NODE_77
+NODE6_X = 2003.334
+NODE6_Y = 103.333
+NODE_51 = PASSTHROUGH
+NODE_51_COMMENTED_OUT = 1
+NODE_51_EP_PARAMETERS_FLAG = -2
+NODE_51_NESTED_OUTPUT =  OUT_PRICES
+NODE_51_X = 2760
+NODE_51_Y = 2206.666
+NODE_57 = UPDATE_FIELDS(SET="STATE::BID_SIZE_THRESHOLD=BID_VALUE*$MIN_LAYERING_SIDE_PCT/100,STATE::ASK_SIZE_THRESHOLD=ASK_VALUE*$MIN_LAYERING_SIDE_PCT/100")
+NODE_57_EP_PARAMETERS_FLAG = -2
+NODE_57_SOURCE =  NODE_58
+NODE_57_X = 898.666
+NODE_57_Y = 941.999
+NODE_58 = OB_SIZE(IS_RUNNING_AGGR=true,MAX_LEVELS="$TRIGGERING_PRICE_LEVELS",MAX_INITIALIZATION_DAYS=3,MAX_DEPTH_FOR_PRICE="expr(ATOF(_SYMBOL_PARAM.MAX_BBO_DEVIATION_PCT)/100.0)",MIN_LEVELS="$TRIGGERING_PRICE_LEVELS")
+NODE_58_COMMENT = MAX_INITIALIZATION_DAYS=3 ~ because weekends for NYSE
+NODE_58_EP_PARAMETERS_FLAG = -2
+NODE_58_SOURCE =  NODE6
+NODE_58_X = 959.666
+NODE_58_Y = 653.333
+NODE_61 = UPDATE_FIELDS(SET="STATE::BID_SIZE=BID_VALUE,\
+STATE::ASK_SIZE=ASK_VALUE")
+NODE_61_EP_PARAMETERS_FLAG = -2
+NODE_61_SOURCE =  NODE_57
+NODE_61_X = 962
+NODE_61_Y = 1215.999
+NODE_62 = UPDATE_FIELDS(SET="STATE::BID_PRICE_THRESHOLD = PRICE",ELSE_SET="STATE::ASK_PRICE_THRESHOLD = PRICE",WHERE="BUY_SELL_FLAG = 0")
+NODE_62_COMMENT = STATE::ASK_PRICE_THRESHOLD = PRICE
+NODE_62_EP_PARAMETERS_FLAG = -2
+NODE_62_SINK =  NODE_78
+NODE_62_X = 2753.333
+NODE_62_Y = 1515.999
+NODE_75 = HIGH_TICK(IS_RUNNING_AGGR=true,SELECTION=LAST,GROUP_BY="BUY_SELL_FLAG,THE_SAME_TIME",INPUT_FIELD_NAME=LEVEL)
+NODE_75_EP_PARAMETERS_FLAG = -2
+NODE_75_SINK =  NODE_62
+NODE_75_X = 2752
+NODE_75_Y = 1246
+NODE_76 = ADD_FIELD(FIELD=THE_SAME_TIME,VALUE="NSECTIME_TO_LONG(TIMESTAMP)")
+NODE_76_EP_PARAMETERS_FLAG = -2
+NODE_76_SINK =  NODE_75
+NODE_76_X = 2742
+NODE_76_Y = 978
+NODE_77 = OB_SNAPSHOT(IS_RUNNING_AGGR=true,MAX_LEVELS="$TRIGGERING_PRICE_LEVELS",MAX_DEPTH_FOR_PRICE="expr(ATOF(_SYMBOL_PARAM.MAX_BBO_DEVIATION_PCT)/100.0)",MAX_INITIALIZATION_DAYS=3)
+NODE_77_COMMENT = Compute best_bid/ask from the book\
+\
+MAX_INITIALIZATION_DAYS=3 ~ because weekends for NYSE
+NODE_77_EP_PARAMETERS_FLAG = -2
+NODE_77_SINK =  NODE_76
+NODE_77_X = 2658.667
+NODE_77_Y = 639.333
+NODE_78 = UPDATE_FIELD(FIELD="STATE::BID_PRICE_THRESHOLD",VALUE="DECIMAL_INFINITY()",WHERE="STATE::BID_PRICE_THRESHOLD = NAN()")
+NODE_78_EP_PARAMETERS_FLAG = -2
+NODE_78_SINK =  NODE_79
+NODE_78_X = 2752
+NODE_78_Y = 1766
+NODE_79 = UPDATE_FIELD(FIELD="STATE::ASK_PRICE_THRESHOLD",VALUE="-DECIMAL_INFINITY()",WHERE="STATE::ASK_PRICE_THRESHOLD = NAN()")
+NODE_79_EP_PARAMETERS_FLAG = -2
+NODE_79_SINK =  NODE_51
+NODE_79_X = 2756
+NODE_79_Y = 2004
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = PASSTHROUGH
+ROOT_COMMENTED_OUT = 1
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_OUTPUT =  OUT_ASK_BID_SIZES
+ROOT_SOURCE =  NODE_61
+ROOT_X = 961.334
+ROOT_Y = 1722.666
+SECURITY = DUMMY 0
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_add_orig_time]
+COMMENT = Add timestamp for each order. In case if order not in the time window ORIG_TIMESTAMP is set to 0.
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE_40 = DECLARE_STATE_VARIABLES(SCOPE=QUERY,VARIABLES="TICK_SET_UNORDERED(LATEST_TICK,100000,ID) ORDER_REG;")
+NODE_40_EP_PARAMETERS_FLAG = -2
+NODE_40_NESTED_INPUT =  IN
+NODE_40_X = 1489.334
+NODE_40_Y = 456.500
+one_to_many_symbol_mapping = 0
+PARAMETER = MAX_FILL_DELAY_SEC 2000
+QUERY_BATCH_SIZE = 0
+ROOT = PER_TICK_SCRIPT(SCRIPT="/* Output tick is appended with ORIG_TIME and ORIG_OMDSEQ, \
+which for cancel ticks should derive their value from TIMESTAMP and OMDSEQ of original order which is cancelled. */ \
+long ORIG_TIME = 0;\
+long ORIG_OMDSEQ = 0;\
+static TICK_SET_TICK LOCAL::iterator;\
+static DYNAMIC_TICK LOCAL::dynamic_tick;\
+static TICK_LIST LOCAL::expiration; /*only orders within $MAX_FILL_DELAY_SEC + $MAX_CANCEL_DELAY_SEC should be monitored, this container has expiration timestamps*/\
+long LOCAL::ORIG_TIME = 0;\
+long LOCAL::CUR_TIME = NSECTIME_TO_LONG(TIMESTAMP);\
+\
+_ONCE\
+{ /* tick is used to insert into STATE::ORDER_REG */\
+    LOCAL::dynamic_tick.ADD_FIELD(\"ID\", \"string\", \"\");\
+    LOCAL::dynamic_tick.ADD_FIELD(\"ORIG_TIME\", \"long\", 0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"ORIG_OMDSEQ\", \"long\", 0);\
+}\
+\
+if (RECORD_TYPE == \"N\") /*new order*/ \
+{\
+    ORIG_TIME = LOCAL::CUR_TIME;\
+    LOCAL::dynamic_tick.SET_STRING_VALUE(\"ID\", ID);\
+    LOCAL::dynamic_tick.SET_LONG_VALUE(\"ORIG_TIME\", ORIG_TIME);\
+    LOCAL::dynamic_tick.SET_LONG_VALUE(\"ORIG_OMDSEQ\", OMDSEQ);\
+    INSERT_TO_TICK_SET(STATE::ORDER_REG, LOCAL::dynamic_tick);\
+    LOCAL::expiration.PUSH_BACK(LOCAL::dynamic_tick);\
+}\
+else if (RECORD_TYPE == \"C\") /*cancel order*/ \
+{\
+    if (FIND(STATE::ORDER_REG, LOCAL::iterator, ID)) \
+    {\
+        ORIG_TIME = LOCAL::iterator.GET_LONG_VALUE(\"ORIG_TIME\");\
+        ORIG_OMDSEQ = LOCAL::iterator.GET_LONG_VALUE(\"ORIG_OMDSEQ\");\
+    }\
+    else \
+    {\
+        ORIG_TIME = 0;\
+    }\
+}\
+\
+\
+for (TICK_LIST_TICK LOCAL::exp_iterator : LOCAL::expiration) /*remove expired orders from the window*/ {\
+    LOCAL::ORIG_TIME = LOCAL::exp_iterator.GET_LONG_VALUE(\"ORIG_TIME\");\
+    if (LOCAL::ORIG_TIME + $MAX_FILL_DELAY_SEC * 1000000000 + $MAX_CANCEL_DELAY_SEC * 1000000000 < LOCAL::CUR_TIME) \
+    /* Out of window: TIMESTAMP - TIMESTAMP_NEW >  $MAX_FILL_DELAY_SEC + $MAX_CANCEL_DELAY_SEC */ \
+    {\
+        if (FIND(STATE::ORDER_REG, LOCAL::iterator, LOCAL::exp_iterator.GET_STRING_VALUE(\"ID\"))) \
+        {\
+	    ERASE_FROM_TICK_SET(STATE::ORDER_REG, LOCAL::iterator);\
+	    LOCAL::expiration.ERASE(LOCAL::exp_iterator);\
+        }\
+    }\
+    else /* because all left LOCAL::ORIG_TIME will be in the window too */ \
+    {\
+        return 1;\
+    }\
+}\
+return 1;")
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_OUTPUT =  OUT
+ROOT_SOURCE =  NODE_40
+ROOT_X = 1491
+ROOT_Y = 812.500
+SECURITY = DUMMY 0
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_monitor_participant_sizes_detect_fills]
+COMMENT = Add orders to BIG_PARTICIPANTS which satisfaying LayeringCondition and CancelCondition.
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE_43 = DECLARE_STATE_VARIABLES(SCOPE=QUERY,VARIABLES="TICK_SET(LATEST_TICK,GROUP_BY_FIELDS,EXPIRATION_TS,FIRST_ORDER_ID) BIG_PARTICIPANTS; \
+TICK_SET(LATEST_TICK,EXPIRATION_TS,FIRST_ORDER_ID) CANCEL_EXPIRATION_HORIZON;")
+NODE_43_EP_PARAMETERS_FLAG = -2
+NODE_43_NESTED_INPUT =  IN
+NODE_43_X = 1669.752
+NODE_43_Y = 151.333
+NODE_45 = PER_TICK_SCRIPT(SCRIPT="static TICK_SET_TICK LOCAL::iterator;\
+string LOCAL::GROUP_BY_FIELDS = GROUP_BY_FIELDS;\
+long LOCAL::BUY_SELL_FLAG = 0;\
+static DYNAMIC_TICK LOCAL::dynamic_tick;\
+static TICK_LIST LOCAL::temp;\
+\
+_ONCE\
+{\
+    /*creating tick used to insert into STATE::BIG_PARTICIPANTS*/\
+    LOCAL::dynamic_tick.ADD_FIELD(\"GROUP_BY_FIELDS\", \"string\", \"\");\
+    LOCAL::dynamic_tick.ADD_FIELD(\"EXPIRATION_TS\", \"long\", 0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"FIRST_ORDER_ID\", \"string\", \"\");\
+    LOCAL::dynamic_tick.ADD_FIELD(\"RECORD_TYPE\", \"string\", \"\");\
+    LOCAL::dynamic_tick.ADD_FIELD(\"ID\", \"string\", \"\");\
+    LOCAL::dynamic_tick.ADD_FIELD(\"IDS\", \"string[$SIZE_IDS]\", \"\");\
+    LOCAL::dynamic_tick.ADD_FIELD(\"ASK_PRICE_THRESHOLD\", \"double\", 0.0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"BID_PRICE_THRESHOLD\", \"double\", 0.0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"TIME_ID\", \"long\", 0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"OMDSEQ\", \"long\", 0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"FIRST_ORDER_TIME\", \"long\", 0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"SIZE\", \"double\", 0.0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"FILLED_QTY\", \"double\", 0.0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"MONITORING_START_TS\", \"long\", 0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"FIRST_ORDER_TS\", \"long\", 0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"FIRST_ORDER_OMDSEQ\", \"long\", 0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"BUY_SELL_FLAG\", \"long\", 0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"CANCELLED_SIZE\", \"double\", 0.0);\
+    LOCAL::dynamic_tick.ADD_FIELD(\"THRESHOLD\", \"double\", 0.0);\
+}\
+\
+/*finds marker value indication start of records for specific GROUP_BY_FIELDS */\
+if (FIND(STATE::BIG_PARTICIPANTS, LOCAL::iterator, GROUP_BY_FIELDS, 0, \"\"))\
+{\
+    while (LOCAL::GROUP_BY_FIELDS == GROUP_BY_FIELDS)\
+    {\
+        if (LOCAL::iterator.GET_LONG_VALUE(\"EXPIRATION_TS\") != 0)\
+        /*if normal entry (not marker)*/\
+        {\
+            LOCAL::BUY_SELL_FLAG = LOCAL::iterator.GET_LONG_VALUE(\"BUY_SELL_FLAG\");\
+            if (BUY_SELL_FLAG == LOCAL::BUY_SELL_FLAG)\
+            {\
+                /*in case if price satisfies price threshold condition computed when entry was added*/\
+                if ((BUY_SELL_FLAG == 0 AND PRICE >= LOCAL::iterator.GET_DOUBLE_VALUE(\"THRESHOLD\"))\
+                     OR (BUY_SELL_FLAG == 1 AND PRICE <= LOCAL::iterator.GET_DOUBLE_VALUE(\"THRESHOLD\")))\
+                {\
+                    if (RECORD_TYPE == \"N\") /*increase total size on new order*/\
+                    {\
+                        LOCAL::iterator.SET_DOUBLE_VALUE(\"SIZE\", LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\") + SIZE);\
+			LOCAL::iterator.SET_STRING_VALUE(\"IDS\", LOCAL::iterator.GET_STRING_VALUE(\"IDS\") + ID + \"|\");\
+                    } else if (RECORD_TYPE == \"C\" AND(LOCAL::iterator.GET_LONG_VALUE(\"FIRST_ORDER_TS\") < ORIG_TIME\
+                             OR (LOCAL::iterator.GET_LONG_VALUE(\"FIRST_ORDER_TS\") == ORIG_TIME AND LOCAL::iterator.GET_LONG_VALUE(\"FIRST_ORDER_OMDSEQ\") <= ORIG_OMDSEQ)))\
+                    /*increase cancelled size if cancelled order is included in total size*/\
+                    {\
+                        LOCAL::iterator.SET_DOUBLE_VALUE(\"CANCELLED_SIZE\", LOCAL::iterator.GET_DOUBLE_VALUE(\"CANCELLED_SIZE\") + CANCELLED_SIZE);\
+			LOCAL::iterator.SET_STRING_VALUE(\"IDS\", LOCAL::iterator.GET_STRING_VALUE(\"IDS\") + ID + \"|\");\
+                    }\
+		    	\
+                }\
+            }\
+            else\
+            {\
+                if (RECORD_TYPE == \"F\" OR RECORD_TYPE == \"PF\")\
+                /* for fill, extend entry expiration period by copying \
+                   it to LOCAL::temp which would later be moved into STATE::BIG_PARTICIPANTS */\
+                {\
+                    LOCAL::dynamic_tick.SET_STRING_VALUE(\"GROUP_BY_FIELDS\", LOCAL::iterator.GET_STRING_VALUE(\"GROUP_BY_FIELDS\"));\
+                    LOCAL::dynamic_tick.SET_DOUBLE_VALUE(\"SIZE\", LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\"));\
+                    LOCAL::dynamic_tick.SET_LONG_VALUE(\"EXPIRATION_TS\", NSECTIME_TO_LONG(TIMESTAMP) + $MAX_CANCEL_DELAY_SEC * 1000000000);\
+                    LOCAL::dynamic_tick.SET_LONG_VALUE(\"MONITORING_START_TS\", LOCAL::iterator.GET_LONG_VALUE(\"MONITORING_START_TS\"));\
+                    LOCAL::dynamic_tick.SET_LONG_VALUE(\"FIRST_ORDER_TS\", LOCAL::iterator.GET_LONG_VALUE(\"FIRST_ORDER_TS\"));\
+                    LOCAL::dynamic_tick.SET_LONG_VALUE(\"FIRST_ORDER_TIME\", LOCAL::iterator.GET_LONG_VALUE(\"FIRST_ORDER_TIME\"));\
+                    LOCAL::dynamic_tick.SET_LONG_VALUE(\"FIRST_ORDER_OMDSEQ\", LOCAL::iterator.GET_LONG_VALUE(\"FIRST_ORDER_OMDSEQ\"));\
+                    LOCAL::dynamic_tick.SET_LONG_VALUE(\"BUY_SELL_FLAG\", LOCAL::iterator.GET_LONG_VALUE(\"BUY_SELL_FLAG\"));\
+                    LOCAL::dynamic_tick.SET_DOUBLE_VALUE(\"CANCELLED_SIZE\", LOCAL::iterator.GET_DOUBLE_VALUE(\"CANCELLED_SIZE\"));\
+                    LOCAL::dynamic_tick.SET_DOUBLE_VALUE(\"THRESHOLD\", LOCAL::iterator.GET_DOUBLE_VALUE(\"THRESHOLD\"));\
+                    LOCAL::dynamic_tick.SET_STRING_VALUE(\"FIRST_ORDER_ID\", LOCAL::iterator.GET_STRING_VALUE(\"FIRST_ORDER_ID\"));\
+                    LOCAL::dynamic_tick.SET_DOUBLE_VALUE(\"FILLED_QTY\", LOCAL::iterator.GET_DOUBLE_VALUE(\"FILLED_QTY\") + FILLED_QTY); \
+		    LOCAL::dynamic_tick.SET_STRING_VALUE(\"IDS\", LOCAL::iterator.GET_STRING_VALUE(\"IDS\") + ID + \"|\");\
+\
+\
+		    /*increase total filled size on new order*/\
+                    LOCAL::temp.PUSH_BACK(LOCAL::dynamic_tick);\
+                }\
+            }\
+        }\
+        LOCAL::iterator.NEXT();\
+        if (LOCAL::iterator.IS_END())\
+        {\
+            break;\
+        }\
+        LOCAL::GROUP_BY_FIELDS = LOCAL::iterator.GET_STRING_VALUE(\"GROUP_BY_FIELDS\");\
+    }\
+}\
+\
+for (TICK_LIST_TICK LOCAL::temp_iterator : LOCAL::temp)\
+/*move entries to STATE::BIG_PARTICIPANTS and add expiration monitoring records*/\
+{\
+    INSERT_TO_TICK_SET(STATE::BIG_PARTICIPANTS, LOCAL::temp_iterator);\
+    INSERT_TO_TICK_SET(STATE::CANCEL_EXPIRATION_HORIZON, LOCAL::temp_iterator);\
+}\
+\
+LOCAL::temp.CLEAR();\
+return 0;")
+NODE_45_EP_PARAMETERS_FLAG = -2
+NODE_45_SOURCE =  NODE_43
+NODE_45_X = 1674.110
+NODE_45_Y = 597.077
+one_to_many_symbol_mapping = 0
+PARAMETER = MAX_CANCEL_DELAY_SEC 2000
+QUERY_BATCH_SIZE = 0
+ROOT = PASSTHROUGH
+ROOT_COMMENTED_OUT = 1
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_OUTPUT =  PARTICIPANT_SIZE
+ROOT_SOURCE =  NODE_45
+ROOT_X = 1671.188
+ROOT_Y = 899.281
+SECURITY = DUMMY 0
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_cache_big_participants]
+COMMENT = Ccalculate thresholds values by making the book for TRIGGERING_PRICE_LEVELS for each tick and save values into the variables.\
+\
+A cache of orders per GROUP_BY_FIELDS is maintained inside STATE::PARTICIPANTS for $MAX_FILL_DELAY_SEC. \
+When a firm exceedes size participation threshold an entry is added to STATE::BIG_PARTICIPANTS.  \
+Multiple entries can be added for the same GROUP_BY_FIELDS if is has different orders with different expiration (monitoring end) \
+timestamp and different combination of those orders exceed the threshold.
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE6 = DECLARE_STATE_VARIABLES(SCOPE=QUERY,VARIABLES="TICK_SET(LATEST_TICK,GROUP_BY_FIELDS,EXPIRATION_TS,FIRST_ORDER_ID) BIG_PARTICIPANTS; \
+TICK_SET(LATEST_TICK,EXPIRATION_TS,FIRST_ORDER_ID) FILL_EXPIRATION_HORIZON;")
+NODE6_EP_PARAMETERS_FLAG = -2
+NODE6_SOURCE =  NODE_37..IF
+NODE6_X = 1686.333
+NODE6_Y = 922.212
+NODE_37 = WHERE_CLAUSE(WHERE="BUY_SELL_FLAG = $BUY_SELL_FLAG")
+NODE_37_EP_PARAMETERS_FLAG = -2
+NODE_37_NESTED_INPUT =  IN
+NODE_37_X = 1718.001
+NODE_37_Y = 128.667
+NODE_39 = PER_TICK_SCRIPT(SCRIPT="/* A cache of orders per GROUP_BY_FIELDS is maintained inside STATE::PARTICIPANTS for $MAX_FILL_DELAY_SEC. \
+When a firm exceedes size participation threshold an entry is added to STATE::BIG_PARTICIPANTS.  \
+Multiple entries can be added for the same GROUP_BY_FIELDS if is has different orders with different expiration (monitoring end) \
+timestamp and different combination of those orders exceed the threshold. */\
+\
+long main()\
+{\
+    static TICK_SET_TICK LOCAL::iterator;\
+    static DYNAMIC_TICK LOCAL::dynamic_tick;\
+    static TICK_LIST LOCAL::expiration_horizon;\
+    long LOCAL::TS = NSECTIME_TO_LONG(TIMESTAMP);\
+    long LOCAL::CTS = 0;\
+    long LOCAL::EXPIRATION_TS = 0;\
+    long LOCAL::EXPIRED_SIZE = 0.0;\
+    double LOCAL::REMAINING_SIZE = 0.0;\
+    string LOCAL::GROUP_BY_FIELDS = \"\";\
+    _ONCE\
+    {\
+        LOCAL::dynamic_tick.ADD_FIELD(\"GROUP_BY_FIELDS\", \"string\", \"\");\
+        LOCAL::dynamic_tick.ADD_FIELD(\"EXPIRATION_TS\", \"long\", 0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"ID\", \"string\", \"\");\
+    } /* remove expired entries in window*/\
+\
+    for (TICK_LIST_TICK LOCAL::expiration_iterator : LOCAL::expiration_horizon)\
+    {\
+        LOCAL::CTS = LOCAL::expiration_iterator.GET_LONG_VALUE(\"EXPIRATION_TS\");\
+        if (LOCAL::CTS < LOCAL::TS)\
+        {\
+            LOCAL::GROUP_BY_FIELDS = LOCAL::expiration_iterator.GET_STRING_VALUE(\"GROUP_BY_FIELDS\");\
+            if (FIND(STATE::PARTICIPANTS, LOCAL::iterator, LOCAL::GROUP_BY_FIELDS, LOCAL::CTS, LOCAL::expiration_iterator.GET_STRING_VALUE(\"ID\")))\
+            {\
+                LOCAL::EXPIRED_SIZE = LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\");\
+                ERASE_FROM_TICK_SET(STATE::PARTICIPANTS, LOCAL::iterator); /*remove marker value if necessary*/\
+                if(FIND(STATE::PARTICIPANTS, LOCAL::iterator, LOCAL::GROUP_BY_FIELDS, 0, \"\"))\
+                {\
+                    LOCAL::REMAINING_SIZE = LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\") - LOCAL::EXPIRED_SIZE;\
+                    if (LOCAL::REMAINING_SIZE == 0.0)\
+                    {\
+                        ERASE_FROM_TICK_SET(STATE::PARTICIPANTS, LOCAL::iterator);\
+                    }\
+                    else\
+                    {\
+                        LOCAL::iterator.SET_DOUBLE_VALUE(\"SIZE\", LOCAL::REMAINING_SIZE);\
+                    }\
+                }\
+            }\
+            LOCAL::expiration_horizon.ERASE(LOCAL::expiration_iterator);\
+        }\
+        else\
+        {\
+            break;\
+        }\
+    }\
+    if (RECORD_TYPE == \"N\") /*handle new order*/\
+    {\
+        LOCAL::EXPIRATION_TS = add_order();\
+        LOCAL::dynamic_tick.SET_LONG_VALUE(\"EXPIRATION_TS\", LOCAL::EXPIRATION_TS);\
+        LOCAL::dynamic_tick.SET_STRING_VALUE(\"GROUP_BY_FIELDS\", GROUP_BY_FIELDS);\
+        LOCAL::dynamic_tick.SET_STRING_VALUE(\"ID\", ID);\
+        LOCAL::expiration_horizon.PUSH_BACK(LOCAL::dynamic_tick);\
+    }\
+    else if (RECORD_TYPE == \"C\") /*handle cancel*/\
+    {\
+        remove_qty(CANCELLED_SIZE);\
+    }\
+    else if (RECORD_TYPE == \"F\" OR RECORD_TYPE == \"PF\") /*handle fill*/\
+    {\
+        remove_qty(FILLED_QTY);\
+    }\
+    return 0;\
+}\
+\
+long add_order()\
+{\
+    static TICK_SET_TICK LOCAL::iterator;\
+    static DYNAMIC_TICK LOCAL::dynamic_tick;\
+    long LOCAL::EXPIRATION_TS = NSECTIME_TO_LONG(TIMESTAMP) + $MAX_FILL_DELAY_SEC * 1000000000;\
+    _ONCE\
+    {\
+        LOCAL::dynamic_tick.ADD_FIELD(\"GROUP_BY_FIELDS\", \"string\", \"\");\
+        LOCAL::dynamic_tick.ADD_FIELD(\"EXPIRATION_TS\", \"long\", 0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"OMDSEQ\", \"long\", 0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"ID\", \"string\", \"\");\
+	LOCAL::dynamic_tick.ADD_FIELD(\"RECORD_TYPE\", \"string\", \"\");\
+        LOCAL::dynamic_tick.ADD_FIELD(\"SIZE\", \"double\", 0.0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"FILLED_QTY\", \"double\", 0.0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"PRICE\", \"double\", 0.0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"TIME\", \"long\", 0);\
+    }\
+\
+    LOCAL::dynamic_tick.SET_LONG_VALUE(\"TIME\", ORIG_TIME);\
+    LOCAL::dynamic_tick.SET_LONG_VALUE(\"OMDSEQ\", OMDSEQ);\
+    LOCAL::dynamic_tick.SET_STRING_VALUE(\"GROUP_BY_FIELDS\", GROUP_BY_FIELDS);\
+    LOCAL::dynamic_tick.SET_STRING_VALUE(\"RECORD_TYPE\", RECORD_TYPE);\
+    LOCAL::dynamic_tick.SET_DOUBLE_VALUE(\"SIZE\", SIZE);\
+\
+    /*each cached GROUP_BY_FIELDS should have a \"marker\" value with EXPIRATION_TS=0, \
+      it is used to find first entry for a GROUP_BY_FIELDS firm and to maintain the total size*/\
+    if (FIND(STATE::PARTICIPANTS, LOCAL::iterator, GROUP_BY_FIELDS, 0, \"\"))\
+    {\
+        LOCAL::iterator.SET_DOUBLE_VALUE(\"SIZE\", LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\") + SIZE);\
+    }\
+    else\
+    {\
+        LOCAL::dynamic_tick.SET_LONG_VALUE(\"EXPIRATION_TS\", 0);\
+        LOCAL::dynamic_tick.SET_STRING_VALUE(\"ID\", \"\");\
+        LOCAL::dynamic_tick.SET_DOUBLE_VALUE(\"PRICE\", NAN());\
+        INSERT_TO_TICK_SET(STATE::PARTICIPANTS, LOCAL::dynamic_tick);\
+    }\
+    LOCAL::dynamic_tick.SET_LONG_VALUE(\"EXPIRATION_TS\", LOCAL::EXPIRATION_TS);\
+    LOCAL::dynamic_tick.SET_STRING_VALUE(\"ID\", ID);\
+    LOCAL::dynamic_tick.SET_DOUBLE_VALUE(\"PRICE\", PRICE);\
+    INSERT_TO_TICK_SET(STATE::PARTICIPANTS, LOCAL::dynamic_tick);\
+    \
+    check_participant();\
+    return LOCAL::EXPIRATION_TS;\
+}\
+\
+long remove_qty(double delta_size)\
+{\
+    static TICK_SET_TICK LOCAL::iterator;\
+    static TICK_SET_TICK LOCAL::first_iterator;\
+    double LOCAL::REMAINING_SIZE = 0.0;\
+    double LOCAL::DELTA_SIZE = delta_size;\
+    if (FIND(STATE::PARTICIPANTS, LOCAL::iterator, GROUP_BY_FIELDS, 0, \"\"))\
+    {\
+        LOCAL::iterator.COPY(LOCAL::first_iterator);\
+        while (LOCAL::iterator.GET_STRING_VALUE(\"GROUP_BY_FIELDS\") == GROUP_BY_FIELDS)\
+        {\
+            if (LOCAL::iterator.GET_STRING_VALUE(\"ID\") == ID)\
+            {\
+                if (LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\") > LOCAL::DELTA_SIZE) /*PF arise here*/\
+                {\
+                    LOCAL::iterator.SET_DOUBLE_VALUE(\"SIZE\", LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\") - LOCAL::DELTA_SIZE);\
+                }\
+                else /* LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\") == LOCAL::DELTA_SIZE */\
+                {\
+                    LOCAL::DELTA_SIZE = LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\");\
+                    ERASE_FROM_TICK_SET(STATE::PARTICIPANTS, LOCAL::iterator);\
+                    LOCAL::first_iterator.COPY(LOCAL::iterator);\
+                    LOCAL::REMAINING_SIZE = LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\") - LOCAL::DELTA_SIZE;\
+                    if (LOCAL::REMAINING_SIZE == 0.0) /*remove or update marker value*/\
+                    {\
+                        ERASE_FROM_TICK_SET(STATE::PARTICIPANTS, LOCAL::iterator);\
+                    }\
+                    else\
+                    {\
+                        LOCAL::iterator.SET_DOUBLE_VALUE(\"SIZE\", LOCAL::REMAINING_SIZE);\
+                    }\
+                }\
+                break;\
+            }\
+            LOCAL::iterator.NEXT();\
+            if (LOCAL::iterator.IS_END())\
+            {\
+                break;\
+            }\
+        }\
+    }\
+    return 0;\
+}\
+\
+long check_participant()\
+{\
+    static TICK_SET_TICK LOCAL::iterator;\
+    static TICK_SET_TICK LOCAL::first_iterator;\
+    static DYNAMIC_TICK LOCAL::dynamic_tick;\
+    static TICK_LIST LOCAL::entries_to_remove;\
+    double LOCAL::SIZE = 0.0;\
+    double LOCAL::DELTA_SIZE = 0.0;\
+    double LOCAL::PRICE_THRESHOLD = BID_PRICE_THRESHOLD;\
+    double LOCAL::SIZE_THRESHOLD = BID_SIZE_THRESHOLD;\
+    long LOCAL::EXPIRATION_TS = 0;\
+\
+    _ONCE\
+    { /*constructing a tick to insert to STATE::BIG_PARTICIPANTS*/\
+        LOCAL::dynamic_tick.ADD_FIELD(\"GROUP_BY_FIELDS\", \"string\", \"\");\
+        LOCAL::dynamic_tick.ADD_FIELD(\"EXPIRATION_TS\", \"long\", 0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"FIRST_ORDER_ID\", \"string\", \"\");\
+	LOCAL::dynamic_tick.ADD_FIELD(\"ID\", \"string\", \"\");\
+	LOCAL::dynamic_tick.ADD_FIELD(\"IDS\", \"string[$SIZE_IDS]\", \"\");\
+	LOCAL::dynamic_tick.ADD_FIELD(\"RECORD_TYPE\", \"string\", \"\");\
+	LOCAL::dynamic_tick.ADD_FIELD(\"OMDSEQ\", \"long\", 0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"FIRST_ORDER_TS\", \"long\", 0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"FIRST_ORDER_TIME\", \"long\", 0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"MONITORING_START_TS\", \"long\", 0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"FIRST_ORDER_OMDSEQ\", \"long\", 0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"FILLED_QTY\", \"double\", 0.0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"SIZE\", \"double\", 0.0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"CANCELLED_SIZE\", \"double\", 0.0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"THRESHOLD\", \"double\", 0.0);\
+        LOCAL::dynamic_tick.ADD_FIELD(\"BUY_SELL_FLAG\", \"long\", 0);\
+    }\
+    if (BUY_SELL_FLAG == 1)\
+    {\
+        LOCAL::PRICE_THRESHOLD = ASK_PRICE_THRESHOLD;\
+        LOCAL::SIZE_THRESHOLD = ASK_SIZE_THRESHOLD;\
+    }\
+    else\
+    {\
+        LOCAL::PRICE_THRESHOLD = BID_PRICE_THRESHOLD;\
+        LOCAL::SIZE_THRESHOLD = BID_SIZE_THRESHOLD;\
+    }\
+\
+    if (FIND(STATE::PARTICIPANTS, LOCAL::iterator, GROUP_BY_FIELDS, 0, \"\"))\
+    {\
+        LOCAL::iterator.COPY(LOCAL::first_iterator);\
+        if (LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\") <= LOCAL::SIZE_THRESHOLD)\
+        /*return if total size is not big enough*/\
+        {\
+            return 0;\
+        }\
+        LOCAL::iterator.NEXT();\
+        while (LOCAL::iterator.GET_STRING_VALUE(\"GROUP_BY_FIELDS\") == GROUP_BY_FIELDS)\
+        /*compute total size of satisfying price*/\
+        {\
+            if ((BUY_SELL_FLAG == 0 AND PRICE >= LOCAL::PRICE_THRESHOLD)\
+                OR (BUY_SELL_FLAG == 1 AND PRICE <= LOCAL::PRICE_THRESHOLD))\
+            {\
+                LOCAL::SIZE = LOCAL::SIZE + LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\");\
+            }\
+            LOCAL::iterator.NEXT();\
+            if (LOCAL::iterator.IS_END())\
+            {\
+                break;\
+            }\
+        }\
+\
+        if (LOCAL::SIZE < LOCAL::SIZE_THRESHOLD)\
+        /*return if total size of satisfying price is not big enough*/\
+        {\
+            return 0;\
+        }\
+\
+        LOCAL::dynamic_tick.SET_LONG_VALUE(\"EXPIRATION_TS\", 0);\
+        LOCAL::dynamic_tick.SET_STRING_VALUE(\"FIRST_ORDER_ID\", \"\");\
+        LOCAL::dynamic_tick.SET_STRING_VALUE(\"GROUP_BY_FIELDS\", GROUP_BY_FIELDS);\
+\
+        INSERT_TO_TICK_SET(STATE::BIG_PARTICIPANTS, LOCAL::dynamic_tick); /*enter marker value if needed*/\
+\
+        LOCAL::dynamic_tick.SET_LONG_VALUE(\"BUY_SELL_FLAG\", BUY_SELL_FLAG);\
+        LOCAL::dynamic_tick.SET_DOUBLE_VALUE(\"THRESHOLD\", LOCAL::PRICE_THRESHOLD);\
+        LOCAL::first_iterator.COPY(LOCAL::iterator);\
+        LOCAL::iterator.NEXT(); /*get to first non-marker value*/\
+        LOCAL::DELTA_SIZE = LOCAL::SIZE;\
+        LOCAL::entries_to_remove.CLEAR();\
+        while (LOCAL::SIZE_THRESHOLD <= LOCAL::SIZE) /*while size is big enough*/\
+        {\
+            if (PRICE = NAN() OR (BUY_SELL_FLAG == 0 AND PRICE >= LOCAL::PRICE_THRESHOLD)\
+                OR (BUY_SELL_FLAG == 1 AND PRICE <= LOCAL::PRICE_THRESHOLD)) /*if price is satisfying*/\
+            {\
+                LOCAL::dynamic_tick.SET_DOUBLE_VALUE(\"SIZE\", LOCAL::SIZE);\
+                LOCAL::EXPIRATION_TS = LOCAL::iterator.GET_LONG_VALUE(\"EXPIRATION_TS\");\
+                LOCAL::dynamic_tick.SET_LONG_VALUE(\"EXPIRATION_TS\", LOCAL::EXPIRATION_TS);\
+                LOCAL::dynamic_tick.SET_LONG_VALUE(\"FIRST_ORDER_TS\", LOCAL::EXPIRATION_TS - $MAX_FILL_DELAY_SEC * 1000000000);\
+                LOCAL::dynamic_tick.SET_LONG_VALUE(\"FIRST_ORDER_OMDSEQ\", LOCAL::iterator.GET_LONG_VALUE(\"OMDSEQ\"));\
+                LOCAL::dynamic_tick.SET_LONG_VALUE(\"FIRST_ORDER_TIME\", LOCAL::iterator.GET_LONG_VALUE(\"TIME\"));\
+                LOCAL::dynamic_tick.SET_LONG_VALUE(\"MONITORING_START_TS\", TIMESTAMP);\
+                LOCAL::dynamic_tick.SET_STRING_VALUE(\"FIRST_ORDER_ID\", LOCAL::iterator.GET_STRING_VALUE(\"ID\"));\
+		LOCAL::dynamic_tick.SET_STRING_VALUE(\"IDS\", LOCAL::iterator.GET_STRING_VALUE(\"ID\") + \"|\");\
+		LOCAL::dynamic_tick.SET_STRING_VALUE(\"ID\", LOCAL::iterator.GET_STRING_VALUE(\"ID\"));\
+		LOCAL::dynamic_tick.SET_STRING_VALUE(\"RECORD_TYPE\", LOCAL::iterator.GET_STRING_VALUE(\"RECORD_TYPE\"));\
+		LOCAL::dynamic_tick.SET_LONG_VALUE(\"OMDSEQ\", LOCAL::iterator.GET_LONG_VALUE(\"OMDSEQ\"));\
+                LOCAL::SIZE = LOCAL::SIZE - LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\");\
+\
+		\
+                INSERT_TO_TICK_SET(STATE::BIG_PARTICIPANTS, LOCAL::dynamic_tick);        /*add monitoring entry*/\
+                INSERT_TO_TICK_SET(STATE::FILL_EXPIRATION_HORIZON, LOCAL::dynamic_tick); /*add monitoring end entry*/\
+                LOCAL::entries_to_remove.PUSH_BACK(LOCAL::iterator);                     /*cannot erase while iterating*/\
+            }\
+            LOCAL::iterator.NEXT();\
+            if (LOCAL::iterator.IS_END() == 1)\
+            {\
+                break;\
+            }\
+        }\
+\
+\
+        for (TICK_LIST_TICK LOCAL::remove_iterator : LOCAL::entries_to_remove)\
+        {\
+            ERASE_FROM_TICK_SET(STATE::PARTICIPANTS,\
+                                GROUP_BY_FIELDS,\
+                                LOCAL::remove_iterator.GET_LONG_VALUE(\"EXPIRATION_TS\"),\
+                                LOCAL::remove_iterator.GET_STRING_VALUE(\"ID\"));\
+        }\
+        /*compute size change and update marker value*/\
+        LOCAL::DELTA_SIZE = LOCAL::DELTA_SIZE - LOCAL::SIZE;\
+        LOCAL::first_iterator.COPY(LOCAL::iterator);\
+        LOCAL::iterator.SET_DOUBLE_VALUE(\"SIZE\", LOCAL::iterator.GET_DOUBLE_VALUE(\"SIZE\") - LOCAL::DELTA_SIZE);\
+    }\
+    return 0;\
+}")
+NODE_39_EP_PARAMETERS_FLAG = -2
+NODE_39_SOURCE =  NODE_40
+NODE_39_X = 1680.410
+NODE_39_Y = 1559.853
+NODE_40 = DECLARE_STATE_VARIABLES(VARIABLES="TICK_SET(LATEST_TICK, GROUP_BY_FIELDS, EXPIRATION_TS, ID) PARTICIPANTS;")
+NODE_40_EP_PARAMETERS_FLAG = -2
+NODE_40_SOURCE =  NODE6
+NODE_40_X = 1676.333
+NODE_40_Y = 1214.212
+one_to_many_symbol_mapping = 0
+PARAMETER = MAX_FILL_DELAY_SEC 2000
+QUERY_BATCH_SIZE = 0
+ROOT = PASSTHROUGH
+ROOT_COMMENTED_OUT = 1
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_OUTPUT =  OUT
+ROOT_SOURCE =  NODE_39
+ROOT_X = 1600
+ROOT_Y = 1857.212
+SECURITY = DUMMY 0
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_finalize_monitoring_generate_alert]
+COMMENT = 
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE_46 = PER_TICK_SCRIPT(SCRIPT="long EXPIRATION_TS = 0;\
+nsectime FIRST_ORDER_TIME = 0;\
+nsectime MONITORING_START_TS = 0;\
+nsectime BENEFICIAL_FILL_TS = 0;\
+\
+double TOTAL_FILLED_SIZE = 0.0;\
+static TICK_SET_TICK LOCAL::participant_iterator;\
+static TICK_SET_TICK LOCAL::current_participant_iterator;\
+double TOTAL_SIZE = 0.0;\
+double THRESHOLD = 0;\
+static TICK_LIST LOCAL::temp;\
+string FIRST_ORDER_ID = \"\";\
+long LOCAL::IS_FOUND = 0;\
+string[$SIZE_IDS] IDS = \"\";\
+\
+for (TICK_SET_TICK LOCAL::iterator : STATE::FILL_EXPIRATION_HORIZON)\
+/*remove expired records for which we are awaiting a fill*/\
+{\
+	\
+  if (LOCAL::iterator.GET_LONG_VALUE(\"EXPIRATION_TS\") < NSECTIME_TO_LONG(TIMESTAMP))\
+  {\
+    \
+    LOCAL::IS_FOUND = FIND(STATE::BIG_PARTICIPANTS,\
+                           LOCAL::participant_iterator,\
+                           LOCAL::iterator.GET_STRING_VALUE(\"GROUP_BY_FIELDS\"),\
+                           LOCAL::iterator.GET_LONG_VALUE(\"EXPIRATION_TS\"),\
+                           LOCAL::iterator.GET_STRING_VALUE(\"FIRST_ORDER_ID\"));\
+    if (LOCAL::IS_FOUND == 1)\
+    {\
+      LOCAL::temp.PUSH_BACK(LOCAL::iterator); /*postpone deletion*/\
+      ERASE_FROM_TICK_SET(STATE::BIG_PARTICIPANTS, LOCAL::participant_iterator);\
+      \
+    }\
+  }\
+}\
+\
+for (TICK_SET_TICK LOCAL::iterator : STATE::CANCEL_EXPIRATION_HORIZON)\
+/*remove expired records for which we had an opposite fill and were waiting for expiration to compare total and cancelled sizes*/\
+{\
+  if (LOCAL::iterator.GET_LONG_VALUE(\"EXPIRATION_TS\") < NSECTIME_TO_LONG(TIMESTAMP))\
+  {\
+    LOCAL::IS_FOUND = FIND(STATE::BIG_PARTICIPANTS,\
+                           LOCAL::participant_iterator,\
+                           LOCAL::iterator.GET_STRING_VALUE(\"GROUP_BY_FIELDS\"),\
+                           LOCAL::iterator.GET_LONG_VALUE(\"EXPIRATION_TS\"),\
+                           LOCAL::iterator.GET_STRING_VALUE(\"FIRST_ORDER_ID\"));\
+    if (LOCAL::IS_FOUND == 1)\
+    {\
+      if (LOCAL::participant_iterator.GET_DOUBLE_VALUE(\"SIZE\") * $MIN_CANCEL_PCT / 100 <= LOCAL::participant_iterator.GET_DOUBLE_VALUE(\"CANCELLED_SIZE\"))\
+      {\
+        COPY_TICK(LOCAL::participant_iterator);\
+        LOCAL::participant_iterator.COPY(LOCAL::current_participant_iterator);\
+        BENEFICIAL_FILL_TS = NSECTIME(EXPIRATION_TS - $MAX_CANCEL_DELAY_SEC * 1000000000);\
+	THRESHOLD = LOCAL::participant_iterator.GET_DOUBLE_VALUE(\"THRESHOLD\");\
+        TOTAL_SIZE = LOCAL::participant_iterator.GET_DOUBLE_VALUE(\"SIZE\");\
+        FIRST_ORDER_TIME = NSECTIME(LOCAL::participant_iterator.GET_LONG_VALUE(\"FIRST_ORDER_TIME\"));\
+        FIRST_ORDER_ID = LOCAL::participant_iterator.GET_STRING_VALUE(\"FIRST_ORDER_ID\");\
+        TOTAL_FILLED_SIZE = LOCAL::participant_iterator.GET_DOUBLE_VALUE(\"FILLED_QTY\");\
+	IDS = \"|\" + LOCAL::participant_iterator.GET_STRING_VALUE(\"IDS\");\
+        PROPAGATE_TICK(); /*generate alert!*/\
+      }\
+     \
+      LOCAL::temp.PUSH_BACK(LOCAL::iterator); /* postpone deletion */\
+      ERASE_FROM_TICK_SET(STATE::BIG_PARTICIPANTS, LOCAL::participant_iterator);\
+    }\
+  }\
+}\
+\
+for (TICK_LIST_TICK LOCAL::temp_iterator : LOCAL::temp) \
+/*delete marker values in STATE::BIG_PARTICIPANTS if necessary*/\
+{\
+  FIND(STATE::BIG_PARTICIPANTS, LOCAL::participant_iterator, LOCAL::temp_iterator.GET_STRING_VALUE(\"GROUP_BY_FIELDS\"), 0, \"\");\
+  LOCAL::participant_iterator.NEXT(); /*since first record is maker value*/\
+  if (LOCAL::participant_iterator.IS_END() == 1 OR LOCAL::participant_iterator.GET_STRING_VALUE(\"GROUP_BY_FIELDS\") != LOCAL::temp_iterator.GET_STRING_VALUE(\"GROUP_BY_FIELDS\"))\
+  {\
+    ERASE_FROM_TICK_SET(STATE::BIG_PARTICIPANTS, LOCAL::temp_iterator.GET_STRING_VALUE(\"GROUP_BY_FIELDS\"), 0, \"\");\
+  }\
+  /*postponed deletions*/\
+  ERASE_FROM_TICK_SET(STATE::FILL_EXPIRATION_HORIZON,\
+                      LOCAL::temp_iterator.GET_LONG_VALUE(\"EXPIRATION_TS\"),\
+                      LOCAL::temp_iterator.GET_STRING_VALUE(\"FIRST_ORDER_ID\"));\
+  ERASE_FROM_TICK_SET(STATE::CANCEL_EXPIRATION_HORIZON,\
+                      LOCAL::temp_iterator.GET_LONG_VALUE(\"EXPIRATION_TS\"),\
+                      LOCAL::temp_iterator.GET_STRING_VALUE(\"FIRST_ORDER_ID\"));\
+}\
+\
+\
+LOCAL::temp.CLEAR();\
+\
+return 0;")
+NODE_46_EP_PARAMETERS_FLAG = -2
+NODE_46_SOURCE =  NODE_47
+NODE_46_X = 1678.575
+NODE_46_Y = 499.152
+NODE_47 = DECLARE_STATE_VARIABLES(SCOPE=QUERY,VARIABLES="TICK_SET(LATEST_TICK, GROUP_BY_FIELDS, EXPIRATION_TS, FIRST_ORDER_ID) BIG_PARTICIPANTS; \
+TICK_SET(LATEST_TICK, EXPIRATION_TS, FIRST_ORDER_ID) FILL_EXPIRATION_HORIZON, CANCEL_EXPIRATION_HORIZON;")
+NODE_47_EP_PARAMETERS_FLAG = -2
+NODE_47_NESTED_INPUT =  IN
+NODE_47_X = 1677.060
+NODE_47_Y = 151.333
+NODE_51 = HIGH_TICK(GROUP_BY="EXPIRATION_TS,GROUP_BY_FIELDS",INPUT_FIELD_NAME=TOTAL_SIZE,KEEP_INITIAL_SCHEMA=true)
+NODE_51_EP_PARAMETERS_FLAG = -2
+NODE_51_SOURCE =  NODE_46
+NODE_51_X = 1674
+NODE_51_Y = 706
+one_to_many_symbol_mapping = 0
+PARAMETER = MAX_CANCEL_DELAY_SEC 2000
+QUERY_BATCH_SIZE = 0
+ROOT = PASSTHROUGH
+ROOT_COMMENT = GROUP_BY_FIELDS,BENEFICIAL_FILL_TS,TOTAL_SIZE,CANCELLED_SIZE,MONITORING_START_TS
+ROOT_COMMENT_HEIGHT = 76.000
+ROOT_COMMENT_WIDTH = 220.000
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_OUTPUT =  ALERT
+ROOT_SOURCE =  NODE_51
+ROOT_X = 1675.333
+ROOT_Y = 1084
+SECURITY = DUMMY 0
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[alert]
+COMMENT = 
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE_24 = NESTED_OTQ ___ME___::orders
+NODE_24_EP_PARAMETERS_FLAG = -2
+NODE_24_MINIMIZED = 1
+NODE_24_NESTED_INPUT = IN IN
+NODE_24_X = 1954
+NODE_24_Y = 186
+NODE_27 = ADD_FIELD(FIELD=GROUP_BY_FIELDS,VALUE=FIRM_IDENTIFIER)
+NODE_27_EP_PARAMETERS_FLAG = -2
+NODE_27_SOURCE =  NODE_32
+NODE_27_X = 1778
+NODE_27_Y = 1157.334
+NODE_28 = PASSTHROUGH(FIELDS=UPDATE_TIME,DROP_FIELDS=true)
+NODE_28_EP_PARAMETERS_FLAG = -2
+NODE_28_SOURCE =  NODE_24..ROOT
+NODE_28_SOURCE_DESCRIPTION = NODE_24..ROOT .orders
+NODE_28_X = 1882
+NODE_28_Y = 422
+NODE_29 = NESTED_OTQ ___ME___::_schema_prepare
+NODE_29_EP_PARAMETERS_FLAG = -2
+NODE_29_MINIMIZED = 1
+NODE_29_SOURCE =  NODE_27.NODE_14.
+NODE_29_SOURCE_DESCRIPTION = NODE_27.NODE_14. IN.
+NODE_29_X = 1738
+NODE_29_Y = 1373.334
+NODE_30 = UPDATE_FIELD(FIELD=BUY_SELL_FLAG,VALUE="1 - BUY_SELL_FLAG")
+NODE_30_COMMENTED_OUT = 1
+NODE_30_EP_PARAMETERS_FLAG = -2
+NODE_30_SOURCE =  NODE_29..ROOT
+NODE_30_SOURCE_DESCRIPTION = NODE_29..ROOT .OUT
+NODE_30_X = 1714
+NODE_30_Y = 1813.334
+NODE_32 = TABLE(FIELDS="string ID,double PRICE,double PRICE_FILLED,long QTY,long QTY_FILLED,long LEAVESQTY,long BUY_FLAG,string STATE,long OMDSEQ,long CANCEL_QUANTITY,string FIRM_IDENTIFIER")
+NODE_32_COMMENTED_OUT = 1
+NODE_32_EP_PARAMETERS_FLAG = -2
+NODE_32_SOURCE =  NODE_28
+NODE_32_X = 1774
+NODE_32_Y = 948
+NODE_35 = NESTED_OTQ ___ME___::_enrich_with_book_state
+NODE_35_COMMENT = Expected the following list of fields:\
+\
+SIZE - size of order which is left in the book after applying the current tick to the book\
+PRICE - price of the order\
+FIRM_ID - string identifier of the order submitter, used to group by layering candidate orders and detect opposite side fill with the same value\
+ID - identifier of the order, used to detect cancels and replaces\
+RECORD_TYPE - is expected to carry N for new orders, C for cancels and F for fills\
+BUY_SELL_FLAG - is expected to carry 0 for buys, 1 for sells\
+UPDATE_TIME - used by book EPs, value isn't relevant for layering logic\
+CANCELLED_SIZE - is expected to carry cancelled size for ticks with RECORD_TYPE=C, ignored otherwise\
+OMDSEQ - used to order ticks with same timestamp\
+FILLED_QTY - es expected to carry the filled size for RECORD_TYPE=F
+NODE_35_EP_PARAMETERS_FLAG = -2
+NODE_35_MINIMIZED = 1
+NODE_35_PARAMETER = TRIGGERING_PRICE_LEVELS 4
+NODE_35_PARAMETER = MIN_LAYERING_SIDE_PCT 10
+NODE_35_PARAMETER = MAX_CANCEL_DELAY_SEC 0.8
+NODE_35_PARAMETER = MAX_FILL_DELAY_SEC 1.4
+NODE_35_SOURCE =  NODE_30.NODE_47.
+NODE_35_SOURCE_DESCRIPTION = NODE_30.NODE_47. IN.
+NODE_35_X = 1695
+NODE_35_Y = 2259.091
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = NESTED_OTQ ___ME___::Impl
+ROOT_COMMENT = Expected the following list of fields:\
+\
+SIZE - size of order which is left in the book after applying the current tick to the book\
+PRICE - price of the order\
+FIRM_ID - string identifier of the order submitter, used to group by layering candidate orders and detect opposite side fill with the same value\
+ID - identifier of the order, used to detect cancels and replaces\
+RECORD_TYPE - is expected to carry N for new orders, C for cancels and F for fills\
+BUY_SELL_FLAG - is expected to carry 0 for buys, 1 for sells\
+UPDATE_TIME - used by book EPs, value isn't relevant for layering logic\
+CANCELLED_SIZE - is expected to carry cancelled size for ticks with RECORD_TYPE=C, ignored otherwise\
+OMDSEQ - used to order ticks with same timestamp\
+FILLED_QTY - es expected to carry the filled size for RECORD_TYPE=F
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_MINIMIZED = 1
+ROOT_PARAMETER = MAX_CANCEL_DELAY_SEC 0.8
+ROOT_PARAMETER = MAX_FILL_DELAY_SEC 1.4
+ROOT_PARAMETER = MIN_CANCEL_PCT 10
+ROOT_PARAMETER = SIZE_IDS 1000
+ROOT_SOURCE =  NODE_35.NODE_47.ROOT
+ROOT_SOURCE_DESCRIPTION = NODE_35.NODE_47.ROOT IN.OUT
+ROOT_X = 1724
+ROOT_Y = 2862
+SECURITY = DEMO_L1::A 0
+SECURITY_PARAM = DEMO_L1::A MAX_BBO_DEVIATION_PCT 1 PRICE_PARAM 1
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[FSQ]
+COMMENT = 
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE_2 = NESTED_OTQ common_utils/GetSymbolsMultipleDBs.otq::GetAllSymbols
+NODE_2_COMMENT = Default value for KEEP_DB must be blank.
+NODE_2_EP_PARAMETERS_FLAG = -2
+NODE_2_MINIMIZED = 1
+NODE_2_PARAMETER = DBS_TICKS $DBS_TICKS
+NODE_2_PARAMETER = PATTERN $PATTERN
+NODE_2_SOURCE =  NODE_3.NODE_1.
+NODE_2_SOURCE_DESCRIPTION = NODE_3.NODE_1. IN.
+NODE_2_X = 2566
+NODE_2_Y = 918
+NODE_3 = MERGE(IDENTIFY_INPUT_TS=false)
+NODE_3_COMMENTED_OUT = 1
+NODE_3_EP_PARAMETERS_FLAG = -2
+NODE_3_TICK_TYPE = $DBS_TICKS
+NODE_3_X = 2592
+NODE_3_Y = 414
+one_to_many_symbol_mapping = 0
+PARAMETER = DBS_TICKS S_ORDERS_M2_ARCX::ORDER
+PARAMETER = PATTERN AA%
+QUERY_BATCH_SIZE = 0
+ROOT = ADD_FIELD(FIELD=MAX_BBO_DEVIATION_PCT,VALUE=1)
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_SOURCE =  NODE_2..ROOT
+ROOT_SOURCE_DESCRIPTION = NODE_2..ROOT .OUT
+ROOT_X = 2572
+ROOT_Y = 1348
+SECURITY = COMMON:: 0
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[DetailsExtractAndSave]
+COMMENT = 
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE_17 = PASSTHROUGH
+NODE_17_EP_PARAMETERS_FLAG = -2
+NODE_17_NESTED_INPUT =  IN
+NODE_17_X = 1948
+NODE_17_Y = 104
+NODE_29 = DISTINCT(KEYS="TIME_ID,OMDSEQ,FIRST_ORDER_ID,EXPIRATION_TS,GROUP_BY_FIELDS",KEY_ATTRS_ONLY=false)
+NODE_29_EP_PARAMETERS_FLAG = -2
+NODE_29_SOURCE =  NODE_77
+NODE_29_X = 3538
+NODE_29_Y = 1580
+NODE_30 = PER_TICK_SCRIPT(SCRIPT="static TICK_SET_TICK LOCAL::details_n;\
+static TICK_SET_TICK LOCAL::participant;\
+long LOCAL::FIND_TICK = 0;\
+static TICK_LIST LOCAL::temp;\
+\
+\
+for (TICK_SET_TICK LOCAL::details_participant : STATE::PARTICIPANTS_DETAILS)\
+{\
+		if ((LOCAL::details_participant.GET_STRING_VALUE(\"GROUP_BY_FIELDS\") = GROUP_BY_FIELDS)\
+		     AND (LOCAL::details_participant.GET_LONG_VALUE(\"EXPIRATION_TS\") = EXPIRATION_TS)\
+		     AND (LOCAL::details_participant.GET_STRING_VALUE(\"FIRST_ORDER_ID\") = FIRST_ORDER_ID))\
+		{\
+			LOCAL::FIND_TICK = FIND(STATE::PARTICIPANTS_DETAILS_NEW, \
+						LOCAL::details_n, \
+						LOCAL::details_participant.GET_STRING_VALUE(\"ID\"));\
+			if (LOCAL::FIND_TICK == 1 and LOCAL::details_participant.GET_STRING_VALUE(\"RECORD_TYPE\") != \"N\")\
+			{\
+				LOCAL::details_n.SET_LONG_VALUE(\"EXPIRATION_TS\", LOCAL::details_participant.GET_LONG_VALUE(\"EXPIRATION_TS\"));\
+				LOCAL::details_n.SET_STRING_VALUE(\"FIRST_ORDER_ID\", LOCAL::details_participant.GET_STRING_VALUE(\"FIRST_ORDER_ID\"));\
+				COPY_TICK(LOCAL::details_n);\
+				PROPAGATE_TICK();\
+			}\
+			COPY_TICK(LOCAL::details_participant);\
+			PROPAGATE_TICK();\
+			LOCAL::temp.PUSH_BACK(LOCAL::details_participant);\
+		}\
+}\
+\
+\
+for (TICK_LIST_TICK LOCAL::temp_iterator : LOCAL::temp)\
+{\
+    ERASE_FROM_TICK_SET(STATE::PARTICIPANTS_DETAILS, \
+			LOCAL::temp_iterator.GET_STRING_VALUE(\"GROUP_BY_FIELDS\"), \
+			LOCAL::temp_iterator.GET_LONG_VALUE(\"EXPIRATION_TS\"), \
+			LOCAL::temp_iterator.GET_STRING_VALUE(\"FIRST_ORDER_ID\"), \
+			LOCAL::temp_iterator.GET_LONG_VALUE(\"TIME_ID\"), \
+			LOCAL::temp_iterator.GET_LONG_VALUE(\"OMDSEQ\"));\
+}\
+LOCAL::temp.CLEAR();\
+\
+return 1;")
+NODE_30_EP_PARAMETERS_FLAG = -2
+NODE_30_SOURCE =  NODE_31
+NODE_30_X = 3532
+NODE_30_Y = 1174
+NODE_31 = TABLE(FIELDS="FIRST_ORDER_ID string,\
+ID string,\
+ASK_SIZE double,\
+BID_SIZE double,\
+ASK_PRICE_THRESHOLD double,\
+BID_PRICE_THRESHOLD double,\
+TIME_ID long,\
+EXPIRATION_TS long,\
+OMDSEQ long,\
+GROUP_BY_FIELDS string,\
+RECORD_TYPE string,\
+ALERT_ID string[255],\
+BENEFITING_SIDE byte,\
+SIZE,\
+CANCELLED_SIZE")
+NODE_31_EP_PARAMETERS_FLAG = -2
+NODE_31_SOURCE =  NODE_64
+NODE_31_X = 3532
+NODE_31_Y = 950
+NODE_32 = DECLARE_STATE_VARIABLES(SCOPE=QUERY,VARIABLES="TICK_SET_UNORDERED(LATEST_TICK, 10000, GROUP_BY_FIELDS, EXPIRATION_TS, FIRST_ORDER_ID, TIME_ID, OMDSEQ) PARTICIPANTS_DETAILS;\
+TICK_SET_UNORDERED(LATEST_TICK, 100000,  ID) PARTICIPANTS_DETAILS_NEW;")
+NODE_32_COMMENT = Main state variables used in calculation.\
+\
+BIG_PARTICIPANTS contains orders which satisfying condition: LayeringCondition (LayeringSidePct > MIN_LAYERING_SIDE_PCT) and for each GROUP it contains marker value with FIRST_ORDER_ID="" and EXPIRATION_TS=0\
+\
+FILL_EXPIRATION_HORIZON contains info expiration time from (t = LayeringSidePct > MIN_LAYERING_SIDE_PCT)  t+MAX_FILL_DELAY_SEC\
+\
+\
+CANCEL_EXPIRATION_HORIZON  contains info about time t-MAX_CANCEL_DELAY_SEC until ( t = LayeringSideCancelPct > MIN_CANCEL_PCT)
+NODE_32_EP_PARAMETERS_FLAG = -2
+NODE_32_SOURCE =  NODE_17
+NODE_32_X = 3526
+NODE_32_Y = 338
+NODE_38 = PASSTHROUGH
+NODE_38_EP_PARAMETERS_FLAG = -2
+NODE_38_NAME = DETAILS
+NODE_38_SOURCE =  NODE_45
+NODE_38_X = 3550
+NODE_38_Y = 2058
+NODE_39 = PASSTHROUGH(FIELDS="ASK_SIZE,BID_SIZE,ASK_PRICE_THRESHOLD,BID_PRICE_THRESHOLD,FIRST_ORDER_ID,EXPIRATION_TS,GROUP_BY_FIELDS,RECORD_TYPE",DROP_FIELDS=true)
+NODE_39_EP_PARAMETERS_FLAG = -2
+NODE_39_NAME = ORDERS
+NODE_39_SOURCE =  NODE_53
+NODE_39_X = 5294
+NODE_39_Y = 2320
+NODE_43 = PASSTHROUGH
+NODE_43_EP_PARAMETERS_FLAG = -2
+NODE_43_NESTED_INPUT =  IN_ORD
+NODE_43_X = 5430
+NODE_43_Y = 1264
+NODE_44 = TABLE(FIELDS="OMDSEQ long",KEEP_INPUT_FIELDS=true)
+NODE_44_EP_PARAMETERS_FLAG = -2
+NODE_44_SOURCE =  NODE_43
+NODE_44_X = 5420
+NODE_44_Y = 1520
+NODE_45 = TABLE(FIELDS="OMDSEQ long",KEEP_INPUT_FIELDS=true)
+NODE_45_EP_PARAMETERS_FLAG = -2
+NODE_45_SOURCE =  NODE_29
+NODE_45_X = 3540
+NODE_45_Y = 1768
+NODE_51 = JOIN(JOIN_CRITERIA="DETAILS.TIME_ID=ORDERS.TIME_ID_ and DETAILS.ID = ORDERS.ID_",JOIN_TYPE=INNER,LEFT_SOURCE=DETAILS,ADD_SOURCE_PREFIX=false)
+NODE_51_EP_PARAMETERS_FLAG = -2
+NODE_51_SOURCE =  NODE_38 NODE_39
+NODE_51_X = 3554
+NODE_51_Y = 2416
+NODE_52 = ADD_FIELD(FIELD=TIME_ID_,VALUE="NSECTIME_TO_LONG(TIMESTAMP)")
+NODE_52_EP_PARAMETERS_FLAG = -2
+NODE_52_SOURCE =  NODE_44
+NODE_52_X = 5426
+NODE_52_Y = 1784
+NODE_53 = RENAME_FIELDS(RENAME_FIELDS="ID=ID_,OMDSEQ=OMDSEQ_")
+NODE_53_EP_PARAMETERS_FLAG = -2
+NODE_53_SOURCE =  NODE_52
+NODE_53_X = 5362
+NODE_53_Y = 2040
+NODE_54 = ORDER_BY(ORDER_BY="TIMESTAMP asc,OMDSEQ")
+NODE_54_EP_PARAMETERS_FLAG = -2
+NODE_54_SOURCE =  NODE_55
+NODE_54_X = 3538
+NODE_54_Y = 3416
+NODE_55 = UPDATE_FIELD(FIELD=TIMESTAMP,VALUE="ORDERS.TIMESTAMP")
+NODE_55_EP_PARAMETERS_FLAG = -2
+NODE_55_SOURCE =  NODE_56
+NODE_55_X = 3538
+NODE_55_Y = 3262
+NODE_56 = ORDER_BY(ORDER_BY="ORDERS.TIMESTAMP asc,OMDSEQ")
+NODE_56_EP_PARAMETERS_FLAG = -2
+NODE_56_SOURCE =  NODE_63
+NODE_56_X = 3548
+NODE_56_Y = 3054
+NODE_57 = PASSTHROUGH(FIELDS="ORDERS.TIMESTAMP, ORDERS.ID_, ORDERS.OMDSEQ_, ORDERS.TIME_ID_, ORDERS.ID_",DROP_FIELDS=true)
+NODE_57_EP_PARAMETERS_FLAG = -2
+NODE_57_SOURCE =  NODE_54
+NODE_57_X = 3538
+NODE_57_Y = 3630
+NODE_58 = WRITE_TO_ONETICK_DB(PROPAGATE_TICKS=false,DATABASE="$DETAILS_DB",DATE="expr(ceil(atol(TOSTRING(AS_YYYYMMDDHHMMSS(_START_TIME,_TIMEZONE)))/1000000))",SYMBOL_NAME_FIELD=ALERT_ID,TICK_TYPE_FIELD=__TT,KEEP_SYMBOL_NAME_AND_TICK_TYPE=false,APPEND_MODE=true,ALLOW_CONCURRENT_WRITE=true)
+NODE_58_EP_PARAMETERS_FLAG = -2
+NODE_58_SOURCE =  NODE_74
+NODE_58_X = 3516
+NODE_58_Y = 6880
+NODE_60 = ADD_FIELD(FIELD=__TT,VALUE="\"$TICK_TYPE_DETAILS\"")
+NODE_60_EP_PARAMETERS_FLAG = -2
+NODE_60_SOURCE =  NODE_57
+NODE_60_X = 3536
+NODE_60_Y = 3842
+NODE_61 = WHERE_CLAUSE(WHERE=false)
+NODE_61_EP_PARAMETERS_FLAG = -2
+NODE_61_SOURCE =  NODE_58
+NODE_61_X = 3482
+NODE_61_Y = 6822
+NODE_62 = TABLE(FIELDS="ORDERS.TIMESTAMP nsectime, LAYERING_SIDE_QTY double, LAYERING_SIDE_CANCEL_QTY double, LAYERING_SIDE_PCT double, LAYERING_SIDE_CANCEL_PCT double",KEEP_INPUT_FIELDS=true)
+NODE_62_EP_PARAMETERS_FLAG = -2
+NODE_62_SOURCE =  NODE_51
+NODE_62_X = 3554
+NODE_62_Y = 2664
+NODE_63 = UPDATE_FIELD(FIELD="ORDERS.TIMESTAMP",VALUE="NSECTIME(TIME_ID)",WHERE="ORDERS.TIMESTAMP = 0")
+NODE_63_EP_PARAMETERS_FLAG = -2
+NODE_63_SOURCE =  NODE_62
+NODE_63_X = 3550
+NODE_63_Y = 2870
+NODE_64 = ADD_FIELD(FIELD=BENEFITING_SIDE,VALUE=BUY_FLAG)
+NODE_64_EP_PARAMETERS_FLAG = -2
+NODE_64_SOURCE =  NODE_32
+NODE_64_X = 3528
+NODE_64_Y = 638
+NODE_65 = ADD_FIELD(FIELD="REASON string",VALUE="\"BENEFITTING\"")
+NODE_65_EP_PARAMETERS_FLAG = -2
+NODE_65_SOURCE =  NODE_60
+NODE_65_X = 3532
+NODE_65_Y = 4138
+NODE_66 = UPDATE_FIELD(FIELD=REASON,VALUE="\"LAYERING\"",WHERE="BENEFITING_SIDE != BUY_FLAG")
+NODE_66_EP_PARAMETERS_FLAG = -2
+NODE_66_SOURCE =  NODE_65
+NODE_66_X = 3526
+NODE_66_Y = 4394
+NODE_67 = ADD_FIELD(FIELD=BOOK_SIDE_QTY,VALUE=0)
+NODE_67_EP_PARAMETERS_FLAG = -2
+NODE_67_SOURCE =  NODE_66
+NODE_67_X = 3522
+NODE_67_Y = 4592
+NODE_68 = UPDATE_FIELD(FIELD=BOOK_SIDE_QTY,VALUE=BID_SIZE,WHERE="BENEFITING_SIDE = 0")
+NODE_68_COMMENT = LAYERING SIDE==BUY    =>    BID  side
+NODE_68_EP_PARAMETERS_FLAG = -2
+NODE_68_SOURCE =  NODE_67
+NODE_68_X = 3520
+NODE_68_Y = 4790
+NODE_69 = UPDATE_FIELD(FIELD=BOOK_SIDE_QTY,VALUE=ASK_SIZE,WHERE="BENEFITING_SIDE = 1")
+NODE_69_COMMENT = LAYERING SIDE==SELL  =>    ASK  side
+NODE_69_EP_PARAMETERS_FLAG = -2
+NODE_69_SOURCE =  NODE_68
+NODE_69_X = 3524
+NODE_69_Y = 5006
+NODE_74 = UPDATE_FIELDS(SET="LAYERING_SIDE_PCT = LAYERING_SIDE_QTY /  BOOK_SIDE_QTY,\
+LAYERING_SIDE_CANCEL_PCT = LAYERING_SIDE_CANCEL_QTY /  LAYERING_SIDE_QTY")
+NODE_74_EP_PARAMETERS_FLAG = -2
+NODE_74_SOURCE =  NODE_69
+NODE_74_X = 3516
+NODE_74_Y = 5568
+NODE_77 = RENAME_FIELDS(RENAME_FIELDS="CANCELLED_SIZE=LAYERING_SIDE_CANCEL_QTY,\
+SIZE=LAYERING_SIDE_QTY")
+NODE_77_EP_PARAMETERS_FLAG = -2
+NODE_77_SOURCE =  NODE_30
+NODE_77_X = 3538
+NODE_77_Y = 1386
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = MERGE(IDENTIFY_INPUT_TS=false)
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_OUTPUT =  OUT
+ROOT_SOURCE =  NODE_17 NODE_61..IF
+ROOT_X = 2102
+ROOT_Y = 7322
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[________________]
+COMMENT = 
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = PASSTHROUGH
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_X = 1880
+ROOT_Y = 332
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_DEVLayering]
+COMMENT = 
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE_3 = ADD_FIELD(FIELD=GROUP_BY_FIELDS,VALUE=FIRM_IDENTIFIER)
+NODE_3_EP_PARAMETERS_FLAG = -2
+NODE_3_SOURCE =  NODE_4
+NODE_3_X = 1616
+NODE_3_Y = 665.334
+NODE_4 = MERGE(IDENTIFY_INPUT_TS=false)
+NODE_4_EP_PARAMETERS_FLAG = -2
+NODE_4_TICK_TYPE = $DB
+NODE_4_X = 1692
+NODE_4_Y = 298
+NODE_6 = NESTED_OTQ ___ME___::_schema_prepare
+NODE_6_EP_PARAMETERS_FLAG = -2
+NODE_6_MINIMIZED = 1
+NODE_6_SOURCE =  NODE_3.NODE_14.
+NODE_6_SOURCE_DESCRIPTION = NODE_3.NODE_14. IN.
+NODE_6_X = 1616
+NODE_6_Y = 945.334
+one_to_many_symbol_mapping = 0
+PARAMETER = PATTERN PLD%
+PARAMETER = DB S_ORDERS_M2_ARCX::ORDER
+QUERY_BATCH_SIZE = 0
+ROOT = NESTED_OTQ ___ME___::_enrich_with_book_state
+ROOT_COMMENT = Expected the following list of fields:\
+\
+SIZE - size of order which is left in the book after applying the current tick to the book\
+PRICE - price of the order\
+FIRM_ID - string identifier of the order submitter, used to group by layering candidate orders and detect opposite side fill with the same value\
+ID - identifier of the order, used to detect cancels and replaces\
+RECORD_TYPE - is expected to carry N for new orders, C for cancels and F for fills\
+BUY_SELL_FLAG - is expected to carry 0 for buys, 1 for sells\
+UPDATE_TIME - used by book EPs, value isn't relevant for layering logic\
+CANCELLED_SIZE - is expected to carry cancelled size for ticks with RECORD_TYPE=C, ignored otherwise\
+OMDSEQ - used to order ticks with same timestamp\
+FILLED_QTY - es expected to carry the filled size for RECORD_TYPE=F
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_MINIMIZED = 1
+ROOT_PARAMETER = TRIGGERING_PRICE_LEVELS 4
+ROOT_PARAMETER = MIN_LAYERING_SIDE_PCT 50
+ROOT_PARAMETER = MAX_CANCEL_DELAY_SEC 0.4
+ROOT_PARAMETER = MAX_FILL_DELAY_SEC 0.5
+ROOT_SOURCE =  NODE_6.NODE_47.ROOT
+ROOT_SOURCE_DESCRIPTION = NODE_6.NODE_47.ROOT IN.OUT
+ROOT_X = 1633
+ROOT_Y = 1429.091
+SECURITY = eval(THIS::FSQ,DBS_TICKS="$DB",PATTERN=$PATTERN) 0
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[orders]
+COMMENT = 
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+NODE_3 = CSV_FILE_LISTING(FIELD_DELIMITERS="\",\"",FILE_CONTENTS="1000,370,,15,0,15,1,N,0,0,10\
+1001,371,,9,0,9,1,N,1,0,11\
+1002,369,,1,0,1,1,N,2,0,12\
+1003,369,,10,0,10,1,N,3,0,12\
+1004,369,,5,0,5,1,N,4,0,12\
+1005,371,,9,0,9,1,N,5,0,11\
+1005,371,,9,0,0,1,C,6,9,11\
+1006,371,,9,0,9,1,N,7,0,11\
+1006,371,,9,0,0,1,C,8,9,11\
+1007,372,,10,0,10,0,N,9,0,12\
+1008,369,,1,0,1,0,N,10,0,12\
+1007,372,372,10,3,7,0,PF,11,0,12\
+1008,369,369,1,1,0,0,F,12,0,12\
+1012,371,,1,0,1,1,N,13,0,13\
+1004,369,,4,0,0,1,C,14,4,12\
+1003,369,,10,0,0,1,C,15,10,12\
+1009,371,,1,0,1,1,N,16,0,13\
+1009,371,,1,0,0,1,C,17,1,13\
+1010,371,,1,0,1,1,N,18,0,13\
+1010,371,371,1,1,0,1,F,19,0,13",FIELDS="string ID,double PRICE,double PRICE_FILLED,long QTY,long QTY_FILLED,long LEAVESQTY,byte BUY_FLAG,string STATE,long OMDSEQ,long CANCEL_QUANTITY,string FIRM_IDENTIFIER")
+NODE_3_EP_PARAMETERS_FLAG = -2
+NODE_3_NESTED_INPUT =  IN
+NODE_3_TICK_TYPE = ORDER
+NODE_3_X = 1731.538
+NODE_3_Y = 767.333
+NODE_9 = MODIFY_TS_PROPERTIES(PROPERTY_VALUE="PRICE,ID")
+NODE_9_EP_PARAMETERS_FLAG = -2
+NODE_9_SOURCE =  NODE_3
+NODE_9_X = 1707.333
+NODE_9_Y = 1604.667
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = UPDATE_FIELD(FIELD=TIMESTAMP,VALUE="_START_TIME + 200*OMDSEQ")
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_OUTPUT =  orders
+ROOT_SOURCE =  NODE_9
+ROOT_X = 1709.333
+ROOT_Y = 1890.667
+SECURITY = DEMO_L1::A 0
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_meta]
+app_version = OneTick Display Build tag: BUILD_update2_20191112120000 Build timestamp : 20191112120000
+ApplyTimesDaily = 0
+end = 20190413000000000
+file_version = 1.0
+RunningQuery = 0
+start = 20190412000000000
+SYMBOL_DATE = 
+TZ = EST5EDT
+USER_NAME = tsypia

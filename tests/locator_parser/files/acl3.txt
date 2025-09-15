@@ -1,0 +1,193 @@
+<roles>
+
+<role name="Admin" >
+ <user name="onetick" />
+ <user name="build" />
+ <user name="webdash" />
+ <user name=dakar />
+ <user name=mashka />
+ <user name=c50091 />
+ <user name=c50092 />
+ <user name=test />
+ <user name=galinr />
+ <user name=Mashkovskiy />
+ <user name=dash-uat />
+ <user name=dash-prod />
+ <user name=CT />
+ <user name=luojia />
+ <user name="krutoa" />
+ <user name="andy" />
+ <user name=${LINUX_USERNAME} />
+ <user name="novoze" />
+ <user name="babeeo" />
+ <user name="ec2-user" />
+ <user name="soldemo1" />
+ <user name="soldemo2" />
+ <user name="nikols" />
+ <user name="SergeyN" />
+ <user name="DevNik" />
+ <user name="tsypia" />
+ <user name="ytrushkov" />
+ <user name="yuri.trushkov" />
+ <user name="anefedov" />
+ <user name="Nefedov Alex" />
+ <user name="davdeenko" />
+ <user name="avdee" />
+ <user name="poletn" /> 
+</role>
+
+<role name="Users" >
+ <user name="onetick" />
+</role>
+
+</roles>
+
+<databases>
+
+<db ID="P_CME" read_access="true">
+  <allow role="Admin" write_access="false"/>
+</db>
+
+<db ID="BEX_FILTER" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_CMEFIX" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_FEED" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_TEMP" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="WORKFLOW" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_ENHANCED" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_LB_T" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_LB_T2" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+
+<db ID="BESTEX_ALERTS" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="BESTEX_STATUS" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="CUSTOM_CODE" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_PREENHANCED" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_CLIENT_ORDERS" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_CANADA" read_access="true"> 
+ <allow role="Admin" write_access="true"/> 
+</db>
+
+<db ID="S_ORDERS_FIX" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_PRINCIPAL" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_AGENCY" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_LB" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_DEMO" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="ALERTS" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="ALERTS_PARAMS" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="ALERTS_STAGE" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="ALERTS_DETAILS" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="ALERTS_STATUS" read_access="true">
+ <allow role="Admin" write_access="true"/>
+ <allow role="Users" write_access="true" />
+</db>
+
+<db ID="S_ORDERS_TEST" read_access="true">
+ <allow role="Admin" write_access="true"/>
+ <allow role="Users" write_access="true"/>
+</db>
+
+<db ID="SURV_CONFIG_ASSIGNEE_MAPPING" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="TEST_S_ORDERS_FIX" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="STAT" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="NEWS_DEMO_ISIN" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="NEWS_DEMO_SOURCE" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+</databases>
+
+
+<event_processors>
+<ep ID="READ_FROM_RAW">
+ <allow role="Admin" />
+ <allow role="Users" />
+</ep>
+
+<ep ID="WRITE_TEXT">
+ <allow role="Admin" />
+ <allow role="Users" />
+</ep>
+
+<ep ID="COMMAND_EXECUTE">
+ <allow role="Admin" />
+ <allow role="Users" />
+</ep>
+
+</event_processors>

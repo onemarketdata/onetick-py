@@ -1,0 +1,29 @@
+#COLUMN1
+
+[query]
+COMMENT = 
+CPU_NUMBER = 1
+DB_HINT_FOR_PROCESSING_HOST = 
+graph_reuse = 0
+one_to_many_symbol_mapping = 0
+QUERY_BATCH_SIZE = 0
+ROOT = PASSTHROUGH
+ROOT_EP_PARAMETERS_FLAG = -2
+ROOT_NESTED_INPUT =  IN
+ROOT_NESTED_OUTPUT =  OUT
+ROOT_TICK_TYPE = SOME
+ROOT_X = 994
+ROOT_Y = 846
+SHOW_TEMPLATE = 
+TYPE = GRAPH
+
+[_meta]
+app_version = OneTick Display Build tag: BUILD_update4_20191219120000 Build timestamp : 20191219120000
+ApplyTimesDaily = 0
+end = UT1070485199.999.0
+execute_based_on_query_structure = 1
+file_version = 1.0
+RunningQuery = 0
+start = UT1070226000.0.0
+SYMBOL_DATE = 
+TZ = 

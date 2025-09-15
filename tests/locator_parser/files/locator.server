@@ -1,0 +1,66 @@
+<VERSION_INFO VERSION="2"/>
+<DATABASES>
+
+######################################
+# Dash bestex anonimization
+
+<db ID="S_ORDERS_TEMP" SYMBOLOGY="TDEQ" DB_ARCHIVE_TMP_DIR="${MAIN_DATA_DIR}/tmp/bestex/S_ORDERS_TEMP">
+    <LOCATIONS >
+              <location ACCESS_METHOD="file" DAY_BOUNDARY_TZ="${DAY_BOUNDARY_TZ}" END_TIME="20501231000000" LOCATION="${MAIN_DATA_DIR}/bestex/S_ORDERS_TEMP" START_TIME="19930101000000" />
+    </LOCATIONS>
+</db>
+
+######################################
+# For LB anonimization
+
+<DB ID="LB"
+    SYMBOLOGY="BZX"
+    ARCHIVE_COMPRESSION_TYPE="NATIVE_PLUS_GZIP"
+    MEMORY_DATA_MAX_LIFE_HOURS="30"
+    MEMORY_DB_DIR="${MAIN_DATA_DIR}/LB/shmem"
+    MMAP_DB_COMPRESSION_TYPE="NATIVE_PLUS_GZIP"
+    DB_ARCHIVE_TMP_DIR="${MAIN_DATA_DIR}/tmp/LB">
+  <LOCATIONS>
+    <location access_method="file" DAY_BOUNDARY_TZ="GMT" location="${MAIN_DATA_DIR}/Anonymized/LB" start_time="20050101000000" end_time="20990101000000" />
+  </LOCATIONS>
+  <RAW_DATA>
+     <RAW_DB ID="PRIMARY" prefix="LB.">
+        <LOCATIONS>
+          <location mount="mount1" location="${MAIN_DATA_DIR}/Anonymized/LB/raw" start_time="20010101000000" end_time="20501231000000" />
+        </LOCATIONS>
+     </RAW_DB>
+  </RAW_DATA>
+</DB>
+
+<db ID="S_ORDERS_FEED" SYMBOLOGY="S_ORDERS_FEED" MEMORY_DATA_MAX_LIFE_HOURS="30" MEMORY_DB_DIR="${MAIN_DATA_DIR}/S_ORDERS_FEED/shmem">
+	<LOCATIONS>
+		<location access_method="file" location="${MAIN_DATA_DIR}/S_ORDERS_FEED" start_time="19930101000000" end_time="20201231000000" />
+		<location access_method="memory" location="${MAIN_DATA_DIR}/S_ORDERS_FEED/shmem" start_time="19930101000000" end_time="20201231000000" />
+	</LOCATIONS>
+
+	<RAW_DATA>
+		<RAW_DB ID="PRIMARY" prefix="S_ORDERS_FEED.">
+			<LOCATIONS>
+				<location mount="mount1" location="${MAIN_DATA_DIR}/raw_data/s_orders_feed/primary" start_time="19930101000000" end_time="20201231000000" />
+			</LOCATIONS>
+		</RAW_DB>
+	</RAW_DATA>
+
+	<FEED type=raw_db>
+		<options frequency="10000" use_queue="yes" />
+	</FEED>
+</db>
+
+</DATABASES>
+
+<TICK_SERVERS>
+  <location location="192.168.5.53:50001" />
+</TICK_SERVERS>
+
+<INCLUDES>
+  <INCLUDE PATH="parser/examples/locator.surveillance" />
+  <INCLUDE PATH="parser/examples/locator.bestex" />
+  <INCLUDE PATH="parser/examples/locator.workflow" />
+  <INCLUDE PATH="parser/examples/locator.common" />
+</INCLUDES>
+

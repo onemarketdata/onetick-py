@@ -1,0 +1,6 @@
+MD013:
+  line_length: 120
+
+# do not raise error when there are headers with the same name
+MD024:
+  siblings_only: true

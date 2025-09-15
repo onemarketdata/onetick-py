@@ -1,0 +1,21 @@
+<roles>
+<role name="Admin">
+<user name="onetick" />
+</role>
+</roles>
+<databases>
+</databases>
+<event_processors>
+
+<ep ID="RELOAD_CONFIG">
+<allow role="Admin" />
+</ep>
+
+<ep ID="WRITE_TEXT">
+<allow role="Admin" />
+</ep>
+
+<ep ID="COMMAND_EXECUTE">
+<allow role="Admin" />
+</ep>
+</event_processors>

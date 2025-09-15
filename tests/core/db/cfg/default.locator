@@ -1,0 +1,24 @@
+<VERSION_INFO VERSION="2"/>
+<DATABASES>
+
+<db ID="DEMO_L1" symbology="TICKER" time_series_is_composite="YES">
+<locations>
+<location access_method="file" location="/opt/one_market_data/one_tick/examples/data/demo_level1" start_time="20001201000000" end_time="20301031050000" day_boundary_tz="EST5EDT"/>
+</locations>
+</db>
+
+
+<db ID="COMMON" symbology="TICKER" time_series_is_composite="YES">
+<locations>
+<location access_method="file" location="/opt/one_market_data/one_tick/examples/data/demo_level1" start_time="20001201000000" end_time="20301031050000" day_boundary_tz="EST5EDT"/>
+</locations>
+</db>
+
+
+</DATABASES>
+<TICK_SERVERS>
+</TICK_SERVERS>
+<CEP_TICK_SERVERS>
+</CEP_TICK_SERVERS>
+<INCLUDES>
+</INCLUDES>

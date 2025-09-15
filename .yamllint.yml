@@ -1,0 +1,14 @@
+---
+extends: relaxed
+
+rules:
+  line-length:
+    max: 120
+  document-start: disable
+  trailing-spaces: disable
+  truthy: disable
+  new-line-at-end-of-file: disable
+
+ignore: |
+  /client_data/config/pipeline.yml
+  /sol/

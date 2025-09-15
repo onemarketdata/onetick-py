@@ -1,0 +1,52 @@
+<roles>
+
+<role name="Admin" >
+ <user name="onetick" />
+ <user name="test" />
+ <user name=${LINUX_USERNAME} />
+</role>
+
+<role name="Users" >
+ <user name="onetick" />
+</role>
+
+</roles>
+
+<databases>
+
+<db ID="S_ORDERS_FEED" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_TEMP" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="WORKFLOW" read_access="true">
+  <allow role="Admin" write_access="true"/>
+</db>
+
+<db ID="S_ORDERS_FIX" read_access="true">
+ <allow role="Admin" write_access="true"/>
+</db>
+
+</databases>
+
+
+<event_processors>
+<ep ID="READ_FROM_RAW">
+ <allow role="Admin" />
+ <allow role="Users" />
+</ep>
+
+<ep ID="WRITE_TEXT">
+ <allow role="Admin" />
+ <allow role="Users" />
+</ep>
+
+<ep ID="COMMAND_EXECUTE">
+ <allow role="Admin" />
+ <allow role="Users" />
+</ep>
+
+</event_processors>
