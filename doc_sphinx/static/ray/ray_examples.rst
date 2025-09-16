@@ -8,7 +8,7 @@ Ray usage examples
 Example remote function
 :::::::::::::::::::::::
 
-::
+.. code-block:: python
 
     import ray
     import onetick.py as otp
@@ -53,11 +53,18 @@ Example function with arguments
 You may define arguments for remote functions and call it similarly with specific arguments.
 The only difference is that you must put arguments inside ``function.remote()`` method.
 
-::
+.. code-block:: python
+
+    import ray
+    import onetick.py as otp
 
     # Remote function with arguments
     @ray.remote(max_retries=1)
     def get_BBO_offset(start, num_orders, offset):
+        # basic setup of onetick.py inside remote function
+        import onetick.py as otp
+        otp.config.default_symbol = 'NQ\H22'
+
         # Create order flow.
         # In practice, it can be take from a CSV file for from a DataFrame.
         order = otp.Ticks(timezone_for_time='EST5EDT',
@@ -67,7 +74,6 @@ The only difference is that you must put arguments inside ``function.remote()`` 
                           ID = [x for x in range (0, num_orders)])
         order['ARRIVAL'] = order['Time']
         order['SYMBOL'] = 'NQ\H22'
-        order()
         q = order.join_with_query(
             otp.DataSource('CME', tick_type='QTE', back_to_first_tick=600),
             symbol=(order['SYMBOL']),
@@ -123,7 +129,7 @@ Using apply() method in remote context
 Technical implementation of :doc:`/api/source/apply` method requires user to use :doc:`/api/misc/remote` decorator
 with functions and lambda expressions that will be used as arguments to :doc:`/api/source/apply` method.
 
-::
+.. code-block:: python
 
     import ray
     import onetick.py as otp

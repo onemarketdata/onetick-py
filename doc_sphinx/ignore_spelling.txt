@@ -40,6 +40,7 @@ dtype
 env
 filename
 filesystem
+Github
 Gitlab
 google
 gRPC

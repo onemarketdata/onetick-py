@@ -53,9 +53,7 @@ Authentication with OneTick Cloud
 
 If you are using ``onetick-py`` to connect to OneTick cloud, you will need to authenticate.
 
-There are different ways to authenticate with OneTick cloud.
-
-The easiest way is to create or log-in to account on `<https://www.onetick.com/cloud-services/>`_
+You will need to create or log-in to account on `<https://www.onetick.com/cloud-services/>`_
 and get ``CLIENT_ID`` and ``CLIENT_SECRET`` there.
 
 Run this code to set up authentication for ``onetick-py``:
@@ -68,19 +66,6 @@ Run this code to set up authentication for ``onetick-py``:
     os.environ['OTP_ACCESS_TOKEN_URL'] = 'https://cloud-auth.parent.onetick.com/realms/OMD/protocol/openid-connect/token'
     os.environ['OTP_CLIENT_ID'] = '__FILL_IN__'
     os.environ['OTP_CLIENT_SECRET'] = '__FILL_IN__'
-
-
-The other way is getting direct access to OneTick cloud with username and password.
-You can ask your OneMarketData rep for them.
-Replace the placeholders ``__FILL_IN__`` with the provided credentials.
-
-::
-
-    import os
-    os.environ['OTP_WEBAPI'] = '1'
-    os.environ['OTP_HTTP_ADDRESS'] = 'https://data.onetick.com:443'
-    os.environ['OTP_HTTP_USERNAME'] = '__FILL_IN__'
-    os.environ['OTP_HTTP_PASSWORD'] = '__FILL_IN__'
 
 
 Quick examples

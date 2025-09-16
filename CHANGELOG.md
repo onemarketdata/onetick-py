@@ -10,6 +10,22 @@
 
 ### Removed
 
+## [1.167.0] - 2025-09-15
+
+### Added
+
+- Add script `github_release.sh` and a job for automatic upload to Github on release
+
+### Changed
+
+- Remove deprecated authentication method from WebAPI guide in documentation
+
+### Fixed
+
+- Ray examples in documentation updated for compatibility with latest `onetick.py` version
+
+### Removed
+
 ## [1.166.0] - 2025-09-08
 
 ### Added

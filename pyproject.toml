@@ -34,7 +34,8 @@ classifiers = [
 
 [project.urls]
 Documentation = "https://docs.pip.distribution.sol.onetick.com"
-OneTick = "https://onetick.com/"
+OneTick = "https://onetick.com"
+GitHub = "https://github.com/onemarketdata/onetick-py"
 
 [tool.setuptools.packages.find]
 where = ["src"]
