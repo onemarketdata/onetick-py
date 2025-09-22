@@ -2,7 +2,7 @@
 import os
 from . import _version
 __version__ = _version.VERSION
-__webapi__: bool = bool(os.getenv("OTP_WEBAPI"))
+__webapi__: bool = os.getenv('OTP_WEBAPI', default='').lower() not in ('0', 'false', 'no', '')
 
 
 def __validate_onetick_query_integration():  # noqa
@@ -77,7 +77,8 @@ def __validate_onetick_query_integration():  # noqa
     if _otq_import_ex is None:
         return
 
-    # webapi is installed to pip and OTP_WEBAPI=1, we don't need to raise any exception
+    # PY-1033: if we can't import onetick.query, but can import onetick.query_webapi
+    # then we can just use it and don't need to raise any exception (even if OTP_WEBAPI is not set)
     try:
         import onetick.query_webapi
         __webapi__ = True

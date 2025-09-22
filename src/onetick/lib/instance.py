@@ -5,7 +5,7 @@ import gc
 import inspect
 from enum import Enum
 
-if os.getenv("OTP_WEBAPI"):
+if os.getenv('OTP_WEBAPI', default='').lower() not in ('0', 'false', 'no', ''):
     import onetick.query_webapi as otq
 
     class OneTickLibMock:

@@ -10,6 +10,21 @@
 
 ### Removed
 
+## [1.168.0] - 2025-09-22
+
+### Added
+
+### Changed
+
+- Changed `symbol_time` parameter of `join_with_query` to use query parameter instead of symbol parameter
+- Improve parsing the value of `OTP_WEBAPI` environment variable
+
+### Fixed
+
+- Fixed script `github_release.sh` not working on detached HEAD
+
+### Removed
+
 ## [1.167.0] - 2025-09-15
 
 ### Added

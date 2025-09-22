@@ -758,3 +758,12 @@ def is_include_market_order_ticks_supported(**kwargs):
     return _is_min_build_or_version(1.25, 20241229055942,
                                     20240812120000, min_update_number=2,
                                     **kwargs)
+
+
+def is_join_with_query_symbol_time_otq_supported():
+    # 20241209: Fixed 0034770: hours/minutes/seconds part of otq parameter _SYMBOL_TIME, expressed in
+    # milliseconds since 1970/01/01 00:00:00 GMT, is ignored
+    # 20250219: Implemented 0035092: passing otq param _SYMBOL_TIME should be just like setting symbol_date
+    # to the equivalent value, except in YYYYMMDDhhmmss format
+    return _is_min_build_or_version(None, None,
+                                    20250227120000)

@@ -14,6 +14,7 @@ from onetick.py.core.eval_query import prepare_params
 from onetick.py.otq import otq
 from onetick.py.compatibility import (
     is_supported_point_in_time,
+    is_join_with_query_symbol_time_otq_supported,
     is_join_with_snapshot_snapshot_fields_parameter_supported,
 )
 
@@ -72,6 +73,19 @@ def _columns_to_params_for_joins(columns, query_params=False):
             else:
                 raise ValueError('Parameter symbol_time has to be a datetime value!')
 
+        elif key == '_SYMBOL_TIME' and query_params:
+            # hack to support passing _SYMBOL_TIME to called query as a parameter
+            if dtype is otp.nsectime:
+                convert_rule += get_msecs_expression(ott.value2str(value))
+            elif dtype is str:
+                ns = f'PARSE_NSECTIME("%Y%m%d%H%M%S", {ott.value2str(value)}, _TIMEZONE)'
+                convert_rule += get_msecs_expression(ns)
+            elif dtype is otp.msectime:
+                # for backward compatibility
+                convert_rule += get_msecs_expression(value)
+            else:
+                raise ValueError('Parameter symbol_time has to be a datetime value!')
+
         elif dtype is str:
             if are_strings(getattr(value, "dtype", None)):
                 convert_rule += str(value)
@@ -80,17 +94,7 @@ def _columns_to_params_for_joins(columns, query_params=False):
         elif dtype is otp.msectime:
             convert_rule += get_msecs_expression(value)
         elif dtype is otp.nsectime:
-            if key == '_SYMBOL_TIME' and query_params:
-                # hack to support passing _SYMBOL_TIME to called query as a parameter
-                warnings.warn(
-                    'Query parameter _SYMBOL_TIME passed to join_with_query! '
-                    'This is deprecated. Please use a dedicated `symbol_time` parameter of the '
-                    'join_with_query function',
-                    FutureWarning,
-                    stacklevel=3,
-                )
-                convert_rule += get_msecs_expression(value)
-            elif query_params:
+            if query_params:
                 # this can be used for query params but cannot be used for symbol params
                 # overall it's better
                 convert_rule += "'NSECTIME('+tostring(NSECTIME_TO_LONG(" + str(value) + "))+')'"
@@ -672,10 +676,10 @@ def join_with_query(
     Function object as query is also supported (Note it will be executed only once in python's code):
 
     >>> def func(symbol):
-    ...    d = otp.Ticks(TYPE=["six"])
-    ...    d = d.update(dict(TYPE="three"), where=(symbol.name == "3"))  # symbol is always converted to string
-    ...    d["TYPE"] = symbol['PREF'] + d["TYPE"] + symbol['POST']
-    ...    return d
+    ...     d = otp.Ticks(TYPE=["six"])
+    ...     d = d.update(dict(TYPE="three"), where=(symbol.name == "3"))  # symbol is always converted to string
+    ...     d["TYPE"] = symbol['PREF'] + d["TYPE"] + symbol['POST']
+    ...     return d
     >>> # OTdirective: snippet-name: Special functions.join with query.with a function
     >>> data = otp.Ticks(A=[1, 2], B=[2, 4])
     >>> res = data.join_with_query(func, how='inner', symbol=(data['A'] + data['B'], dict(PREF="_", POST="$")))
@@ -689,9 +693,9 @@ def join_with_query(
     accessible through the "symbol" object:
 
     >>> def func(symbol):
-    ...    d = otp.Ticks(TYPE=["six"])
-    ...    d["TYPE"] = symbol['PREF'] + d["TYPE"] + symbol['POST']
-    ...    return d
+    ...     d = otp.Ticks(TYPE=["six"])
+    ...     d["TYPE"] = symbol['PREF'] + d["TYPE"] + symbol['POST']
+    ...     return d
     >>> # OTdirective: snippet-name: 'Source' operations.join with query.source as symbol;
     >>> data = otp.Ticks(A=[1, 2], B=[2, 4], PREF=["_", "$"], POST=["$", "_"])
     >>> res = data.join_with_query(func, how='inner', symbol=data)
@@ -834,22 +838,20 @@ def join_with_query(
             'object (dict or Source), or a tuple containing both'
         )
 
-    # adding symbol time
     if '_PARAM_SYMBOL_TIME' in converted_symbol_param_columns.keys():
         warnings.warn(
             '"_PARAM_SYMBOL_TIME" explicitly passed among join_with_query symbol parameters! '
-            'This is deprecated - please use symbol_time parameter instead. '
-            'If you specify symbol_time parameter, it will override the explicitly passed value',
+            'This is deprecated - please use symbol_time parameter instead.',
             FutureWarning,
             stacklevel=2,
         )
-    if symbol_time is not None:
-        if ott.get_object_type(symbol_time) is not otp.nsectime and ott.get_object_type(symbol_time) is not str:
-            raise ValueError(
-                f'Parameter of type {ott.get_object_type(symbol_time)} passed as symbol_time! '
-                'This parameter only supports datetime values or strings'
-            )
-        converted_symbol_param_columns['_PARAM_SYMBOL_TIME'] = symbol_time
+    if '_SYMBOL_TIME' in params.keys():
+        warnings.warn(
+            'Query parameter "_SYMBOL_TIME" passed to join_with_query! '
+            'This is deprecated. Please use a dedicated `symbol_time` parameter.',
+            FutureWarning,
+            stacklevel=2,
+        )
 
     # prepare temporary file
     # ------------------------------------ #
@@ -874,6 +876,19 @@ def join_with_query(
 
     if not sub_source._is_unbound_required():
         sub_source += otp.Empty()
+
+    # adding symbol time
+    if symbol_time is not None:
+        if ott.get_object_type(symbol_time) is not otp.nsectime and ott.get_object_type(symbol_time) is not str:
+            raise ValueError(
+                f'Parameter of type {ott.get_object_type(symbol_time)} passed as symbol_time! '
+                'This parameter only supports datetime values or strings'
+            )
+        if is_join_with_query_symbol_time_otq_supported():
+            params = params.copy()
+            params['_SYMBOL_TIME'] = symbol_time
+        else:
+            converted_symbol_param_columns['_PARAM_SYMBOL_TIME'] = symbol_time
 
     params_str = _columns_to_params_for_joins(params, query_params=True)
     symbol_params_str = _columns_to_params_for_joins(converted_symbol_param_columns)
