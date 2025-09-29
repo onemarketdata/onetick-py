@@ -537,6 +537,14 @@ class Config:
         allowed_types=str,
     )
 
+    default_username = OtpProperty(
+        description='Default username to call queries. '
+                    'By default the name of the owner of the current process is used.',
+        base_default=None,
+        allowed_types=str,
+        env_var_name='OTP_DEFAULT_USERNAME',
+    )
+
     default_auth_username = OtpProperty(
         description='Default username used for authentication.',
         base_default=None,

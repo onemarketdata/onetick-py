@@ -185,7 +185,7 @@ suppress_warnings = ['toc.excluded', 'etoc.ref']
 #
 
 html_baseurl = ''
-html_favicon = ''
+html_favicon = 'static/favicon.ico'
 html_logo = 'static/logo.png'
 html_show_sourcelink = False
 html_show_sphinx = False

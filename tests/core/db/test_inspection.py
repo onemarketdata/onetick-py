@@ -5,6 +5,7 @@ import onetick.py as otp
 from onetick.py.otq import otq
 
 from onetick.py.db._inspection import databases
+from onetick.py.compatibility import is_show_db_list_show_description_supported
 
 
 def cmp_lists(l1, l2):
@@ -327,3 +328,18 @@ def test_big_dates(f_session):
     assert dbs['MY_DB'].schema() == {'X': int}
     assert dbs['MY_DB']._locator_date_ranges[0][0] == datetime(2003, 1, 2)
     assert dbs['MY_DB']._locator_date_ranges[0][1] == datetime.max
+
+
+@pytest.mark.skipif(
+    not is_show_db_list_show_description_supported(), reason="Not supported on this version of OneTick",
+)
+@pytest.mark.parametrize('readable_only', [True, False])
+def test_description(f_session, readable_only):
+    db = otp.DB('DESC_TEST', db_properties={'description': 'TEST'})
+    f_session.use(db)
+
+    result = otp.databases(readable_only=readable_only, fetch_description=True)
+    assert result['DESC_TEST'].description == 'TEST'
+
+    result = otp.databases(readable_only=readable_only, fetch_description=False)
+    assert result['DESC_TEST'].description == ''

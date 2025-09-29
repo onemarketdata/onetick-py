@@ -38,6 +38,7 @@ downticks
 Drexel
 dtype
 env
+favicon
 filename
 filesystem
 Github

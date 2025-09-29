@@ -10,6 +10,22 @@
 
 ### Removed
 
+## [1.169.0] - 2025-09-29
+
+### Added
+
+- Added favicon to the documentation
+- Added support of retrieving database descriptions in `otp.databases`
+- Added `otp.config.default_username`
+
+### Changed
+
+### Fixed
+
+- Fixed script `github_release.sh` not working without configured author
+
+### Removed
+
 ## [1.168.0] - 2025-09-22
 
 ### Added

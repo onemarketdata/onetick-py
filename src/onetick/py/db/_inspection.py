@@ -7,7 +7,7 @@ from dateutil.tz import gettz
 
 import onetick.py as otp
 from onetick.py import configuration, utils
-from onetick.py.compatibility import is_native_plus_zstd_supported
+from onetick.py.compatibility import is_native_plus_zstd_supported, is_show_db_list_show_description_supported
 from onetick.py.core import db_constants
 from onetick.py.otq import otq
 
@@ -25,8 +25,9 @@ class DB:
     dates with data, symbols, tick schema, etc.
     """
 
-    def __init__(self, name, context=utils.default):
+    def __init__(self, name, description='', context=utils.default):
         self.name = name
+        self.description = description
         if context is utils.default or context is None:
             self.context = otp.config.context
         else:
@@ -907,7 +908,9 @@ class DB:
         return df
 
 
-def databases(context=utils.default, derived=False, readable_only: bool = True) -> dict[str, DB]:
+def databases(
+    context=utils.default, derived: bool = False, readable_only: bool = True, fetch_description: bool = False,
+) -> dict[str, DB]:
     """
     Gets all available databases in the ``context``
 
@@ -925,6 +928,9 @@ def databases(context=utils.default, derived=False, readable_only: bool = True) 
     readable_only: bool
         If set to True (default), then return only the databases with read-access for the current user.
         Otherwise return all databases visible from the current process.
+    fetch_description: bool
+        If set to True, retrieves descriptions for databases and puts them into ``description`` property of
+        :py:class:`~onetick.py.DB` objects in a returned dict.
 
     See also
     --------
@@ -938,17 +944,47 @@ def databases(context=utils.default, derived=False, readable_only: bool = True) 
         Dict where keys are database names and values are :class:`DB <onetick.py.db._inspection.DB>` objects
         with ``context`` specified.
     """
+    if fetch_description and not is_show_db_list_show_description_supported():
+        fetch_description = False
+
     if readable_only:
         node = (
             otq.AccessInfo(info_type='DATABASES', show_for_all_users=False, deep_scan=True).tick_type('ANY')
             >> otq.Passthrough('DB_NAME,READ_ACCESS')
             >> otq.WhereClause(where='READ_ACCESS = 1')
         )
+
+        if fetch_description:
+            join = otq.Join(
+                left_source='LEFT', join_type='LEFT_OUTER', join_criteria='LEFT.DB_NAME = RIGHT.DATABASE_NAME'
+            )
+
+            _ = node.set_node_name('LEFT') >> join
+            _ = (
+                otq.ShowDbList(show_description=fetch_description).tick_type('ANY')
+                >> otq.Passthrough('DATABASE_NAME,DESCRIPTION').set_node_name('RIGHT')
+                >> join
+            )
+
+            node = (
+                join >> otq.Passthrough('LEFT.DB_NAME,RIGHT.DESCRIPTION')
+                >> otq.RenameFields("LEFT.DB_NAME=DB_NAME,RIGHT.DESCRIPTION=DESCRIPTION")
+            )
     else:
+        db_list_kwargs = {}
+        output_fields = ['DATABASE_NAME']
+        if fetch_description:
+            db_list_kwargs['show_description'] = fetch_description
+            output_fields.append('DESCRIPTION')
+
         node = (
-            otq.ShowDbList().tick_type('ANY')
-            >> otq.Passthrough('DATABASE_NAME')
+            otq.ShowDbList(**db_list_kwargs).tick_type('ANY')
+            >> otq.Passthrough(','.join(output_fields))
         )
+
+    if not fetch_description:
+        node = node >> otq.AddField('DESCRIPTION', '""')
+
     dbs = otp.run(node,
                   symbols='LOCAL::',
                   # start and end times don't matter for this query, use some constants
@@ -961,9 +997,14 @@ def databases(context=utils.default, derived=False, readable_only: bool = True) 
         return {}
 
     db_list = list(dbs['DB_NAME'] if readable_only else dbs['DATABASE_NAME'])
-    db_dict = {db_name: DB(db_name, context=context) for db_name in db_list}
+    merged_db_list = list(zip(db_list, dbs['DESCRIPTION']))
+
+    db_dict = {
+        db_name: DB(db_name, description=db_description, context=context) for db_name, db_description in merged_db_list
+    }
+
     if derived:
-        kwargs = derived if isinstance(derived, dict) else {}
+        kwargs: dict = derived if isinstance(derived, dict) else {}
         kwargs.setdefault('context', context)
         db_dict.update(
             derived_databases(**kwargs)

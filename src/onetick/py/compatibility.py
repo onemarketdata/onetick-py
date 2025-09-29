@@ -767,3 +767,10 @@ def is_join_with_query_symbol_time_otq_supported():
     # to the equivalent value, except in YYYYMMDDhhmmss format
     return _is_min_build_or_version(None, None,
                                     20250227120000)
+
+
+def is_show_db_list_show_description_supported():
+    # 20240301: Implemented 0032320: 0032320: SHOW_DB_LIST should have a new EP parameter, SHOW_DESCRIPTION
+    # However on 20240330 builds it returns SHOW_DESCRIPTION column instead of DESCRIPTION
+    return _is_min_build_or_version(1.25, 20241229055942,
+                                    20240501000000)

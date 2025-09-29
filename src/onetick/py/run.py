@@ -84,14 +84,14 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
     start: :py:class:`datetime.datetime`, :py:class:`otp.datetime <onetick.py.datetime>`,\
             :py:class:`pyomd.timeval_t`, optional
         The start time of the query. Can be timezone-naive or timezone-aware. See also ``timezone`` argument.
-        onetick.py uses :py:attr:`default_start_time<onetick.py.configuration.Config.default_start_time>`
+        onetick.py uses :py:attr:`otp.config.default_start_time<onetick.py.configuration.Config.default_start_time>`
         as default value, if you don't want to specify start time, e.g. to use saved time of the query,
         then you should specify None value.
     end: :py:class:`datetime.datetime`, :py:class:`otp.datetime <onetick.py.datetime>`,\
           :py:class:`pyomd.timeval_t`, optional
         The end time of the query (note that it's non-inclusive).
         Can be timezone-naive or timezone-aware. See also ``timezone`` argument.
-        onetick.py uses :py:attr:`default_end_time<onetick.py.configuration.Config.default_end_time>`
+        onetick.py uses :py:attr:`otp.config.default_end_time<onetick.py.configuration.Config.default_end_time>`
         as default value, if you don't want to specify end time, e.g. to use saved time of the query,
         then you should specify None value.
     date: :py:class:`datetime.date`, :py:class:`otp.date <onetick.py.date>`, optional
@@ -109,28 +109,30 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
          The timezone of output timestamps.
          Also, when start and/or end arguments are timezone-naive, it will define their timezone.
          If parameter is omitted timestamps of ticks will be formatted
-         with the default :py:attr:`tz<onetick.py.configuration.Config.tz>`.
+         with the default :py:attr:`otp.config.tz<onetick.py.configuration.Config.tz>`.
     context: str, optional
         Allows specification of different contexts from OneTick configuration to connect to.
-        If not set then default :py:attr:`context<onetick.py.configuration.Config.context>` is used.
+        If not set then default :py:attr:`otp.config.context<onetick.py.configuration.Config.context>` is used.
         See :ref:`guide about switching contexts <switching contexts>` for examples.
     username
         The username to make the connection.
-        By default the user which executed the process is used.
+        By default the user which executed the process is used or the value specified in
+        :py:attr:`otp.config.default_username<onetick.py.configuration.Config.default_username>`.
     alternative_username: str
         The username used for authentication.
         Needs to be set only when the tick server is configured to use password-based authentication.
-        By default, :py:attr:`default_auth_username<onetick.py.configuration.Config.default_auth_username>` is used.
+        By default,
+        :py:attr:`otp.config.default_auth_username<onetick.py.configuration.Config.default_auth_username>` is used.
         Not supported for WebAPI mode.
     password: str, optional
         The password used for authentication.
         Needs to be set only when the tick server is configured to use password-based authentication.
         Note: not supported and ignored on older OneTick versions.
-        By default, :py:attr:`default_password<onetick.py.configuration.Config.default_password>` is used.
+        By default, :py:attr:`otp.config.default_password<onetick.py.configuration.Config.default_password>` is used.
     batch_size: int
         number of symbols to run in one batch.
         By default, the value from
-        :py:attr:`default_batch_size<onetick.py.configuration.Config.default_batch_size>` is used.
+        :py:attr:`otp.config.default_batch_size<onetick.py.configuration.Config.default_batch_size>` is used.
         Not supported for WebAPI mode.
     running: bool, optional
         Indicates whether a query is CEP or not. Default is `False`.
@@ -139,7 +141,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
     concurrency: int, optional
         The maximum number of CPU cores to use to process the query.
         By default, the value from
-        :py:attr:`default_concurrency<onetick.py.configuration.Config.default_concurrency>` is used.
+        :py:attr:`otp.config.default_concurrency<onetick.py.configuration.Config.default_concurrency>` is used.
     apply_times_daily: bool
         Runs the query for every day in the ``start``-``end`` time range,
         using the time components of ``start`` and ``end`` datetimes.
@@ -195,9 +197,8 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         If set to True, result will be forced to be a dictionary even if it's returned for a single symbol
     max_expected_ticks_per_symbol: int
         Expected maximum number of ticks per symbol (used for performance optimizations).
-        By default,
-        :py:attr:`max_expected_ticks_per_symbol<onetick.py.configuration.Config.max_expected_ticks_per_symbol>`
-        is used.
+        By default, :py:attr:`otp.config.max_expected_ticks_per_symbol \
+            <onetick.py.configuration.Config.max_expected_ticks_per_symbol>` is used.
         Not supported for WebAPI mode.
     log_symbol: bool
         Log currently executed symbol.
@@ -547,6 +548,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
     start, end = _get_start_end(start, end, timezone)
 
     # authentication
+    username = username or otp.config.default_username
     alternative_username = alternative_username or otp.config.default_auth_username
     password = password or otp.config.default_password
     kwargs = {}
