@@ -61,7 +61,7 @@ Plugins import
 We need to import our ``onetick-py-test`` pytest plugin into the project.
 pytest recommends creating a ``conftest.py`` file in the root of the project and keeping plugin imports and  common helpers there.
 
-:: 
+::
 
     project-folder/
                    conftest.py
@@ -71,7 +71,7 @@ pytest recommends creating a ``conftest.py`` file in the root of the project and
 
 Let's add the following line to `conftest.py` to import our plugin:
 
-:: 
+::
 
     pytest_plugins = ['onetick.test']
 
@@ -115,7 +115,7 @@ Let's consider ``onetick.py`` code that calculates directional volume imbalance 
 
         result = otp.join(buy, sell, on='same_size')
 
-        result, _ = result[(result['BUY_COUNT'] > 0) | (result['SELL_COUNT'] > 0)]
+        result = result.where((result['BUY_COUNT'] > 0) | (result['SELL_COUNT'] > 0))
 
         result['FLAG'] = result.apply(lambda tick:
                             otp.math.sign(tick['BUY_SIZE'] - tick['SELL_SIZE']) \
@@ -336,7 +336,7 @@ OTQ query
 
 pytest can be used to test queries written in OneTick Query Designer (OTQs).
 
-A developer can point to a query from some OTQ file on the local filesystem using 
+A developer can point to a query from some OTQ file on the local filesystem using
 :class:`otp.query <onetick.py.sources.query>`:
 
 .. code-block:: python

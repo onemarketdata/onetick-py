@@ -146,6 +146,8 @@ class _OrderBookAggregation(_Aggregation, ABC):
         self.max_initialization_days = max_initialization_days
         self.book_uncross_method = book_uncross_method
         self.dq_events_that_clear_book = ','.join(dq_events_that_clear_book) if dq_events_that_clear_book else None
+        self.bound_symbols = None
+
         super().__init__(_Column('TIMESTAMP'), *args, **kwargs)
 
     def _param_validation(self):
@@ -169,6 +171,19 @@ class _OrderBookAggregation(_Aggregation, ABC):
         ]):
             raise TypeError(f"Aggregation `{self.NAME}` need these columns: "
                             f"BUY_SELL_FLAG, PRICE, SIZE and (UPDATE_TIME or DELETED_TIME)")
+
+    def to_ep(self, *args, **kwargs):
+        ob_ep = super().to_ep(*args, **kwargs)
+        if self.bound_symbols:
+            ob_ep = ob_ep.symbols(self.bound_symbols)
+
+        return ob_ep
+
+    def set_bound_symbols(self, bound_symbols=None):
+        if isinstance(bound_symbols, str):
+            bound_symbols = [bound_symbols]
+
+        self.bound_symbols = bound_symbols
 
 
 class ObSnapshot(_OrderBookAggregation):

@@ -725,7 +725,7 @@ class Operation:
         Examples
         --------
         >>> t = otp.Ticks(A=range(4))
-        >>> t, _ = t[~(t['A'] > 1)]
+        >>> t = t.where(~(t['A'] > 1))
         >>> otp.run(t)[['A']]
            A
         0  0
@@ -741,7 +741,7 @@ class Operation:
         Examples
         --------
         >>> t = otp.Ticks(A=range(4))
-        >>> t, _ = t[(t['A'] == 1)]
+        >>> t = t.where((t['A'] == 1))
         >>> otp.run(t)[['A']]
            A
         0  1
@@ -756,7 +756,7 @@ class Operation:
         Examples
         --------
         >>> t = otp.Ticks(A=range(4))
-        >>> t, _ = t[(t['A'] != 1)]
+        >>> t = t.where((t['A'] != 1))
         >>> otp.run(t)[['A']]
            A
         0  0
@@ -773,7 +773,7 @@ class Operation:
         Examples
         --------
         >>> t = otp.Ticks(A=range(4))
-        >>> t, _ = t[(t['A'] == 1) | (t['A'] == 2)]
+        >>> t = t.where((t['A'] == 1) | (t['A'] == 2))
         >>> otp.run(t)[['A']]
            A
         0  1
@@ -789,7 +789,7 @@ class Operation:
         Examples
         --------
         >>> t = otp.Ticks(A=[1, 1], B=[1, 2])
-        >>> t, _ = t[(t['A'] == 1) & (t['B'] == 1)]
+        >>> t = t.where((t['A'] == 1) & (t['B'] == 1))
         >>> otp.run(t)[['A', 'B']]
            A  B
         0  1  1
@@ -804,7 +804,7 @@ class Operation:
         Examples
         --------
         >>> t = otp.Ticks(A=range(4))
-        >>> t, _ = t[t['A'] <= 2]
+        >>> t = t.where(t['A'] <= 2)
         >>> otp.run(t)[['A']]
            A
         0  0
@@ -821,7 +821,7 @@ class Operation:
         Examples
         --------
         >>> t = otp.Ticks(A=range(4))
-        >>> t, _ = t[t['A'] < 2]
+        >>> t = t.where(t['A'] < 2)
         >>> otp.run(t)[['A']]
            A
         0  0
@@ -837,7 +837,7 @@ class Operation:
         Examples
         --------
         >>> t = otp.Ticks(A=range(4))
-        >>> t, _ = t[t['A'] >= 2]
+        >>> t = t.where(t['A'] >= 2)
         >>> otp.run(t)[['A']]
            A
         0  2
@@ -853,7 +853,7 @@ class Operation:
         Examples
         --------
         >>> t = otp.Ticks(A=range(4))
-        >>> t, _ = t[t['A'] > 2]
+        >>> t = t.where(t['A'] > 2)
         >>> otp.run(t)[['A']]
            A
         0  3

@@ -81,7 +81,13 @@ class StateVars:
             str_type = type2str(base_type)
 
         expression = f'{str_type} {name}'
+
+        import onetick.py as otp
         if value.default_value is not None:
-            # TODO: PY-952: use to_eval_string(self._owner._tmp_otq) here if otp.eval is passed
-            expression += f' = {value2str(value.default_value)}'
+            if isinstance(value.default_value, otp.Source):
+                value_expression = otp.eval(value.default_value).to_eval_string(self._owner._tmp_otq)
+            else:
+                # TODO: PY-952: use to_eval_string(self._owner._tmp_otq) here if otp.eval is passed
+                value_expression = value2str(value.default_value)
+            expression += f' = {value_expression}'
         self._owner.sink(otq.DeclareStateVariables(variables=expression, scope=value.scope))

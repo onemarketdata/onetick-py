@@ -394,7 +394,7 @@ def join_with_collection(
     >>>
     >>> trd_qte = trd_qte.state_vars['LAST_QUOTE_PER_EXCHANGE'].update(where=trd_qte['TICK_TYPE'] == 'QTE',
     ...                                                                value_fields=['ASK_PRICE', 'BID_PRICE'])
-    >>> trd, _ = trd_qte[trd_qte['TICK_TYPE'] == 'TRD']
+    >>> trd = trd_qte.where(trd_qte['TICK_TYPE'] == 'TRD')
     >>> trd.drop(['ASK_PRICE', 'BID_PRICE', 'EXCHANGE'], inplace=True)
     >>> trd = trd.join_with_collection('LAST_QUOTE_PER_EXCHANGE')
     >>> otp.run(trd)[['PRICE', 'SIZE', 'EXCHANGE', 'ASK_PRICE', 'BID_PRICE']]

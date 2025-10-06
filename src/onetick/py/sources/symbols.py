@@ -5,6 +5,8 @@ from onetick.py.otq import otq
 
 from onetick.py.core.source import Source
 from onetick.py.core.column_operations.base import Raw, OnetickParameter
+from onetick.py.core.eval_query import _QueryEvalWrapper
+from onetick.py.core._source.tmp_otq import TmpOtq
 
 from .. import types as ott
 from .. import utils
@@ -20,7 +22,7 @@ class Symbols(Source):
 
     Parameters
     ----------
-    db: str
+    db: str, :py:func:`eval query <onetick.py.eval>`
         Name of the database where to search symbols.
         By default the database used by :py:func:`otp.run <onetick.py.run>` will be inherited.
     keep_db: bool
@@ -276,9 +278,13 @@ class Symbols(Source):
             end = date.end
 
         _symbol = utils.adaptive
+        _tmp_otq = None
         if db:
             if isinstance(db, list):
                 _symbol = [f"{str(_db).split(':')[0]}::" for _db in db] # noqa
+            elif isinstance(db, _QueryEvalWrapper):
+                _tmp_otq = TmpOtq()
+                _symbol = db.to_eval_string(tmp_otq=_tmp_otq)
             else:
                 _symbol = f"{str(db).split(':')[0]}::"  # noqa
 
@@ -335,6 +341,9 @@ class Symbols(Source):
 
         if _find_params['symbology'] and _find_params['show_original_symbols']:
             self.schema['ORIGINAL_SYMBOL_NAME'] = str
+
+        if _tmp_otq:
+            self._tmp_otq.merge(_tmp_otq)
 
     def base_ep(self, ep_tick_type, keep_db, **params):
         src = Source(otq.FindDbSymbols(**params))

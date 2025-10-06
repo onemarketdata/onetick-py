@@ -10,6 +10,24 @@
 
 ### Removed
 
+## [1.170.0] - 2025-10-06
+
+### Added
+
+- Added support of `otp.eval` as `db` parameter in `otp.Symbols`
+- Added support of `otp.Source` objects as tick sequence initializers
+- Added support of multiple bound symbols to OB Sources
+
+### Changed
+
+- Use `otp.Source.where` for filtering examples
+
+### Fixed
+
+- Fixed script `github_release.sh` not working without configured author
+
+### Removed
+
 ## [1.169.0] - 2025-09-29
 
 ### Added

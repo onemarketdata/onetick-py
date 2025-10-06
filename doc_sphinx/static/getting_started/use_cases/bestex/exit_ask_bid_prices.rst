@@ -17,7 +17,7 @@ To find the EXIT_ASK_PRICE and EXIT_BID_PRICE for each order in ``onetick.py``, 
     quotes = otp.DataSource(quotes_db, tick_type='QTE', symbol=symbol)
 
     # Filter orders to get only those that are fully executed or cancelled
-    exit_orders, _ = orders[(orders['STATE'] == 'F') | (orders['STATE'] == 'C')]
+    exit_orders = orders.where((orders['STATE'] == 'F') | (orders['STATE'] == 'C'))
 
     # Join exit orders with quotes based on timestamp
     exit_orders_with_quotes = otp.join_by_time([exit_orders, quotes])

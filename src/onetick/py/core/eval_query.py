@@ -171,7 +171,7 @@ def eval(query, symbol=None, start=None, end=None,
     >>> data = otp.Ticks(X=[1, 2, 3])
     >>> # note that in this case column WHERE must be specified,
     >>> # because evaluated query returns tick with more than one field
-    >>> data, _ = data[otp.eval(get_filter, a=0, b=2)['WHERE']]
+    >>> data = data.where(otp.eval(get_filter, a=0, b=2)['WHERE'])
     >>> otp.run(data)
             Time  X
     0 2003-12-01  1
@@ -183,12 +183,12 @@ def eval(query, symbol=None, start=None, end=None,
     ...         'TICK_TYPE': ['TRD', 'QTE'],
     ...         'WHERE': ['PRICE>=1.4', 'ASK_PRICE>=1.4']
     ...     })
-    ...     res, _ = res[res['TICK_TYPE'] == tick_type]
+    ...     res = res.where(res['TICK_TYPE'] == tick_type)
     ...     return res.drop(['TICK_TYPE'])
     >>> t = otp.DataSource('US_COMP::TRD')
     >>> # note that in this case column WHERE do not need to be specified,
     >>> # because evaluated query returns tick with only one field
-    >>> t, _ = t[otp.eval(filter_by_tt, tick_type=t['_TICK_TYPE'])]
+    >>> t = t.where(otp.eval(filter_by_tt, tick_type=t['_TICK_TYPE']))
     >>> otp.run(t, start=otp.dt(2022, 3, 1), end=otp.dt(2022, 3, 2))
                          Time  PRICE  SIZE
     0 2022-03-01 00:00:00.001    1.4    10

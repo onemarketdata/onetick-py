@@ -142,3 +142,11 @@ def test_exceptions(db):
         otp.Symbols(db=db, for_tick_type='TA', cep_method='WRONG')
     with pytest.raises(ValueError, match="Wrong value for parameter 'symbols_to_return':"):
         otp.Symbols(db=db, for_tick_type='TA', symbols_to_return='WRONG')
+
+
+def test_eval_as_db_param(db):
+    pattern = 'TEST_SYMBOLS::'
+    db_param = otp.eval(otp.Tick(SYMBOL_NAME=pattern))
+    symbols = otp.Symbols(db=db_param)
+    df = otp.run(symbols)
+    assert set(df[pattern]['SYMBOL_NAME']) == {'A', 'B', 'C', 'D'}

@@ -227,7 +227,7 @@ class _StrAccessor(_Accessor):
 
         >>> q = otp.DataSource('US_COMP', tick_type='TRD', symbols=['SPY'])  # doctest: +SKIP
         >>> q = q[['PRICE', 'SIZE', 'COND', 'EXCHANGE']]  # doctest: +SKIP
-        >>> q, _ = q[q['COND'].str.match('^[^O6TUHILNRWZ47QMBCGPV]*$')]  # doctest: +SKIP
+        >>> q = q.where(q['COND'].str.match('^[^O6TUHILNRWZ47QMBCGPV]*$'))  # doctest: +SKIP
         >>> otp.run(q, start=otp.dt(2023, 5, 15, 9, 30), end=otp.dt(2023, 5, 15, 9, 30, 1))  # doctest: +SKIP
                                     Time    PRICE  SIZE  COND EXCHANGE
         0  2023-05-15 09:30:00.000776704  412.220   247              Z
@@ -1225,7 +1225,7 @@ class _StrAccessor(_Accessor):
         This function can be used to filter out ticks:
 
         >>> data = otp.Ticks(X=['a', 'ab', 'b_', 'b%'])
-        >>> data, _ = data[data['X'].str.like('a%')]
+        >>> data = data.where(data['X'].str.like('a%'))
         >>> otp.run(data)
                              Time   X
         0 2003-12-01 00:00:00.000   a
@@ -1335,7 +1335,7 @@ class _StrAccessor(_Accessor):
            :skipif: not is_ilike_supported()
 
            data = otp.Ticks(X=['a', 'ab', 'Ab', 'b_'])
-           data, _ = data[data['X'].str.ilike('a%')]
+           data = data.where(data['X'].str.ilike('a%'))
            df = otp.run(data)
            print(df)
 

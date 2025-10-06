@@ -191,7 +191,7 @@ A typical filtering case looks like this:
 
 ::
 
-    data, _ = data[(data['FLAG'] > 0) & (data['STATE'] == 'F')]
+    data = data.where((data['FLAG'] > 0) & (data['STATE'] == 'F'))
 
 
 

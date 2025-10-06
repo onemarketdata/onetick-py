@@ -487,6 +487,13 @@ class TestTickList:
             src.state_vars['tick_list_9'] = otp.state.tick_list(schema=['K', 'L'])
             src.state_vars['tick_list_9'].schema
 
+    def test_source_as_default_value(self, session):
+        data = otp.Tick(A=1)
+        data.state_vars['list'] = otp.state.tick_list(otp.Ticks(B=[4, 5, 6]))
+        data.state_vars['list'].dump(inplace=True)
+        df = otp.run(data)
+        assert list(df['B']) == [4, 5, 6]
+
 
 class TestTickSet:
 

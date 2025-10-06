@@ -977,14 +977,7 @@ class DataSource(Source):
         src = self._table_schema(src)
         return src
 
-    def _base_ep_for_cross_symbol(
-        self, db, symbol, tick_type, identify_input_ts,
-        back_to_first_tick=0, keep_first_tick_timestamp=None,
-        presort=utils.adaptive, batch_size=None, concurrency=utils.default,
-        max_back_ticks_to_prepend=1,
-        where_clause_for_back_ticks=None,
-        symbol_date=None,
-    ):
+    def _cross_symbol_convert(self, symbol, symbol_date=None):
         tmp_otq = TmpOtq()
 
         if isinstance(symbol, _QueryEvalWrapper):
@@ -995,6 +988,18 @@ class DataSource(Source):
             symbol = symbol.to_eval_string()
         elif isinstance(symbol, (Source, otq.GraphQuery)):
             symbol = Source._convert_symbol_to_string(symbol, tmp_otq, symbol_date=symbol_date)
+
+        return symbol, tmp_otq
+
+    def _base_ep_for_cross_symbol(
+        self, db, symbol, tick_type, identify_input_ts,
+        back_to_first_tick=0, keep_first_tick_timestamp=None,
+        presort=utils.adaptive, batch_size=None, concurrency=utils.default,
+        max_back_ticks_to_prepend=1,
+        where_clause_for_back_ticks=None,
+        symbol_date=None,
+    ):
+        symbol, tmp_otq = self._cross_symbol_convert(symbol, symbol_date)
 
         self.logger.info(f'symbol={symbol}')
 
@@ -1030,6 +1035,7 @@ class DataSource(Source):
             src.sink(
                 otq.Merge(identify_input_ts=identify_input_ts).symbols(symbol).tick_type(tick_type)
             )
+
         src._tmp_otq.merge(tmp_otq)
 
         src = self._table_schema(src)

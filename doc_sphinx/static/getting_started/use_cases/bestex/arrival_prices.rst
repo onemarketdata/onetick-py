@@ -17,7 +17,7 @@ To find the `arrival mid-price` (which is the average of the ask and bid prices 
     quotes = otp.DataSource(quotes_db, tick_type='QTE', symbol=symbol)
 
     # Filter for new (arrival) orders
-    arrival_orders, _ = orders[(orders['STATE'] == 'N')]
+    arrival_orders = orders.where(orders['STATE'] == 'N')
 
     # Join arrival orders with quotes based on timestamp
     arrival_orders_with_quotes = otp.join_by_time([arrival_orders, quotes])

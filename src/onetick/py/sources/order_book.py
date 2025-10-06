@@ -15,6 +15,7 @@ from ..aggregations.order_book import (
 from ..aggregations.functions import (
     ob_snapshot, ob_snapshot_wide, ob_snapshot_flat, ob_summary, ob_size, ob_vwap, ob_num_levels,
 )
+from .. import utils
 
 from .data_source import DataSource, DATA_SOURCE_DOC_PARAMS
 
@@ -24,17 +25,43 @@ class _ObSource(DataSource):
     OB_AGG_PARAMS: Iterable
     _PROPERTIES = DataSource._PROPERTIES + ['_ob_agg']
 
-    def __init__(self, *args, schema=None, **kwargs):
-        if self._try_default_constructor(*args, schema=schema, **kwargs):
+    def __init__(self, db=None, schema=None, **kwargs):
+        if self._try_default_constructor(schema=schema, **kwargs):
             return
 
         ob_agg_params = {
             param.name: kwargs.pop(param.name, param.default)
             for _, param in self.OB_AGG_PARAMS
         }
+
+        symbol_param = kwargs.get('symbol')
+        symbols_param = kwargs.get('symbols')
+
+        if symbol_param and symbols_param:
+            raise ValueError(
+                'You have set the `symbol` and `symbols` parameters together, it is not allowed. '
+                'Please, clarify parameters'
+            )
+
+        symbols = symbol_param if symbol_param else symbols_param
+        tmp_otq = None
+
+        # Use bound symbols only in case, if db not passed
+        use_bound_symbols = not db and symbols and symbols is not utils.adaptive
+        if use_bound_symbols:
+            symbols, tmp_otq = self._cross_symbol_convert(symbols, kwargs.get('symbol_date'))
+
+            if symbols_param:
+                del kwargs['symbols']
+
+            kwargs['symbol'] = None
+
         self._ob_agg = self.__class__.OB_AGG_FUNC(**ob_agg_params)
 
-        super().__init__(*args, schema=schema, **kwargs)
+        if use_bound_symbols:
+            self._ob_agg.set_bound_symbols(symbols)
+
+        super().__init__(db=db, schema=schema, **kwargs)
 
         ob_agg_output_schema = self._ob_agg._get_output_schema(otp.Empty())
 
@@ -42,6 +69,9 @@ class _ObSource(DataSource):
             self.schema.update(**ob_agg_output_schema)
         else:
             self.schema.set(**ob_agg_output_schema)
+
+        if tmp_otq:
+            self._tmp_otq.merge(tmp_otq)
 
     def base_ep(self, *args, **kwargs):
         src = super().base_ep(*args, **kwargs)

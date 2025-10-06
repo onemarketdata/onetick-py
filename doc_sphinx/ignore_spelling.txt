@@ -49,6 +49,7 @@ hardcoded
 homogenous
 html
 initializer
+initializers
 inplace
 instantiate
 int

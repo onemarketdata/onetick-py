@@ -7,16 +7,28 @@ from onetick.py.compatibility import is_supported_otq_ob_summary
 
 @pytest.fixture(scope="module", autouse=True)
 def session(m_session):
-    db = otp.DB('SOME_DB')
-    db.add(src=otp.Ticks({
+    data = otp.Ticks({
         'BUY_SELL_FLAG': [0, 1, 0, 1, 0],
         # or DELETED_TIME
         'UPDATE_TIME': [otp.config['default_start_time']] * 5,
         'PRICE': [1, 2, 1, 2, 5],
         'SIZE': [1, 2, 3, 4, 7],
         'X': ['A', 'B', 'B', 'A', 'B'],
-    }), symbol='AA', tick_type='PRL_REALLY')
+    })
+
+    db = otp.DB('SOME_DB')
+    db.add(src=data, symbol='AA', tick_type='PRL_REALLY')
     m_session.use(db)
+
+    db = otp.DB('BOUND_DB')
+    db.add(src=data, symbol='AA', tick_type='PRL_REALLY')
+    db.add(src=data, symbol='AAA', tick_type='PRL_REALLY')
+    m_session.use(db)
+
+    db = otp.DB('BOUND_DB_2')
+    db.add(src=data, symbol='BB', tick_type='PRL_REALLY')
+    m_session.use(db)
+
     return m_session
 
 
@@ -169,3 +181,17 @@ class TestObNumLevels:
 
         assert list(df['ASK_VALUE']) == [1.0]
         assert list(df['BID_VALUE']) == [2.0]
+
+
+class TestObBoundSymbols:
+    @pytest.mark.parametrize('symbols', [
+        ['BOUND_DB::AA', 'BOUND_DB_2::BB'],
+        otp.Symbols(db='BOUND_DB', for_tick_type='PRL_REALLY', keep_db=True),
+    ])
+    def test_simple(self, symbols):
+        data = otp.ObSnapshot(tick_type='PRL_REALLY', symbols=symbols, schema_policy='manual', schema={
+            'BUY_SELL_FLAG': int, 'PRICE': float, 'SIZE': float, 'UPDATE_TIME': otp.nsectime,
+        })
+        df = otp.run(data)
+        df = df.to_dict(orient='list')
+        assert [df['PRICE'], df['SIZE'], df['LEVEL']] == [[2.0, 5.0, 1.0], [12, 14, 8], [1, 1, 2]]

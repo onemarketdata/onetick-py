@@ -75,7 +75,7 @@ def tick_list(default_value=None, scope='query', schema=None) -> TickList:
 
     Parameters
     ----------
-    default_value: :py:func:`eval query <onetick.py.eval>`
+    default_value: :class:`otp.Source <onetick.py.Source>`, :py:func:`eval query <onetick.py.eval>`
         Evaluated query to initialize tick list from.
     scope: str
         Scope for the state variable.
@@ -85,14 +85,12 @@ def tick_list(default_value=None, scope='query', schema=None) -> TickList:
         if ``default_value`` is not passed as well, schema will contain fields of the main Source object.
 
         If schema is passed as a list, it will select only these fields from the schema of ``default_value``
-        or main Source object.
+        or main :class:`Source <onetick.py.Source>` object.
 
     Examples
     --------
-    >>> def fsq():
-    ...     return otp.Ticks(B=[1, 2, 3])
     >>> data = otp.Tick(A=1)
-    >>> data.state_vars['LIST'] = otp.state.tick_list(otp.eval(fsq))
+    >>> data.state_vars['LIST'] = otp.state.tick_list(otp.Ticks(B=[1, 2, 3]))
     >>> data = data.state_vars['LIST'].dump()
     >>> otp.run(data)[['B']]
        B
@@ -115,7 +113,7 @@ def tick_set(insertion_policy, key_fields, default_value=None, scope='query', sc
         'latest' makes the last inserted tick overwrite the one with the same keys (if existing).
     key_fields: str, list of str
         The values of the specified fields will be used as keys.
-    default_value: :py:func:`eval query <onetick.py.eval>`
+    default_value: :class:`otp.Source <onetick.py.Source>`, :py:func:`eval query <onetick.py.eval>`
         Evaluated query to initialize tick set from.
     scope: str
         Scope for the state variable.
@@ -125,14 +123,12 @@ def tick_set(insertion_policy, key_fields, default_value=None, scope='query', sc
         if ``default_value`` is not passed as well, schema will contain fields of the main Source object.
 
         If schema is passed as a list, it will select only these fields from the schema of ``default_value``
-        or main Source object.
+        or main :class:`Source <onetick.py.Source>` object.
 
     Examples
     --------
-    >>> def fsq():
-    ...     return otp.Ticks(B=[1, 1, 2, 2, 3, 3])
     >>> data = otp.Tick(A=1)
-    >>> data.state_vars['SET'] = otp.state.tick_set('oldest', 'B', otp.eval(fsq))
+    >>> data.state_vars['SET'] = otp.state.tick_set('oldest', 'B', otp.Ticks(B=[1, 1, 2, 2, 3, 3]))
     >>> data = data.state_vars['SET'].dump()
     >>> otp.run(data)[['B']]
        B
@@ -175,7 +171,7 @@ def tick_set_unordered(insertion_policy,
             may be considerably worse than that of normal tick set.
             In particular, **default value of -1 will lead to bad performance and should be avoided**
 
-    default_value: :py:func:`eval query <onetick.py.eval>`
+    default_value: :class:`otp.Source <onetick.py.Source>`, :py:func:`eval query <onetick.py.eval>`
         Evaluated query to initialize unordered tick set from.
     scope: str,
         Scope for the state variable.
@@ -186,14 +182,14 @@ def tick_set_unordered(insertion_policy,
         if ``default_value`` is not passed as well, schema will contain fields of the main Source object.
 
         If schema is passed as a list, it will select only these fields from the schema of ``default_value``
-        or main Source object.
+        or main :class:`Source <onetick.py.Source>` object.
 
     Examples
     --------
-    >>> def fsq():
-    ...     return otp.Ticks(B=[1, 1, 2, 2, 3, 3])
     >>> data = otp.Tick(A=1)
-    >>> data.state_vars['SET'] = otp.state.tick_set_unordered('oldest', 'B', otp.eval(fsq), max_distinct_keys=5)
+    >>> data.state_vars['SET'] = otp.state.tick_set_unordered('oldest', 'B',
+    ...                                                       otp.Ticks(B=[1, 1, 2, 2, 3, 3]),
+    ...                                                       max_distinct_keys=5)
     >>> data = data.state_vars['SET'].dump()
     >>> otp.run(data)[['B']]
        B
@@ -218,7 +214,7 @@ def tick_deque(default_value=None, scope='query', schema=None) -> TickDeque:
 
     Parameters
     ----------
-    default_value: :py:func:`eval query <onetick.py.eval>`
+    default_value: :class:`otp.Source <onetick.py.Source>`, :py:func:`eval query <onetick.py.eval>`
         Evaluated query to initialize tick deque from.
     scope: str
         Scope for the state variable.
@@ -228,14 +224,12 @@ def tick_deque(default_value=None, scope='query', schema=None) -> TickDeque:
         if ``default_value`` is not passed as well, schema will contain fields of the main Source object.
 
         If schema is passed as a list, it will select only these fields from the schema of ``default_value``
-        or main Source object.
+        or main :class:`Source <onetick.py.Source>` object.
 
     Examples
     --------
-    >>> def fsq():
-    ...     return otp.Ticks(B=[1, 2, 3])
     >>> data = otp.Tick(A=1)
-    >>> data.state_vars['DEQUE'] = otp.state.tick_deque(otp.eval(fsq))
+    >>> data.state_vars['DEQUE'] = otp.state.tick_deque(otp.Ticks(B=[1, 2, 3]))
     >>> data = data.state_vars['DEQUE'].dump()
     >>> otp.run(data)[['B']]
        B

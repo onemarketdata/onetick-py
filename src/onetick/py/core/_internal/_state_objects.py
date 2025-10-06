@@ -165,7 +165,7 @@ class _StateBase(ABC):
            data.state_vars['VAR'] = otp.state.tick_list()
            def fun(min_value):
                t = otp.Ticks(X=[123, 234])
-               t, _ = t[t['X'] > min_value]
+               t = t.where(t['X'] > min_value)
                return t
            data = data.state_vars['VAR'].modify_from_query(fun, params={'min_value': 200})
            data = data.state_vars['VAR'].dump()
@@ -344,8 +344,9 @@ class _TickSequence(_StateBase):
     def __init__(self, name, obj_ref, default_value, scope, schema=None, **kwargs):
         if kwargs:
             raise ValueError(f"Unknown parameters for '{self.__class__.__name__}': {list(kwargs)}")
-        if default_value is not None and not isinstance(default_value, _QueryEvalWrapper):
-            raise ValueError('only otp.eval can be used as initial value for tick sequences')
+        from onetick.py.core.source import Source
+        if default_value is not None and not isinstance(default_value, (_QueryEvalWrapper, Source)):
+            raise ValueError('only otp.eval and otp.Source objects can be used as initial value for tick sequences')
         if default_value is not None and schema is not None:
             # TODO: check that the two schemas align or possibly that they are exactly the same
             pass
@@ -396,9 +397,13 @@ class _TickSequence(_StateBase):
             self._schema = None
         if not self._schema:
             if self.default_value is not None:
-                # If tick sequence is initialized from eval,
-                # then we get schema from the Source in eval.
-                self._schema = self.default_value.query.schema.copy()
+                from onetick.py.core.source import Source
+                if isinstance(self.default_value, _QueryEvalWrapper):
+                    # If tick sequence is initialized from eval,
+                    # then we get schema from the Source in eval.
+                    self._schema = self.default_value.query.schema.copy()
+                elif isinstance(self.default_value, Source):
+                    self._schema = self.default_value.schema.copy()
             else:
                 # If tick sequence is initialized as empty,
                 # then it's schema will be derived from the schema of the parent object (e.g. source)

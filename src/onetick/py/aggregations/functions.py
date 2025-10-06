@@ -956,7 +956,7 @@ def generic(*args, **kwargs):
 
     >>> data = otp.Ticks({'A': [1, 2, 1]})
     >>> def count_values(source, value):
-    ...     values, _ = source[source['A'] == value]
+    ...     values = source.where(source['A'] == value)
     ...     return values.agg({'count': otp.agg.count()})
     >>> data = otp.agg.generic(count_values).apply(data, value=1)
     >>> otp.run(data)
