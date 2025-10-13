@@ -352,3 +352,19 @@ def test_join_on_operation(session):
     df = otp.run(data)
     assert list(df['A']) == [1, 2, 3, 4]
     assert list(df['B']) == [0, 2, 0, 4]
+
+
+def test_join_floor(session):
+    t1, t2 = otp.Tick(X=1.7), otp.Tick(Y=2.8)
+    data = otp.join(t1, t2, on=(otp.math.floor(t1['X']) == 1.0) & (otp.math.floor(t2['Y']) == 2.0))
+    df = otp.run(data)
+    assert list(df['X']) == [1.7]
+    assert list(df['Y']) == [2.8]
+
+
+def test_join_ceil(session):
+    t1, t2 = otp.Tick(X=1.2), otp.Tick(Y=2.3)
+    data = otp.join(t1, t2, on=(otp.math.ceil(t1['X']) == 2.0) & (otp.math.ceil(t2['Y']) == 3.0))
+    df = otp.run(data)
+    assert list(df['X']) == [1.2]
+    assert list(df['Y']) == [2.3]

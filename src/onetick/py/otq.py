@@ -160,18 +160,24 @@ elif otp.__webapi__:
         if 'https_proxy' not in kwargs:
             kwargs['https_proxy'] = config.https_proxy
 
-        is_trusted_certificates_supported = 'trusted_certificates_file' in inspect.signature(otq.run).parameters
+        webapi_run_parameters = inspect.signature(__original_run).parameters
 
-        if (
-            ('trusted_certificates_file' in kwargs or config.trusted_certificates_file is not None) and
-            not is_trusted_certificates_supported
-        ):
-            raise ValueError(
-                'Parameter `trusted_certificates_file` was set, however current version of OneTick doesn\'t support it.'
-            )
-
-        if 'trusted_certificates_file' not in kwargs and is_trusted_certificates_supported:
-            kwargs['trusted_certificates_file'] = config.trusted_certificates_file
+        trusted_certificate_file_arg = kwargs.pop('trusted_certificates_file',
+                                                  kwargs.pop('trusted_certificate_file', None))
+        trusted_certificate_file_value = (
+            trusted_certificate_file_arg if trusted_certificate_file_arg is not None
+            else config.trusted_certificates_file
+        )
+        if trusted_certificate_file_value is not None:
+            trusted_certificates_supported = set(webapi_run_parameters).intersection({'trusted_certificates_file',
+                                                                                      'trusted_certificate_file'})
+            if not trusted_certificates_supported:
+                raise ValueError(
+                    "Parameter `trusted_certificates_file` was set,"
+                    " however current version of OneTick doesn't support it."
+                )
+            trusted_certificates_supported_param = list(trusted_certificates_supported)[0]
+            kwargs[trusted_certificates_supported_param] = trusted_certificate_file_value
 
         if 'callback' in kwargs and kwargs['callback'] is not None:
             kwargs['output_mode'] = otq.QueryOutputMode.callback

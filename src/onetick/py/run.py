@@ -1,4 +1,4 @@
-
+import asyncio
 import inspect
 import datetime
 import warnings
@@ -76,10 +76,11 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         ``query`` can also be a function that has a symbol object as the first parameter.
         This object can be used to get symbol name and symbol parameters.
         Function must return a :py:class:`Source <onetick.py.Source>`.
-    symbols: str, list of str, list of otq.Symbol, :py:class:`onetick.py.Source`, pd.DataFrame, optional
-        Symbol(s) to run the query for passed as a string, a list of strings, a pd.DataFrame with the ``SYMBOL_NAME``
-        column, or as a "symbols" query which results include the ``SYMBOL_NAME`` column. The start/end times for the
-        symbols query will taken from the params below.
+    symbols: str, list of str, list of otq.Symbol, :py:class:`onetick.py.Source`, :pandas:`pandas.DataFrame`, optional
+        Symbol(s) to run the query for passed as a string, a list of strings,
+        a :pandas:`pandas.DataFrame` with the ``SYMBOL_NAME`` column,
+        or as a "symbols" query which results include the ``SYMBOL_NAME`` column.
+        The start/end times for the symbols query will taken from the params below.
         See :ref:`symbols <static/concepts/symbols:Symbols: bound and unbound>` for more details.
     start: :py:class:`datetime.datetime`, :py:class:`otp.datetime <onetick.py.datetime>`,\
             :py:class:`pyomd.timeval_t`, optional
@@ -608,6 +609,75 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
 
     return _format_call_output(result, output_structure=output_structure,
                                require_dict=require_dict, node_names=node_names)
+
+
+async def run_async(*args, **kwargs):
+    """
+    Asynchronous alternative to :func:`otp.run <onetick.py.run>`.
+
+    All parameters are the same.
+
+    This function can be used via built-in python ``await`` syntax
+    and standard `asyncio <https://docs.python.org/3/library/asyncio.html>`_ library.
+
+    Note
+    ----
+    Internally this function is implemented as :func:`otp.run <onetick.py.run>` running in a separate thread.
+
+    Threads in python are generally not interruptable,
+    so some `asyncio` functionality may not work as expected.
+
+    For example, canceling :func:`otp.run_async <onetick.py.run_async>` task by
+    `timeout <https://docs.python.org/3/library/asyncio-task.html#timeouts>`_
+    may block the waiting function
+    or exiting the python process will block until the task is finished,
+    depending on python and `asyncio` back-end implementation.
+
+    Examples
+    --------
+
+    >>> data = otp.Ticks(A=[1, 2, 3])
+
+    Calling :func:`otp.run_async <onetick.py.run_async>` will create a "coroutine" object:
+
+    >>> otp.run_async(data) # doctest: +SKIP
+    <coroutine object run_async at ...>
+
+    Use `asyncio.run <https://docs.python.org/3/library/asyncio-runner.html#asyncio.run>`_
+    to run this coroutine and wait for it to finish:
+
+    >>> asyncio.run(otp.run_async(data))
+                         Time  A
+    0 2003-12-01 00:00:00.000  1
+    1 2003-12-01 00:00:00.001  2
+    2 2003-12-01 00:00:00.002  3
+
+    You can use standard `asyncio <https://docs.python.org/3/library/asyncio.html>`_
+    library functions to create and schedule tasks.
+
+    In the example below two tasks are executed in parallel,
+    so total execution time will be around 3 seconds instead of 6:
+
+    >>> import asyncio
+    >>> import time
+    >>> async def parallel_tasks():
+    ...     # pause 1 second on each tick (thus 3 seconds for 3 ticks)
+    ...     task_otp = asyncio.create_task(otp.run_async(data.pause(1000)))
+    ...     # just sleep for 3 seconds
+    ...     task_other = asyncio.create_task(asyncio.sleep(3))
+    ...     otp_result = await task_otp
+    ...     await task_other
+    ...     print(otp_result)
+    >>> start_time = time.time()
+    >>> asyncio.run(parallel_tasks())
+                         Time  A
+    0 2003-12-01 00:00:00.000  1
+    1 2003-12-01 00:00:00.001  2
+    2 2003-12-01 00:00:00.002  3
+    >>> print('Finished in', time.time() - start_time, 'seconds') # doctest: +SKIP
+    Finished in 3.0108885765075684 seconds
+    """
+    return await asyncio.to_thread(run, *args, **kwargs)
 
 
 def _filter_returned_map_by_node(result, _node_names):

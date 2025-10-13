@@ -152,7 +152,7 @@ class TestInf:
                           (5.3139e+3, '5313.9'),
                           (otp.nan, 'NAN()'),
                           (otp.inf, 'INFINITY()'),
-                          (otp.now(), 'now()'),
+                          (otp.now(), 'NOW()'),
                           (12345, '12345'),
                           (otp.core.column._Column('NAME', int), 'NAME'),
                           (otp.core.column._Column('NAME', float), 'NAME'),

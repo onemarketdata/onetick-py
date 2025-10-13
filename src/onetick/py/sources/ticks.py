@@ -369,7 +369,7 @@ def Ticks(data=None,  # NOSONAR
 
     Parameters
     ----------
-    data: dict, list or pandas.DataFrame, optional
+    data: dict, list or :pandas:`pandas.DataFrame`, optional
         Ticks values
 
         * ``dict`` -- <field_name>: <values>

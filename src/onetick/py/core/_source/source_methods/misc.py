@@ -514,7 +514,7 @@ def cache(
         the result data not found in the cache. Otherwise, the cache remains unchanged.
     tick_type: str
         Tick type.
-    symbol: str, list of str, list of otq.Symbol, :py:class:`onetick.py.Source`, pd.DataFrame, optional
+    symbol: str, list of str, list of otq.Symbol, :py:class:`onetick.py.Source`, :pandas:`pandas.DataFrame`, optional
         ``symbols`` parameter of ``otp.run()``.
     db: str
         Database.

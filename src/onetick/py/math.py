@@ -1,32 +1,11 @@
-from typing import Optional
 from onetick.py.core.column_operations.base import _Operation
-
-
-class _MaxOperator(_Operation):
-
-    def __init__(self, objs):
-        from onetick.py.types import get_type_by_objects
-
-        super().__init__(dtype=get_type_by_objects(objs))
-
-        def _str_max(l_val, r_val):
-            if isinstance(r_val, list):
-                if len(r_val) > 1:
-                    r_val = _str_max(r_val[0], r_val[1:])
-                else:
-                    r_val = r_val[0]
-            # CASE should be uppercased because it can be used in per-tick script
-            return 'CASE({0} > {1}, 1, {0}, {1})'.format(str(l_val), str(r_val))
-
-        self._repr = _str_max(objs[0], objs[1:])
-
-    def __str__(self):
-        return self._repr
+from onetick.py.types import value2str, nsectime, get_type_by_objects
 
 
 def max(*objs):
     """
     Returns maximum value from list of ``objs``.
+    The objects must be of the same type.
 
     Parameters
     ----------
@@ -44,34 +23,30 @@ def max(*objs):
             Time  A  MAX
     0 2003-12-01  1    5
     """
-    return _MaxOperator(list(objs))
+    if len(objs) < 2:
+        raise ValueError("otp.math.max expects at least 2 values to compare")
 
+    def _max_func(*objs):
+        dtype = get_type_by_objects(objs)
+        onetick_params = map(value2str, objs)
+        if dtype is nsectime:
+            onetick_params = [f'NSECTIME_TO_LONG({param})' for param in onetick_params]
+            onetick_params_str = ', '.join(onetick_params)
+            return f"NSECTIME(MAX({onetick_params_str}))", dtype
+        else:
+            onetick_params_str = ', '.join(onetick_params)
+            return f"MAX({onetick_params_str})", dtype
 
-class _MinOperator(_Operation):
-
-    def __init__(self, objs):
-        from onetick.py.types import get_type_by_objects
-
-        super().__init__(dtype=get_type_by_objects(objs))
-
-        def _str_min(l_val, r_val):
-            if isinstance(r_val, list):
-                if len(r_val) > 1:
-                    r_val = _str_min(r_val[0], r_val[1:])
-                else:
-                    r_val = r_val[0]
-            # CASE should be uppercased because it can be used in per-tick script
-            return 'CASE({0} < {1}, 1, {0}, {1})'.format(str(l_val), str(r_val))
-
-        self._repr = _str_min(objs[0], objs[1:])
-
-    def __str__(self):
-        return self._repr
+    return _Operation(
+        op_func=_max_func,
+        op_params=list(objs),
+    )
 
 
 def min(*objs):
     """
     Returns minimum value from list of ``objs``.
+    The objects must be of the same type.
 
     Parameters
     ----------
@@ -89,32 +64,27 @@ def min(*objs):
             Time  A  MIN
     0 2003-12-01  1   -5
     """
-    return _MinOperator(list(objs))
+    if len(objs) < 2:
+        raise ValueError("otp.math.min expects at least 2 values to compare")
+
+    def _min_func(*objs):
+        dtype = get_type_by_objects(objs)
+        onetick_params = map(value2str, objs)
+        if dtype is nsectime:
+            onetick_params = [f'NSECTIME_TO_LONG({param})' for param in onetick_params]
+            onetick_params_str = ', '.join(onetick_params)
+            return f"NSECTIME(MIN({onetick_params_str}))", dtype
+        else:
+            onetick_params_str = ', '.join(onetick_params)
+            return f"MIN({onetick_params_str})", dtype
+
+    return _Operation(
+        op_func=_min_func,
+        op_params=list(objs),
+    )
 
 
-class _RandomFunc(_Operation):
-    """
-    It implements the `rand` built-in function.
-    """
-
-    def __init__(self, min_value: int, max_value: int, seed: Optional[int] = None):
-        super().__init__(dtype=int)
-
-        def _repr(min_value, max_value, seed):
-            result = f'rand({str(min_value)}, {str(max_value)}'
-            if seed is not None:
-                result += f',{str(seed)})'
-            else:
-                result += ')'
-            return result
-
-        self._repr = _repr(min_value, max_value, seed)
-
-    def __str__(self):
-        return self._repr
-
-
-def rand(min_value: int, max_value: int, seed: Optional[int] = None):
+def rand(min_value, max_value, seed=None):
     """
     Returns a pseudo-random value in the range between ``min_value`` and ``max_value`` (both inclusive).
     If ``seed`` is not specified, the function produces different values each time a query is invoked.
@@ -135,6 +105,9 @@ def rand(min_value: int, max_value: int, seed: Optional[int] = None):
     --------
     >>> data = otp.Tick(A=1)
     >>> data['RAND'] = otp.math.rand(1, 1000)
+    >>> otp.run(data)  # doctest: +SKIP
+            Time  A  RAND
+    0 2003-12-01  1   155
     """
 
     if isinstance(min_value, int) and min_value < 0:
@@ -142,29 +115,67 @@ def rand(min_value: int, max_value: int, seed: Optional[int] = None):
     if isinstance(min_value, int) and isinstance(max_value, int) and min_value >= max_value:
         raise ValueError("The `max_value` parameter should be more than `min_value`")
 
-    return _RandomFunc(min_value, max_value, seed)
+    def _random_func(min_value, max_value, seed=None):
+        result = f'RAND({value2str(min_value)}, {value2str(max_value)}'
+        if seed is not None:
+            result += f', {value2str(seed)})'
+        else:
+            result += ')'
+        return result, int
+
+    return _Operation(
+        op_func=_random_func,
+        op_params=[min_value, max_value, seed],
+    )
 
 
-class _Now(_Operation):
+def frand(min_value=0, max_value=1, *, seed=None):
+    """
+    Returns a pseudo-random value in the range between ``min_value`` and ``max_value``.
 
-    def __init__(self):
-        from onetick.py.types import nsectime
+    Parameters
+    ----------
+    min_value: float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    max_value: float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    seed: int, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+        If not specified, the function produces different values each time a query is invoked.
+        If specified, for this seed the function produces the same sequence of values
+        each time a query is invoked.
 
-        super().__init__(dtype=nsectime)
+    Returns
+    -------
+        :py:class:`~onetick.py.Operation`
 
-        def _repr():
-            return 'now()'
+    Examples
+    --------
+    >>> data = otp.Tick(A=otp.math.frand())
+    >>> otp.run(data)  # doctest: +SKIP
+            Time  A     FRAND
+    0 2003-12-01  1  0.667519
+    """
 
-        self._repr = _repr()
+    if isinstance(min_value, (int, float)) and min_value < 0:
+        raise ValueError("It is not possible to use negative values for the `min_value`")
+    if isinstance(min_value, (int, float)) and isinstance(max_value, (int, float)) and min_value >= max_value:
+        raise ValueError("The `max_value` parameter should be more than `min_value`")
 
-    def __str__(self):
-        return self._repr
+    def _frand_func(min_value, max_value, seed=None):
+        func_args = [min_value, max_value]
+        if seed is not None:
+            func_args.append(seed)
+        onetick_args_str = ', '.join(value2str(arg) for arg in func_args)
+        return f'FRAND({onetick_args_str})', float
+
+    return _Operation(
+        op_func=_frand_func,
+        op_params=[min_value, max_value, seed],
+    )
 
 
 # TODO: this is not math, let's move it somewhere else
 def now():
     """
-    Returns the current time expressed as the number of milliseconds since the UNIX epoch.
+    Returns the current time expressed as the number of milliseconds since the UNIX epoch in a GMT timezone.
 
     Returns
     -------
@@ -174,25 +185,13 @@ def now():
     --------
     >>> data = otp.Tick(A=1)
     >>> data['NOW'] = otp.now()
+    >>> otp.run(data)  # doctest: +SKIP
+            Time  A                     NOW
+    0 2003-12-01  1 2025-09-29 09:09:00.158
     """
-    return _Now()
-
-
-class _Ln(_Operation):
-    """
-    Compute the natural logarithm.
-    """
-
-    def __init__(self, value):
-        super().__init__(dtype=float)
-
-        def _repr(value):
-            return f'LOG({str(value)})'
-
-        self._repr = _repr(value)
-
-    def __str__(self):
-        return self._repr
+    return _Operation(
+        op_func=lambda: ('NOW()', nsectime),
+    )
 
 
 def ln(value):
@@ -217,26 +216,15 @@ def ln(value):
 
     See Also
     --------
-    onetick.py.math.exp
+    :py:func:`onetick.py.math.exp`
     """
-    return _Ln(value)
+    return _Operation(
+        op_func=lambda v: (f'LOG({value2str(v)})', float),
+        op_params=[value],
+    )
 
 
-class _Log10(_Operation):
-    """
-    Compute the base-10 logarithm.
-    """
-
-    def __init__(self, value):
-        super().__init__(dtype=float)
-
-        def _repr(value):
-            return f'LOG10({str(value)})'
-
-        self._repr = _repr(value)
-
-    def __str__(self):
-        return self._repr
+log = ln
 
 
 def log10(value):
@@ -259,24 +247,10 @@ def log10(value):
             Time  A  LOG10
     0 2003-12-01  1    2.0
     """
-    return _Log10(value)
-
-
-class _Exp(_Operation):
-    """
-    Compute the natural exponent.
-    """
-
-    def __init__(self, value):
-        super().__init__(dtype=float)
-
-        def _repr(value):
-            return f'EXP({str(value)})'
-
-        self._repr = _repr(value)
-
-    def __str__(self):
-        return self._repr
+    return _Operation(
+        op_func=lambda v: (f'LOG10({value2str(v)})', float),
+        op_params=[value],
+    )
 
 
 def exp(value):
@@ -301,26 +275,12 @@ def exp(value):
 
     See Also
     --------
-    onetick.py.math.ln
+    :py:func:`onetick.py.math.ln`
     """
-    return _Exp(value)
-
-
-class _Sqrt(_Operation):
-    """
-    Compute the square root.
-    """
-
-    def __init__(self, value):
-        super().__init__(dtype=float)
-
-        def _repr(value):
-            return f'SQRT({str(value)})'
-
-        self._repr = _repr(value)
-
-    def __str__(self):
-        return self._repr
+    return _Operation(
+        op_func=lambda v: (f'EXP({value2str(v)})', float),
+        op_params=[value],
+    )
 
 
 def sqrt(value):
@@ -343,24 +303,10 @@ def sqrt(value):
             Time  A  SQRT
     0 2003-12-01  1   2.0
     """
-    return _Sqrt(value)
-
-
-class _Sign(_Operation):
-    """
-    Get the sign of value.
-    """
-
-    def __init__(self, value):
-        super().__init__(dtype=int)
-
-        def _repr(value):
-            return f'SIGN({str(value)})'
-
-        self._repr = _repr(value)
-
-    def __str__(self):
-        return self._repr
+    return _Operation(
+        op_func=lambda v: (f'SQRT({value2str(v)})', float),
+        op_params=[value],
+    )
 
 
 def sign(value):
@@ -385,24 +331,10 @@ def sign(value):
             Time  A  SIGN_POS  SIGN_ZERO  SIGN_NEG
     0 2003-12-01  1         1          0        -1
     """
-    return _Sign(value)
-
-
-class _Power(_Operation):
-    """
-    Compute the ``base`` to the power of the ``exponent``.
-    """
-
-    def __init__(self, base, exponent):
-        super().__init__(dtype=float)
-
-        def _repr(base, exponent):
-            return f'POWER({str(base)}, {str(exponent)})'
-
-        self._repr = _repr(base, exponent)
-
-    def __str__(self):
-        return self._repr
+    return _Operation(
+        op_func=lambda v: (f'SIGN({value2str(v)})', int),
+        op_params=[value],
+    )
 
 
 def pow(base, exponent):
@@ -426,21 +358,10 @@ def pow(base, exponent):
             Time  A     RES
     0 2003-12-01  2  1024.0
     """
-    return _Power(base, exponent)
-
-
-class _Pi(_Operation):
-
-    def __init__(self):
-        super().__init__(dtype=float)
-
-        def _repr():
-            return 'PI()'
-
-        self._repr = _repr()
-
-    def __str__(self):
-        return self._repr
+    return _Operation(
+        op_func=lambda b, e: (f'POWER({value2str(b)}, {value2str(e)})', float),
+        op_params=[base, exponent],
+    )
 
 
 def pi():
@@ -459,24 +380,9 @@ def pi():
             Time  A        PI
     0 2003-12-01  1  3.141593
     """
-    return _Pi()
-
-
-class _Sin(_Operation):
-    """
-    Returns the value of trigonometric function `sin` for the given angle number expressed in radians.
-    """
-
-    def __init__(self, value):
-        super().__init__(dtype=float)
-
-        def _repr(value):
-            return f'SIN({str(value)})'
-
-        self._repr = _repr(value)
-
-    def __str__(self):
-        return self._repr
+    return _Operation(
+        op_func=lambda: ('PI()', float),
+    )
 
 
 def sin(value):
@@ -501,27 +407,13 @@ def sin(value):
 
     See Also
     --------
-    :py:data:`onetick.py.math.pi`
+    :py:func:`onetick.py.math.pi`
     :py:func:`onetick.py.math.asin`
     """
-    return _Sin(value)
-
-
-class _Cos(_Operation):
-    """
-    Returns the value of trigonometric function `cos` for the given angle number expressed in radians.
-    """
-
-    def __init__(self, value):
-        super().__init__(dtype=float)
-
-        def _repr(value):
-            return f'COS({str(value)})'
-
-        self._repr = _repr(value)
-
-    def __str__(self):
-        return self._repr
+    return _Operation(
+        op_func=lambda v: (f'SIN({value2str(v)})', float),
+        op_params=[value],
+    )
 
 
 def cos(value):
@@ -546,27 +438,13 @@ def cos(value):
 
     See Also
     --------
-    :py:data:`onetick.py.math.pi`
+    :py:func:`onetick.py.math.pi`
     :py:func:`onetick.py.math.acos`
     """
-    return _Cos(value)
-
-
-class _Tan(_Operation):
-    """
-    Returns the value of trigonometric function `tan` for the given angle number expressed in radians.
-    """
-
-    def __init__(self, value):
-        super().__init__(dtype=float)
-
-        def _repr(value):
-            return f'TAN({str(value)})'
-
-        self._repr = _repr(value)
-
-    def __str__(self):
-        return self._repr
+    return _Operation(
+        op_func=lambda v: (f'COS({value2str(v)})', float),
+        op_params=[value],
+    )
 
 
 def tan(value):
@@ -591,27 +469,13 @@ def tan(value):
 
     See Also
     --------
-    :py:data:`onetick.py.math.pi`
+    :py:func:`onetick.py.math.pi`
     :py:func:`onetick.py.math.atan`
     """
-    return _Tan(value)
-
-
-class _Cot(_Operation):
-    """
-    Returns the value of trigonometric function `cot` for the given angle number expressed in radians.
-    """
-
-    def __init__(self, value):
-        super().__init__(dtype=float)
-
-        def _repr(value):
-            return f'COT({str(value)})'
-
-        self._repr = _repr(value)
-
-    def __str__(self):
-        return self._repr
+    return _Operation(
+        op_func=lambda v: (f'TAN({value2str(v)})', float),
+        op_params=[value],
+    )
 
 
 def cot(value):
@@ -636,27 +500,13 @@ def cot(value):
 
     See Also
     --------
-    :py:data:`onetick.py.math.pi`
+    :py:func:`onetick.py.math.pi`
     :py:func:`onetick.py.math.acot`
     """
-    return _Cot(value)
-
-
-class _Asin(_Operation):
-    """
-    Returns the value of inverse trigonometric function `arcsin`.
-    """
-
-    def __init__(self, value):
-        super().__init__(dtype=float)
-
-        def _repr(value):
-            return f'ASIN({str(value)})'
-
-        self._repr = _repr(value)
-
-    def __str__(self):
-        return self._repr
+    return _Operation(
+        op_func=lambda v: (f'COT({value2str(v)})', float),
+        op_params=[value],
+    )
 
 
 def asin(value):
@@ -689,30 +539,16 @@ def asin(value):
 
     See Also
     --------
-    :py:data:`onetick.py.math.pi`
+    :py:func:`onetick.py.math.pi`
     :py:func:`onetick.py.math.sin`
     """
-    return _Asin(value)
+    return _Operation(
+        op_func=lambda v: (f'ASIN({value2str(v)})', float),
+        op_params=[value],
+    )
 
 
 arcsin = asin
-
-
-class _Acos(_Operation):
-    """
-    Returns the value of inverse trigonometric function `arccos`.
-    """
-
-    def __init__(self, value):
-        super().__init__(dtype=float)
-
-        def _repr(value):
-            return f'ACOS({str(value)})'
-
-        self._repr = _repr(value)
-
-    def __str__(self):
-        return self._repr
 
 
 def acos(value):
@@ -745,30 +581,16 @@ def acos(value):
 
     See Also
     --------
-    :py:data:`onetick.py.math.pi`
+    :py:func:`onetick.py.math.pi`
     :py:func:`onetick.py.math.cos`
     """
-    return _Acos(value)
+    return _Operation(
+        op_func=lambda v: (f'ACOS({value2str(v)})', float),
+        op_params=[value],
+    )
 
 
 arccos = acos
-
-
-class _Atan(_Operation):
-    """
-    Returns the value of inverse trigonometric function `arctan`.
-    """
-
-    def __init__(self, value):
-        super().__init__(dtype=float)
-
-        def _repr(value):
-            return f'ATAN({str(value)})'
-
-        self._repr = _repr(value)
-
-    def __str__(self):
-        return self._repr
 
 
 def atan(value):
@@ -801,30 +623,16 @@ def atan(value):
 
     See Also
     --------
-    :py:data:`onetick.py.math.pi`
+    :py:func:`onetick.py.math.pi`
     :py:func:`onetick.py.math.tan`
     """
-    return _Atan(value)
+    return _Operation(
+        op_func=lambda v: (f'ATAN({value2str(v)})', float),
+        op_params=[value],
+    )
 
 
 arctan = atan
-
-
-class _Acot(_Operation):
-    """
-    Returns the value of inverse trigonometric function `arccot`.
-    """
-
-    def __init__(self, value):
-        super().__init__(dtype=float)
-
-        def _repr(value):
-            return f'ACOT({str(value)})'
-
-        self._repr = _repr(value)
-
-    def __str__(self):
-        return self._repr
 
 
 def acot(value):
@@ -857,35 +665,21 @@ def acot(value):
 
     See Also
     --------
-    :py:data:`onetick.py.math.pi`
+    :py:func:`onetick.py.math.pi`
     :py:func:`onetick.py.math.cot`
     """
-    return _Acot(value)
+    return _Operation(
+        op_func=lambda v: (f'ACOT({value2str(v)})', float),
+        op_params=[value],
+    )
 
 
 arccot = acot
 
 
-class _Mod(_Operation):
-    """
-    Implements the remainder from dividing ``value1`` by ``value2``
-    """
-
-    def __init__(self, value1, value2):
-        super().__init__(dtype=int)
-
-        def _repr(value1, value2):
-            return f'MOD({str(value1)}, {str(value2)})'
-
-        self._repr = _repr(value1, value2)
-
-    def __str__(self):
-        return self._repr
-
-
 def mod(value1, value2):
     """
-    Computes the remainder from dividing ``value1`` by ``value2``
+    Computes the remainder from dividing ``value1`` by ``value2``.
 
     Parameters
     ----------
@@ -904,29 +698,69 @@ def mod(value1, value2):
             Time    A  MOD
     0 2003-12-01  100   28
     """
-    return _Mod(value1, value2)
+    return _Operation(
+        op_func=lambda v1, v2: (f'MOD({value2str(v1)}, {value2str(v2)})', int),
+        op_params=[value1, value2],
+    )
 
 
-class _Floor(_Operation):
+def div(value1, value2):
     """
-    Returns a long integer value representing the largest integer that is less than or equal to the `value`.
+    Computes the quotient by dividing ``value1`` by ``value2``.
+
+    Parameters
+    ----------
+    value1: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value2: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+
+    Returns
+    -------
+        :py:class:`~onetick.py.Operation`
+
+    Examples
+    --------
+    >>> data = otp.Tick(A=100)
+    >>> data['DIV'] = otp.math.div(data['A'], 72)
+    >>> otp.run(data)
+            Time    A  DIV
+    0 2003-12-01  100    1
     """
+    return _Operation(
+        op_func=lambda v1, v2: (f'DIV({value2str(v1)}, {value2str(v2)})', int),
+        op_params=[value1, value2],
+    )
 
-    def __init__(self, value):
-        super().__init__(dtype=int)
 
-        def _repr(val):
-            return f'FLOOR({str(val)})'
+def gcd(value1, value2):
+    """
+    Computes the greatest common divisor between ``value1`` and ``value2``.
 
-        self._repr = _repr(value)
+    Parameters
+    ----------
+    value1: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value2: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
 
-    def __str__(self):
-        return self._repr
+    Returns
+    -------
+        :py:class:`~onetick.py.Operation`
+
+    Examples
+    --------
+    >>> data = otp.Tick(A=99)
+    >>> data['GCD'] = otp.math.gcd(data['A'], 72)
+    >>> otp.run(data)
+            Time   A  GCD
+    0 2003-12-01  99    9
+    """
+    return _Operation(
+        op_func=lambda v1, v2: (f'GCD({value2str(v1)}, {value2str(v2)})', int),
+        op_params=[value1, value2],
+    )
 
 
 def floor(value):
     """
-    Returns a long integer value representing the largest integer that is less than or equal to the `value`.
+    Returns a long integer value representing the largest integer that is less than or equal to the ``value``.
 
     Parameters
     ----------
@@ -938,10 +772,55 @@ def floor(value):
 
     Examples
     --------
-    >>> data = otp.Tick(A=1.2)
+    >>> data = otp.Ticks(A=[-1.7, -1.5, -1.2, -1, 0 , 1, 1.2, 1.5, 1.7])
     >>> data['FLOOR'] = otp.math.floor(data['A'])
     >>> otp.run(data)
-            Time    A  FLOOR
-    0 2003-12-01  1.2      1
+                         Time    A  FLOOR
+    0 2003-12-01 00:00:00.000 -1.7     -2
+    1 2003-12-01 00:00:00.001 -1.5     -2
+    2 2003-12-01 00:00:00.002 -1.2     -2
+    3 2003-12-01 00:00:00.003 -1.0     -1
+    4 2003-12-01 00:00:00.004  0.0      0
+    5 2003-12-01 00:00:00.005  1.0      1
+    6 2003-12-01 00:00:00.006  1.2      1
+    7 2003-12-01 00:00:00.007  1.5      1
+    8 2003-12-01 00:00:00.008  1.7      1
     """
-    return _Floor(value)
+    return _Operation(
+        op_func=lambda v: (f'FLOOR({value2str(v)})', int),
+        op_params=[value],
+    )
+
+
+def ceil(value):
+    """
+    Returns a long integer value representing the smallest integer that is greater than or equal to the ``value``.
+
+    Parameters
+    ----------
+    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+
+    Returns
+    -------
+        :py:class:`~onetick.py.Operation`
+
+    Examples
+    --------
+    >>> data = otp.Ticks(A=[-1.7, -1.5, -1.2, -1, 0 , 1, 1.2, 1.5, 1.7])
+    >>> data['CEIL'] = otp.math.ceil(data['A'])
+    >>> otp.run(data)
+                         Time    A  CEIL
+    0 2003-12-01 00:00:00.000 -1.7    -1
+    1 2003-12-01 00:00:00.001 -1.5    -1
+    2 2003-12-01 00:00:00.002 -1.2    -1
+    3 2003-12-01 00:00:00.003 -1.0    -1
+    4 2003-12-01 00:00:00.004  0.0     0
+    5 2003-12-01 00:00:00.005  1.0     1
+    6 2003-12-01 00:00:00.006  1.2     2
+    7 2003-12-01 00:00:00.007  1.5     2
+    8 2003-12-01 00:00:00.008  1.7     2
+    """
+    return _Operation(
+        op_func=lambda v: (f'CEIL({value2str(v)})', int),
+        op_params=[value],
+    )

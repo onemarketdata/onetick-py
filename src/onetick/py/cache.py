@@ -113,7 +113,7 @@ def create_cache(
         The cache will be cleared every X seconds, triggering new query executions when data is requested.
     tick_type: str
         Tick type.
-    symbol: str, list of str, list of otq.Symbol, :py:class:`onetick.py.Source`, pd.DataFrame, optional
+    symbol: str, list of str, list of otq.Symbol, :py:class:`onetick.py.Source`, :pandas:`pandas.DataFrame`, optional
         ``symbols`` parameter of ``otp.run()``.
     db: str
         Database.
@@ -259,7 +259,7 @@ def delete_cache(
         :func:`<onetick.py.create_cache>`.
     tick_type: str
         Tick type.
-    symbol: str, list of str, list of otq.Symbol, :py:class:`onetick.py.Source`, pd.DataFrame, optional
+    symbol: str, list of str, list of otq.Symbol, :py:class:`onetick.py.Source`, :pandas:`pandas.DataFrame`, optional
         ``symbols`` parameter of ``otp.run()``.
     db: str
         Database.
@@ -329,7 +329,7 @@ def modify_cache_config(
         New value of configuration parameter. Will be converted to string.
     tick_type: str
         Tick type.
-    symbol: str, list of str, list of otq.Symbol, :py:class:`onetick.py.Source`, pd.DataFrame, optional
+    symbol: str, list of str, list of otq.Symbol, :py:class:`onetick.py.Source`, :pandas:`pandas.DataFrame`, optional
         ``symbols`` parameter of ``otp.run()``.
     db: str
         Database.

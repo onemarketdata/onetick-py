@@ -214,9 +214,15 @@ from onetick.py.core.per_tick_script import (
 )
 from onetick.py.callback import CallbackBase
 from onetick.py.sql import SqlQuery
-from onetick.py.run import run
+from onetick.py.run import run, run_async
 from onetick.py.math import rand, now
-from onetick.py.misc import bit_and, bit_or, bit_at, bit_xor, bit_not, hash_code, get_symbology_mapping
+from onetick.py.misc import (
+    bit_and, bit_or, bit_at, bit_xor, bit_not,
+    hash_code,
+    get_symbology_mapping,
+    get_onetick_version,
+    get_username,
+)
 from onetick.py.core.column import Column
 from onetick.py.core.column_operations.base import Operation, Expr as expr, Raw as raw, OnetickParameter as param
 from onetick.py.core.per_tick_script import remote, Once, once, logf, throw_exception

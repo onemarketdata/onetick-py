@@ -32,6 +32,28 @@ def parse_datetime(s):
     )
 
 
+def parse_bool(value) -> Optional[bool]:
+    str_value = str(value).lower()
+    if str_value in ('1', 'true', 'yes'):
+        return True
+    elif str_value in ('0', 'false', 'no'):
+        return False
+    else:
+        return None
+
+
+def parse_true(value) -> bool:
+    return parse_bool(value) is True
+
+
+def parse_bool_or_string(value) -> Union[bool, str]:
+    parsed_value = parse_bool(value)
+    if parsed_value is not None:
+        return parsed_value
+    else:
+        return str(value)
+
+
 def _env_func_concurrency(value: str) -> Optional[int]:
     if not value:
         return None
@@ -197,7 +219,7 @@ class OtpShowStackInfoProperty(OtpProperty):
     """
     @staticmethod
     def parser(value):
-        return str(value).lower() in ('1', 'true', 'yes')
+        return parse_true(value)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -492,7 +514,7 @@ class Config:
         base_default=False,
         allowed_types=[bool],
         env_var_name='OTP_PRESORT_FORCE_DEFAULT_CONCURRENCY',
-        env_var_func=OtpShowStackInfoProperty.parser,
+        env_var_func=parse_true,
     )
 
     # default batch size is set to 0, so the number of symbols in batch is not limited
@@ -623,10 +645,14 @@ class Config:
     )
 
     trusted_certificates_file = OtpProperty(
-        description='Path to the file with list of trusted Certificate Authority certificates for WebAPI requests.',
+        description='Either a boolean, in which case it controls whether we verify the server TLS certificate '
+                    'or a string with the path to the file with list of '
+                    'trusted Certificate Authority certificates for WebAPI requests. '
+                    'Default behaviour implies verification is enabled.',
         base_default=None,
-        allowed_types=str,
+        allowed_types=(bool, str),
         env_var_name='OTP_SSL_CERT_FILE',
+        env_var_func=parse_bool_or_string,
     )
 
     max_expected_ticks_per_symbol = OtpProperty(
@@ -641,7 +667,7 @@ class Config:
         base_default=False,
         allowed_types=(str, bool, int),
         env_var_name='OTP_SHOW_STACK_INFO',
-        env_var_func=OtpShowStackInfoProperty.parser,
+        env_var_func=parse_true,
     )
 
     log_symbol = OtpProperty(
@@ -651,7 +677,7 @@ class Config:
         base_default=False,
         allowed_types=(str, bool, int),
         env_var_name='OTP_LOG_SYMBOL',
-        env_var_func=OtpShowStackInfoProperty.parser,
+        env_var_func=parse_true,
     )
 
     ignore_ticks_in_unentitled_time_range = OtpProperty(
@@ -659,7 +685,7 @@ class Config:
         base_default=False,
         env_var_name='OTP_IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE',
         allowed_types=(str, bool, int),
-        env_var_func=OtpShowStackInfoProperty.parser,
+        env_var_func=parse_true,
     )
 
     main_query_generated_filename = OtpProperty(
@@ -685,7 +711,7 @@ class Config:
         base_default=False,
         env_var_name='OTP_OTQ_DEBUG_MODE',
         allowed_types=(str, bool, int),
-        env_var_func=OtpShowStackInfoProperty.parser,
+        env_var_func=parse_true,
     )
 
     allow_lowercase_in_saved_fields = OtpProperty(
@@ -702,7 +728,7 @@ class Config:
         base_default=True,
         env_var_name='OTP_CLEAN_UP_TMP_FILES',
         allowed_types=(str, bool, int),
-        env_var_func=OtpShowStackInfoProperty.parser,
+        env_var_func=parse_true,
     )
 
     default_schema_policy = OtpProperty(

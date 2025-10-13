@@ -1,3 +1,4 @@
+import itertools
 import warnings
 from typing import Union, Iterable, Tuple, Optional, Any, Literal
 from datetime import date as dt_date, datetime, timedelta
@@ -7,6 +8,7 @@ from dateutil.tz import gettz
 
 import onetick.py as otp
 from onetick.py import configuration, utils
+from onetick.py import types as ott
 from onetick.py.compatibility import is_native_plus_zstd_supported, is_show_db_list_show_description_supported
 from onetick.py.core import db_constants
 from onetick.py.otq import otq
@@ -909,10 +911,12 @@ class DB:
 
 
 def databases(
-    context=utils.default, derived: bool = False, readable_only: bool = True, fetch_description: bool = False,
-) -> dict[str, DB]:
+    context=utils.default, derived: bool = False, readable_only: bool = True,
+    fetch_description: Optional[bool] = None,
+    as_table: bool = False,
+) -> Union[dict[str, DB], pd.DataFrame]:
     """
-    Gets all available databases in the ``context``
+    Gets all available databases in the ``context``.
 
     Parameters
     ----------
@@ -931,6 +935,9 @@ def databases(
     fetch_description: bool
         If set to True, retrieves descriptions for databases and puts them into ``description`` property of
         :py:class:`~onetick.py.DB` objects in a returned dict.
+    as_table: bool
+        If False (default), this function returns a dictionary of database names and database objects.
+        If True, returns a :pandas:`pandas.DataFrame` table where each row contains the info for each database.
 
     See also
     --------
@@ -940,50 +947,66 @@ def databases(
 
     Returns
     -------
-    dict
-        Dict where keys are database names and values are :class:`DB <onetick.py.db._inspection.DB>` objects
-        with ``context`` specified.
+    Dict where keys are database names and values are :class:`DB <onetick.py.db._inspection.DB>` objects
+    or :pandas:`pandas.DataFrame` object depending on ``as_table`` parameter.
+
+    Examples
+    --------
+
+    Get the dictionary of database names and objects:
+
+    >>> otp.databases()  # doctest: +SKIP
+    {'ABU_DHABI': <onetick.py.db._inspection.DB at 0x7f9413a5e8e0>,
+     'ABU_DHABI_BARS': <onetick.py.db._inspection.DB at 0x7f9413a5ef40>,
+     'ABU_DHABI_DAILY': <onetick.py.db._inspection.DB at 0x7f9413a5eac0>,
+     'ALPHA': <onetick.py.db._inspection.DB at 0x7f9413a5e940>,
+     'ALPHA_X': <onetick.py.db._inspection.DB at 0x7f9413a5e490>,
+     ...
+    }
+
+    Get a table with database info:
+
+    >>> otp.databases(as_table=True)  # doctest: +SKIP
+               Time            DB_NAME  READ_ACCESS  WRITE_ACCESS         ...
+    0    2003-01-01          ABU_DHABI            1             0         ...
+    1    2003-01-01     ABU_DHABI_BARS            1             1         ...
+    2    2003-01-01    ABU_DHABI_DAILY            1             1         ...
+    3    2003-01-01              ALPHA            1             1         ...
+    4    2003-01-01            ALPHA_X            1             1         ...
+    ...         ...                ...          ...           ...         ...
     """
-    if fetch_description and not is_show_db_list_show_description_supported():
-        fetch_description = False
+    show_db_list_kwargs = {}
+    if fetch_description is not None and is_show_db_list_show_description_supported() and (
+        'show_description' in otq.ShowDbList.Parameters.list_parameters()
+    ):
+        show_db_list_kwargs['show_description'] = fetch_description
 
+    node = otq.AccessInfo(info_type='DATABASES', show_for_all_users=False, deep_scan=True).tick_type('ANY')
+    # for some reason ACCESS_INFO sometimes return several ticks
+    # for the same database with different SERVER_ADDRESS values
+    # so we get only the first tick
+    node = (
+        node >> otq.NumTicks(is_running_aggr=True, group_by='DB_NAME',
+                             all_fields_for_sliding=False, output_field_name='NUM_TICKS')
+        >> otq.WhereClause(where='NUM_TICKS = 1')
+        >> otq.Passthrough('NUM_TICKS', drop_fields=True)
+    )
     if readable_only:
-        node = (
-            otq.AccessInfo(info_type='DATABASES', show_for_all_users=False, deep_scan=True).tick_type('ANY')
-            >> otq.Passthrough('DB_NAME,READ_ACCESS')
-            >> otq.WhereClause(where='READ_ACCESS = 1')
-        )
+        node = node >> otq.WhereClause(where='READ_ACCESS = 1')
 
-        if fetch_description:
-            join = otq.Join(
-                left_source='LEFT', join_type='LEFT_OUTER', join_criteria='LEFT.DB_NAME = RIGHT.DATABASE_NAME'
-            )
+    left = node.set_node_name('LEFT')
+    right = otq.ShowDbList(**show_db_list_kwargs).tick_type('ANY').set_node_name('RIGHT')
+    join = otq.Join(
+        left_source='LEFT', join_type='INNER', join_criteria='LEFT.DB_NAME = RIGHT.DATABASE_NAME',
+        add_source_prefix=False,
+    )
+    left >> join << right  # pylint: disable=pointless-statement
+    node = join >> otq.Passthrough('LEFT.TIMESTAMP,RIGHT.TIMESTAMP,DATABASE_NAME', drop_fields=True)
 
-            _ = node.set_node_name('LEFT') >> join
-            _ = (
-                otq.ShowDbList(show_description=fetch_description).tick_type('ANY')
-                >> otq.Passthrough('DATABASE_NAME,DESCRIPTION').set_node_name('RIGHT')
-                >> join
-            )
-
-            node = (
-                join >> otq.Passthrough('LEFT.DB_NAME,RIGHT.DESCRIPTION')
-                >> otq.RenameFields("LEFT.DB_NAME=DB_NAME,RIGHT.DESCRIPTION=DESCRIPTION")
-            )
-    else:
-        db_list_kwargs = {}
-        output_fields = ['DATABASE_NAME']
-        if fetch_description:
-            db_list_kwargs['show_description'] = fetch_description
-            output_fields.append('DESCRIPTION')
-
-        node = (
-            otq.ShowDbList(**db_list_kwargs).tick_type('ANY')
-            >> otq.Passthrough(','.join(output_fields))
-        )
-
-    if not fetch_description:
-        node = node >> otq.AddField('DESCRIPTION', '""')
+    # times bigger than datetime.max are not representable in python
+    max_dt = ott.value2str(datetime.max)
+    node = node >> otq.UpdateFields(set=f'INTERVAL_START={max_dt}', where=f'INTERVAL_START > {max_dt}')
+    node = node >> otq.UpdateFields(set=f'INTERVAL_END={max_dt}', where=f'INTERVAL_END > {max_dt}')
 
     dbs = otp.run(node,
                   symbols='LOCAL::',
@@ -992,15 +1015,20 @@ def databases(
                   end=db_constants.DEFAULT_END_DATE,
                   context=context)
 
+    if as_table:
+        return dbs
+
     # WebAPI returns empty DataFrame (no columns) if there are no databases
     if len(dbs) == 0:
         return {}
 
-    db_list = list(dbs['DB_NAME'] if readable_only else dbs['DATABASE_NAME'])
-    merged_db_list = list(zip(db_list, dbs['DESCRIPTION']))
+    db_list = list(dbs['DB_NAME'])
+    db_description_list = dbs['DESCRIPTION'] if 'DESCRIPTION' in dbs else itertools.repeat('')
+    merged_db_list = list(zip(db_list, db_description_list))
 
     db_dict = {
-        db_name: DB(db_name, description=db_description, context=context) for db_name, db_description in merged_db_list
+        db_name: DB(db_name, description=db_description, context=context)
+        for db_name, db_description in merged_db_list
     }
 
     if derived:
@@ -1018,6 +1046,7 @@ def derived_databases(
     selection_criteria='all',
     db=None,
     db_discovery_scope='query_host_only',
+    as_table: bool = False,
 ) -> dict[str, DB]:
     """
     Gets available derived databases.
@@ -1052,6 +1081,9 @@ def derived_databases(
         an attempt will be performed to get derived databases from all reachable hosts.
         When *query_host_only* is specified,
         only derived databases from the host on which the query is performed will be returned.
+    as_table: bool
+        If False (default), this function returns a dictionary of database names and database objects.
+        If True, returns a :pandas:`pandas.DataFrame` table where each row contains the info for each database.
 
     See also
     --------
@@ -1059,9 +1091,8 @@ def derived_databases(
 
     Returns
     -------
-    dict
-        Dict where keys are database names and values are :class:`DB <onetick.py.db._inspection.DB>` objects
-        with ``context`` specified.
+    Dict where keys are database names and values are :class:`DB <onetick.py.db._inspection.DB>` objects
+    or :pandas:`pandas.DataFrame` object depending on ``as_table`` parameter.
     """
     if start and end:
         time_range = otq.ShowDerivedDbList.TimeRange.QUERY_TIME_INTERVAL
@@ -1089,6 +1120,8 @@ def derived_databases(
     ep = ep.tick_type('ANY')
     db = db or 'LOCAL'
     dbs = otp.run(ep, symbols=f'{db}::', start=start, end=end, context=context)
+    if as_table:
+        return dbs
     if len(dbs) == 0:
         return {}
     db_list = list(dbs['DERIVED_DB_NAME'])

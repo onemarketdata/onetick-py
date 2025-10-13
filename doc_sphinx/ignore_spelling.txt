@@ -17,6 +17,7 @@ combinations
 config
 configs
 configurating
+coroutine
 csv
 dataframe
 datetime
@@ -54,6 +55,7 @@ inplace
 instantiate
 int
 ints
+interruptable
 ip
 Jira
 json

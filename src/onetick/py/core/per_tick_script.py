@@ -1095,6 +1095,8 @@ class CaseExpressionParser(ExpressionParser):
             try:
                 return super().call(expr)
             except Exception:
+                if orig_err is not None:
+                    raise err from orig_err
                 raise ValueError(
                     f"Can't convert function '{astunparse(expr)}' to CASE() expression."
                 ) from err

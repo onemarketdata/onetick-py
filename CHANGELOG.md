@@ -10,6 +10,28 @@
 
 ### Removed
 
+## [1.171.0] - 2025-10-13
+
+### Added
+
+- Added `otp.math.ceil`, `otp.math.div`, `otp.math.frand`, `otp.math.gcd`
+- Added `otp.get_onetick_version`, `otp.get_username`
+- Added parameter `as_table` for `otp.databases` and `otp.derived_databases`
+- Added `otp.run_async`
+
+### Changed
+
+- Test `latest` OneTick build in `webapi-compatibility-latest` job
+- Changed `otp.math.max` and `otp.math.min` implementations
+
+### Fixed
+
+- Do not upload `public` directory to GitHub
+- Fixed using `trusted_certificates_file` parameter on latest WebAPI versions
+- Fixed objects returned by `otp.math` functions
+
+### Removed
+
 ## [1.170.0] - 2025-10-06
 
 ### Added

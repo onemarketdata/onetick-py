@@ -3,19 +3,6 @@ from onetick.py.core.column_operations.base import _Operation
 from onetick.py.types import value2str, string
 
 
-class _BitAndOperator(_Operation):
-    def __init__(self, value1, value2):
-        super().__init__(dtype=int)
-
-        def _repr(_value1, _value2):
-            return f'BIT_AND({str(_value1)}, {str(_value2)})'
-
-        self._repr = _repr(value1, value2)
-
-    def __str__(self):
-        return self._repr
-
-
 def bit_and(value1, value2):
     """
     Performs the logical AND operation on each pair of corresponding bits of the parameters.
@@ -55,20 +42,10 @@ def bit_and(value1, value2):
             Time  A  AND
     0 2003-12-01  1    2
     """
-    return _BitAndOperator(value1, value2)
-
-
-class _BitOrOperator(_Operation):
-    def __init__(self, value1, value2):
-        super().__init__(dtype=int)
-
-        def _repr(_value1, _value2):
-            return f'BIT_OR({str(_value1)}, {str(_value2)})'
-
-        self._repr = _repr(value1, value2)
-
-    def __str__(self):
-        return self._repr
+    return _Operation(
+        op_func=lambda v1, v2: (f'BIT_AND({value2str(v1)}, {value2str(v2)})', int),
+        op_params=[value1, value2],
+    )
 
 
 def bit_or(value1, value2):
@@ -110,7 +87,10 @@ def bit_or(value1, value2):
             Time  A  OR
     0 2003-12-01  1   3
     """
-    return _BitOrOperator(value1, value2)
+    return _Operation(
+        op_func=lambda v1, v2: (f'BIT_OR({value2str(v1)}, {value2str(v2)})', int),
+        op_params=[value1, value2],
+    )
 
 
 def bit_xor(value1, value2):
@@ -152,7 +132,10 @@ def bit_xor(value1, value2):
             Time  A  XOR
     0 2003-12-01  1    1
     """
-    return _Operation(dtype=int, op_str=f'BIT_XOR({str(value1)}, {str(value2)})')
+    return _Operation(
+        op_func=lambda v1, v2: (f'BIT_XOR({value2str(v1)}, {value2str(v2)})', int),
+        op_params=[value1, value2],
+    )
 
 
 def bit_not(value):
@@ -193,7 +176,10 @@ def bit_not(value):
             Time  A  NOT
     0 2003-12-01  1   -3
     """
-    return _Operation(dtype=int, op_str=f'BIT_NOT({str(value)})')
+    return _Operation(
+        op_func=lambda v: (f'BIT_NOT({value2str(v)})', int),
+        op_params=[value],
+    )
 
 
 def bit_at(value, index):
@@ -235,7 +221,10 @@ def bit_at(value, index):
             Time  A  AT
     0 2003-12-01  1   0
     """
-    return _Operation(dtype=int, op_str=f'BIT_AT({str(value)}, {str(index)})')
+    return _Operation(
+        op_func=lambda v, i: (f'BIT_AT({value2str(v)}, {value2str(i)})', int),
+        op_params=[value, index],
+    )
 
 
 class _HashCodeOperator(_Operation):
@@ -262,18 +251,14 @@ class _HashCodeOperator(_Operation):
 
         dtype = self.HASH_TYPES[hash_type]
 
-        super().__init__(dtype=dtype)
-
         def _repr(_value, _hash_type):
             _value = value2str(_value)
             _hash_type = value2str(_hash_type.upper())
 
-            return f'COMPUTE_HASH_CODE_STR({_value}, {_hash_type})'
+            return f'COMPUTE_HASH_CODE_STR({_value}, {_hash_type})', dtype
 
-        self._repr = _repr(value, hash_type)
-
-    def __str__(self):
-        return self._repr
+        super().__init__(op_func=_repr,
+                         op_params=[value, hash_type])
 
 
 def hash_code(value, hash_type):
@@ -435,4 +420,51 @@ def get_symbology_mapping(dest_symbology, src_symbology=None, symbol=None, times
         op_func=op_func,
         op_params=[dest_symbology, src_symbology, symbol, timestamp],
         dtype=str,
+    )
+
+
+def get_onetick_version():
+    """
+    Returns the string with the build name of OneTick.
+    Build string may have different format depending on OneTick version.
+
+    Note
+    ----
+    The version is returned from the server where the query executes.
+    Usually it's the same server where the database specified in :func:`otp.run <onetick.py.run>` resides.
+
+    Returns
+    -------
+    :py:class:`~onetick.py.Operation`
+
+    Examples
+    --------
+    >>> data = otp.Tick(VERSION=otp.get_onetick_version())
+    >>> otp.run(data, symbols='US_COMP::')  # doctest: +SKIP
+            Time                                      VERSION
+    0 2003-12-01  BUILD_rel_20250727_update2 (20250727120000)
+    """
+    return _Operation(
+        op_func=lambda: ('FORMATMESSAGE("%1% (%2%)", GET_ONETICK_RELEASE(), GET_ONETICK_VERSION())', str),
+    )
+
+
+def get_username():
+    """
+    Returns the string with the name of the user executing the query
+    and authenticated login name of the user.
+
+    Returns
+    -------
+    :py:class:`~onetick.py.Operation`
+
+    Examples
+    --------
+    >>> data = otp.Tick(USER=otp.get_username())
+    >>> otp.run(data)  # doctest: +SKIP
+            Time               USER
+    0 2003-12-01  onetick (onetick)
+    """
+    return _Operation(
+        op_func=lambda: ('FORMATMESSAGE("%1% (%2%)", GETUSER(), GET_AUTHENTICATED_USERNAME())', str),
     )

@@ -10,6 +10,6 @@ def test_time_expressions(session):
                      running=True)
     query = query.split('::')[0]
     text = Path(query).read_text()
-    assert "start_expression = now()" in text
-    assert "end_expression = DATEADD('second', (5), (now()), _TIMEZONE)" in text
+    assert "start_expression = NOW()" in text
+    assert "end_expression = DATEADD('second', (5), (NOW()), _TIMEZONE)" in text
     assert "RunningQuery = 1" in text

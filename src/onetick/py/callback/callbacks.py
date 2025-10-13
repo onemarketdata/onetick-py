@@ -18,7 +18,7 @@ class LogCallback(CallbackBase):
 
 class ManualDataframeCallback(CallbackBase):
     """
-    This callback class can be used to generate the same pandas.DataFrame result as in otp.run.
+    This callback class can be used to generate the same :pandas:`pandas.DataFrame` result as in otp.run.
     Unlike otp.run, here result is constructed manually, one tick at a time.
     This may lead to lower memory usage in some cases.
     See task PY-863 for details.
