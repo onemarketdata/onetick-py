@@ -760,7 +760,12 @@ def gcd(value1, value2):
 
 def floor(value):
     """
-    Returns a long integer value representing the largest integer that is less than or equal to the ``value``.
+    Returns a float value representing the largest number that is less than or equal to the ``value``.
+
+    Note
+    ----
+    Rounding :class:`otp.nan <onetick.py.nan>` returns NaN
+    and rounding :class:`otp.inf <onetick.py.inf>` returns Infinity.
 
     Parameters
     ----------
@@ -772,29 +777,41 @@ def floor(value):
 
     Examples
     --------
-    >>> data = otp.Ticks(A=[-1.7, -1.5, -1.2, -1, 0 , 1, 1.2, 1.5, 1.7])
+    >>> data = otp.Ticks(A=[-1.7, -1.5, -1.2, -1, 0 , 1, 1.2, 1.5, 1.7, -otp.inf, otp.inf, otp.nan])
     >>> data['FLOOR'] = otp.math.floor(data['A'])
     >>> otp.run(data)
-                         Time    A  FLOOR
-    0 2003-12-01 00:00:00.000 -1.7     -2
-    1 2003-12-01 00:00:00.001 -1.5     -2
-    2 2003-12-01 00:00:00.002 -1.2     -2
-    3 2003-12-01 00:00:00.003 -1.0     -1
-    4 2003-12-01 00:00:00.004  0.0      0
-    5 2003-12-01 00:00:00.005  1.0      1
-    6 2003-12-01 00:00:00.006  1.2      1
-    7 2003-12-01 00:00:00.007  1.5      1
-    8 2003-12-01 00:00:00.008  1.7      1
+                          Time     A  FLOOR
+    0  2003-12-01 00:00:00.000  -1.7   -2.0
+    1  2003-12-01 00:00:00.001  -1.5   -2.0
+    2  2003-12-01 00:00:00.002  -1.2   -2.0
+    3  2003-12-01 00:00:00.003  -1.0   -1.0
+    4  2003-12-01 00:00:00.004   0.0    0.0
+    5  2003-12-01 00:00:00.005   1.0    1.0
+    6  2003-12-01 00:00:00.006   1.2    1.0
+    7  2003-12-01 00:00:00.007   1.5    1.0
+    8  2003-12-01 00:00:00.008   1.7    1.0
+    9  2003-12-01 00:00:00.009  -inf   -inf
+    10 2003-12-01 00:00:00.010   inf    inf
+    11 2003-12-01 00:00:00.011   NaN    NaN
     """
+    def fun(v):
+        v = value2str(v)
+        return f'CASE({v}, NAN(), NAN(), INFINITY(), INFINITY(), -INFINITY(), -INFINITY(), FLOOR({v}) * 1.0)', float
+
     return _Operation(
-        op_func=lambda v: (f'FLOOR({value2str(v)})', int),
+        op_func=fun,
         op_params=[value],
     )
 
 
 def ceil(value):
     """
-    Returns a long integer value representing the smallest integer that is greater than or equal to the ``value``.
+    Returns a float value representing the smallest number that is greater than or equal to the ``value``.
+
+    Note
+    ----
+    Rounding :class:`otp.nan <onetick.py.nan>` returns NaN
+    and rounding :class:`otp.inf <onetick.py.inf>` returns Infinity.
 
     Parameters
     ----------
@@ -806,21 +823,113 @@ def ceil(value):
 
     Examples
     --------
-    >>> data = otp.Ticks(A=[-1.7, -1.5, -1.2, -1, 0 , 1, 1.2, 1.5, 1.7])
+    >>> data = otp.Ticks(A=[-1.7, -1.5, -1.2, -1, 0 , 1, 1.2, 1.5, 1.7, -otp.inf, otp.inf, otp.nan])
     >>> data['CEIL'] = otp.math.ceil(data['A'])
     >>> otp.run(data)
-                         Time    A  CEIL
-    0 2003-12-01 00:00:00.000 -1.7    -1
-    1 2003-12-01 00:00:00.001 -1.5    -1
-    2 2003-12-01 00:00:00.002 -1.2    -1
-    3 2003-12-01 00:00:00.003 -1.0    -1
-    4 2003-12-01 00:00:00.004  0.0     0
-    5 2003-12-01 00:00:00.005  1.0     1
-    6 2003-12-01 00:00:00.006  1.2     2
-    7 2003-12-01 00:00:00.007  1.5     2
-    8 2003-12-01 00:00:00.008  1.7     2
+                          Time     A  CEIL
+    0  2003-12-01 00:00:00.000  -1.7  -1.0
+    1  2003-12-01 00:00:00.001  -1.5  -1.0
+    2  2003-12-01 00:00:00.002  -1.2  -1.0
+    3  2003-12-01 00:00:00.003  -1.0  -1.0
+    4  2003-12-01 00:00:00.004   0.0   0.0
+    5  2003-12-01 00:00:00.005   1.0   1.0
+    6  2003-12-01 00:00:00.006   1.2   2.0
+    7  2003-12-01 00:00:00.007   1.5   2.0
+    8  2003-12-01 00:00:00.008   1.7   2.0
+    9  2003-12-01 00:00:00.009  -inf  -inf
+    10 2003-12-01 00:00:00.010   inf   inf
+    11 2003-12-01 00:00:00.011   NaN   NaN
     """
+    def fun(v):
+        v = value2str(v)
+        return f'CASE({v}, NAN(), NAN(), INFINITY(), INFINITY(), -INFINITY(), -INFINITY(), CEIL({v}) * 1.0)', float
+
     return _Operation(
-        op_func=lambda v: (f'CEIL({value2str(v)})', int),
+        op_func=fun,
         op_params=[value],
+    )
+
+
+def round(value, precision=0, rounding_method='upward'):
+    """
+    Rounds value with specified ``precision`` and ``rounding_method``.
+
+    Rounding :class:`otp.nan <onetick.py.nan>` returns NaN
+    and rounding :class:`otp.inf <onetick.py.inf>` returns Infinity.
+
+    Parameters
+    ----------
+    precision: int
+        Number from -12 to 12.
+        Positive precision is precision after the floating point.
+        Negative precision is precision before the floating point (and the fraction part is dropped in this case).
+    rounding_method: str
+        Used for values that are exactly half-way between two integers (when the fraction part of value is exactly 0.5).
+        Available values are **upward**, **downward**, **towards_zero**, **away_from_zero**.
+        Default is **upward**.
+
+    Examples
+    --------
+
+    Different rounding methods produce different results for values that are exactly half-way between two integers:
+
+    >>> t = otp.Ticks(A=[-123.45, 123.45, -123.4, 123.6])
+    >>> t['UPWARD'] = otp.math.round(t['A'], precision=1, rounding_method='upward')
+    >>> t['DOWNWARD'] = otp.math.round(t['A'], precision=1, rounding_method='downward')
+    >>> t['TOWARDS_ZERO'] = otp.math.round(t['A'], precision=1, rounding_method='towards_zero')
+    >>> t['AWAY_FROM_ZERO'] = otp.math.round(t['A'], precision=1, rounding_method='away_from_zero')
+    >>> otp.run(t).head(2)
+                         Time       A  UPWARD  DOWNWARD  TOWARDS_ZERO  AWAY_FROM_ZERO
+    0 2003-12-01 00:00:00.000 -123.45  -123.4    -123.5        -123.4          -123.5
+    1 2003-12-01 00:00:00.001  123.45   123.5     123.4         123.4           123.5
+
+    Note that for other cases all methods produce the same results:
+
+    >>> otp.run(t).tail(2)
+                         Time      A  UPWARD  DOWNWARD  TOWARDS_ZERO  AWAY_FROM_ZERO
+    2 2003-12-01 00:00:00.002 -123.4  -123.4    -123.4        -123.4          -123.4
+    3 2003-12-01 00:00:00.003  123.6   123.6     123.6         123.6           123.6
+
+    Positive precision truncates to the number of digits *after* floating point:
+
+    >>> t = otp.Ticks(A=[-123.45, 123.45])
+    >>> t['ROUND1'] = otp.math.round(t['A'], 1)
+    >>> t['ROUND2'] = otp.math.round(t['A'], 2)
+    >>> otp.run(t)
+                            Time       A  ROUND1  ROUND2
+    0 2003-12-01 00:00:00.000 -123.45  -123.4 -123.45
+    1 2003-12-01 00:00:00.001  123.45   123.5  123.45
+
+    Negative precision truncates to the number of digits *before* floating point
+    (and the fraction part is dropped in this case):
+
+    >>> t = otp.Ticks(A=[-123.45, 123.45])
+    >>> t['ROUND_M1'] = otp.math.round(t['A'], -1)
+    >>> t['ROUND_M2'] = otp.math.round(t['A'], -2)
+    >>> otp.run(t)
+                            Time       A  ROUND_M1  ROUND_M2
+    0 2003-12-01 00:00:00.000 -123.45    -120.0    -100.0
+    1 2003-12-01 00:00:00.001  123.45     120.0     100.0
+
+    Rounding :class:`otp.nan <onetick.py.nan>` returns NaN
+    and rounding :class:`otp.inf <onetick.py.inf>` returns Infinity in all cases:
+
+    >>> t = otp.Ticks(A=[otp.inf, -otp.inf, otp.nan])
+    >>> t['ROUND_0'] = otp.math.round(t['A'])
+    >>> t['ROUND_P2'] = otp.math.round(t['A'], 2)
+    >>> t['ROUND_M2'] = otp.math.round(t['A'], -2)
+    >>> otp.run(t)
+                         Time    A  ROUND_0  ROUND_P2  ROUND_M2
+    0 2003-12-01 00:00:00.000  inf      inf       inf       inf
+    1 2003-12-01 00:00:00.001 -inf     -inf      -inf      -inf
+    2 2003-12-01 00:00:00.002  NaN      NaN       NaN       NaN
+    """
+    if not -12 <= precision <= 12:
+        raise ValueError("Parameter 'precision' must be an integer in range [-12, 12]")
+    supported_rounding_methods = {'upward', 'downward', 'towards_zero', 'away_from_zero'}
+    if rounding_method not in supported_rounding_methods:
+        raise ValueError(f"Parameter 'rounding_method' must be one of {supported_rounding_methods}")
+    return _Operation(
+        op_func=lambda v, p, r: (f'ROUND_DOUBLE({value2str(v)},{value2str(p)},{value2str(r)})', float),
+        op_params=[value, precision, rounding_method],
     )

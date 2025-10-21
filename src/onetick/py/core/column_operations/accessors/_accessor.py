@@ -11,13 +11,11 @@ class _Accessor:
         self._base_column = base_column
 
     class Formatter(_Operation):
+        def __init__(self, dtype, formatter, op_params):
+            def op_func(*args, **kwargs):
+                return formatter(*args, **kwargs), dtype
 
-        def __init__(self, base_column, dtype, formatter):
-            super().__init__(dtype=dtype, op_params=[base_column])
-            self._formatter = formatter
-
-        def __str__(self):
-            return self._formatter(str(self._op_params[0]))
+            super().__init__(op_func=op_func, op_params=op_params, dtype=dtype)
 
     def _preprocess_tz_and_format(self,
                                   timezone: typing.Union[Operation, str, None],

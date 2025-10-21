@@ -110,8 +110,8 @@ def write_to_db(src: 'otp.Source',
     if timezone is None:
         timezone = configuration.config.tz
     if date is None or date is otp.adaptive:
-        kwargs['start'] = start
-        kwargs['end'] = end
+        kwargs['start_date'] = start
+        kwargs['end_date'] = end
     else:
         kwargs['date'] = date
 

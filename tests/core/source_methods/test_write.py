@@ -30,6 +30,10 @@ def test_deprecated(session):
         t.write('DB', symbol='S', tick_type='TT', append_mode=False)
     with pytest.warns(FutureWarning):
         t.write('DB', symbol='S', tick_type='TT', timestamp_field='A')
+    with pytest.warns(FutureWarning):
+        t.write('DB', symbol='S', tick_type='TT',
+                start=otp.config['default_start_time'],
+                end=otp.config['default_start_time'] + otp.Day(2))
 
 
 def test_inplace(session):
@@ -154,11 +158,12 @@ def test_write_start_end(session):
                   end=start + otp.Day(days))
 
     src = t.write('DB', symbol='S', tick_type='TT',
-                  start=start,
-                  end=start + otp.Day(days))
+                  start_date=start,
+                  end_date=start + otp.Day(days))
 
     df = otp.run(src)
     assert len(df) == days
+    assert all(df.columns == ["Time", "A"])
     assert df['Time'].min() == start
     assert df['Time'].max() == start + otp.Day(days - 1)
 
@@ -240,8 +245,8 @@ def test_write_with_day_boundary_offset_hhmmss(f_session):
     t2 = t.write('DB',
                  symbol='S',
                  tick_type='TT',
-                 start=start,
-                 end=start + otp.Day(1),
+                 start_date=start,
+                 end_date=start,
                  propagate=True,)
     with pytest.raises(Exception, match='Timestamp 20220101230000.111000000 of a tick, visible or hidden, '
                                         'later than 2022-01-02 in timezone GMT.'):
@@ -258,8 +263,8 @@ def test_write_with_day_boundary_offset_hhmmss(f_session):
     t2 = t.write('DB',
                  symbol='S',
                  tick_type='TT',
-                 start=start,
-                 end=start + otp.Day(2),
+                 start_date=start,
+                 end_date=start + otp.Day(1),
                  propagate=True,)
     df = otp.run(t2, symbols="DB::S", timezone="GMT")
     assert len(df) == hours
@@ -378,8 +383,8 @@ def test_start_end_with_day_boundary_offset(session, set_date):
         kwargs = dict(date=date)
     else:
         kwargs = dict(
-            start=date,
-            end=date + otp.Day(1),
+            start_date=date,
+            end_date=date,
         )
     write_query = ticks.write(
         db='DB_DAY_BOUNDARY_TZ',

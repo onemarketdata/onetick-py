@@ -1,3 +1,4 @@
+from onetick import py as otp
 from onetick.py import configuration
 from onetick.py.otq import otq
 
@@ -94,8 +95,8 @@ class MultiOutputSource:
         # we create a set of keys for all outputs and see if all sets are connected;
         # two sets are connected if they have any key in common
 
-        if len(outputs) <= 1:
-            raise ValueError('At least two branches should be passed to a MultiOutputSource object')
+        if len(outputs) < 1:
+            raise ValueError('At least one branch should be passed to a MultiOutputSource object')
 
         def get_history_key_set(hist):
             keys = set()
@@ -155,6 +156,41 @@ class MultiOutputSource:
     def _side_branch_list(self):
         return list(self.__side_branches.values())
 
+    def get_branch(self, branch_name: str) -> otp.Source:
+        """
+        Retrieve a branch by its name.
+
+        Parameters
+        ----------
+        branch_name : str
+            The name of the branch to retrieve.
+
+        Returns
+        -------
+        otp.Source
+            The branch corresponding to the given name.
+        """
+        if branch_name == self.__main_branch_name:
+            return self.__main_branch
+
+        branch = self.__side_branches.get(branch_name)
+        if branch is None:
+            raise ValueError(f'Branch name "{branch_name}" not found among the outputs!')
+
+        return branch
+
+    @property
+    def main_branch(self) -> otp.Source:
+        """
+        Get the main branch.
+
+        Returns
+        -------
+        otp.Source
+            The main branch.
+        """
+        return self.__main_branch
+
     def _prepare_for_execution(self, symbols=None, start=None, end=None, start_time_expression=None,
                                end_time_expression=None, timezone=None,
                                has_output=None,  # NOSONAR
@@ -191,3 +227,6 @@ class MultiOutputSource:
                                          end=end,
                                          timezone=timezone,
                                          add_passthrough=False)
+
+    def _store_in_tmp_otq(self, *args, **kwargs):
+        return self.main_branch._store_in_tmp_otq(*args, **kwargs)

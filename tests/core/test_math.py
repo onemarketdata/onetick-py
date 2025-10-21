@@ -261,7 +261,7 @@ class TestFloatNan:
 
 
 def test_round():
-    t = otp.Tick(A=1234.5678)
+    t = otp.Ticks(A=[1234.5678, otp.inf, -otp.inf, otp.nan])
     t['B'] = round(t['A'])
     t['C'] = round(t['A'], 2)
     t['D'] = round(t['A'], -2)
@@ -269,6 +269,15 @@ def test_round():
     assert df['B'][0] == 1235
     assert df['C'][0] == 1234.57
     assert df['D'][0] == 1200.0
+    assert df['B'][1] == float('inf')
+    assert df['C'][1] == float('inf')
+    assert df['D'][1] == float('inf')
+    assert df['B'][2] == -float('inf')
+    assert df['C'][2] == -float('inf')
+    assert df['D'][2] == -float('inf')
+    assert math.isnan(df['B'][3])
+    assert math.isnan(df['C'][3])
+    assert math.isnan(df['D'][3])
 
 
 class TestFloor:
@@ -276,7 +285,7 @@ class TestFloor:
     def test_const(self, session, value):
         data = otp.Tick(A=1)
         data['B'] = otp.math.floor(value)
-        assert data['B'].dtype is int
+        assert data['B'].dtype is float
         df = otp.run(data)
         assert df['B'][0] == math.floor(value)
 
@@ -284,13 +293,13 @@ class TestFloor:
     def test_column(self, session, value):
         data = otp.Tick(A=value)
         data['B'] = otp.math.floor(data['A'])
-        assert data['B'].dtype is int
+        assert data['B'].dtype is float
         df = otp.run(data)
         assert df['B'][0] == math.floor(value)
 
     def test_operation(self, session):
         data = otp.Tick(A=54.1, B=27)
         data['C'] = otp.math.floor(data['A'] / data['B'])
-        assert data['C'].dtype is int
+        assert data['C'].dtype is float
         df = otp.run(data)
         assert df['C'][0] == 2

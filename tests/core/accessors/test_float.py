@@ -61,3 +61,23 @@ class TestScientificNotation:
         src['EQ'] = src['X'].float.eq(src['X'], 10 ** -6)
         df = otp.run(src)
         assert all(df['EQ'] == 1)
+
+
+def test_replace_parameters(m_session):
+    from onetick.py.functions import _add_node_name_prefix_to_columns_in_operation
+    t = otp.Tick(AA=1.1, BB=2.3, CC=1, DD=0.01)
+    t.node_name('PREFIX')
+
+    ops = [
+        t['AA'].float.str(t['CC'], t['DD']),
+        t['AA'].float.cmp(t['BB'], t['CC']),
+        t['AA'].float.eq(t['BB'], t['DD']),
+    ]
+
+    for op in ops:
+        str_op = str(op)
+        str_replaced_op = str_op[:]
+        for column in t.schema:
+            str_replaced_op = str_replaced_op.replace(column, f'PREFIX.{column}')
+        str_node_name_prefix_op = str(_add_node_name_prefix_to_columns_in_operation(op, t))
+        assert str_replaced_op == str_node_name_prefix_op

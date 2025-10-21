@@ -1,6 +1,7 @@
 from typing import Union
 
 from onetick.py import configuration, utils
+from onetick.py import types as ott
 from onetick.py.core.column_operations.accessors._accessor import _Accessor
 from onetick.py.backports import Literal
 from onetick.py.types import datetime, value2str
@@ -76,14 +77,17 @@ class _DtAccessor(_Accessor):
         """
         if timezone is utils.default:
             timezone = configuration.config.tz
-        timezone, format_str = self._preprocess_tz_and_format(timezone, format)
 
-        def formatter(x):
-            return f'nsectime_format({format_str},{x},{timezone})'
+        def formatter(column, _format, _timezone):
+            column = ott.value2str(column)
+            _timezone, _format = self._preprocess_tz_and_format(_timezone, _format)
+            return f'nsectime_format({_format},{column},{_timezone})'
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     str,
-                                     formatter=formatter)
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, format, timezone],
+            dtype=str,
+            formatter=formatter,
+        )
 
     def date(self):
         """
@@ -103,7 +107,9 @@ class _DtAccessor(_Accessor):
         return self.strftime(format_str, None).str.to_datetime(format_str, None)
 
     @docstring(parameters=[_timezone_doc], add_self=True)
-    def day_of_week(self, start_index: int = 1, start_day: Literal['monday', 'sunday'] = 'monday', timezone=None):
+    def day_of_week(
+        self, start_index: Union[int, _Operation] = 1, start_day: Literal['monday', 'sunday'] = 'monday', timezone=None,
+    ):
         """
         Return the day of the week.
 
@@ -112,7 +118,7 @@ class _DtAccessor(_Accessor):
 
         Parameters
         ----------
-        start_index: int
+        start_index: int or Operation
             Sunday index.
         start_day: 'monday' or 'sunday'
             Day that will be denoted with ``start_index``
@@ -135,19 +141,22 @@ class _DtAccessor(_Accessor):
         if start_day not in ['monday', 'sunday']:
             raise ValueError(f"'start_day' parameter ({start_day}) not in ['monday', 'sunday']")
 
-        timezone, _ = self._preprocess_tz_and_format(timezone, '')
-
-        def formatter(x):
-            format_ = f'day_of_week({x},{timezone})'
-            if start_day == 'monday':
+        def formatter(column, _start_index, _start_day, _timezone):
+            column = ott.value2str(column)
+            _start_index = ott.value2str(_start_index)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            format_ = f'day_of_week({column},{_timezone})'
+            if _start_day == 'monday':
                 # CASE should be uppercased because it can be used in per-tick script
                 format_ = f'CASE({format_}, 0, 7, {format_})-1'
-            format_ += f'+{start_index}'
+            format_ += f'+{_start_index}'
             return format_
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     int,
-                                     formatter=formatter)
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, start_index, start_day, timezone],
+            dtype=int,
+            formatter=formatter,
+        )
 
     @docstring(parameters=[_timezone_doc], add_self=True)
     def day_name(self, timezone=None):
@@ -168,11 +177,16 @@ class _DtAccessor(_Accessor):
         5 2022-05-15     Sunday
         6 2022-05-16     Monday
         """
-        timezone, _ = self._preprocess_tz_and_format(timezone, '')
+        def formatter(column, _timezone):
+            column = ott.value2str(column)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            return f'DAYNAME({column},{_timezone})'
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     str,
-                                     formatter=lambda x: f'DAYNAME({x},{timezone})')
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, timezone],
+            dtype=str,
+            formatter=formatter,
+        )
 
     @docstring(parameters=[_timezone_doc], add_self=True)
     def day_of_month(self, timezone=None):
@@ -193,11 +207,16 @@ class _DtAccessor(_Accessor):
         5 2022-05-15            15
         6 2022-05-16            16
         """
-        timezone, _ = self._preprocess_tz_and_format(timezone, '')
+        def formatter(column, _timezone):
+            column = ott.value2str(column)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            return f'DAYOFMONTH({column},{_timezone})'
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     int,
-                                     formatter=lambda x: f'DAYOFMONTH({x},{timezone})')
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, timezone],
+            dtype=int,
+            formatter=formatter,
+        )
 
     @docstring(parameters=[_timezone_doc], add_self=True)
     def day_of_year(self, timezone=None):
@@ -218,11 +237,16 @@ class _DtAccessor(_Accessor):
         5 2022-05-15          135
         6 2022-05-16          136
         """
-        timezone, _ = self._preprocess_tz_and_format(timezone, '')
+        def formatter(column, _timezone):
+            column = ott.value2str(column)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            return f'DAYOFYEAR({column},{_timezone})'
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     int,
-                                     formatter=lambda x: f'DAYOFYEAR({x},{timezone})')
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, timezone],
+            dtype=int,
+            formatter=formatter,
+        )
 
     @docstring(parameters=[_timezone_doc], add_self=True)
     def hour(self, timezone=None):
@@ -243,11 +267,16 @@ class _DtAccessor(_Accessor):
         5 2022-05-01 15:00:06    15
         6 2022-05-01 16:00:06    16
         """
-        timezone, _ = self._preprocess_tz_and_format(timezone, '')
+        def formatter(column, _timezone):
+            column = ott.value2str(column)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            return f'HOUR({column},{_timezone})'
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     int,
-                                     formatter=lambda x: f'HOUR({x},{timezone})')
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, timezone],
+            dtype=int,
+            formatter=formatter,
+        )
 
     @docstring(parameters=[_timezone_doc], add_self=True)
     def minute(self, timezone=None):
@@ -269,11 +298,16 @@ class _DtAccessor(_Accessor):
         5 2022-05-01 15:15:06      15
         6 2022-05-01 15:16:06      16
         """
-        timezone, _ = self._preprocess_tz_and_format(timezone, '')
+        def formatter(column, _timezone):
+            column = ott.value2str(column)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            return f'MINUTE({column},{_timezone})'
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     int,
-                                     formatter=lambda x: f'MINUTE({x},{timezone})')
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, timezone],
+            dtype=int,
+            formatter=formatter,
+        )
 
     @docstring(parameters=[_timezone_doc], add_self=True)
     def second(self, timezone=None):
@@ -294,11 +328,16 @@ class _DtAccessor(_Accessor):
         5 2022-05-01 15:11:15      15
         6 2022-05-01 15:11:16      16
         """
-        timezone, _ = self._preprocess_tz_and_format(timezone, '')
+        def formatter(column, _timezone):
+            column = ott.value2str(column)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            return f'SECOND({column},{_timezone})'
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     int,
-                                     formatter=lambda x: f'SECOND({x},{timezone})')
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, timezone],
+            dtype=int,
+            formatter=formatter,
+        )
 
     @docstring(parameters=[_timezone_doc], add_self=True)
     def month(self, timezone=None):
@@ -320,11 +359,16 @@ class _DtAccessor(_Accessor):
         6 2022-09-01      9
         7 2022-10-01     10
         """
-        timezone, _ = self._preprocess_tz_and_format(timezone, '')
+        def formatter(column, _timezone):
+            column = ott.value2str(column)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            return f'MONTH({column},{_timezone})'
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     int,
-                                     formatter=lambda x: f'MONTH({x},{timezone})')
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, timezone],
+            dtype=int,
+            formatter=formatter,
+        )
 
     @docstring(parameters=[_timezone_doc], add_self=True)
     def month_name(self, timezone=None):
@@ -346,11 +390,16 @@ class _DtAccessor(_Accessor):
         6 2022-09-01        Sep
         7 2022-10-01        Oct
         """
-        timezone, _ = self._preprocess_tz_and_format(timezone, '')
+        def formatter(column, _timezone):
+            column = ott.value2str(column)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            return f'MONTHNAME({column},{_timezone})'
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     str,
-                                     formatter=lambda x: f'MONTHNAME({x},{timezone})')
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, timezone],
+            dtype=str,
+            formatter=formatter,
+        )
 
     @docstring(parameters=[_timezone_doc], add_self=True)
     def quarter(self, timezone=None):
@@ -372,11 +421,16 @@ class _DtAccessor(_Accessor):
         6 2022-09-01        3
         7 2022-10-01        4
         """
-        timezone, _ = self._preprocess_tz_and_format(timezone, '')
+        def formatter(column, _timezone):
+            column = ott.value2str(column)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            return f'QUARTER({column},{_timezone})'
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     int,
-                                     formatter=lambda x: f'QUARTER({x},{timezone})')
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, timezone],
+            dtype=int,
+            formatter=formatter,
+        )
 
     @docstring(parameters=[_timezone_doc], add_self=True)
     def year(self, timezone=None):
@@ -398,11 +452,16 @@ class _DtAccessor(_Accessor):
         6 2029-03-01  2029
         7 2030-03-01  2030
         """
-        timezone, _ = self._preprocess_tz_and_format(timezone, '')
+        def formatter(column, _timezone):
+            column = ott.value2str(column)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            return f'YEAR({column},{_timezone})'
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     int,
-                                     formatter=lambda x: f'YEAR({x},{timezone})')
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, timezone],
+            dtype=int,
+            formatter=formatter,
+        )
 
     @docstring(parameters=[_timezone_doc], add_self=True)
     def date_trunc(self,
@@ -434,12 +493,17 @@ class _DtAccessor(_Accessor):
         5 2020-11-11 05:04:13.101737879 2020-11-11 05:04:13.101000000  millisecond
         6 2020-11-11 05:04:13.101737879 2020-11-11 05:04:13.101737879   nanosecond
         """
-        timezone, _ = self._preprocess_tz_and_format(timezone, '')
-        date_part = value2str(date_part)
+        def formatter(column, _date_part, _timezone):
+            column = ott.value2str(column)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            _date_part = value2str(_date_part)
+            return f'DATE_TRUNC({_date_part},{column},{_timezone})'
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     datetime,
-                                     formatter=lambda x: f'DATE_TRUNC({date_part},{x},{timezone})')
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, date_part, timezone],
+            dtype=datetime,
+            formatter=formatter,
+        )
 
     @docstring(parameters=[_timezone_doc], add_self=True)
     def week(self, timezone=None):
@@ -461,8 +525,13 @@ class _DtAccessor(_Accessor):
         6 2020-09-01    36
         7 2020-10-01    40
         """
-        timezone, _ = self._preprocess_tz_and_format(timezone, '')
+        def formatter(column, _timezone):
+            column = ott.value2str(column)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            return f'WEEK({column},{_timezone})'
 
-        return _DtAccessor.Formatter(self._base_column,
-                                     int,
-                                     formatter=lambda x: f'WEEK({x},{timezone})')
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, timezone],
+            dtype=int,
+            formatter=formatter,
+        )

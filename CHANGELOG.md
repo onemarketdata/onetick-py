@@ -10,6 +10,27 @@
 
 ### Removed
 
+## [1.172.0] - 2025-10-20
+
+### Added
+
+- Added support for branch retrieval in `MultiOutputSource`.
+- Added `otp.math.round`
+
+### Changed
+
+- Changed return type for `otp.math.floor`, `otp.math.ceil` and `otp.Operation.__round__` to float
+- Renamed parameters `start` and `end` to `start_date` and `end_date` in `otp.Source.write`; `end_date` is now inclusive
+
+### Fixed
+
+- Fixed an issue where `otp.Source.write` wrote temporary columns in multi-day cases
+- Improve `.float` and `.dt` accessors operation representations
+- Fixed rounding operations for NaN and Infinity values
+- Improve documentation and guides
+
+### Removed
+
 ## [1.171.0] - 2025-10-13
 
 ### Added

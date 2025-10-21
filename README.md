@@ -22,7 +22,7 @@ The latest version of ``onetick-py`` is available on PyPI: <https://pypi.org/pro
 
     pip install onetick-py[webapi]
 
-Use ``webapi`` extra to easily use it with remote OneTick Cloud server.
+Use ``webapi`` extra to easily use it with remote OneTick REST Servers, such as [OneTick Cloud](https://www.onetick.com/cloud-services).
 
 See [Getting Started](https://docs.pip.distribution.sol.onetick.com/static/getting_started/root.html)
 section in the documentation to see how quickly set up ``onetick-py`` configuration
@@ -49,6 +49,8 @@ section in the documentation.
 - **Data Visualization**: Compatible with OneTick's visualization tool, OneTick Dashboard.
 - **Machine Learning**: Integrates with the OneTick ML library [onetick-ml](https://dsframework.pip.distribution.sol.onetick.com/intro.html).
 - **Industry Applications**: Industry leading OneTick's Trade Surveillance and BestEx/TCA solutions are written in ``onetick.py``.
+- **Back Testing**: Retrieve historic market data and metrics.
+- **Market Microstructure**:  Consolidated Book Depth analysis.
 
 ## Advantages Over Competitors
 

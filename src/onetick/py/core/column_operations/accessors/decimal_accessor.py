@@ -1,5 +1,6 @@
 from onetick.py import types as ott
 from onetick.py.core.column_operations.accessors._accessor import _Accessor
+from onetick.py.core.column_operations.base import _Operation
 
 
 class _DecimalAccessor(_Accessor):
@@ -37,10 +38,16 @@ class _DecimalAccessor(_Accessor):
         3    3.142
         Name: X, dtype: object
         """
+        def formatter(column, _precision):
+            column = ott.value2str(column)
+            _precision = ott.value2str(_precision)
+
+            return f'decimal_to_string({column}, {_precision})'
+
         return _DecimalAccessor.Formatter(
-            self._base_column,
-            str,
-            formatter=lambda x: f'decimal_to_string({x}, {precision})'
+            op_params=[self._base_column, precision],
+            dtype=str,
+            formatter=formatter,
         )
 
     def cmp(self, other, eps):
@@ -83,10 +90,15 @@ class _DecimalAccessor(_Accessor):
         4    1.0
         Name: X, dtype: float64
         """
-        other = ott.value2str(other)
-        eps = ott.value2str(eps)
+
+        def formatter(column, _other, _eps):
+            column = ott.value2str(column)
+            _other = ott.value2str(_other)
+            _eps = ott.value2str(_eps)
+            return f'decimal_compare({column}, {_other}, {_eps})'
+
         return _DecimalAccessor.Formatter(
-            self._base_column,
-            ott.decimal,
-            formatter=lambda x: f'decimal_compare({x}, {other}, {eps})'
+            op_params=[self._base_column, other, eps],
+            dtype=ott.decimal,
+            formatter=formatter,
         )

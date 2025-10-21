@@ -21,13 +21,6 @@ class _StrAccessor(_Accessor):
     >>> data = otp.Ticks(X=['some string'])
     >>> data["Y"] = data["X"].str.<function_name>() # doctest: +SKIP
     """
-    class Formatter(_Operation):
-        def __init__(self, dtype, formatter, op_params):
-
-            def op_func(*args, **kwargs):
-                return formatter(*args, **kwargs), dtype
-
-            super().__init__(op_func=op_func, op_params=op_params, dtype=dtype)
 
     def to_datetime(self,
                     format='%Y/%m/%d %H:%M:%S.%J',

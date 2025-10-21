@@ -241,3 +241,35 @@ class TestDateTrunc:
             assert df['TRUNCATED_X'][0] == pd.Timestamp(2020, 1, 1)
         else:
             assert df['TRUNCATED_X'][0] == pd.Timestamp(2019, 12, 31, 23)
+
+
+def test_replace_parameters(m_session):
+    from onetick.py.functions import _add_node_name_prefix_to_columns_in_operation
+    t = otp.Tick(AA=otp.datetime(2025, 12, 1, 1), BB='%d.%m.%Y', CC='UTC', DD=1, EE='hour')
+    t.node_name('PREFIX')
+
+    ops = [
+        t['AA'].dt.strftime(t['BB'], t['CC']),
+        t['AA'].dt.date(),
+        t['AA'].dt.day_of_week(t['DD'], 'monday', t['CC']),
+        t['AA'].dt.day_name(t['CC']),
+        t['AA'].dt.day_of_month(t['CC']),
+        t['AA'].dt.day_of_year(t['CC']),
+        t['AA'].dt.hour(t['CC']),
+        t['AA'].dt.minute(t['CC']),
+        t['AA'].dt.second(t['CC']),
+        t['AA'].dt.month(t['CC']),
+        t['AA'].dt.month_name(t['CC']),
+        t['AA'].dt.quarter(t['CC']),
+        t['AA'].dt.year(t['CC']),
+        t['AA'].dt.date_trunc(t['EE'], t['CC']),
+        t['AA'].dt.year(t['CC']),
+    ]
+
+    for op in ops:
+        str_op = str(op)
+        str_replaced_op = str_op[:]
+        for column in t.schema:
+            str_replaced_op = str_replaced_op.replace(column, f'PREFIX.{column}')
+        str_node_name_prefix_op = str(_add_node_name_prefix_to_columns_in_operation(op, t))
+        assert str_replaced_op == str_node_name_prefix_op

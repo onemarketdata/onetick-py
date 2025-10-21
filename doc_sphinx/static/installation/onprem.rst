@@ -75,13 +75,20 @@ or if you have older OneTick build version, please modify the **PYTHONPATH** var
 
     export PYTHONPATH="/opt/one_market_data/one_tick/bin:$PYTHONPATH"
     export PYTHONPATH="/opt/one_market_data/one_tick/bin/python:$PYTHONPATH"
-    export PYTHONPATH="/opt/one_market_data/one_tick/bin/numpy/python39:$PYTHONPATH"
 
 - for Windows add the following values to your **PYTHONPATH** variable:
 
     | ``C:\omd\one_market_data\one_tick\bin``
     | ``C:\omd\one_market_data\one_tick\bin\python``
-    | ``C:\omd\one_market_data\one_tick\bin\numpy\python39``
+
+
+Note that on older OneTick versions you may also need to add ``numpy`` directory too.
+On newer versions this directory doesn't exist and is not needed.
+The directory must be for the same python version as will be used by ``onetick.py`` (in the example for python 3.9).
+
+    | ``/opt/one_market_data/one_tick/bin/numpy/python39``   (Linux)
+    | ``C:\omd\one_market_data\one_tick\bin\numpy\python39`` (Windows)
+
 
 Requirements
 :::::::::::::

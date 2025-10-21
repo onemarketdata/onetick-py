@@ -45,10 +45,8 @@ class TestMultiOutputSource:
                                   main_branch_name="OTHER")
 
     def test_not_enough_branches(self):
-        with pytest.raises(ValueError, match='At least two branches should be passed to a MultiOutputSource object'):
+        with pytest.raises(ValueError, match='At least one branch should be passed to a MultiOutputSource object'):
             otp.MultiOutputSource({})
-        with pytest.raises(ValueError, match='At least two branches should be passed to a MultiOutputSource object'):
-            otp.MultiOutputSource(dict(BRANCH=otp.Tick(A=1)))
 
     def test_disconnected_outputs(self):
         src1 = otp.Tick(A=1)
@@ -188,3 +186,29 @@ class TestMultiOutputSource:
         assert len(res['BRANCH2']) == 1
         assert res['BRANCH2']['A_FIELD'][0] == 'A'
         assert res['BRANCH2']['B_FIELD'][0] == 'B'
+
+    def test_get_branch(self):
+        src = otp.Tick(A=1)
+        branch1 = src.copy(0)
+        branch1['B'] = 2
+        branch2 = src.copy()
+        branch2['C'] = 2
+
+        query = otp.MultiOutputSource(dict(BRANCH1=branch1, BRANCH2=branch2))
+
+        assert set(query.get_branch('BRANCH1').schema) == {'A', 'B'}
+        assert set(query.get_branch('BRANCH2').schema) == {'A', 'C'}
+
+        with pytest.raises(ValueError, match='Branch name "BRANCH3" not found among the outputs!'):
+            query.get_branch('BRANCH3')
+
+    def test_main_branch(self):
+        src = otp.Tick(A=1)
+        branch1 = src.copy(0)
+        branch1['B'] = 2
+        branch2 = src.copy()
+        branch2['C'] = 2
+
+        query = otp.MultiOutputSource(dict(BRANCH1=branch1, BRANCH2=branch2), main_branch_name='BRANCH2')
+
+        assert set(query.main_branch.schema) == {'A', 'C'}

@@ -2033,7 +2033,13 @@ def _add_element(cur_res, element, format_spec_additional=None):
         elif issubclass(element.dtype, float) and re.fullmatch(r'\.\d+f', format_spec_additional):
             # float has strange behavior when precision=0
             decimal_elem = element.apply(ott.decimal)
-            cur_res += decimal_elem.decimal.str(re.findall(r'\d+', format_spec_additional)[0])
+            precision_str = re.findall(r'\d+', format_spec_additional)[0]
+            try:
+                precision = int(precision_str)
+            except ValueError as exc:
+                raise ValueError('Incorrect value for `precision` for formatting decimal number') from exc
+
+            cur_res += decimal_elem.decimal.str(precision)
         elif issubclass(element.dtype, (ott.nsectime, ott.msectime)):
             cur_res += element.dt.strftime(format_spec_additional)
         else:

@@ -23,8 +23,8 @@ def write(
     symbol: Union[str, 'otp.Column', None] = None,
     tick_type: Union[str, 'otp.Column', None] = None,
     date: Union[datetime.date, Type[adaptive], None] = adaptive,
-    start: Optional[datetime.date] = None,
-    end: Optional[datetime.date] = None,
+    start_date: Optional[datetime.date] = None,
+    end_date: Optional[datetime.date] = None,
     append: bool = False,
     keep_symbol_and_tick_type: Union[bool, Type[adaptive]] = adaptive,
     propagate: bool = True,
@@ -72,22 +72,21 @@ def write(
         date where to save data.
         Should be set to `None` if writing to accelerator or memory database.
         By default, it is set to `otp.config.default_date`.
-    start: :py:class:`otp.datetime <onetick.py.datetime>` or None
+    start_date: :py:class:`otp.datetime <onetick.py.datetime>` or None
         Start date for data to save. It is inclusive.
         Cannot be used with ``date`` parameter.
         Also cannot be used with ``inplace`` set to ``True``.
         Should be set to `None` if writing to accelerator or memory database.
         By default, None.
-    end: :py:class:`otp.datetime <onetick.py.datetime>` or None
-        End date for data to save. It is exclusive, so be sure to set
-        it to the next day after the last day in data.
+    end_date: :py:class:`otp.datetime <onetick.py.datetime>` or None
+        End date for data to save. It is inclusive.
         Cannot be used with ``date`` parameter.
         Also cannot be used with ``inplace`` set to ``True``.
         Should be set to `None` if writing to accelerator or memory database.
         By default, None.
     append: bool
         If False - data will be rewritten for this ``date``
-        or range of dates (from ``start`` to ``end``),
+        or range of dates (from ``start_date`` to ``end_date``),
         otherwise data will be appended: new symbols are added,
         existing symbols can be modified (append new ticks, modify existing ticks).
         This option is not valid for accelerator databases.
@@ -100,12 +99,12 @@ def write(
     propagate: bool
         Propagate ticks after that event processor or not.
     out_of_range_tick_action: str
-        Action to be executed if tick's timestamp's date is not ``date`` or between ``start`` or ``end``:
+        Action to be executed if tick's timestamp's date is not ``date`` or between ``start_date`` or ``end_date``:
 
             * `exception`: runtime exception will be raised
             * `ignore`: tick will not be written to the database
             * `load`: writes tick to the database anyway.
-                Can be used only with ``date``, not with ``start``+``end``.
+                Can be used only with ``date``, not with ``start_date``+``end_date``.
 
         Default: `exception`
     timestamp: Column
@@ -134,7 +133,7 @@ def write(
         A flag controls whether operation should be applied inplace.
         If ``inplace=True``, then it returns nothing.
         Otherwise, method returns a new modified object.
-        Cannot be ``True`` if ``start`` and ``end`` are set.
+        Cannot be ``True`` if ``start_date`` and ``end_date`` are set.
     kwargs:
         .. deprecated:: 1.21.0
 
@@ -176,6 +175,15 @@ def write(
         warnings.warn("Parameter 'keep_timestamp_field' is deprecated, use 'keep_timestamp'", FutureWarning)
         keep_timestamp = kwargs.pop('keep_timestamp_field')
 
+    if 'start' in kwargs:
+        warnings.warn("Parameter 'start' is deprecated, use 'start_date'", FutureWarning)
+        start_date = kwargs.pop('start')
+
+    if 'end' in kwargs:
+        warnings.warn("Parameter 'end' is deprecated, use 'end_date'", FutureWarning)
+        # Parameter 'end' was exclusive. Parameter 'end_date' is inclusive.
+        end_date = kwargs.pop('end') - otp.Day(1)
+
     if kwargs:
         raise TypeError(f'write() got unexpected arguments: {list(kwargs)}')
 
@@ -194,15 +202,18 @@ def write(
                     f'Field "{field_name}" contains lowercase characters and cannot be saved to a Onetick database'
                 )
 
-    if date is not adaptive and (start or end):
-        raise ValueError('date cannot be used with start+end')
+    if date is not adaptive and (start_date or end_date):
+        raise ValueError('date cannot be used with start_date+end_date')
 
-    if date is adaptive and (start and end) and inplace:
+    if date is adaptive and (start_date and end_date) and inplace:
         # join_with_query and merge are used for multiple dates, so inplace is not supported
-        raise ValueError('cannot run on multiple dates if inplace is True, use one value for date instead of start+end')
+        raise ValueError(
+            'cannot run on multiple dates if inplace is True,'
+            ' use one value for date instead of start_date+end_date'
+        )
 
-    if (start and not end) or (not start and end):
-        raise ValueError('start and end should be both specified or both None')
+    if (start_date and not end_date) or (not start_date and end_date):
+        raise ValueError('start_date and end_date should be both specified or both None')
 
     if date is adaptive:
         date = configuration.config.default_date
@@ -244,10 +255,10 @@ def write(
         # let's ignore
         pass
     elif out_of_range_tick_action.upper() == 'LOAD':
-        if start and end:
-            raise ValueError('LOAD out_of_range_tick_action cannot be used with start+end, use date instead')
+        if start_date and end_date:
+            raise ValueError('LOAD out_of_range_tick_action cannot be used with start_date+end_date, use date instead')
     elif out_of_range_tick_action.upper() == 'EXCEPTION':
-        if start and end:
+        if start_date and end_date:
             # WRITE_TO_ONETICK_DB use DAY_BOUNDARY_TZ and DAY_BOUNDARY_OFFSET
             # to check tick timestamp is out of range or not
             # so we mimic it here with THROW event processor
@@ -259,10 +270,12 @@ def write(
                 {'DAY_BOUNDARY_TZ': '__DAY_BOUNDARY_TZ', 'DAY_BOUNDARY_OFFSET': '__DAY_BOUNDARY_OFFSET'}, inplace=True
             )
             self = self.join_with_query(src, symbol=f"{str(db)}::DUMMY", caching='per_symbol')
-            start_formatted = start.strftime('%Y-%m-%d')
-            end_formatted = end.strftime('%Y-%m-%d')
-            convert_timestamp = self['TIMESTAMP'].dt.strftime('%Y%m%d%H%M%S.%J', timezone=self['__DAY_BOUNDARY_TZ'])
-            start_op = otp.dt(start).to_operation(timezone=self['__DAY_BOUNDARY_TZ']) + self['__DAY_BOUNDARY_OFFSET']
+            timezone = self['__DAY_BOUNDARY_TZ']
+            offset = self['__DAY_BOUNDARY_OFFSET']
+            convert_timestamp = self['TIMESTAMP'].dt.strftime('%Y%m%d%H%M%S.%J', timezone=timezone)
+
+            start_formatted = start_date.strftime('%Y-%m-%d')
+            start_op = otp.dt(start_date).to_operation(timezone=timezone) + offset
             self.throw(
                 where=(self['TIMESTAMP'] < start_op),
                 message=(
@@ -270,11 +283,14 @@ def write(
                     + convert_timestamp
                     + ' of a tick, visible or hidden, '
                     + f'earlier than {start_formatted} in timezone '
-                    + self['__DAY_BOUNDARY_TZ']
+                    + timezone
                 ),
                 inplace=True,
             )
-            end_op = otp.dt(end).to_operation(timezone=self['__DAY_BOUNDARY_TZ']) + self['__DAY_BOUNDARY_OFFSET']
+
+            end = end_date + otp.Day(1)  # end_date is inclusive
+            end_formatted = end.strftime('%Y-%m-%d')
+            end_op = otp.dt(end).to_operation(timezone=timezone) + offset
             self.throw(
                 where=(self['TIMESTAMP'] >= end_op),
                 message=(
@@ -282,10 +298,11 @@ def write(
                     + convert_timestamp
                     + ' of a tick, visible or hidden, '
                     + f'later than {end_formatted} in timezone '
-                    + self['__DAY_BOUNDARY_TZ']
+                    + timezone
                 ),
                 inplace=True,
             )
+            self.drop(['__DAY_BOUNDARY_TZ', '__DAY_BOUNDARY_OFFSET'], inplace=True)
     else:
         raise ValueError(
             f'Unknown out_of_range_tick_action: {out_of_range_tick_action}.'
@@ -303,18 +320,16 @@ def write(
         use_context_of_query=use_context_of_query,
     )
 
-    if start and end:
-        days = (end - start).days
+    if start_date and end_date:
+        days = (end_date - start_date).days
         if days < 0:
-            raise ValueError("Parameter 'start' must be less than parameter 'end'")
-        if days == 0:
-            raise ValueError("Parameters 'start' and 'end' must specify different dates")
+            raise ValueError("Parameter 'start_date' must be less than or equal to parameter 'end_date'")
         branches = []
-        for i in range(days):
+        for i in range(days + 1):
             branch = self.copy()
             branch.sink(
                 otq.WriteToOnetickDb(
-                    date=(start + otp.Day(i)).strftime('%Y%m%d'),
+                    date=(start_date + otp.Day(i)).strftime('%Y%m%d'),
                     propagate_ticks=propagate,
                     out_of_range_tick_action='IGNORE',
                     **kwargs,

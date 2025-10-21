@@ -1,5 +1,6 @@
 from onetick.py import types as ott
 from onetick.py.core.column_operations.accessors._accessor import _Accessor
+from onetick.py.core.column_operations.base import _Operation
 
 
 class _FloatAccessor(_Accessor):
@@ -61,11 +62,18 @@ class _FloatAccessor(_Accessor):
         Name: X, dtype: object
         """
         dtype = ott.string[length] if isinstance(length, int) else str
-        length = ott.value2str(length)
-        precision = ott.value2str(precision)
-        return _FloatAccessor.Formatter(self._base_column,
-                                        dtype,
-                                        formatter=lambda x: f"str({x}, {length}, {precision})")
+
+        def formatter(column, _length, _precision):
+            column = ott.value2str(column)
+            _length = ott.value2str(_length)
+            _precision = ott.value2str(_precision)
+            return f"str({column}, {_length}, {_precision})"
+
+        return _FloatAccessor.Formatter(
+            op_params=[self._base_column, length, precision],
+            dtype=dtype,
+            formatter=formatter,
+        )
 
     def cmp(self, other, eps):
         """
@@ -110,11 +118,17 @@ class _FloatAccessor(_Accessor):
         4    1.0
         Name: X, dtype: float64
         """
-        other = ott.value2str(other)
-        eps = ott.value2str(eps)
-        return _FloatAccessor.Formatter(self._base_column,
-                                        float,
-                                        formatter=lambda x: f"double_compare({x}, {other}, {eps})")
+        def formatter(column, _other, _eps):
+            column = ott.value2str(column)
+            _other = ott.value2str(_other)
+            _eps = ott.value2str(_eps)
+            return f"double_compare({column}, {_other}, {_eps})"
+
+        return _FloatAccessor.Formatter(
+            op_params=[self._base_column, other, eps],
+            dtype=float,
+            formatter=formatter,
+        )
 
     def eq(self, other, delta):
         """
@@ -153,8 +167,14 @@ class _FloatAccessor(_Accessor):
         4    0.0
         Name: X, dtype: float64
         """
-        other = ott.value2str(other)
-        delta = ott.value2str(delta)
-        return _FloatAccessor.Formatter(self._base_column,
-                                        bool,
-                                        formatter=lambda x: f"abs({x} - {other}) <= {delta}")
+        def formatter(column, _other, _delta):
+            column = ott.value2str(column)
+            _other = ott.value2str(_other)
+            _delta = ott.value2str(_delta)
+            return f"abs({column} - {_other}) <= {_delta}"
+
+        return _FloatAccessor.Formatter(
+            op_params=[self._base_column, other, delta],
+            dtype=bool,
+            formatter=formatter,
+        )

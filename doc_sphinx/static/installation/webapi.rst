@@ -3,7 +3,8 @@
 Installation
 ============
 
-This section describes how to install the `onetick-py` package to use remotely with OneTick Cloud Server.
+This section describes how to install the `onetick-py` package to use remotely with OneTick REST API,
+such as used by `OneTick Cloud <https://www.onetick.com/cloud-services>`_.
 In this case, the package does not require OneTick binaries to be installed on the client side.
 
 - If you have OneTick binaries installed on your machine and want to use `onetick-py` locally with them,
@@ -35,7 +36,8 @@ The latest version of `onetick-py` is available on PyPI: `<https://pypi.org/proj
     pip install onetick-py[webapi]
 
 
-``webapi`` extra is needed to install additional dependencies required for making web-connection to the OneTick server.
+``webapi`` extra is needed to install additional dependencies required for REST connectivity to the OneTick server,
+over either HTTP or HTTPS using Arrow as a transport format.
 
 Getting started
 :::::::::::::::
