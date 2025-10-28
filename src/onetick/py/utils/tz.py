@@ -3,8 +3,8 @@ import sys
 import warnings
 
 from typing import Optional
+from contextlib import suppress
 
-import pytz
 import dateutil.tz
 import tzlocal
 
@@ -15,8 +15,8 @@ from onetick.py.backports import zoneinfo
 def get_tzfile_by_name(timezone):
     if isinstance(timezone, str):
         try:
-            timezone = pytz.timezone(timezone)
-        except pytz.exceptions.UnknownTimeZoneError:
+            timezone = zoneinfo.ZoneInfo(timezone)
+        except zoneinfo.ZoneInfoNotFoundError:
             timezone = dateutil.tz.gettz(timezone)
     return timezone
 
@@ -35,8 +35,10 @@ def get_timezone_from_datetime(dt) -> Optional[str]:
         return None
     if tzinfo is datetime.timezone.utc:
         return 'UTC'
-    if isinstance(tzinfo, pytz.BaseTzInfo):
-        return tzinfo.zone
+    with suppress(ModuleNotFoundError):
+        import pytz
+        if isinstance(tzinfo, pytz.BaseTzInfo):
+            return tzinfo.zone
     if isinstance(tzinfo, zoneinfo.ZoneInfo):
         return tzinfo.key
     if isinstance(tzinfo, dateutil.tz.tzlocal):
@@ -48,7 +50,7 @@ def get_timezone_from_datetime(dt) -> Optional[str]:
             warnings.warn(
                 "It's not recommended to use dateutil.tz timezones on Windows platform. "
                 "Function 'get_timezone_from_datetime' can't guarantee correct results in this case. "
-                "Please, use pytz or zoneinfo timezones instead."
+                "Please, use zoneinfo timezones instead."
             )
         if hasattr(tzinfo, '_filename'):
             if tzinfo._filename == '/etc/localtime':

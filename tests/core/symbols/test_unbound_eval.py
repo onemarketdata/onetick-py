@@ -660,10 +660,10 @@ class TestUnboundAndBoundMerge:
         dfs = otp.run(orders_with_nearest_trade(), symbols=first_stage)
 
         assert set(dfs.keys()) == {"AAPL", "AMD", "MSFT"}
-        expected = pd.Series([np.NaN, 48.10, 48.05])
+        expected = pd.Series([np.nan, 48.10, 48.05])
         assert all((dfs["MSFT"]["PRICE"] == expected) | (dfs["MSFT"]["PRICE"].isna() & expected.isna()))
         assert all((dfs["AAPL"]["PRICE"] == expected) | (dfs["AAPL"]["PRICE"].isna() & expected.isna()))
-        expected = pd.Series([np.NaN, 48.10, 48.05, 295.43])
+        expected = pd.Series([np.nan, 48.10, 48.05, 295.43])
         assert all((dfs["AMD"]["PRICE"] == expected) | (dfs["AAPL"]["PRICE"].isna() & expected.isna()))
 
     def test_mixture(self, default_session, orders_db, m1_db, m2_db, m3_db):

@@ -3,6 +3,7 @@ import warnings
 from dataclasses import dataclass, astuple
 from datetime import datetime
 from typing import Optional
+
 from packaging.version import parse as parse_version
 
 import onetick.py as otp
@@ -416,14 +417,15 @@ def is_odbc_query_supported():
 
 
 def is_event_processor_repr_upper():
-    return _is_min_build_or_version(None, None,
-                                    20240205120000, min_update_number=0) or otq.webapi
+    if otq.webapi:
+        return True
+    return _is_min_build_or_version(1.25, None,
+                                    20240205120000, min_update_number=0)
 
 
 def is_date_trunc_fixed():
-    # tests/core/accessors/test_dt.py::TestDateTrunc::test_dst_year
-    # this test will show, when release fixes the issue
-    return _is_min_build_or_version(None, None,
+    # Fixed 0032253: DATE_TRUNC function returns wrong answer in case of daylight saving time
+    return _is_min_build_or_version(1.25, None,
                                     20240205120000, min_update_number=0)
 
 
@@ -511,7 +513,8 @@ def is_duplicating_quotes_not_supported():
     # 20240329: Fixed 0032754:
     # Logical expressions should trigger error when duplicate single(or double) quote
     # is directly followed or preceded by some name
-    return _is_min_build_or_version(None, None, 20240330120000)
+    return _is_min_build_or_version(1.25, None,
+                                    20240330120000)
 
 
 def are_quotes_in_query_params_supported():
@@ -681,9 +684,9 @@ def is_ob_virtual_prl_and_show_full_detail_supported():
 
 
 def is_per_tick_script_boolean_problem():
-    # strange problem, couldn't reproduce it anywhere except a single onetick build
+    # strange problem, couldn't reproduce it anywhere except a single onetick release
     version = get_onetick_version()
-    return version.release_version == '1.22' and version.build_number in (20220815034358, 20220128183755)
+    return version.release_version == '1.22'
 
 
 def is_symbol_time_override_fixed():
@@ -709,8 +712,10 @@ def is_native_plus_zstd_supported():
 
 def is_save_snapshot_database_parameter_supported():
     # 20220929: Implemented 0028559: Update SAVE_SNAPSHOT to specify output database
-    return _is_min_build_or_version(1.23, 20230605193357,
-                                    20221111120000)
+    client_support = 'database' in otq.SaveSnapshot.Parameters.list_parameters()
+    server_support = _is_min_build_or_version(1.23, 20230605193357,
+                                              20221111120000)
+    return client_support and server_support
 
 
 def is_join_with_snapshot_snapshot_fields_parameter_supported():

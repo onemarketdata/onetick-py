@@ -1,12 +1,12 @@
 import os
 import datetime
 import random
+import zoneinfo
 from functools import partial
 
 import dateutil
 import pandas as pd
 import pytest
-import pytz
 
 import onetick.py as otp
 import onetick.py.types as ott
@@ -76,9 +76,9 @@ class TestTimestamp:
 
 
 class TestDatetime:
-    def test_dst_with_pytz(self):
-        d0 = otp.dt(2019, 4, 12, tzinfo=pytz.timezone("EST5EDT"))
-        d1 = otp.dt(2019, 12, 4, tzinfo=pytz.timezone("EST5EDT"))
+    def test_dst_with_zoneinfo(self):
+        d0 = otp.dt(2019, 4, 12, tzinfo=zoneinfo.ZoneInfo("EST5EDT"))
+        d1 = otp.dt(2019, 12, 4, tzinfo=zoneinfo.ZoneInfo("EST5EDT"))
 
         data = otp.Ticks(dict(x=[d0, d1]))
 
@@ -110,9 +110,9 @@ class TestDatetime:
     @pytest.mark.parametrize(
         "timestamp",
         [
-            datetime.datetime(2019, 4, 12, tzinfo=pytz.timezone("EST5EDT")),
+            datetime.datetime(2019, 4, 12, tzinfo=zoneinfo.ZoneInfo("EST5EDT")),
             pd.Timestamp("2019/01/02 03:04:05.123456789"),
-            otp.datetime(2019, 4, 12, tzinfo=pytz.timezone("EST5EDT")),
+            otp.datetime(2019, 4, 12, tzinfo=zoneinfo.ZoneInfo("EST5EDT")),
             "2019/01/02 03:04:05.123456789",
             otp.date(2019, 4, 12),
         ],
@@ -122,9 +122,9 @@ class TestDatetime:
         timestamp = pd.Timestamp(timestamp) if isinstance(timestamp, str) else timestamp
         assert otp_datetime == timestamp
 
-    @pytest.mark.parametrize("timezone_param", [dict(tz="Europe/Moscow"), dict(tzinfo=pytz.timezone("GMT"))])
+    @pytest.mark.parametrize("timezone_param", [dict(tz="Europe/Moscow"), dict(tzinfo=zoneinfo.ZoneInfo("GMT"))])
     def test_create_with_wrong_timezone(self, timezone_param):
-        d = datetime.datetime(2019, 4, 12, tzinfo=pytz.timezone("EST5EDT"))
+        d = datetime.datetime(2019, 4, 12, tzinfo=zoneinfo.ZoneInfo("EST5EDT"))
         with pytest.raises(ValueError, match="You've specified the timezone for the object, which already has it"):
             otp.datetime(d, **timezone_param)
 
@@ -137,23 +137,23 @@ class TestDatetime:
         timestamp = pd.Timestamp("2019/01/02 03:04:05.123456789", tz="Europe/Paris")
         otp_datetime = otp.datetime(timestamp.value, tz="Europe/Paris")
         assert otp_datetime == timestamp
-        timestamp = pd.Timestamp("2019/01/02 03:04:05.123456789", tzinfo=pytz.timezone("EST5EDT"))
-        otp_datetime = otp.datetime(timestamp.value, tzinfo=pytz.timezone("EST5EDT"))
+        timestamp = pd.Timestamp("2019/01/02 03:04:05.123456789", tzinfo=zoneinfo.ZoneInfo("EST5EDT"))
+        otp_datetime = otp.datetime(timestamp.value, tzinfo=zoneinfo.ZoneInfo("EST5EDT"))
         assert otp_datetime == timestamp
 
     def test_create_with_kwargs(self):
-        expected = datetime.datetime(1999, 1, 4, tzinfo=pytz.timezone("GMT"))
-        actual = otp.datetime(first_arg=1999, month=1, day=4, tzinfo=pytz.timezone("GMT"))
+        expected = datetime.datetime(1999, 1, 4, tzinfo=zoneinfo.ZoneInfo("GMT"))
+        actual = otp.datetime(first_arg=1999, month=1, day=4, tzinfo=zoneinfo.ZoneInfo("GMT"))
         assert actual == expected
 
     def test_user_specified_both_tz_and_tzinfo(self):
         with pytest.raises(ValueError, match="tzinfo and tz params are mutually exclusive parameters"):
-            otp.datetime(first_arg=1999, month=1, day=4, tzinfo=pytz.timezone("GMT"), tz="tz")
+            otp.datetime(first_arg=1999, month=1, day=4, tzinfo=zoneinfo.ZoneInfo("GMT"), tz="tz")
 
     def test_correct_nanos(self):
         timestamps = []
         for nanos in (0, 100, 999):
-            t = otp.dt(1999, 1, 4, 1, 2, 3, 999, nanos, tzinfo=pytz.timezone("GMT"))
+            t = otp.dt(1999, 1, 4, 1, 2, 3, 999, nanos, tzinfo=zoneinfo.ZoneInfo("GMT"))
             assert t.nanosecond == nanos
             timestamps.append(t)
         data = otp.Ticks(dict(TIME_VALUE=timestamps))
@@ -164,7 +164,7 @@ class TestDatetime:
     @pytest.mark.parametrize("nanos", [-1, 1000])
     def test_wrong_nanos(self, nanos):
         with pytest.raises(ValueError, match="Nanosecond parameter should be between 0 and 999"):
-            otp.dt(1999, 1, 4, 1, 2, 3, 999, nanos, tzinfo=pytz.timezone("GMT"))
+            otp.dt(1999, 1, 4, 1, 2, 3, 999, nanos, tzinfo=zoneinfo.ZoneInfo("GMT"))
 
     @pytest.mark.parametrize("method", ["__add__", "__sub__"])
     def test_operations_with_int_is_not_supported(self, method):
@@ -524,6 +524,9 @@ class TestNextDay:
         datetime.datetime(2022, 1, 1, 1, 2, 3),
         datetime.date(2022, 1, 1),
         pd.Timestamp(2022, 1, 1, 1, 2, 3),
+        otp.datetime(2022, 1, 1, 1, 2, 3, tz='America/New_York'),
+        datetime.datetime(2022, 1, 1, 1, 2, 3, tzinfo=zoneinfo.ZoneInfo('America/New_York')),
+        pd.Timestamp(2022, 1, 1, 1, 2, 3).replace(tzinfo=zoneinfo.ZoneInfo('America/New_York')),
     ])
     def test_next_day(self, dt):
         assert ott.next_day(dt) == datetime.datetime(2022, 1, 2)
@@ -598,7 +601,7 @@ class TestDatetimeTimezoneAwareness:
     def test_timezone_aware_datetime(self):
         date_columns = {
             'T1': otp.datetime(2011, 1, 1, 1, 1, 1, tz='Europe/Moscow'),
-            'T2': datetime.datetime(2011, 1, 1, 1, 1, 1, tzinfo=pytz.timezone('Europe/Moscow')),
+            'T2': datetime.datetime(2011, 1, 1, 1, 1, 1, tzinfo=zoneinfo.ZoneInfo('Europe/Moscow')),
             'T3': pd.Timestamp(2011, 1, 1, 1, 1, 1).tz_localize('Europe/Moscow'),
         }
         data = otp.Tick(**date_columns)

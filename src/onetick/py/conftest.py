@@ -1,7 +1,6 @@
 import datetime
 
 import os
-import pytz
 import pytest
 import onetick.py as otp
 from onetick.py.otq import otq
@@ -87,6 +86,5 @@ def add_session(pytestconfig, doctest_namespace, request, session):
     doctest_namespace['otq'] = otq
     doctest_namespace['otp'] = otp
     doctest_namespace['session'] = session
-    doctest_namespace['pytz'] = pytz
     doctest_namespace['datetime'] = datetime
     doctest_namespace['csv_path'] = os.path.join(pytestconfig.rootdir, 'doctest_resources')

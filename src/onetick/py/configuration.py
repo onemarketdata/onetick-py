@@ -656,8 +656,9 @@ class Config:
     )
 
     max_expected_ticks_per_symbol = OtpProperty(
-        description='Expected maximum number of ticks per symbol (used for performance optimizations).',
-        base_default=2000,
+        description='Expected maximum number of ticks per symbol (used for performance optimizations). '
+                    'Default is 2000.',
+        base_default=None,
         allowed_types=int,
         env_var_name='OTP_MAX_EXPECTED_TICKS_PER_SYMBOL',
     )

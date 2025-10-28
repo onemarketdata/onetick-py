@@ -1,10 +1,10 @@
 import math
 import os
+import zoneinfo
 from pathlib import Path
 
 import pytest
 import datetime
-import pytz
 import pandas as pd
 import numpy as np
 
@@ -59,8 +59,8 @@ def test_hetero_ticks_common_columns(session, par_dir):
 
 def test_date(session):
     original_dates = [datetime.datetime(2010, 10, 12, 20, 4, 3), datetime.datetime(2020, 1, 1)]
-    tz = pytz.timezone("GMT")
-    dates = list(map((lambda x: tz.localize(x)), original_dates))
+    tz = zoneinfo.ZoneInfo("GMT")
+    dates = list(map((lambda x: x.replace(tzinfo=tz)), original_dates))
 
     t = otp.Ticks({"x": dates})
 

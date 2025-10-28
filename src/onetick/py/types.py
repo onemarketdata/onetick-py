@@ -3,14 +3,14 @@ import functools
 import inspect
 import warnings
 from typing import Optional, Type, Union
-from packaging.version import parse as parse_version
+from datetime import date as _date
+from datetime import datetime as _datetime
+from datetime import timedelta as _timedelta
 
 import pandas as pd
 import numpy as np
-from datetime import date as _date
-from datetime import datetime as _datetime
-
 from pandas.tseries import offsets
+from packaging.version import parse as parse_version
 
 import onetick.py as otp
 from onetick.py.otq import otq, pyomd
@@ -1095,7 +1095,9 @@ class datetime(AbstractTime):
     def _process_timezones_args(self, tz, tzinfo):
         if tz is not None:
             if tzinfo is None:
-                tzinfo = get_tzfile_by_name(tz)  # pandas is broken https://github.com/pandas-dev/pandas/issues/31929
+                # parameter tz in pandas.Timestamp is broken https://github.com/pandas-dev/pandas/issues/31929
+                # it is fixed in pandas>=2.0.0, but we need to support older versions
+                tzinfo = get_tzfile_by_name(tz)
                 tz = None
             else:
                 raise ValueError(
@@ -1936,21 +1938,12 @@ def is_time_type(time):
 
 def next_day(dt_obj: Union[_date, _datetime, date, datetime, pd.Timestamp]) -> _datetime:
     """
-    Return next day of ``dt_obj`` as datetime.datetime.
+    Return the start of the next day of ``dt_obj`` as timezone-naive :py:class:`datetime.datetime`.
+
+    Next day in this case means simply incrementing day/month/year number,
+    not adding 24 hours (which may return the same date on DST days).
     """
-    updated_dt = dt_obj + Day(1)
-
-    # If we switch ts on timezone transition time, ts changes its timezone offset
-    if hasattr(dt_obj, "tzinfo") and updated_dt.tzinfo != dt_obj.tzinfo:
-        dt_offset = dt_obj.tzinfo.utcoffset(dt_obj)
-        updated_dt_offset = updated_dt.tzinfo.utcoffset(updated_dt)
-
-        tz_diff = dt_offset - updated_dt_offset
-        updated_dt += tz_diff
-
-    updated_date = updated_dt.date()
-
-    return _datetime(updated_date.year, updated_date.month, updated_date.day)
+    return _datetime(dt_obj.year, dt_obj.month, dt_obj.day) + _timedelta(days=1)
 
 
 def default_by_type(dtype):

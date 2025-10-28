@@ -1,7 +1,9 @@
+import datetime
+import zoneinfo
+
 import pytest
 import numpy as np
-import datetime
-import pytz
+
 from onetick.py.core.source import _Source
 
 import onetick.py as otp
@@ -804,9 +806,7 @@ def test_add_bool_column_2(session):
 
 
 def test_date(session):
-    date = datetime.datetime(2010, 10, 12, 20, 4, 3)
-    tz = pytz.timezone("GMT")
-    date = tz.localize(date)
+    date = datetime.datetime(2010, 10, 12, 20, 4, 3, tzinfo=zoneinfo.ZoneInfo("GMT"))
 
     t = Tick(x=date)
 

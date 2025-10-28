@@ -1,4 +1,5 @@
-FROM python:3.9.8
+ARG ONETICK_QUERY_WEBAPI_PYTHON_VERSION
+FROM python:$ONETICK_QUERY_WEBAPI_PYTHON_VERSION
 
 ARG LOCAL_PIP_URL
 ARG ONETICK_QUERY_WEBAPI_VERSION
@@ -8,7 +9,7 @@ ARG ONETICK_QUERY_WEBAPI_VERSION
 ARG STRICT_DEPENDENCIES
 
 # Libraries for correct OneTick functioning
-ENV BUILD_PACKAGES "libgomp1 gcc libncurses5-dev sudo sssd vim less libodbc1 jq"
+ENV BUILD_PACKAGES "libgomp1 gcc libncurses5-dev sudo sssd vim less libodbc2 jq"
 
 ENV DEBIAN_FTP "https://ftp.debian.org/debian/pool/main"
 
@@ -49,7 +50,6 @@ COPY requirements.txt /onetick-py/requirements.txt
 # install python dependenices based on the requirements.dev.txt file
 RUN sudo -E pip --no-cache-dir install --upgrade pip --ignore-installed \
     && sudo -E pip --no-cache-dir install -r "/onetick-py/requirements.dev.txt" \
-       numpy==1.23.0 pandas==1.3.4 \
        --extra-index-url "https://${LOCAL_PIP_URL}"
 
 # install onetick.query_webapi

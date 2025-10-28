@@ -1,5 +1,6 @@
+import zoneinfo
+
 import pytest
-import pytz
 import pandas as pd
 
 import onetick.py as otp
@@ -93,10 +94,7 @@ class TestToStr:
         assert df["str_date"][0] == "2015-12-01"
 
     def test_timezone(self, m_session):
-        dates = [otp.datetime(2015, 12, 1, 1, 45, 34)]
-
-        tz = pytz.timezone('GMT')
-        dates = list(map((lambda x: tz.localize(x)), dates))
+        dates = [otp.datetime(2015, 12, 1, 1, 45, 34, tzinfo=zoneinfo.ZoneInfo('GMT'))]
 
         data = otp.Ticks(dict(x=dates))
 

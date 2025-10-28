@@ -4,7 +4,6 @@ from functools import partial
 from collections import defaultdict
 
 import os
-import pytz
 import pytest
 import pandas
 import onetick.py as otp
@@ -90,7 +89,6 @@ def add_session(doctest_namespace, request, session, monkeypatch, mocker):
     doctest_namespace['otq'] = otq
     doctest_namespace['otp'] = otp
     doctest_namespace['session'] = session
-    doctest_namespace['pytz'] = pytz
     doctest_namespace['datetime'] = datetime
     doctest_namespace['pd'] = pandas
     doctest_namespace['pprint'] = pprint

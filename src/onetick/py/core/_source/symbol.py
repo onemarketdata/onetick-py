@@ -35,7 +35,7 @@ class SymbolType:
         | :ref:`api/misc/symbol_param:Symbol Parameters Objects`
         """
 
-        self._name = _SymbolParamColumn("_SYMBOL_NAME", str)
+        self.__name = _SymbolParamColumn("_SYMBOL_NAME", str)
 
     @property
     def name(self):
@@ -61,7 +61,7 @@ class SymbolType:
         4 2003-12-01 00:00:00.002  3          S1
         5 2003-12-01 00:00:00.002 -1          S2
         """
-        return self._name
+        return self.__name
 
     def get(self, name, dtype, default=None):
         """
@@ -131,6 +131,9 @@ class SymbolType:
         -------
         _SymbolParamColumn
         """
+        if item == '__objclass__':
+            # fix for PY-1399 (some inspect functions try to access this special attribute)
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
         if not item.startswith('_') and item != 'pytest_mock_example_attribute_that_shouldnt_exist':
             warnings.warn("`__getattr__` method is deprecated. Please, use `__getitem__` method instead.",
                           FutureWarning, stacklevel=2)

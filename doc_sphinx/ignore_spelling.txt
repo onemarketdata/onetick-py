@@ -14,6 +14,7 @@ boolean
 callables
 cep
 changelog
+codebase
 combinations
 config
 configs
@@ -44,6 +45,7 @@ favicon
 filename
 filesystem
 Github
+gitlab
 Gitlab
 google
 gRPC

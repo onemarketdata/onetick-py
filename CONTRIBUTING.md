@@ -118,8 +118,8 @@ We have one special subsection name `### Backward incompatible changes`.
 
 ## Multiple Python versions support
 
-- We support multiple python versions **3.9, 3.10, 3.11, 3.12, 3.13**, but we suppose as main python version **3.12**.
-  So we use it for development and testing.
+- We support multiple python versions **3.9, 3.10, 3.11, 3.12, 3.13**.
+  But python version **3.12** is used for development and testing.
 - Keep in mind that some features are available only for specific versions.
   We collected backports in the `./onetick/py/backports.py` file,
   so you can use it in your code to DRY with imports like `from onetick.py.backports import Literal`.

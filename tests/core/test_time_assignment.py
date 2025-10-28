@@ -1,12 +1,12 @@
 import itertools
+import zoneinfo
 
 from onetick.py.otq import otq
 import pytest
-import pytz
 
 import onetick.py as otp
 
-GMT = pytz.timezone("GMT")
+GMT = zoneinfo.ZoneInfo("GMT")
 start_ts = otp.config['default_start_time'].replace(tzinfo=GMT).timestamp() * 1000
 
 

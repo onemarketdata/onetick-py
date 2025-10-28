@@ -28,6 +28,9 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    # OneTick server and onetick.query-webapi do not support it yet
+    # mantis [onetick 0037046]: Add support of python 3.14
+    # "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Environment :: Console",
 ]

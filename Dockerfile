@@ -11,7 +11,9 @@ ARG STRICT_DEPENDENCIES
 
 # gitlab checkouts code into the current directory, ie .
 # and this command copy code inside the image
-COPY . /onetick-py/
+# (we also change ownership of the directory to onetick user,
+#  because tests and build scripts are run by onetick user and the ownership is required by git)
+COPY --chown=onetick:root --chmod=775 . /onetick-py/
 
 RUN sudo apt-get update
 RUN sudo apt-get install --no-install-recommends graphviz -y

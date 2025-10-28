@@ -557,8 +557,10 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         kwargs['password'] = password
 
     max_expected_ticks_per_symbol = max_expected_ticks_per_symbol or otp.config.max_expected_ticks_per_symbol
-    if has_max_expected_ticks_per_symbol(throw_warning=True):
+    if max_expected_ticks_per_symbol is not None and has_max_expected_ticks_per_symbol(throw_warning=True):
         kwargs['max_expected_ticks_per_symbol'] = max_expected_ticks_per_symbol
+    elif max_expected_ticks_per_symbol is None and has_max_expected_ticks_per_symbol(throw_warning=False):
+        kwargs['max_expected_ticks_per_symbol'] = 2000
 
     if encoding is not None and has_query_encoding_parameter(throw_warning=True):
         kwargs['encoding'] = encoding

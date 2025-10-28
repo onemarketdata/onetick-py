@@ -10,6 +10,30 @@
 
 ### Removed
 
+## [1.173.0] - 2025-10-28
+
+### Added
+
+- Added *preliminary* support for python 3.14
+- Added `locator_parser` and `onetick-lib` to unit tests
+- Added `webapi-python3.14` testing job
+
+### Changed
+
+- Drop support for all dependent packages having python version less than 3.9
+- Use python 3.12 when testing onetick-py and WebAPI
+- Remove `pytz` usage from the codebase, use standard `zoneinfo` instead
+- Drop support for `pandas` version less than 1.5.2
+- Remove `pyarrow` dependency
+- Change ownership of `/onetick-py` directory and use it in Gitlab CI/CD
+
+### Fixed
+
+- Fixed error when getting `help(otp.DataSource)`
+- Fixed tests and compatibility checks for some OneTick builds and releases
+
+### Removed
+
 ## [1.172.0] - 2025-10-20
 
 ### Added
@@ -2393,7 +2417,7 @@
 
 ### Fixed
 
-- while deducing schema use last day with _selected_ tick type
+- while deducing schema use last day with *selected* tick type
 
 ## [1.55.3]
 
@@ -3557,7 +3581,7 @@ with datetime arguments
 - `copy()` function now create subclass instance instead of `_Source`
 - `output_type_index` parameter for `merge()`, `join()`, `join_by_time()` and `apply_query()`
 - all standard `otp.Source` subclasses now support `node` and `**kwargs` parameters for `__init__()`
-- from this point all subclasses of `otp.Source` _must_ support `node` and `**kwargs` parameters for `__init__()`
+- from this point all subclasses of `otp.Source` *must* support `node` and `**kwargs` parameters for `__init__()`
 
 ### Fixed
 
@@ -3691,7 +3715,7 @@ with datetime arguments
 
 ### Added
 
-- Support _dateparts_ in the `Ticks` `offsets`, i.e. `Hour`, `Nano`, `Minute`, but without expressions
+- Support *dateparts* in the `Ticks` `offsets`, i.e. `Hour`, `Nano`, `Minute`, but without expressions
 
 ## [1.5.5]
 
@@ -4087,7 +4111,7 @@ with datetime arguments
 
 ### Fixed
 
-- _Dateparts_ objects (`otp.Second`, `otp.Milli` and so on) are now correctly support
+- *Dateparts* objects (`otp.Second`, `otp.Milli` and so on) are now correctly support
  initialization with difference between two lag operators
 
 ## [1.3.91]
@@ -4477,7 +4501,7 @@ with datetime arguments
 
 ### Added
 
-- Implemented date difference in _datepart_ units
+- Implemented date difference in *datepart* units
 
 ## [1.3.35]
 
@@ -4857,7 +4881,7 @@ with datetime arguments
 
 ### Fixed
 
-- Assignment to timestamp field now applies a _pre-sort_.
+- Assignment to timestamp field now applies a *pre-sort*.
 
 ## [1.2.30]
 

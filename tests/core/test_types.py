@@ -1,10 +1,10 @@
 import os
 import pytest
 import datetime
+import zoneinfo
 
 import numpy as np
 import pandas as pd
-import pytz
 
 import onetick.py as otp
 from onetick.py.compatibility import has_timezone_parameter
@@ -257,9 +257,9 @@ hour_ns = 60 * 60 * 1_000_000_000
     (otp.date(2005, 1, 2), 'EST5EDT', 1104624000000000000 + 5 * hour_ns),
     # ---------------------------
     (datetime.datetime(2005, 1, 2), None, 1104624000000000000),
-    (datetime.datetime(2005, 1, 2, tzinfo=pytz.timezone('EST5EDT')), None, 1104624000000000000 + 5 * hour_ns),
+    (datetime.datetime(2005, 1, 2, tzinfo=zoneinfo.ZoneInfo('EST5EDT')), None, 1104624000000000000 + 5 * hour_ns),
     (datetime.datetime(2005, 1, 2), 'EST5EDT', 1104624000000000000 + 5 * hour_ns),
-    (datetime.datetime(2005, 1, 1, 19, tzinfo=pytz.timezone('EST5EDT')), 'GMT', 1104624000000000000),
+    (datetime.datetime(2005, 1, 1, 19, tzinfo=zoneinfo.ZoneInfo('EST5EDT')), 'GMT', 1104624000000000000),
     (datetime.datetime(2005, 1, 1, 23, 59, 59, 999999), None, 1104624000000000000 - 1000),
     # ---------------------------
     (datetime.date(2005, 1, 2), None, 1104624000000000000),

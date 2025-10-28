@@ -8,8 +8,8 @@ import onetick.py as otp
 import importlib
 import datetime
 import pandas as pd
-import pytz
 import dateutil.tz
+import zoneinfo
 
 from pathlib import Path
 from onetick.py.utils import TmpFile
@@ -90,7 +90,7 @@ def test_keep_everything_generated(obj_class):
     (datetime.date(2022, 1, 1), None),
     (datetime.datetime(2022, 1, 1), None),
     (datetime.datetime(2022, 1, 1, tzinfo=datetime.timezone.utc), 'UTC'),
-    (datetime.datetime(2022, 1, 1, tzinfo=pytz.timezone('Europe/London')), 'Europe/London'),
+    (datetime.datetime(2022, 1, 1, tzinfo=zoneinfo.ZoneInfo('Europe/London')), 'Europe/London'),
     (datetime.datetime(2022, 1, 1, tzinfo=dateutil.tz.gettz('Asia/Yerevan')), 'Asia/Yerevan'),
     (datetime.datetime(2022, 1, 1, tzinfo=zoneinfo.ZoneInfo('Europe/Kyiv')), 'Europe/Kyiv'),
     (pd.Timestamp(2022, 1, 1), None),

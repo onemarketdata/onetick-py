@@ -1,11 +1,15 @@
 import os
-import sys
+import pydoc
+from datetime import datetime
+
 import pytest
 import numpy as np
 import pandas as pd
-from datetime import datetime
+
+
 import onetick.py as otp
 from onetick.py.otq import otq
+
 DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -267,3 +271,9 @@ class TestSymbolParamWithDefaults:
         df = otp.run(data, symbols=symbols)
         assert len(df) == num
         print(f'Elapsed time without CASE with {num} symbols: {datetime.now() - start_time}')
+
+
+def test_help(session):
+    # PY-1399
+    # this should be the same as help(otp.DataSource)
+    assert pydoc.render_doc(otp.DataSource) != ''

@@ -1,6 +1,7 @@
 import os
 import re
 import math
+import zoneinfo
 from datetime import datetime
 from functools import partial
 
@@ -8,7 +9,6 @@ import dateutil
 import numpy as np
 import pandas as pd
 import pytest
-import pytz
 
 import onetick.py as otp
 from onetick.py.types import string
@@ -484,7 +484,7 @@ class TestSymbolParam:
     def test_start_time(self, db):
         d = otp.DataSource(db)
         data = otp.Ticks(dict(x=[1, 2]))
-        start = datetime(2003, 12, 1, 0, 0, 0, 2000, tzinfo=pytz.timezone("EST5EDT"))
+        start = datetime(2003, 12, 1, 0, 0, 0, 2000, tzinfo=zoneinfo.ZoneInfo("EST5EDT"))
         res = data.join_with_query(d, how="inner", start=start)
         res = otp.run(res)
         assert len(res) == 4  # only tick with 2 and 4 offset is selected
@@ -492,7 +492,7 @@ class TestSymbolParam:
     def test_end_time(self, db):
         d = otp.DataSource(db)
         data = otp.Ticks(dict(x=[1, 2]))
-        end = datetime(2003, 12, 1, 0, 0, 0, 3000, tzinfo=pytz.timezone("EST5EDT"))
+        end = datetime(2003, 12, 1, 0, 0, 0, 3000, tzinfo=zoneinfo.ZoneInfo("EST5EDT"))
         res = data.join_with_query(d, how="inner", end=end)
         res = otp.run(res)
         assert len(res) == 6  # only tick with 0 and 2 offset is selected
@@ -501,8 +501,8 @@ class TestSymbolParam:
     def test_start_and_end_time(self, db, timeclass):
         d = otp.DataSource(db)
         data = otp.Ticks(dict(x=[1, 2]))
-        start = timeclass(2003, 12, 1, 0, 0, 0, 1000, tzinfo=pytz.timezone("EST5EDT"))
-        end = timeclass(2003, 12, 1, 0, 0, 0, 3000, tzinfo=pytz.timezone("EST5EDT"))
+        start = timeclass(2003, 12, 1, 0, 0, 0, 1000, tzinfo=zoneinfo.ZoneInfo("EST5EDT"))
+        end = timeclass(2003, 12, 1, 0, 0, 0, 3000, tzinfo=zoneinfo.ZoneInfo("EST5EDT"))
         res = data.join_with_query(d, how="inner", start=start, end=end)
         res = otp.run(res)
         assert len(res) == 2  # only tick with 2 offset is selected
