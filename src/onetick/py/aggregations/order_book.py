@@ -229,6 +229,9 @@ class ObSnapshot(_OrderBookAggregation):
         # we don't want to set hard limit on the output of order book aggregations
         if self.show_full_detail:
             kwargs['all_fields'] = True
+        self._size_type = int
+        if self.size_max_fractional_digits > 0:
+            self._size_type = float  # type: ignore[assignment]
         super().__init__(*args, **kwargs)
 
     def _param_validation(self):
@@ -244,7 +247,7 @@ class ObSnapshot(_OrderBookAggregation):
     def _get_output_schema(self, src: 'Source', name: Optional[str] = None) -> dict:
         schema = {
             'PRICE': float,
-            'SIZE': int,
+            'SIZE': self._size_type,
             'LEVEL': int,
             'UPDATE_TIME': otp.nsectime,
             'BUY_SELL_FLAG': int,
@@ -265,10 +268,10 @@ class ObSnapshotWide(ObSnapshot):
     def _get_output_schema(self, src: 'Source', name: Optional[str] = None) -> dict:
         schema = {
             'BID_PRICE': float,
-            'BID_SIZE': int,
+            'BID_SIZE': self._size_type,
             'BID_UPDATE_TIME': otp.nsectime,
             'ASK_PRICE': float,
-            'ASK_SIZE': int,
+            'ASK_SIZE': self._size_type,
             'ASK_UPDATE_TIME': otp.nsectime,
             'LEVEL': int,
         }
@@ -299,10 +302,10 @@ class ObSnapshotFlat(ObSnapshot):
         for level in range(1, self.max_levels + 1):
             schema.update({
                 f'BID_PRICE{level}': float,
-                f'BID_SIZE{level}': int,
+                f'BID_SIZE{level}': self._size_type,
                 f'BID_UPDATE_TIME{level}': otp.nsectime,
                 f'ASK_PRICE{level}': float,
-                f'ASK_SIZE{level}': int,
+                f'ASK_SIZE{level}': self._size_type,
                 f'ASK_UPDATE_TIME{level}': otp.nsectime,
             })
         return schema
@@ -343,6 +346,9 @@ class ObSummary(_OrderBookAggregation):
         self.state_key_max_inactivity_sec = state_key_max_inactivity_sec
         self.size_max_fractional_digits = size_max_fractional_digits
         self.include_market_order_ticks = include_market_order_ticks
+        self._size_type = int
+        if self.size_max_fractional_digits > 0:
+            self._size_type = float   # type: ignore[assignment]
         super().__init__(*args, **kwargs)
 
     def _param_validation(self):
@@ -357,12 +363,12 @@ class ObSummary(_OrderBookAggregation):
 
     def _get_output_schema(self, src: 'Source', name: Optional[str] = None) -> dict:
         schema = {
-            'BID_SIZE': int,
+            'BID_SIZE': self._size_type,
             'BID_VWAP': float,
             'BEST_BID_PRICE': float,
             'WORST_BID_PRICE': float,
             'NUM_BID_LEVELS': int,
-            'ASK_SIZE': int,
+            'ASK_SIZE': self._size_type,
             'ASK_VWAP': float,
             'BEST_ASK_PRICE': float,
             'WORST_ASK_PRICE': float,

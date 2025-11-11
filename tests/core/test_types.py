@@ -150,6 +150,7 @@ class TestInf:
                           (1641819624975, '1641819624975'),
                           (0.1, '0.1'),
                           (5.3139e+3, '5313.9'),
+                          (1e-21, 'atof("1e-21")'),
                           (otp.nan, 'NAN()'),
                           (otp.inf, 'INFINITY()'),
                           (otp.now(), 'NOW()'),
@@ -400,11 +401,30 @@ def test_overflow(session):
 
 def test_decimal(session):
     assert ott.type2str(otp.decimal) == 'decimal'
-    assert str(otp.decimal) == 'decimal'
-    assert ott.value2str(otp.decimal(1)) == 'DECIMAL(1.0)'
-    assert str(otp.decimal(1)) == '1.0'
+    assert str(otp.decimal) == "<class 'onetick.py.types.decimal'>"
+    assert ott.value2str(otp.decimal(1)) == 'STRING_TO_DECIMAL("1")'
+    assert ott.value2str(otp.decimal(1.0)) == 'STRING_TO_DECIMAL("1.0")'
+    assert ott.value2str(otp.decimal('1.0')) == 'STRING_TO_DECIMAL("1.0")'
+    assert str(otp.decimal(1)) == '1'
+    assert str(otp.decimal(1.0)) == '1.0'
+    assert str(otp.decimal('1.0')) == '1.0'
+    assert repr(otp.decimal('1.0')) == 'decimal("1.0")'
+
+    assert isinstance(otp.decimal('0.1') == otp.decimal(0.1), otp.Operation)
+    assert isinstance(otp.decimal('0.1') != otp.decimal(0.1111), otp.Operation)
+    assert isinstance(otp.decimal(1) >= otp.decimal(0), otp.Operation)
+    assert isinstance(otp.decimal(1) > otp.decimal(0), otp.Operation)
+    assert isinstance(otp.decimal(0) < otp.decimal(10.12), otp.Operation)
+    assert isinstance(otp.decimal(0) <= otp.decimal(10.12), otp.Operation)
+    assert isinstance(otp.decimal(0) != otp.decimal(10.12), otp.Operation)
 
     t = otp.Tick(A1=otp.decimal(1.1))
+    t = t.where(t['A1'] > 0)
+    t = t.where(t['A1'] >= 0)
+    t = t.where(t['A1'] < 100)
+    t = t.where(t['A1'] <= 100)
+    t = t.where(t['A1'] != 0)
+    t = t.where(t['A1'] == otp.decimal(1.1))
     t['A2'] = otp.decimal(2.2)
     t['A3'] = otp.decimal(3.3)
     t['A4'] = (1.1 + otp.decimal(1.1)) + (otp.decimal(5.5) - 4.4) * (1 * otp.decimal(1)) * 2
@@ -458,6 +478,35 @@ def test_decimal(session):
     df = otp.run(t)
     assert list(df['A']) == [1, 2]
 
+    t = otp.Ticks(A=[0.1, otp.decimal(0.1)])
+    t['STR_A'] = t['A'].decimal.str(34)
+    df = otp.run(t)
+    # not losing precision when using CSV_FILE_LISTING (converting from string too)
+    assert list(df['STR_A']) == [
+        '0.1000000000000000000000000000000000',
+        '0.1000000000000000000000000000000000',
+    ]
+    t = otp.merge([
+        otp.Tick(A=0.1),
+        otp.Tick(A=otp.decimal(0.1)),
+        otp.Tick(A=otp.decimal('0.1')),
+        otp.Tick(A=otp.decimal(1) / otp.decimal(10)),
+        otp.Tick(A=otp.decimal(1e-1)),
+    ], enforce_order=True)
+    t['STR_A'] = t['A'].decimal.str(34)
+    df = otp.run(t)
+    # losing precision when converting from float
+    assert df['STR_A'][0] != '0.1000000000000000000000000000000000'
+    # not losing precision when converting from decimal float, int or string
+    assert df['STR_A'][1] == '0.1000000000000000000000000000000000'
+    assert df['STR_A'][2] == '0.1000000000000000000000000000000000'
+    assert df['STR_A'][3] == '0.1000000000000000000000000000000000'
+
+    t = otp.Ticks(A=[otp.decimal(1e-21)] * 2)
+    assert otp.run(t)["A"][0] == 1e-21
+    t = otp.Ticks(B=[otp.decimal(1e-21)])
+    assert otp.run(t)["B"][0] == 1e-21
+
 
 @pytest.mark.filterwarnings("ignore:.*milliseconds as nanoseconds.*")
 @pytest.mark.parametrize('value,default_value,schema_type,result', [
@@ -478,7 +527,10 @@ def test_decimal(session):
 def test_default_by_type(session, value, default_value, schema_type, result):
     t = otp.Tick(VALUE=value)
     assert t.schema['VALUE'] is schema_type
-    assert otp.default_by_type(t.schema['VALUE']) == default_value
+    if schema_type is otp.decimal:
+        assert isinstance(otp.default_by_type(t.schema['VALUE']) == default_value, otp.Operation)
+    else:
+        assert otp.default_by_type(t.schema['VALUE']) == default_value
     t['VALUE'] = otp.default_by_type(t.schema['VALUE'])
     assert t.schema['VALUE'] is schema_type
     df = otp.run(t, timezone='GMT')

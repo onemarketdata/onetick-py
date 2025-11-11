@@ -327,6 +327,7 @@ def merge(sources, align_schema=True, symbols=None, identify_input_ts=False,
 
     if enforce_order:
         result.drop('OMDSEQ', inplace=True)
+        merged_columns.pop('OMDSEQ')
 
     if identify_input_ts:
         result.schema['SYMBOL_NAME' + added_field_name_suffix] = str
@@ -2030,7 +2031,7 @@ def _add_element(cur_res, element, format_spec_additional=None):
     if isinstance(element, Operation):
         if format_spec_additional is None:
             cur_res += element.apply(str)
-        elif issubclass(element.dtype, float) and re.fullmatch(r'\.\d+f', format_spec_additional):
+        elif issubclass(element.dtype, (float, ott.decimal)) and re.fullmatch(r'\.\d+f', format_spec_additional):
             # float has strange behavior when precision=0
             decimal_elem = element.apply(ott.decimal)
             precision_str = re.findall(r'\d+', format_spec_additional)[0]
@@ -2047,7 +2048,7 @@ def _add_element(cur_res, element, format_spec_additional=None):
     else:
         if format_spec_additional is None:
             cur_res += str(element)
-        elif isinstance(element, float):
+        elif isinstance(element, (float, ott.decimal)):
             formatting = f'{{:{format_spec_additional}}}'
             cur_res += formatting.format(element)
         else:

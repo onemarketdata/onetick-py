@@ -2,6 +2,7 @@ import ctypes
 import functools
 import inspect
 import warnings
+import decimal as _decimal
 from typing import Optional, Type, Union
 from datetime import date as _date
 from datetime import datetime as _datetime
@@ -707,18 +708,23 @@ class _inf(float, metaclass=_nan_base):
 inf = _inf()
 
 
-class _decimal_str(type):
-    def __str__(cls):
-        return 'decimal'
-
-
-class decimal(float, metaclass=_decimal_str):
+class decimal:
     """
     Object that represents decimal OneTick value.
     Decimal is 128 bit base 10 floating point number.
 
+    Parameters
+    ----------
+    value: int, float, str
+        The value to initialize decimal from.
+        Note that float values may be converted with precision lost.
+
     Examples
     --------
+
+    :py:class:`~onetick.py.types.decimal` objects can be used in tick generators
+    and column operations as any other onetick-py type:
+
     >>> t = otp.Ticks({'A': [otp.decimal(1), otp.decimal(2)]})
     >>> t['B'] = otp.decimal(1.23456789)
     >>> t['C'] = t['A'] / 0
@@ -727,43 +733,107 @@ class decimal(float, metaclass=_decimal_str):
                          Time    A         B    C    D
     0 2003-12-01 00:00:00.000  1.0  1.234568  inf  NaN
     1 2003-12-01 00:00:00.001  2.0  1.234568  inf  NaN
+
+    Additionally, any arithmetic operation with :py:class:`~onetick.py.types.decimal` object will return
+    an :py:class:`~onetick.py.Operation` object:
+
+    >>> t = otp.Tick(A=1)
+    >>> t['X'] = otp.decimal(1) / 0
+    >>> otp.run(t)
+            Time    A    X
+    0 2003-12-01    1  inf
+
+    Note that converting from float (first row) may result in losing precision.
+    :py:class:`~onetick.py.types.decimal` objects are created from strings or integers, so they don't lose precision:
+
+    >>> t0 = otp.Tick(A=0.1)
+    >>> t1 = otp.Tick(A=otp.decimal(0.01))
+    >>> t2 = otp.Tick(A=otp.decimal('0.001'))
+    >>> t3 = otp.Tick(A=otp.decimal(1) / otp.decimal(10_000))
+    >>> t = otp.merge([t0, t1, t2, t3], enforce_order=True)
+    >>> t['STR_A'] = t['A'].decimal.str(34)
+    >>> otp.run(t)
+            Time       A                                 STR_A
+    0 2003-12-01  0.1000  0.1000000000000000055511151231257827
+    1 2003-12-01  0.0100  0.0100000000000000000000000000000000
+    2 2003-12-01  0.0010  0.0010000000000000000000000000000000
+    3 2003-12-01  0.0001  0.0001000000000000000000000000000000
+
+    Note that :py:class:`otp.Ticks <onetick.py.Ticks>` will convert everything from string under the hood,
+    so even the float values will not lose precision:
+
+    >>> t = otp.Ticks({'A': [0.1, otp.decimal(0.01), otp.decimal('0.001'), otp.decimal(1e-4)]})
+    >>> t['STR_A'] = t['A'].decimal.str(34)
+    >>> otp.run(t)
+                         Time       A                                 STR_A
+    0 2003-12-01 00:00:00.000  0.1000  0.1000000000000000000000000000000000
+    1 2003-12-01 00:00:00.001  0.0100  0.0100000000000000000000000000000000
+    2 2003-12-01 00:00:00.002  0.0010  0.0010000000000000000000000000000000
+    3 2003-12-01 00:00:00.003  0.0001  0.0001000000000000000000000000000000
     """
-    def __wrap(self, res):
-        # if parent class doesn't support some operation, it returns NotImplemented and so do we
-        # In other case we wrap float result with our decimal class
-        if isinstance(res, type(NotImplemented)):
-            return NotImplemented
-        return self.__class__(res)
+    def __new__(cls, *args, **kwargs):
+        # this method dynamically adds properties and methods
+        # from otp.Operation class to this one
 
-    def __add__(self, other):
-        return self.__wrap(super().__add__(other))
+        # otp.decimal class doesn't fit well in onetick-py type system,
+        # so this class is a mix of both type and Operation logic
 
-    def __radd__(self, other):
-        return self.__wrap(super().__radd__(other))
+        # Basically it works like this:
+        #   otp.decimal is a OneTick type
+        #   otp.decimal(1) is a decimal type object
+        # Doing anything with this object returns an otp.Operation:
+        #   otp.decimal(1) / 2
 
-    def __sub__(self, other):
-        return self.__wrap(super().__sub__(other))
+        def proxy_wrap(attr, value):
+            if callable(value):
+                @functools.wraps(value)
+                def f(self, *args, **kwargs):
+                    op = self.to_operation()
+                    return getattr(op, attr)(*args, **kwargs)
+                return f
+            else:
+                @functools.wraps(value)
+                def f(self):
+                    op = self.to_operation()
+                    return getattr(op, attr)
+                return property(f)
 
-    def __rsub__(self, other):
-        return self.__wrap(super().__rsub__(other))
+        for attr, value in inspect.getmembers(otp.Operation):
+            # comparison methods are defined by default for some reason,
+            # but we want to get them from otp.Operation
+            if not hasattr(cls, attr) or attr in ('__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__'):
+                setattr(cls, attr, proxy_wrap(attr, value))
 
-    def __mul__(self, other):
-        return self.__wrap(super().__mul__(other))
+        return super().__new__(cls)
 
-    def __rmul__(self, other):
-        return self.__wrap(super().__rmul__(other))
+    def __init__(self, value):
+        supported_types = (str, int, float)
+        if not isinstance(value, supported_types):
+            raise TypeError("Parameter 'value' must be one of these types: {supported_types}")
+        self.__value = value
 
-    def __truediv__(self, other):
-        return self.__wrap(super().__truediv__(other))
+    @classmethod
+    def _to_onetick_type_string(cls):
+        # called by ott.type2str
+        return 'decimal'
 
-    def __rtruediv__(self, other):
-        return self.__wrap(super().__rtruediv__(other))
+    def _to_onetick_string(self):
+        # called by ott.value2str
+        value = str(self.__value)
+        return f'STRING_TO_DECIMAL({value2str(value)})'
+
+    def to_operation(self):
+        return otp.Operation(op_str=self._to_onetick_string(), dtype=decimal)
 
     def __str__(self):
-        return super().__repr__()
+        # called by otp.CSV, we don't need to convert the value with OneTick functions in this case
+        return str(self.__value)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self})"
+        return f"{self.__class__.__name__}({value2str(self.__value)})"
+
+    def __format__(self, __format_spec: str) -> str:
+        return _decimal.Decimal(self.__value).__format__(__format_spec)
 
 # --------------------------------------------------------------- #
 # AUXILIARY FUNCTIONS
@@ -809,7 +879,7 @@ def get_source_base_type(value):
         value_type = nsectime
 
     # check valid value type
-    if get_base_type(value_type) not in [int, float, str, bool]:
+    if get_base_type(value_type) not in [int, float, str, bool, decimal]:
         raise TypeError(f'Type "{repr(value_type)}" is not supported.')
 
     if not is_type_basic(value_type):
@@ -818,7 +888,7 @@ def get_source_base_type(value):
 
 
 def is_type_supported(dtype):
-    return get_base_type(dtype) in [int, float, str, bool] or issubclass(dtype, (datetime, date))
+    return get_base_type(dtype) in [int, float, str, bool, decimal] or issubclass(dtype, (datetime, date))
 
 
 def get_base_type(obj):
@@ -830,6 +900,8 @@ def get_base_type(obj):
         return int
     elif issubclass(obj, float):
         return float
+    elif issubclass(obj, decimal):
+        return decimal
 
     return type(None)
 
@@ -1686,6 +1758,8 @@ def type2str(t):
         return "double"
     if t is None:
         return ''
+    if t is decimal:
+        return t._to_onetick_type_string()
     return str(t)
 
 
@@ -1841,15 +1915,16 @@ def value2str(v):
         # there is no escape, so replacing double quotes with concatenation with it
         return '"' + str(v).replace('"', '''"+'"'+"''') + '"'
 
-    if isinstance(v, (float, decimal)) and not (isinstance(v, (_inf, _nan))):
+    if isinstance(v, decimal):
+        return v._to_onetick_string()
+
+    if isinstance(v, float) and not (isinstance(v, (_inf, _nan))):
         # PY-286: support science notation
         s = str(v)
         if "e" in s:
-            s = f"{v:.20f}".rstrip("0")
+            return f'atof({value2str(s)})'
         if s == "nan":
             return str(nan)
-        if isinstance(v, decimal):
-            return f'DECIMAL({s})'
         return s
 
     if is_time_type(v):
@@ -1960,7 +2035,7 @@ def default_by_type(dtype):
     >>> otp.default_by_type(float)
     nan
     >>> otp.default_by_type(otp.decimal)
-    decimal(0.0)
+    decimal(0)
     >>> otp.default_by_type(int)
     0
     >>> otp.default_by_type(otp.ulong)

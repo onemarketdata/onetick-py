@@ -127,6 +127,23 @@ class TestObSnapshot:
         data = otp.agg.ob_snapshot(**{param: value}).apply(data)
         otp.run(data)
 
+    def test_ob_snapshot_fractional_sizes(self):
+        data = otp.Ticks({
+            'BUY_SELL_FLAG': [0, 1, 0, 1, 0],
+            'UPDATE_TIME': [otp.config['default_start_time']] * 5,
+            'PRICE': [1, 2, 1, 2, 5],
+            'SIZE': [1.1, 2.2, 3.3, 4.4, 7.5],
+            'X': ['A', 'B', 'B', 'A', 'B'],
+        })
+
+        data = otp.agg.ob_snapshot(size_max_fractional_digits=8).apply(data)
+        assert data.schema['SIZE'] == float
+
+        df = otp.run(data)
+        assert len(df) == 3
+        assert set(df['PRICE']) == {1, 2, 5}
+        assert set(df['SIZE']) == {4.4, 6.6, 7.5}
+
 
 class TestObSnapshotWide:
 
@@ -158,6 +175,23 @@ class TestObSnapshotWide:
         assert set(df['ASK_SIZE']) == {6, 0}
         assert len(set(df['LEVEL'])) > 1
         assert 'X' not in df
+
+    def test_ob_snapshot_wide_fractional_sizes(self):
+        data = otp.Ticks({
+            'BUY_SELL_FLAG': [0, 1, 0, 1, 0],
+            'UPDATE_TIME': [otp.config['default_start_time']] * 5,
+            'PRICE': [1, 2, 1, 2, 5],
+            'SIZE': [1.1, 2.2, 3.3, 4.4, 7.5],
+            'X': ['A', 'B', 'B', 'A', 'B'],
+        })
+
+        data = otp.agg.ob_snapshot_wide(size_max_fractional_digits=8).apply(data)
+        assert data.schema['BID_SIZE'] == float
+        assert data.schema['ASK_SIZE'] == float
+
+        df = otp.run(data)
+        assert set(df['BID_SIZE']) == {4.4, 7.5}
+        assert set(df['ASK_SIZE']) == {6.6, 0}
 
 
 class TestObSnapshotFlat:
@@ -200,7 +234,31 @@ class TestObSnapshotFlat:
         }.issubset(df)
         assert 'X' not in df
 
+    def test_ob_snapshot_flat_fractional_sizes(self):
+        data = otp.Ticks({
+            'BUY_SELL_FLAG': [0, 1, 0, 1, 0],
+            'UPDATE_TIME': [otp.config['default_start_time']] * 5,
+            'PRICE': [1, 2, 1, 2, 5],
+            'SIZE': [1.1, 2.2, 3.3, 4.4, 7.5],
+            'X': ['A', 'B', 'B', 'A', 'B'],
+        })
 
+        data = otp.agg.ob_snapshot_flat(
+            size_max_fractional_digits=8, max_levels=2
+        ).apply(data)
+        for i in (1, 2):
+            assert data.schema[f'BID_SIZE{i}'] == float
+            assert data.schema[f'ASK_SIZE{i}'] == float
+
+        d = otp.run(data).iloc[0].to_dict()
+
+        assert d['BID_SIZE1'] == 7.5
+        assert d['BID_SIZE2'] == 4.4
+        assert d['ASK_SIZE1'] == 6.6
+        assert d['ASK_SIZE2'] == 0.
+
+
+@pytest.mark.skipif(not is_supported_otq_ob_summary(), reason='not supported on older OneTick versions')
 class TestObSummary:
 
     @pytest.fixture
@@ -215,21 +273,12 @@ class TestObSummary:
         })
 
     def test_ob_summary_check_input(self):
-        if not is_supported_otq_ob_summary(throw_warning=True):
-            return
-
         with pytest.raises(TypeError):
             otp.agg.ob_summary().apply(
                 otp.Tick(WRONG='INPUT')
             )
 
     def test_ob_summary(self, data):
-        if not is_supported_otq_ob_summary(throw_warning=True):
-            with pytest.raises(RuntimeError):
-                otp.agg.ob_summary().apply(data)
-
-            return
-
         data = otp.agg.ob_summary().apply(data)
         df = otp.run(data).to_dict()
         assert 'X' not in df
@@ -254,6 +303,26 @@ class TestObSummary:
             'WORST_ASK_PRICE': 2.0,
             'NUM_ASK_LEVELS': 1,
         }
+
+    def test_ob_summary_fractional_sizes(self):
+        data = otp.Ticks({
+            'BUY_SELL_FLAG': [0, 1, 0, 1, 0],
+            'UPDATE_TIME': [otp.config['default_start_time']] * 5,
+            'PRICE': [1, 2, 1, 2, 3],
+            'SIZE': [1.1, 2.2, 4.3, 3.4, 5.5],
+            'X': ['A', 'B', 'B', 'A', 'B'],
+        })
+
+        data = otp.agg.ob_summary(size_max_fractional_digits=8).apply(data)
+        assert data.schema['BID_SIZE'] == float
+        assert data.schema['ASK_SIZE'] == float
+
+        d = otp.run(data).iloc[0].to_dict()
+
+        assert d['BID_SIZE'] == 10.9
+        assert d['BID_VWAP'] == pytest.approx(2.0091, abs=1e-4)
+        assert d['ASK_SIZE'] == 5.6
+        assert d['ASK_VWAP'] == 2.0
 
 
 class TestObSize:

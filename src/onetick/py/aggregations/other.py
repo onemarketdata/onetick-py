@@ -100,7 +100,7 @@ class Vwap(_Aggregation):
     FIELDS_TO_SKIP: List = ['column_name']
 
     output_field_type = float
-    require_type = (int, float, ott.nsectime)
+    require_type = (int, float, ott.nsectime, ott.decimal)
 
     def __init__(self,
                  price_column: str,
@@ -271,7 +271,7 @@ class Average(_FloatAggregation):
 class StdDev(_Aggregation):     # Stddev does not support inf, so no need to use _FloatAggregation
     NAME = "STDDEV"
     EP = otq.Stddev
-    require_type = (int, float)
+    require_type = (int, float, ott.decimal)
     output_field_type = float
     FIELDS_MAPPING = deepcopy(_Aggregation.FIELDS_MAPPING)
     FIELDS_MAPPING['biased'] = 'BIASED'

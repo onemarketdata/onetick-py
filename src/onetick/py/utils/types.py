@@ -8,6 +8,8 @@ def get_type_that_includes(types):
         if b_type1 != b_type2:
             if {b_type1, b_type2} == {int, float}:
                 dtype = float
+            elif {b_type1, b_type2} == {ott.decimal, float} or {b_type1, b_type2} == {ott.decimal, int}:
+                dtype = ott.decimal
             elif {b_type1, b_type2} == {ott.nsectime, ott.msectime}:
                 dtype = ott.nsectime
             else:

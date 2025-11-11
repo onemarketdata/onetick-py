@@ -947,7 +947,9 @@ class Source:
         view: bool = False,
         line_limit: Optional[Tuple[int, int]] = (10, 30),
         parse_eval_from_params: bool = False,
+        render_debug_info: bool = False,
         debug: bool = False,
+        graphviz_compat_mode: bool = False,
         **kwargs,
     ):
         """
@@ -973,8 +975,13 @@ class Source:
             If one of tuple values set to zero the corresponding limit disabled.
         parse_eval_from_params: bool
             Enable parsing and printing `eval` sub-queries from EP parameters.
+        render_debug_info: bool
+            Render additional debug information.
         debug: bool
             Allow to print stdout or stderr from `Graphviz` render.
+        graphviz_compat_mode: bool
+            Change internal parameters of result graph for better compatibility with old `Graphviz` versions.
+            Could produce larger and less readable graphs.
         kwargs:
             Additional arguments to be passed to :py:meth:`onetick.py.Source.to_otq` method (except
             ``file_name``, ``file_suffix`` and ``query_name`` parameters)
@@ -1006,7 +1013,8 @@ class Source:
 
         otq_path = self.to_otq(**kwargs)
         return render_otq(
-            otq_path, image_path, output_format, load_external_otqs, view, line_limit, parse_eval_from_params, debug,
+            otq_path, image_path, output_format, load_external_otqs, view, line_limit, parse_eval_from_params,
+            render_debug_info, debug, graphviz_compat_mode,
         )
 
     def copy(self, ep=None, columns=None, deep=False) -> 'Source':

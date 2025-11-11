@@ -1,6 +1,7 @@
 import os
 import re
 import html
+import textwrap
 import graphviz as gv
 from collections import defaultdict, deque
 from datetime import datetime
@@ -29,6 +30,82 @@ IF_ELSE_EPS = {
 }
 
 
+def _parse_table_fields(line: str) -> list:
+    result = line.strip().split(',')
+    for idx in range(0, len(result) - 1):
+        result[idx] = result[idx] + ','
+
+    return result
+
+
+def _light_function_splitter(line: str, sep=',') -> list:
+    lines = []
+    current_line: list = []
+    parentheses_stack = 0
+    quotes_stack = 0
+    lead_quote_type = None
+
+    for ch in line:
+        if ch == sep and not parentheses_stack and not quotes_stack:
+            lines.append(''.join(current_line) + sep)
+            current_line = []
+            continue
+
+        current_line.append(ch)
+
+        if ch == '(' and not quotes_stack:
+            parentheses_stack += 1
+            continue
+
+        if ch == ')' and not quotes_stack:
+            parentheses_stack -= 1
+            if parentheses_stack < 0:
+                break
+
+        if ch in ["\"", "'"]:
+            if lead_quote_type is None:
+                lead_quote_type = ch
+                quotes_stack = 1
+            elif ch == lead_quote_type:
+                lead_quote_type = None
+                quotes_stack = 0
+
+    if parentheses_stack != 0:
+        raise ValueError(f'Incorrect parentheses count in function: `{line}`')
+
+    if quotes_stack != 0:
+        raise ValueError(f'Incorrect quotes count in function: `{line}`')
+
+    lines.append(''.join(current_line))
+
+    return lines
+
+
+EP_TO_MULTILINE_ATTRS: dict = {
+    "ADD_FIELDS": {
+        "set": _light_function_splitter,
+    },
+    "UPDATE_FIELDS": {
+        "set": _light_function_splitter,
+    },
+    "TABLE": {
+        "fields": _parse_table_fields,
+    },
+    "PASSTHROUGH": {
+        "fields": _parse_table_fields,
+    },
+    "COMPUTE": {
+        "compute": _light_function_splitter,
+    },
+    "DECLARE_STATE_VARIABLES": {
+        "variables": _light_function_splitter,
+    },
+    "RENAME_FIELDS": {
+        "rename_fields": _parse_table_fields,
+    }
+}
+
+
 @dataclass
 class NestedQuery:
     name: str
@@ -51,6 +128,14 @@ class NestedQuery:
                 return self.query
         else:
             return "::".join(i for i in [self.file_path, self.query] if i)
+
+
+@dataclass
+class Config:
+    height: int = field(default=0)
+    width: int = field(default=0)
+    render_debug_info: bool = field(default=False)
+    constraint_edges: str = field(default="true")
 
 
 @dataclass
@@ -341,11 +426,14 @@ def _parse_function_params(func_params: str) -> Tuple[list, dict]:
     return args, kwargs
 
 
-def _parse_function(expression: str) -> Tuple[Optional[str], list, dict]:
+def _parse_function(expression: str, pattern: Optional[str] = None) -> Tuple[Optional[str], list, dict]:
     # EP_NAME(PARAM_NAME=PARAM_VALUE,...)
     # [a-zA-Z_:] is EP_NAME, can contain letters, underscore and colon
     # [\s\S] is any symbol including newline (because . doesn't include newline by default)
-    m = re.search(r"^([a-zA-Z_:]*)\s*\(([\s\S]*)\)\s*$", expression)
+    if not pattern:
+        pattern = r"^([a-zA-Z_:]*)\s*\(([\s\S]*)\)\s*$"
+
+    m = re.search(pattern, expression)
 
     if not m:
         return None, [], {}
@@ -412,9 +500,9 @@ def _parse_ep(ep_string: str, parse_eval_from_params: bool = False) -> Union[EP,
         is_query_found = True
 
         if kwargs_key in kwargs:
-            query_path = kwargs.pop(kwargs_key)[1]
+            query_path = kwargs[kwargs_key][1]
         elif 0 <= args_idx < len(args):
-            query_path = args.pop(args_idx)
+            query_path = args[args_idx]
         else:
             # don't do anything, just process as EP
             is_query_found = False
@@ -697,32 +785,59 @@ def read_otq(path: str, parse_eval_from_params: bool = False) -> Optional[Graph]
     return graph
 
 
-def truncate_param_value(ep: Any, param, value, line_limit: Optional[Tuple[int, int]] = None):
-    if line_limit is None:
-        return value
+def _truncate_param_value(value, height, width):
+    lines = [
+        line if len(line) <= width or not width else line[:width] + "..."
+        for line in value.splitlines()
+    ]
 
-    height, width = line_limit
-    if height < 0 or width < 0:
-        raise ValueError("line_limit values should not be negative")
+    if height and len(lines) > height:
+        lines = lines[:height] + ["..."]
 
+    return "\n".join(lines)
+
+
+def _split_long_value_to_lines(value, height, width, indent=0, escape=False) -> list:
+    if len(value) <= width:
+        return [value]
+
+    result = []
+    lines = value.splitlines()
+
+    # textwrap.wrap replaces newline character to whitespace and brakes multiline strings
+    # If replace_whitespace=False, it preserves newline, but not use it for result array line splitting
+    for line in lines:
+        result.extend(textwrap.wrap(line, width=width, replace_whitespace=False))
+
+    if escape:
+        result = [html.escape(s) for s in result]
+
+    if indent:
+        indent_str = "&nbsp;" * indent
+        for i in range(1, len(result)):
+            result[i] = indent_str + result[i]
+
+    if height and len(result) > height:
+        result = result[:height] + ['...']
+    return result
+
+
+def transform_param_value(ep: Any, param, value, height, width):
     if isinstance(ep, EP) and (
         ep.name == "PER_TICK_SCRIPT" and param.lower() == "script" or
         ep.name == "CSV_FILE_LISTING" and param.lower() == "file_contents"
     ):
-        lines = [
-            line if len(line) <= width or not width else line[:width] + "..."
-            for line in value.split("\n")
-        ]
+        return _truncate_param_value(value, height, width)
 
-        if height and len(lines) > height:
-            lines = lines[:height] + ["..."]
-
-        return "\n".join(lines)
+    if not (isinstance(ep, EP) and EP_TO_MULTILINE_ATTRS.get(ep.name, {}).get(param.lower())):
+        return "\n".join(_split_long_value_to_lines(value, height, width))
 
     return value
 
 
-def build_symbols(symbols, gr_nested, gr_static, graphs: GraphStorage, graph_node, reverse=False):
+def build_symbols(
+    symbols, gr_nested, gr_static, graphs: GraphStorage, graph_node, config: Config, reverse=False, graph_file=None,
+):
     table = GVTable()
 
     for symbol_data in symbols:
@@ -732,11 +847,17 @@ def build_symbols(symbols, gr_nested, gr_static, graphs: GraphStorage, graph_nod
             if symbol.query:
                 if symbol.is_local:
                     # reversed directions here brakes everything
+
+                    if graph_file is None:
+                        raise ValueError('`graph_file` parameter required for this case')
+
+                    nested_cluster_id = graphs.get_query_unique_id(symbol.query, graph_file)
+
                     gr_nested.edge(
-                        f"cluster__{symbol.query}__footer",
+                        f"{nested_cluster_id}__footer",
                         f"{graph_node}:symbols",
-                        ltail=f"cluster__{symbol.query}",
-                        style="dashed", constraint="false",
+                        ltail=f"{nested_cluster_id}",
+                        style="dashed", dir="both", constraint=config.constraint_edges,
                     )
                     continue
 
@@ -747,7 +868,7 @@ def build_symbols(symbols, gr_nested, gr_static, graphs: GraphStorage, graph_nod
                         f"{nested_cluster_id}__footer",
                         f"{graph_node}:symbols",
                         ltail=nested_cluster_id,
-                        style="dashed", constraint="false",
+                        style="dashed", dir="both", constraint=config.constraint_edges,
                     )
                     continue
 
@@ -764,11 +885,48 @@ def build_symbols(symbols, gr_nested, gr_static, graphs: GraphStorage, graph_nod
         gr_static.edge(
             f"{graph_node}__symbols" if not reverse else f"{graph_node}:symbols",
             f"{graph_node}:symbols" if not reverse else f"{graph_node}__symbols",
-            style="dashed", constraint="false" if not reverse else "true",
+            style="dashed", constraint=config.constraint_edges,
         )
 
 
-def build_node(graphs: GraphStorage, node: Node, line_limit: Optional[Tuple[int, int]] = None):
+def _parse_special_attribute(param_name, param_lines, parser, height, width, cols=4):
+    """
+    Builds better param representation for selected parameters and EPs
+    """
+    def generate_row_string(_line: list) -> list:
+        sep = "&nbsp;&nbsp;&nbsp;&nbsp;"
+
+        # only in this case line could be longer than width
+        if len(_line) == 1 and len(_line[0]) > width:
+            _lines = _split_long_value_to_lines(_line[0], height, width, indent=4, escape=True)
+        else:
+            _lines = [sep.join(html.escape(s) for s in _line)]
+
+        return ["&nbsp;" * 2 + s for s in _lines]
+
+    param_value = ' '.join(param_lines)
+    params = parser(param_value)
+
+    params_table = [f"{param_name}:"]
+    current_line = []
+    current_width = 0
+
+    for param in params:
+        if width and current_line and current_width + len(param) >= width or len(current_line) == cols:
+            params_table.extend(generate_row_string(current_line))
+            current_line = []
+            current_width = 0
+
+        current_line.append(param)
+        current_width += len(param)
+
+    if current_line:
+        params_table.extend(generate_row_string(current_line))
+
+    return [(params_table, {"ALIGN": "LEFT", "BALIGN": "LEFT"})]
+
+
+def build_node(graphs: GraphStorage, node: Node, config: Config):
     if node.ep is None:
         raise ValueError(f"EP of node {node.id} could not be None")
 
@@ -786,12 +944,19 @@ def build_node(graphs: GraphStorage, node: Node, line_limit: Optional[Tuple[int,
     if node.tick_type:
         table.cell([node.tick_type])
 
+    if config.render_debug_info:
+        table.cell([node.id])
+
     if node.symbols:
         table.cell([("[■]", {"port": "symbols"})])
 
     if node.ep and (node.ep.args or node.ep.kwargs):
         params: List[Tuple[Optional[str], Union[str, NestedQuery]]] = \
             [(None, v) for v in node.ep.args] + list(node.ep.kwargs.values())
+
+        param_args_lines = []
+        param_kwargs_lines = []
+        special_params = []
 
         for idx, data in enumerate(params):
             k, v = data
@@ -806,34 +971,53 @@ def build_node(graphs: GraphStorage, node: Node, line_limit: Optional[Tuple[int,
             else:
                 param_value = v
 
-            param_value = truncate_param_value(node.ep, k, param_value, line_limit)
-            param_value = html.escape(param_value).replace("\t", "&nbsp;" * 4)
-            param_lines = param_value.split("\n")
+            is_special_attribute = k and EP_TO_MULTILINE_ATTRS.get(node.ep.name, {}).get(k.lower())
 
-            if k:
-                if len(param_lines) == 1:
-                    param_lines[0] = f"{html.escape(k)}={param_lines[0]}"
+            param_value = transform_param_value(node.ep, k, param_value, config.height, config.width)
+
+            if not is_special_attribute:
+                param_value = html.escape(param_value)
+
+            param_value = param_value.replace("\t", "&nbsp;" * 4)
+            param_lines = param_value.splitlines()
+
+            # additional k check required by mypy
+            if is_special_attribute and k:
+                special_params.extend(
+                    _parse_special_attribute(
+                        k, param_lines, EP_TO_MULTILINE_ATTRS[node.ep.name][k.lower()], config.height, config.width,
+                    )
+                )
+            else:
+                if k:
+                    if len(param_lines) == 1:
+                        param_lines[0] = f"{html.escape(k)}={param_lines[0]}"
+                    else:
+                        param_lines = [f"{html.escape(k)}:"] + param_lines
+
+                if len(param_lines) > 1:
+                    # Add idents disable default horizontal central align
+                    # if there are multiline parameter for EP.
+                    # Align change affects all parameters for EP.
+                    for i in range(len(param_lines)):
+                        if i > 0:
+                            param_lines[i] = "&nbsp;" * 2 + param_lines[i]
+
+                    attrs.update({"ALIGN": "LEFT", "BALIGN": "LEFT"})
+
+                if k:
+                    param_kwargs_lines.append((param_lines, attrs))
                 else:
-                    param_lines = [f"{html.escape(k)}="] + param_lines
+                    param_args_lines.append((param_lines, attrs))
 
-            if len(param_lines) > 1:
-                # Add idents disable default horizontal central align
-                # if there are multiline parameter for EP.
-                # Align change affects all parameters for EP.
-                for i in range(len(param_lines)):
-                    if i > 0:
-                        param_lines[i] = "&nbsp;" * 2 + param_lines[i]
-
-                attrs.update({"ALIGN": "LEFT", "BALIGN": "LEFT"})
-
+        for param_lines, attrs in param_args_lines + special_params + param_kwargs_lines:
             table.row([param_lines], attrs=attrs)
 
     if node.params:
-        table.row([[f"{html.escape(k)}={html.escape(v)}" for k, v in node.params.items()]])
-
-    if isinstance(node.ep, NestedQuery):
-        if not (node.ep.is_local and node.ep.query or graphs.get_query(node.ep.file_path, node.ep.query)):
-            table.row([node.ep.to_string()])
+        table.row([[
+            f"{html.escape(k)}={html.escape(_truncate_param_value(v, config.height, config.width))}"
+            for k, v in node.params.items()
+        ]])
 
     if isinstance(node.ep, IfElseEP):
         table.row([
@@ -886,7 +1070,7 @@ def _get_nested_query(nested_query: NestedQuery, local_graph: Graph, graphs: Gra
 
 
 def _render_graph(
-    gr_root, gr, graphs: GraphStorage, graph_name: str, queries: set, line_limit: Optional[Tuple[int, int]] = None,
+    gr_root, gr, graphs: GraphStorage, graph_name: str, queries: set, config: Config,
 ):
     graph = graphs[graph_name]
 
@@ -947,15 +1131,18 @@ def _render_graph(
 
                 gr_sub.edge(
                     f"{footer_id}:params", f"{query_id}__params",
-                    style="dashed", constraint="true",
+                    style="dashed", constraint=config.constraint_edges,
                 )
 
             if query.symbols:
-                build_symbols(query.symbols, gr, gr_sub, graphs, f"{query_id}__footer", reverse=True)
+                build_symbols(
+                    query.symbols, gr, gr_sub, graphs, f"{query_id}__footer", config,
+                    reverse=True, graph_file=graph.file_path,
+                )
 
             for node_id, node in query.nodes.items():
                 node_unique_id = _get_node_unique_id(node, query)
-                gr_sub.node(node_unique_id, build_node(graphs, node, line_limit), group=query_name)
+                gr_sub.node(node_unique_id, build_node(graphs, node, config), group=query_name)
 
                 for sink in node.sinks:
                     if "OUT" in node.labels:
@@ -989,11 +1176,11 @@ def _render_graph(
                             f"{node_unique_id}:{param_name}",
                             _get_node_unique_id(nested_cluster.roots[0], nested_cluster),
                             lhead=nested_cluster.get_id(),
-                            style="dashed", dir="both",
+                            style="dashed", dir="both", constraint=config.constraint_edges,
                         )
 
                 if node.symbols:
-                    build_symbols(node.symbols, gr, gr_sub, graphs, node_unique_id)
+                    build_symbols(node.symbols, gr, gr_sub, graphs, node_unique_id, config, graph_file=graph.file_path)
 
                 if isinstance(node.ep, NestedQuery):
                     nested_cluster = _get_nested_query(node.ep, graph, graphs)
@@ -1004,7 +1191,7 @@ def _render_graph(
                         node_unique_id,
                         _get_node_unique_id(nested_cluster.roots[0], nested_cluster),
                         lhead=nested_cluster.get_id(),
-                        style="dashed", dir="both",
+                        style="dashed", dir="both", constraint=config.constraint_edges,
                     )
 
 
@@ -1014,9 +1201,11 @@ def render_otq(
     output_format: Optional[str] = None,
     load_external_otqs: bool = True,
     view: bool = False,
-    line_limit: Optional[Tuple[int, int]] = (10, 30),
+    line_limit: Optional[Tuple[int, int]] = (10, 60),
     parse_eval_from_params: bool = False,
+    render_debug_info: bool = False,
     debug: bool = False,
+    graphviz_compat_mode: bool = False,
 ) -> str:
     """
     Render queries from .otq files.
@@ -1029,7 +1218,7 @@ def render_otq(
     image_path: str, None
         Path for generated image. If omitted, image will be saved in a temp dir
     output_format: str, None
-        `Graphviz` rendering format. Default: `png`.
+        `Graphviz` rendering format. Default: `svg`.
         If `image_path` contains one of next extensions, `output_format` will be set automatically: `png`, `svg`, `dot`.
     load_external_otqs: bool
         If set to `True` (default) dependencies from external .otq files (not listed in ``path`` param)
@@ -1043,8 +1232,13 @@ def render_otq(
         If one of tuple values set to zero the corresponding limit disabled.
     parse_eval_from_params: bool
         Enable parsing and printing `eval` sub-queries from EP parameters.
+    render_debug_info: bool
+        Render additional debug information.
     debug: bool
         Allow to print stdout or stderr from `Graphviz` render.
+    graphviz_compat_mode: bool
+        Change internal parameters of result graph for better compatibility with old `Graphviz` versions.
+        Could produce larger and less readable graphs.
 
     Returns
     -------
@@ -1069,6 +1263,19 @@ def render_otq(
 
     >>> otp.utils.render_otq(["./first.otq", "./second.otq::some_query"])  # doctest: +SKIP
     """
+    if line_limit is None:
+        line_limit = (0, 0)
+
+    height, width = line_limit
+    if height < 0 or width < 0:
+        raise ValueError("line_limit values should not be negative")
+
+    config_kwargs = {}
+    if graphviz_compat_mode:
+        config_kwargs["constraint_edges"] = "false"
+
+    config = Config(height=height, width=width, render_debug_info=render_debug_info, **config_kwargs)
+
     if not isinstance(path, list):
         path = [path]
 
@@ -1137,7 +1344,7 @@ def render_otq(
                     output_format = extension
 
     if not output_format:
-        output_format = "png"
+        output_format = "svg"
 
     if not image_path:
         image_path = TmpFile().path
@@ -1154,8 +1361,14 @@ def render_otq(
         with gr.subgraph(name=f"cluster__graph__{idx}", node_attr={"shape": "plaintext"}) as gr_otq:
             gr_otq.attr(label=otq_path)
             gr_otq.attr(margin="16")
-            _render_graph(gr, gr_otq, graphs, otq_path, queries_to_render[otq_path], line_limit)
+            _render_graph(gr, gr_otq, graphs, otq_path, queries_to_render[otq_path], config)
 
         idx += 1
 
-    return gr.render(view=view, quiet=not debug)
+    try:
+        return gr.render(view=view, quiet=not debug)
+    except Exception as exc:
+        raise RuntimeError(
+            "Graphviz render failed. Try to set parameter `graphviz_compat_mode=True` "
+            "for better compatibility if you use old Graphviz version"
+        ) from exc

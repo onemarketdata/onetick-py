@@ -547,7 +547,7 @@ class _AggregationTSSelection(_Aggregation):
 
 class _FloatAggregation(_Aggregation):
 
-    require_type = (int, float, ott._inf)
+    require_type = (int, float, ott._inf, ott.decimal)
 
     """
     Aggregation that expect int or float as input

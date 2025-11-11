@@ -8,9 +8,12 @@ from onetick.py import types as ott
 
 
 def are_numerics(*dtypes):
-    return all(inspect.isclass(dtype)
-               and (issubclass(dtype, (float, int)) or np.issubdtype(dtype, np.integer))
-               and not issubclass(dtype, (ott.nsectime, ott.msectime)) for dtype in dtypes)
+    return all(
+        inspect.isclass(dtype)
+        and (issubclass(dtype, (float, int)) or np.issubdtype(dtype, np.integer) or issubclass(dtype, ott.decimal))
+        and not issubclass(dtype, (ott.nsectime, ott.msectime))
+        for dtype in dtypes
+    )
 
 
 def are_ints_not_time(*dtypes):
@@ -108,6 +111,12 @@ def _get_widest_type(left, right):
     ... _get_widest_type(MyNSec, ott.nsectime))  # doctest: +ELLIPSIS
     (<class '...MyTime'>, None, <class '...MyNSec'>)
     """
+
+    # decimal takes precedence before integer and floating point types
+    if issubclass(left, ott.decimal) and are_numerics(right):
+        return left
+    if are_numerics(left) and issubclass(right, ott.decimal):
+        return right
 
     if issubclass(left, float) and issubclass(right, float):
         # between np.float and float we choose base float

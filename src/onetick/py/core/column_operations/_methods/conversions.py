@@ -31,7 +31,7 @@ def float_to_str(prev_op, dtype=str):
     return MethodResult(op_str, dtype)
 
 
-def float_to_decimal(prev_op):
+def num_to_decimal(prev_op):
     return MethodResult(f'decimal({str(prev_op)})', ott.decimal)
 
 
@@ -192,7 +192,7 @@ class _ConversionsDict(UserDict):
 
 CONVERSIONS = _ConversionsDict({(float, int): float_to_int,
                                 (float, str): float_to_str,
-                                (float, ott.decimal): float_to_decimal,
+                                (float, ott.decimal): num_to_decimal,
                                 (ott.decimal, int): float_to_int,
                                 (ott.decimal, str): decimal_to_str,
                                 (ott.decimal, float): decimal_to_float,
@@ -206,6 +206,7 @@ CONVERSIONS = _ConversionsDict({(float, int): float_to_int,
                                 (int, float): int_to_float,
                                 (int, ott.nsectime): int_to_nsectime,
                                 (int, ott.msectime): int_to_msectime,
+                                (int, ott.decimal): num_to_decimal,
                                 (str, float): str_to_float,
                                 (str, ott.decimal): str_to_decimal,
                                 (str, int): str_to_int,

@@ -10,6 +10,30 @@
 
 ### Removed
 
+## [1.174.0] - 2025-11-11
+
+### Added
+
+- Added basic debug option for `otp.utils.render_otq` and `otp.Source.render_otq`
+- Added support for creating `otp.decimal` values from strings
+
+### Changed
+
+- Changed default output format for `otp.utils.render_otq` and `otp.Source.render_otq` from `png` to `svg`
+- Improved `otp.Source.pnl_realized` documentation
+
+### Fixed
+
+- Fixed copying compatibility tests results to documentation server
+- Fixed `pandas` warning on python 3.12
+- Improved query rendering by `otp.utils.render_otq` and `otp.Source.render_otq`
+- Reduced graphs sizes and improved readability in query rendering by `otp.utils.render_otq` and `otp.Source.render_otq`
+- Fixed converting floats with science notation
+- Drop `OMDSEQ` column in `otp.merge(enforce_order=True)`
+- Fixed size types in order book aggregations when `size_max_fractional_digits` is greater than zero
+
+### Removed
+
 ## [1.173.0] - 2025-10-28
 
 ### Added

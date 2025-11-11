@@ -221,18 +221,18 @@ class TestEpParsers:
 
         assert asdict(render._parse_ep("EVAL(THIS::query)")) == {
             "name": "EVAL", "raw_string": "EVAL(THIS::query)", "query": "query", "expression": None, "file_path": None,
-            "args": [], "kwargs": {}, "is_local": True,
+            "args": ["THIS::query"], "kwargs": {}, "is_local": True,
         }
 
         assert asdict(render._parse_ep("EVAL(\"some_code = 123\")")) == {
             "name": "EVAL", "raw_string": "EVAL(\"some_code = 123\")", "query": None, "expression": "some_code = 123",
-            "file_path": None, "args": [], "kwargs": {}, "is_local": True,
+            "file_path": None, "args": ["some_code = 123"], "kwargs": {}, "is_local": True,
         }
 
         assert asdict(render._parse_ep("JOIN_WITH_QUERY(otq_query=some_file.otq::query)")) == {
             "name": "JOIN_WITH_QUERY", "raw_string": "JOIN_WITH_QUERY(otq_query=some_file.otq::query)",
             "query": "query", "expression": None, "file_path": "some_file.otq",
-            "args": [], "kwargs": {}, "is_local": False,
+            "args": [], "kwargs": {"otq_query": ("otq_query", "some_file.otq::query")}, "is_local": False,
         }
 
         assert asdict(render._parse_ep("OTHER_EP(arg, kwarg=1)")) == {
@@ -269,7 +269,7 @@ class TestEpParsers:
             "name": "WHERE_CLAUSE", "raw_string": "WHERE_CLAUSE(WHERE=eval(\"path_to.otq::query\"))",
             "args": [], "kwargs": {"where": ("WHERE", {
                 "name": "eval", "raw_string": "eval(path_to.otq::query)", "query": "query", "file_path": "path_to.otq",
-                "expression": None, "is_local": False, "args": [], "kwargs": {},
+                "expression": None, "is_local": False, "args": ["path_to.otq::query"], "kwargs": {},
             })}, "if_nodes": set(), "else_nodes": set(),
         }
 
@@ -446,7 +446,7 @@ class TestReadOTQ:
             len(query_2_symbols) == 1 and isinstance(query_2_symbols[0][0], render.NestedQuery) and
             query_2_symbols[0][0].name == "eval" and query_2_symbols[0][0].query == "FSQ" and
             query_2_symbols[0][0].expression is None and query_2_symbols[0][0].file_path is None and
-            query_2_symbols[0][0].is_local and not query_2_symbols[0][0].args and
+            query_2_symbols[0][0].is_local and query_2_symbols[0][0].args == ["THIS::FSQ"] and
             query_2_symbols[0][0].kwargs == {"dbs_ticks": ("DBS_TICKS", "$DB"), "pattern": ("PATTERN", "$PATTERN")}
         )
 
@@ -475,27 +475,32 @@ class TestReadOTQ:
         assert render.read_otq("remote://SERVER::some/path/to.otq::query") is None
 
 
-def test_truncate_param_value():
+def test_transform_param_value():
     test_ep = render.EP("test", "test")
     suitable_ep = render.EP("PER_TICK_SCRIPT", "PER_TICK_SCRIPT")
 
     # single line
-    assert render.truncate_param_value(test_ep, "script", "a" * 30, (1, 20)) == "a" * 30
-    assert render.truncate_param_value(suitable_ep, "param", "a" * 30, (1, 20)) == "a" * 30
-    assert render.truncate_param_value(suitable_ep, "script", "a" * 30, (1, 20)) == "a" * 20 + "..."
+    assert render.transform_param_value(test_ep, "script", "a" * 30, 1, 20) == "a" * 20 + "\n..."
+    assert render.transform_param_value(suitable_ep, "param", "a" * 30, 1, 20) == "a" * 20 + "\n..."
+    assert render.transform_param_value(suitable_ep, "script", "a" * 30, 1, 20) == "a" * 20 + "..."
 
     # multiline
-    assert render.truncate_param_value(
-        test_ep, "script", "\n".join(["a" * 30] * 3), (2, 20)
-    ) == "\n".join(["a" * 30] * 3)
-    assert render.truncate_param_value(
-        suitable_ep, "param", "\n".join(["a" * 20] + ["b" * 10] + ["c" * 30] * 3), (4, 20)
-    ) == "\n".join(["a" * 20] + ["b" * 10] + ["c" * 30] * 3)
-    assert render.truncate_param_value(
-        suitable_ep, "script", "\n".join(["a" * 20] + ["b" * 10] + ["c" * 30] * 3), (4, 20)
-    ) == "\n".join(["a" * 20] + ["b" * 10] + ["c" * 20 + "..."] * 2 + ["..."])
+    assert render.transform_param_value(
+        test_ep, "script", "\n".join(["a" * 30] * 3), 2, 20
+    ) == "\n".join(["a" * 20, "a" * 10]) + "\n..."
+    assert render.transform_param_value(
+        suitable_ep, "param", "\n".join(["a" * 20, "b" * 10] + ["c" * 30] * 3), 4, 20
+    ) == "\n".join(["a" * 20, "b" * 10, "c" * 20, "c" * 10, "..."])
+    assert render.transform_param_value(
+        suitable_ep, "script", "\n".join(["a" * 20, "b" * 10] + ["c" * 30] * 3), 4, 20
+    ) == "\n".join(["a" * 20, "b" * 10] + ["c" * 20 + "..."] * 2 + ["..."])
 
-    with pytest.raises(ValueError, match="negative"):
-        render.truncate_param_value(test_ep, "param", "value", line_limit=(-1, 20))
-        render.truncate_param_value(test_ep, "param", "value", line_limit=(20, -1))
-        render.truncate_param_value(test_ep, "param", "value", line_limit=(-1, -1))
+
+def test_split_long_value_to_lines():
+    assert render._split_long_value_to_lines("a" * 30, 0, 20) == ["a" * 20, "a" * 10]
+    assert render._split_long_value_to_lines("a" * 30, 1, 20) == ["a" * 20, "..."]
+    assert render._split_long_value_to_lines("\n".join(["a" * 20] * 2), 0, 15) == ["a" * 15, "a" * 5] * 2
+    assert render._split_long_value_to_lines("\n".join(["a" * 20] * 2), 2, 15) == ["a" * 15, "a" * 5, "..."]
+    assert render._split_long_value_to_lines("\n".join(["a" * 20] * 2), 2, 15, 2) == [
+        "a" * 15, "&nbsp;" * 2 + "a" * 5, "...",
+    ]

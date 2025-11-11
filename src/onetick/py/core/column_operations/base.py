@@ -476,7 +476,7 @@ class Operation:
         Property that provides access to
         methods specific to float type.
         """
-        if issubclass(self.dtype, float) and self.dtype is not ott.decimal:
+        if issubclass(self.dtype, float):
             from onetick.py.core.column_operations.accessors.float_accessor import _FloatAccessor
             return _FloatAccessor(self)
         else:
@@ -1043,7 +1043,7 @@ class Raw(Operation):
     def __init__(self, raw, dtype):
         if dtype is str:
             warnings.warn(
-                f'Be careful, default string length in OneTick is {ott.string.DEFAULT_LENGTH}.'
+                f'Be careful, default string length in OneTick is {ott.string.DEFAULT_LENGTH}. '
                 "Length of the result raw expression can't be calculated automatically, "
                 "so you'd better use onetick.py.string type.",
                 stacklevel=2,
