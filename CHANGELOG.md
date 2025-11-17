@@ -10,6 +10,18 @@
 
 ### Removed
 
+## [1.175.0] - 2025-11-17
+
+### Added
+
+### Changed
+
+### Fixed
+
+- Fixed unstable test
+
+### Removed
+
 ## [1.174.0] - 2025-11-11
 
 ### Added

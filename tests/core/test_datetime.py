@@ -49,6 +49,7 @@ class TestTimestamp:
                              [
                                  otp.datetime(1970, 1, 1, tzinfo=dateutil.tz.gettz("EST5EDT")).timestamp(),
                                  otp.datetime(2032, 1, 1, tzinfo=dateutil.tz.gettz("EST5EDT")).timestamp(),
+                                 1225606727,  # ambiguous dst time
                                  'random'
                              ])
     def test_random_timestamp(self, timestamp):
@@ -61,7 +62,7 @@ class TestTimestamp:
         timestamp = pd.Timestamp(timestamp, tz="EST5EDT", unit="s")
         data = otp.Ticks(dict(x=[timestamp]))
         df = otp.run(data)
-        assert df["x"][0].tz_localize("EST5EDT") == timestamp
+        assert df["x"][0].tz_localize("EST5EDT", ambiguous=False) == timestamp
 
     def test_from_source_default(self):
         d = otp.datetime(otp.config['default_start_time'] + otp.Milli(1), tz="GMT")
