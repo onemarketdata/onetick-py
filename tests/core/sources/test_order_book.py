@@ -1,7 +1,7 @@
-import math
 import pytest
 
 import onetick.py as otp
+from onetick.py.otq import otq
 from onetick.py.compatibility import is_supported_otq_ob_summary
 
 
@@ -14,19 +14,22 @@ def session(m_session):
         'PRICE': [1, 2, 1, 2, 5],
         'SIZE': [1, 2, 3, 4, 7],
         'X': ['A', 'B', 'B', 'A', 'B'],
+        'TICK_STATUS': [otp.byte(0)] * 5,
+        'RECORD_TYPE': ['R'] * 5,
     })
+    data.sink(otq.ModifyTsProperties('STATE_KEYS', 'PRICE,BUY_SELL_FLAG'))
 
     db = otp.DB('SOME_DB')
-    db.add(src=data, symbol='AA', tick_type='PRL_REALLY')
+    db.add(src=data, symbol='AA', tick_type='PRL')
     m_session.use(db)
 
     db = otp.DB('BOUND_DB')
-    db.add(src=data, symbol='AA', tick_type='PRL_REALLY')
-    db.add(src=data, symbol='AAA', tick_type='PRL_REALLY')
+    db.add(src=data, symbol='AA', tick_type='PRL')
+    db.add(src=data, symbol='AAA', tick_type='PRL')
     m_session.use(db)
 
     db = otp.DB('BOUND_DB_2')
-    db.add(src=data, symbol='BB', tick_type='PRL_REALLY')
+    db.add(src=data, symbol='BB', tick_type='PRL')
     m_session.use(db)
 
     return m_session
@@ -35,7 +38,7 @@ def session(m_session):
 class TestObSnapshot:
 
     def test_ob_snapshot(self):
-        data = otp.ObSnapshot('SOME_DB', tick_type='PRL_REALLY', symbols='AA', max_levels=1)
+        data = otp.ObSnapshot('SOME_DB', tick_type='PRL', symbols='AA', max_levels=1)
         assert data.schema == {
             'PRICE': float,
             'SIZE': int,
@@ -46,16 +49,24 @@ class TestObSnapshot:
         df = otp.run(data)
         assert len(df) == 2
         assert set(df['PRICE']) == {2, 5}
-        assert set(df['SIZE']) == {6, 7}
+        assert set(df['SIZE']) == {4, 7}
         assert set(df['BUY_SELL_FLAG']) == {1, 0}
         assert len(set(df['LEVEL'])) == 1
         assert 'X' not in df
+
+    def test_ob_snapshot_manual_schema(self):
+        data = otp.ObSnapshot(tick_type='PRL', max_levels=1, schema_policy='manual')
+        df = otp.run(data, symbols='SOME_DB::AA')
+        assert set(df['PRICE']) == {2, 5}
+        assert set(df['SIZE']) == {4, 7}
+        assert set(df['BUY_SELL_FLAG']) == {1, 0}
+        assert len(set(df['LEVEL'])) == 1
 
 
 class TestObSnapshotWide:
 
     def test_ob_snapshot_wide(self):
-        data = otp.ObSnapshotWide('SOME_DB', tick_type='PRL_REALLY', symbols='AA', max_levels=1)
+        data = otp.ObSnapshotWide('SOME_DB', tick_type='PRL', symbols='AA', max_levels=1)
         assert data.schema == {
             'BID_PRICE': float,
             'BID_SIZE': int,
@@ -70,7 +81,7 @@ class TestObSnapshotWide:
         assert set(df['BID_PRICE']) == {5}
         assert set(df['BID_SIZE']) == {7}
         assert set(df['ASK_PRICE']) == {2}
-        assert set(df['ASK_SIZE']) == {6}
+        assert set(df['ASK_SIZE']) == {4}
         assert len(set(df['LEVEL'])) == 1
         assert 'X' not in df
 
@@ -78,7 +89,7 @@ class TestObSnapshotWide:
 class TestObSnapshotFlat:
 
     def test_ob_snapshot_flat(self):
-        data = otp.ObSnapshotFlat('SOME_DB', tick_type='PRL_REALLY', symbols='AA', max_levels=1)
+        data = otp.ObSnapshotFlat('SOME_DB', tick_type='PRL', symbols='AA', max_levels=1)
         assert data.schema == {
             'BID_PRICE1': float,
             'BID_SIZE1': int,
@@ -101,12 +112,12 @@ class TestObSummary:
         if not is_supported_otq_ob_summary(throw_warning=True):
             with pytest.raises(RuntimeError):
                 otp.run(
-                    otp.ObSummary('SOME_DB', tick_type='PRL_REALLY', symbols='AA', max_levels=1)
+                    otp.ObSummary('SOME_DB', tick_type='PRL', symbols='AA', max_levels=1)
                 )
 
             return
 
-        data = otp.ObSummary('SOME_DB', tick_type='PRL_REALLY', symbols='AA', max_levels=1)
+        data = otp.ObSummary('SOME_DB', tick_type='PRL', symbols='AA', max_levels=1)
         print(data.schema)
         assert data.schema == {
             'BID_SIZE': int,
@@ -136,7 +147,7 @@ class TestObSummary:
             'BEST_BID_PRICE': 5.0,
             'WORST_BID_PRICE': 5.0,
             'NUM_BID_LEVELS': 1,
-            'ASK_SIZE': 6,
+            'ASK_SIZE': 4,
             'ASK_VWAP': 2.0,
             'BEST_ASK_PRICE': 2.0,
             'WORST_ASK_PRICE': 2.0,
@@ -146,20 +157,20 @@ class TestObSummary:
 
 class TestObSize:
     def test_ob_size(self):
-        data = otp.ObSize('SOME_DB', tick_type='PRL_REALLY', symbols='AA', max_levels=1)
+        data = otp.ObSize('SOME_DB', tick_type='PRL', symbols='AA', max_levels=1)
         assert data.schema == {
             'ASK_VALUE': float,
             'BID_VALUE': float,
         }
         df = otp.run(data)
 
-        assert list(df['ASK_VALUE']) == [6.0]
+        assert list(df['ASK_VALUE']) == [4.0]
         assert list(df['BID_VALUE']) == [7.0]
 
 
 class TestObVwap:
     def test_ob_vwap(self):
-        data = otp.ObVwap('SOME_DB', tick_type='PRL_REALLY', symbols='AA')
+        data = otp.ObVwap('SOME_DB', tick_type='PRL', symbols='AA')
         assert data.schema == {
             'ASK_VALUE': float,
             'BID_VALUE': float,
@@ -167,12 +178,12 @@ class TestObVwap:
         df = otp.run(data)
 
         assert list(df['ASK_VALUE']) == [2.0]
-        assert list(df['BID_VALUE']) == [pytest.approx(3.545454)]
+        assert list(df['BID_VALUE']) == [pytest.approx(3.8)]
 
 
 class TestObNumLevels:
     def test_ob_num_levels(self):
-        data = otp.ObNumLevels('SOME_DB', tick_type='PRL_REALLY', symbols='AA')
+        data = otp.ObNumLevels('SOME_DB', tick_type='PRL', symbols='AA')
         assert data.schema == {
             'ASK_VALUE': float,
             'BID_VALUE': float,
@@ -186,12 +197,12 @@ class TestObNumLevels:
 class TestObBoundSymbols:
     @pytest.mark.parametrize('symbols', [
         ['BOUND_DB::AA', 'BOUND_DB_2::BB'],
-        otp.Symbols(db='BOUND_DB', for_tick_type='PRL_REALLY', keep_db=True),
+        otp.Symbols(db='BOUND_DB', for_tick_type='PRL', keep_db=True),
     ])
     def test_simple(self, symbols):
-        data = otp.ObSnapshot(tick_type='PRL_REALLY', symbols=symbols, schema_policy='manual', schema={
+        data = otp.ObSnapshot(tick_type='PRL', symbols=symbols, schema_policy='manual', schema={
             'BUY_SELL_FLAG': int, 'PRICE': float, 'SIZE': float, 'UPDATE_TIME': otp.nsectime,
         })
         df = otp.run(data)
         df = df.to_dict(orient='list')
-        assert [df['PRICE'], df['SIZE'], df['LEVEL']] == [[2.0, 5.0, 1.0], [12, 14, 8], [1, 1, 2]]
+        assert [df['PRICE'], df['SIZE'], df['LEVEL']] == [[2.0, 5.0, 1.0], [8, 14, 6], [1, 1, 2]]

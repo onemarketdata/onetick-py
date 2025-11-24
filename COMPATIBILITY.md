@@ -7,6 +7,7 @@
 * 20250510-2:            ✅ stable
 * 20250629-release_1.25: ✅ stable
 * 20250727-1:            ✅ stable
+* 20251010-1:            🆗 stable with minor issues (99.904% of tests passed)
 
 ## Python compatibility 
 

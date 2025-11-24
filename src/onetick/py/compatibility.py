@@ -779,3 +779,13 @@ def is_show_db_list_show_description_supported():
     # However on 20240330 builds it returns SHOW_DESCRIPTION column instead of DESCRIPTION
     return _is_min_build_or_version(1.25, 20241229055942,
                                     20240501000000)
+
+
+def is_symbols_prepend_db_name_supported():
+    # 20250924: Implemented 0036753: FIND_DB_SYMBOLS should have EP parameter PREPEND_DB_NAME (true by default)
+    return hasattr(otq.FindDbSymbols.Parameters, 'prepend_db_name')
+
+
+def is_diff_show_all_ticks_supported():
+    # 20250919: Implemented 0036784: Add SHOW_ALL_TICKS(false by default) ep parameter to DIFF EP.
+    return hasattr(otq.Diff.Parameters, 'show_all_ticks')

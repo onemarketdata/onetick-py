@@ -54,6 +54,7 @@ Here's the complete code to achieve this:
 
     # Define the function to calculate RPM
     def rpm(vwap, direction) -> otp.Source:
+        vwap = vwap.astype(float)
         # Get trades
         md = otp.DataSource(trades_db, tick_type='TRD')
 
@@ -80,7 +81,7 @@ Here's the complete code to achieve this:
     # Join orders with RPM calculation
     orders_with_rpm = orders_agg.join_with_query(
         rpm,
-        params=dict(vwap=orders_agg['VWAP'], direction=orders_agg['DIRECTION']),
+        params=dict(vwap=orders_agg['VWAP'].float.str(), direction=orders_agg['DIRECTION']),
         start_time=orders_agg['ARRIVAL_TIME'],
         end_time=orders_agg['EXIT_TIME']
     )

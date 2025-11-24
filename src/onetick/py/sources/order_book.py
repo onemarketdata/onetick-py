@@ -58,6 +58,9 @@ class _ObSource(DataSource):
 
         self._ob_agg = self.__class__.OB_AGG_FUNC(**ob_agg_params)
 
+        if kwargs.get('schema_policy') in [DataSource.POLICY_MANUAL, DataSource.POLICY_MANUAL_STRICT]:
+            self._ob_agg.disable_ob_input_columns_validation()
+
         if use_bound_symbols:
             self._ob_agg.set_bound_symbols(symbols)
 

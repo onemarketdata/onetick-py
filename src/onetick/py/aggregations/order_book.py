@@ -147,6 +147,7 @@ class _OrderBookAggregation(_Aggregation, ABC):
         self.book_uncross_method = book_uncross_method
         self.dq_events_that_clear_book = ','.join(dq_events_that_clear_book) if dq_events_that_clear_book else None
         self.bound_symbols = None
+        self._validate_ob_input_columns = True
 
         super().__init__(_Column('TIMESTAMP'), *args, **kwargs)
 
@@ -163,8 +164,15 @@ class _OrderBookAggregation(_Aggregation, ABC):
             raise ValueError("'bucket_units' can be one of the following: "
                              f"'{', '.join(valid_units)}'; however, '{self.bucket_units}' was passed")
 
+    def disable_ob_input_columns_validation(self):
+        self._validate_ob_input_columns = False
+
     def validate_input_columns(self, src: 'Source'):
         super().validate_input_columns(src)
+
+        if not self._validate_ob_input_columns:
+            return
+
         if any([
             not {'BUY_SELL_FLAG', 'PRICE', 'SIZE'}.issubset(src.schema),
             'UPDATE_TIME' not in src.schema and 'DELETED_TIME' not in src.schema

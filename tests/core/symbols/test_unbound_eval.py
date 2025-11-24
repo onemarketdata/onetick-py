@@ -220,6 +220,7 @@ class TestExternal:
         else:
             assert list(map(lambda x: dfs[x].y[0], symbols)) == params
 
+    @pytest.mark.filterwarnings("ignore:.*\n.*precision may be lost.*:UserWarning")
     @pytest.mark.parametrize(
         "sym1_params,sym2_params",
         [

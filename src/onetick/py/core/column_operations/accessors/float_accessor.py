@@ -37,29 +37,32 @@ class _FloatAccessor(_Accessor):
         Examples
         --------
 
-        >>> data = otp.Ticks(X=[1, 2.17, 10.31861, 3.141593])
+        >>> data = otp.Ticks(X=[1, 2.17, 10.31861, 3.141593, otp.nan, otp.inf, -otp.inf])
         >>> # OTdirective: snippet-name: float operations.to string.constant precision;
-        >>> data["X"] = data["X"].float.str(15, 3)
-        >>> data = otp.run(data)
-        >>> data["X"]
-        0    1.000
-        1    2.170
-        2    10.319
-        3    3.142
-        Name: X, dtype: object
+        >>> data["Y"] = data["X"].float.str(15, 3)
+        >>> otp.run(data)
+                             Time          X       Y
+        0 2003-12-01 00:00:00.000   1.000000   1.000
+        1 2003-12-01 00:00:00.001   2.170000   2.170
+        2 2003-12-01 00:00:00.002  10.318610  10.319
+        3 2003-12-01 00:00:00.003   3.141593   3.142
+        4 2003-12-01 00:00:00.004        NaN     nan
+        5 2003-12-01 00:00:00.005        inf     inf
+        6 2003-12-01 00:00:00.006       -inf    -inf
+
+        Parameters ``length`` and ``precision`` can also be taken from the columns:
 
         >>> data = otp.Ticks(X=[1, 2.17, 10.31841, 3.141593],
         ...                  LENGTH=[2, 3, 4, 5],
         ...                  PRECISION=[5, 5, 3, 3])
         >>> # OTdirective: snippet-name: float operations.to string.precision from fields;
-        >>> data["X"] = data["X"].float.str(data["LENGTH"], data["PRECISION"])
-        >>> data = otp.run(data)
-        >>> data["X"]
-        0    1
-        1    2.2
-        2    10.3
-        3    3.142
-        Name: X, dtype: object
+        >>> data["Y"] = data["X"].float.str(data["LENGTH"], data["PRECISION"])
+        >>> otp.run(data)
+                             Time          X  LENGTH  PRECISION      Y
+        0 2003-12-01 00:00:00.000   1.000000       2          5      1
+        1 2003-12-01 00:00:00.001   2.170000       3          5    2.2
+        2 2003-12-01 00:00:00.002  10.318410       4          3   10.3
+        3 2003-12-01 00:00:00.003   3.141593       5          3  3.142
         """
         dtype = ott.string[length] if isinstance(length, int) else str
 
@@ -67,7 +70,10 @@ class _FloatAccessor(_Accessor):
             column = ott.value2str(column)
             _length = ott.value2str(_length)
             _precision = ott.value2str(_precision)
-            return f"str({column}, {_length}, {_precision})"
+            str_expr = f"str({column}, {_length}, {_precision})"
+            # BDS-478: str() function raises exception for nan and inf values, so converting them manually
+            str_expr = f'CASE({column}, NAN(), "nan", INFINITY(), "inf", -INFINITY(), "-inf", {str_expr})'
+            return str_expr
 
         return _FloatAccessor.Formatter(
             op_params=[self._base_column, length, precision],
@@ -108,15 +114,14 @@ class _FloatAccessor(_Accessor):
         ...                  OTHER=[1.01, 2.1, 10.32841, 3.14, 5],
         ...                  EPS=[0, 1, 0.1, 0.001, 0.001])
         >>> # OTdirective: snippet-name: float operations.approximate comparison.lt|eq|gt;
-        >>> data["X"] = data["X"].float.cmp(data["OTHER"], data["EPS"])
-        >>> data = otp.run(data)
-        >>> data["X"]
-        0   -1.0
-        1    0.0
-        2    0.0
-        3    0.0
-        4    1.0
-        Name: X, dtype: float64
+        >>> data["Y"] = data["X"].float.cmp(data["OTHER"], data["EPS"])
+        >>> otp.run(data)
+                             Time          X     OTHER    EPS    Y
+        0 2003-12-01 00:00:00.000   1.000000   1.01000  0.000 -1.0
+        1 2003-12-01 00:00:00.001   2.170000   2.10000  1.000  0.0
+        2 2003-12-01 00:00:00.002  10.318410  10.32841  0.100  0.0
+        3 2003-12-01 00:00:00.003   3.141593   3.14000  0.001  0.0
+        4 2003-12-01 00:00:00.004   6.000000   5.00000  0.001  1.0
         """
         def formatter(column, _other, _eps):
             column = ott.value2str(column)
@@ -157,15 +162,14 @@ class _FloatAccessor(_Accessor):
         ...                  OTHER=[1.01, 2.1, 10.32841, 3.14, 5],
         ...                  DELTA=[0, 1, 0.1, 0.01, 0.001])
         >>> # OTdirective: snippet-name: float operations.approximate comparison.eq;
-        >>> data["X"] = (1 + data["X"] - 1).float.eq(data["OTHER"], data["DELTA"])
-        >>> data = otp.run(data)
-        >>> data["X"]
-        0    0.0
-        1    1.0
-        2    1.0
-        3    1.0
-        4    0.0
-        Name: X, dtype: float64
+        >>> data["Y"] = (1 + data["X"] - 1).float.eq(data["OTHER"], data["DELTA"])
+        >>> otp.run(data)
+                             Time          X     OTHER  DELTA    Y
+        0 2003-12-01 00:00:00.000   1.000000   1.01000  0.000  0.0
+        1 2003-12-01 00:00:00.001   2.170000   2.10000  1.000  1.0
+        2 2003-12-01 00:00:00.002  10.318410  10.32841  0.100  1.0
+        3 2003-12-01 00:00:00.003   3.141593   3.14000  0.010  1.0
+        4 2003-12-01 00:00:00.004   6.000000   5.00000  0.001  0.0
         """
         def formatter(column, _other, _delta):
             column = ott.value2str(column)

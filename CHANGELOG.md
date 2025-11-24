@@ -10,6 +10,25 @@
 
 ### Removed
 
+## [1.176.0] - 2025-11-24
+
+### Added
+
+- Added support of `show_all_ticks` parameter for `otp.Source.diff`
+- Added support of native `keep_db` parameter implementation for `otp.Symbols`
+- Add warning when passing float values and columns to `join_with_query`
+- Add support of OneTick parameters to `otp.decimal` class
+
+### Changed
+
+### Fixed
+
+- Fixed support of `schema_policy=manual` for ObSnapshot sources
+- Fixed tick type in order book tests
+- Fix `.float.str` method not working with `otp.nan` and `otp.inf` values
+
+### Removed
+
 ## [1.175.0] - 2025-11-17
 
 ### Added

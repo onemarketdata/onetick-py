@@ -7,6 +7,7 @@ from onetick.py.core.source import Source
 from onetick.py.core.column_operations.base import Raw, OnetickParameter
 from onetick.py.core.eval_query import _QueryEvalWrapper
 from onetick.py.core._source.tmp_otq import TmpOtq
+from onetick.py.compatibility import is_symbols_prepend_db_name_supported
 
 from .. import types as ott
 from .. import utils
@@ -303,6 +304,9 @@ class Symbols(Source):
         _find_params.setdefault('symbology', symbology)
         _find_params.setdefault('show_original_symbols', show_original_symbols)
 
+        if 'prepend_db_name' in _find_params:
+            raise ValueError('Use parameter `keep_db` instead of passing `prepend_db_name` in `find_params`')
+
         if discard_on_match is not None:
             _find_params.setdefault('discard_on_match', discard_on_match)
         if cep_method is not None:
@@ -346,12 +350,16 @@ class Symbols(Source):
             self._tmp_otq.merge(_tmp_otq)
 
     def base_ep(self, ep_tick_type, keep_db, **params):
+        use_prepend_db_name = is_symbols_prepend_db_name_supported()
+        if use_prepend_db_name and not keep_db:
+            params['prepend_db_name'] = False
+
         src = Source(otq.FindDbSymbols(**params))
 
         update_node_tick_type(src, ep_tick_type)
         src.schema['SYMBOL_NAME'] = str
 
-        if not keep_db:
+        if not keep_db and not use_prepend_db_name:
             src["SYMBOL_NAME"] = src["SYMBOL_NAME"].str.regex_replace('.*::', '')
 
         return src

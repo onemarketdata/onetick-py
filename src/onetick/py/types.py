@@ -807,9 +807,10 @@ class decimal:
         return super().__new__(cls)
 
     def __init__(self, value):
-        supported_types = (str, int, float)
+        from onetick.py.core.column_operations.base import OnetickParameter
+        supported_types = (str, int, float, OnetickParameter)
         if not isinstance(value, supported_types):
-            raise TypeError("Parameter 'value' must be one of these types: {supported_types}")
+            raise TypeError(f"Parameter 'value' must be one of these types: {supported_types}, got {type(value)}")
         self.__value = value
 
     @classmethod
@@ -819,7 +820,11 @@ class decimal:
 
     def _to_onetick_string(self):
         # called by ott.value2str
-        value = str(self.__value)
+        from onetick.py.core.column_operations.base import OnetickParameter
+        if isinstance(self.__value, OnetickParameter):
+            value = self.__value
+        else:
+            value = str(self.__value)
         return f'STRING_TO_DECIMAL({value2str(value)})'
 
     def to_operation(self):

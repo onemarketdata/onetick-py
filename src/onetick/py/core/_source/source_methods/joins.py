@@ -104,7 +104,12 @@ def _columns_to_params_for_joins(columns, query_params=False):
                     get_msecs_expression(value) + "+'.'+SUBSTR(NSECTIME_FORMAT('%J'," + str(value) + ",_TIMEZONE),3,6)"
                 )
         else:
-            convert_rule += "tostring(" + str(value) + ")"
+            if issubclass(dtype, float) or dtype is otp.decimal:
+                warnings.warn(f"Parameter '{key}' is of {dtype} type.\n"
+                              "Parameters passed to query will have to be converted to string"
+                              " so the precision may be lost (default precision of 8 will be used).\n"
+                              "Use other types like integers or strings to pass parameters with higher precision.")
+            convert_rule += "tostring(" + ott.value2str(value) + ")"
         params_list.append(convert_rule)
     return "+','+".join(params_list)
 

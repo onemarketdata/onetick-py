@@ -204,7 +204,8 @@ class TestFloatParams:
 
         data = otp.Ticks(dict(x=[1, -2]))
 
-        res = data.join_with_query(func, params=dict(a=0.1, b=0.3))
+        with pytest.warns(UserWarning, match='precision may be lost'):
+            res = data.join_with_query(func, params=dict(a=0.1, b=0.3))
 
         assert "a" in res.columns()
         assert res["a"].dtype is float
@@ -221,6 +222,18 @@ class TestFloatParams:
         assert df["y"][1] == -1.2
         assert df["a"][1] == 0.1
 
+    def test_scientific_notation(self):
+        def func(a, b):
+            return otp.Tick(CONST=a, COLUMN=b)
+
+        t = otp.Tick(X=1e-21)
+        with pytest.warns(UserWarning, match='precision may be lost'):
+            t = t.join_with_query(func, params={'a': 1e-21, 'b': t['X']})
+        df = otp.run(t)
+        # lost precision
+        assert df['CONST'][0] == 0
+        assert df['COLUMN'][0] == 0
+
     def test_from_columns(self):
         def func(a, b):
             d = otp.Ticks(dict(a=[1, a]))
@@ -229,7 +242,8 @@ class TestFloatParams:
 
         data = otp.Ticks(dict(x=[-1, 2], y=[0.1, 0.2], z=[0.3, 0.4]))
 
-        res = data.join_with_query(func, params=dict(a=data.y, b=data.z))
+        with pytest.warns(UserWarning, match='precision may be lost'):
+            res = data.join_with_query(func, params=dict(a=data.y, b=data.z))
 
         assert res["a"].dtype is float
         assert res["b"].dtype is float
@@ -249,7 +263,8 @@ class TestFloatParams:
 
         data = otp.Ticks(dict(x=[otp.nan, 2], y=[0.1, otp.nan], z=[0.3, 0.4]))
 
-        res = data.join_with_query(func, params=dict(a=data.x, b=data.y))
+        with pytest.warns(UserWarning, match='precision may be lost'):
+            res = data.join_with_query(func, params=dict(a=data.x, b=data.y))
 
         assert res["a"].dtype is float
         assert res["b"].dtype is float
@@ -259,6 +274,40 @@ class TestFloatParams:
         assert np.isnan(df["x"][0]) and df["a"][0] == 1 and df["b"][0] == 0.1
         assert np.isnan(df["x"][1]) and np.isnan(df["a"][1]) and df["b"][0] == 0.1
         assert df["x"][2] == 2 and df["a"][2] == 1 and np.isnan(df["b"][2])
+
+
+class TestDecimalParams:
+    def test_params(self, c_session):
+
+        t = otp.Ticks(DUMMY=[1])
+        t['A'] = otp.decimal('0.00000000000000000001')
+
+        def fun(b, c, d):
+            return otp.Tick(B=b, C=c, D=d)
+
+        def fun_2(x):
+            t = otp.Tick(X=otp.decimal(x), X2=x)
+            t['Y'] = t['X2'].astype(otp.decimal)
+            t = t.drop('X2')
+            return t
+
+        with pytest.warns(UserWarning, match='precision may be lost'):
+            t = t.join_with_query(fun, params={'b': t['A'], 'c': otp.decimal('1e-21'), 'd': otp.decimal('1.23')})
+        t = t.join_with_query(fun_2, params={'x': otp.decimal('1e-21').decimal.str(25)})
+        assert t.schema['B'] is otp.decimal
+        assert t.schema['C'] is otp.decimal
+        assert t.schema['D'] is otp.decimal
+        assert t.schema['X'] is otp.decimal
+        assert t.schema['Y'] is otp.decimal
+        df = otp.run(t)
+        assert df['A'][0] == 0.00000000000000000001
+        # lost precision
+        assert df['B'][0] == 0
+        assert df['C'][0] == 0
+        # ok precision
+        assert df['D'][0] == 1.23
+        assert df['X'][0] == 1e-21
+        assert df['Y'][0] == 1e-21
 
 
 class TestStringParams:
@@ -628,13 +677,15 @@ class TestSymbolParam:
             return src
 
         if symbol_param_source == 'source':
-            data = data.join_with_query(source_func, symbol=data)
+            with pytest.warns(UserWarning, match="Parameter 'B'.*\n.*precision may be lost.*"):
+                data = data.join_with_query(source_func, symbol=data)
             df = otp.run(data)
         elif symbol_param_source == 'symbol':
 
             def func(symbol):
                 src = otp.Tick(DUMMY2=1)
-                src = src.join_with_query(source_func, symbol=symbol)
+                with pytest.warns(UserWarning, match="Parameter 'B'.*\n.*precision may be lost.*"):
+                    src = src.join_with_query(source_func, symbol=symbol)
                 return src
 
             df = list(otp.run(func, symbols=data).values())[0]

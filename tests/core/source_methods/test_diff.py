@@ -3,6 +3,8 @@ import pytest
 import onetick.py as otp
 from onetick.py.otq import otq
 
+from onetick.py.compatibility import is_diff_show_all_ticks_supported
+
 
 def test_default(session):
     t = otp.Ticks(A=[1, 2], B=[0, 0])
@@ -18,6 +20,29 @@ def test_default(session):
     assert list(df) == ['Time', 'L.A', 'R.A']
     assert list(df['L.A']) == [2]
     assert list(df['R.A']) == [3]
+
+
+@pytest.mark.skipif(not is_diff_show_all_ticks_supported(), reason='Not supported on current OneTick version')
+def test_default_show_all_ticks(session):
+    t = otp.Ticks(A=[1, 2, 3], B=[0, 0, 1])
+    q = otp.Ticks(A=[1, 3], B=[0, 0])
+    data = t.diff(q, show_all_ticks=True)
+    assert 'L.A' in data.schema
+    assert 'R.A' in data.schema
+    assert 'MATCH_STATUS' in data.schema
+    assert 'A' not in data.schema
+    assert 'B' not in data.schema
+    assert 'L.INDEX' not in data.schema
+    assert 'R.INDEX' not in data.schema
+    df = otp.run(data).to_dict(orient='list')
+    assert set(df.keys()) == {'Time', 'L.A', 'R.A', 'L.B', 'MATCH_STATUS'}
+    del df['Time']
+    assert df == {
+        'MATCH_STATUS': [1, 0, 2],
+        'L.A': [0, 2, 3],
+        'R.A': [0, 3, 0],
+        'L.B': [0, 0, 1],
+    }
 
 
 def test_prefix(session):

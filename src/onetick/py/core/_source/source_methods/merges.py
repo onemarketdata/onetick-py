@@ -16,6 +16,7 @@ from onetick.py.aggregations._docs import (
 )
 from onetick.py.docs.utils import docstring, param_doc
 from onetick.py.aggregations._base import _Aggregation
+from onetick.py.compatibility import is_diff_show_all_ticks_supported
 
 
 if TYPE_CHECKING:
@@ -51,6 +52,7 @@ def diff(self: 'Source', other: 'Source',
          output_ignored_fields: Optional[bool] = None,
          show_only_fields_that_differ: Optional[bool] = None,
          show_matching_ticks: Optional[bool] = None,
+         show_all_ticks: bool = False,
          non_decreasing_value_fields: Optional[Union[str, List[str]]] = None,
          threshold: Optional[int] = None,
          left_prefix: str = 'L',
@@ -97,6 +99,15 @@ def diff(self: 'Source', other: 'Source',
         instead of unmatched ticks.
         The output tick timestamp is equal to the earliest timestamp of its corresponding input ticks.
         Default value is False.
+    show_all_ticks: bool
+        If specified, the output of this EP consists of both matched and unmatched ticks from both input time series.
+        ``MATCH_STATUS`` field will be added to the output tick with the possible values of:
+
+        * ``0`` - different ticks
+        * ``1`` - matching ticks
+        * ``2`` - tick from one source only
+
+        Default: ``False``
     non_decreasing_value_fields:
         List of *non-decreasing* value fields to be used for matching.
         If value of this parameter is **TIMESTAMP** (default), it compares two time series based on tick timestamp.
@@ -170,6 +181,24 @@ def diff(self: 'Source', other: 'Source',
        1 2003-12-01 00:00:01    1    3    1    4
        2 2003-12-01 00:00:02    1    4    1    6
        3 2003-12-01 00:00:02    1    5    1    7
+
+    Showing diff for every tick with ``show_all_ticks`` parameter:
+
+    .. testcode::
+       :skipif: not otp.compatibility.is_diff_show_all_ticks_supported()
+
+       t = otp.Ticks(A=[1, 2, 3], B=[0, 0, 1])
+       q = otp.Ticks(A=[1, 3], B=[0, 0])
+       data = t.diff(q, show_all_ticks=True)
+       print(otp.run(data))
+
+    .. testoutput::
+
+                            Time  MATCH_STATUS  L.A  R.A  L.B
+       0 2003-12-01 00:00:00.000             1    0    0    0
+       1 2003-12-01 00:00:00.001             0    2    3    0
+       2 2003-12-01 00:00:00.002             2    3    0    1
+
     """
 
     if not fields:
@@ -210,6 +239,13 @@ def diff(self: 'Source', other: 'Source',
         raise ValueError(
             "Parameters 'output_ignored_fields' and 'show_only_fields_that_differ' can't be set at the same time"
         )
+
+    if show_all_ticks:
+        if not is_diff_show_all_ticks_supported():
+            raise RuntimeError('`show_all_ticks` parameter not supported on current OneTick version')
+
+        ep_params['show_all_ticks'] = show_all_ticks
+
     if show_only_fields_that_differ is None and output_ignored_fields is None:
         if ignore:
             ep_params['output_ignored_fields'] = True
@@ -240,6 +276,9 @@ def diff(self: 'Source', other: 'Source',
             if ignore and field in fields and not output_ignored_fields:
                 continue
             schema[f'{src_prefix}.{field}'] = dtype
+
+    if show_all_ticks:
+        schema['MATCH_STATUS'] = int
 
     result = otp.Source(
         node=otq.Diff(**ep_params),
