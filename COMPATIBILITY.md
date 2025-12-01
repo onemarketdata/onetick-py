@@ -12,7 +12,7 @@
 ## Python compatibility 
 
 * python 3.9:            ✅ stable
-* python 3.10:           ✅ stable
+* python 3.10:           🆗 stable with minor issues (99.976% of tests passed)
 * python 3.11:           ✅ stable
 * python 3.12:           ✅ stable
 * python 3.13:           ✅ stable

@@ -384,6 +384,16 @@ _max_depth_for_price_doc = param_doc(
     annotation=float,
     default=None,
 )
+_max_spread_doc = param_doc(
+    name='max_spread',
+    desc="""
+    An absolute value, price levels with price that satisfies ``abs(<MID price> - <order price>) <= max_spread/2``
+    contribute to computed book. If ``max_spread`` is specified, ``side`` should not be specified.
+    Empty book is returned when one side is empty.
+    """,
+    annotation=float,
+    default=None,
+)
 _min_levels_doc = param_doc(
     name='min_levels',
     desc="""

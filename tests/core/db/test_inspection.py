@@ -211,17 +211,8 @@ def test_timezone(tz, f_session):
 @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason='RemoteTS is not applicable for WebAPI')
 @pytest.mark.integration
 @pytest.mark.skipif(os.name == "nt", reason="Default windows user in CI doesn't have access")
-def test_remote():
-    with otp.Session(
-        otp.Config(
-            locator=otp.RemoteTS(
-                otp.LoadBalancing(
-                    "development-queryhost.preprod-solutions.parent.onetick.com:50015",
-                    "development-queryhost-2.preprod-solutions.parent.onetick.com:50015"
-                )
-            )
-        )
-    ):
+def test_remote(cloud_server):
+    with otp.Session(otp.Config(locator=cloud_server)):
         dbs = databases()
 
         db = dbs['US_COMP']
@@ -269,14 +260,8 @@ def test_remote():
 
 @pytest.mark.integration
 @pytest.mark.skipif(os.name == "nt", reason="Default windows user in CI doesn't have access")
-def test_remote_service():
-    remote = otp.RemoteTS(
-        otp.LoadBalancing(
-            "development-queryhost.preprod-solutions.parent.onetick.com:50015",
-            "development-queryhost-2.preprod-solutions.parent.onetick.com:50015"
-        )
-    )
-    with otp.Session(otp.Config(locator=remote)):
+def test_remote_service(cloud_server):
+    with otp.Session(otp.Config(locator=cloud_server)):
         access_ep = otq.AccessInfo(info_type='ROLES',
                                    show_for_all_users=True)
         access_ep.set_tick_type('ANY')

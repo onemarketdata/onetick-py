@@ -2,7 +2,9 @@
 import pytest
 
 import onetick.py as otp
-from onetick.py.compatibility import is_supported_new_ob_snapshot_behavior, is_supported_otq_ob_summary
+from onetick.py.compatibility import (
+    is_supported_new_ob_snapshot_behavior, is_supported_otq_ob_summary, is_max_spread_supported,
+)
 from onetick.py.otq import otq
 
 
@@ -77,6 +79,12 @@ class TestObSnapshot:
 
     def test_ob_snapshot_max_depth_for_price(self, data):
         data = otp.agg.ob_snapshot(max_depth_for_price=0.5).apply(data)
+        df = otp.run(data)
+        assert len(df) == 2
+
+    @pytest.mark.skipif(not is_max_spread_supported(), reason='Not supported on this version of OneTick')
+    def test_ob_snapshot_max_spread(self, data):
+        data = otp.agg.ob_snapshot(max_spread=0.5).apply(data)
         df = otp.run(data)
         assert len(df) == 2
 
@@ -403,6 +411,12 @@ class TestObSize:
 
         with pytest.raises(ValueError):
             _ = otp.agg.ob_size(min_levels=2).apply(data)
+
+    @pytest.mark.skipif(not is_max_spread_supported(), reason='Not supported on this version of OneTick')
+    def test_ob_snapshot_max_spread(self, data):
+        data = otp.agg.ob_size(max_spread=0.2).apply(data)
+        df = otp.run(data)
+        assert len(df) == 1
 
 
 class TestObVwap:

@@ -9,6 +9,10 @@ from onetick.py.otq import otq
 import backoff
 
 
+# global marker for the whole module
+pytestmark = pytest.mark.integration
+
+
 def _give_up(e):
     return not ('unexpected end of socket' in str(e) or 'Connection refused' in str(e))
 
@@ -21,16 +25,9 @@ if sys.platform.startswith('win'):
 
 
 @pytest.fixture
-def session():
+def session(cloud_server):
     with otp.Session() as session:
-        servers = otp.RemoteTS(
-            otp.LoadBalancing(
-                "development-queryhost.preprod-solutions.parent.onetick.com:50015",
-                "development-queryhost-2.preprod-solutions.parent.onetick.com:50015"
-            )
-        )
-
-        session.use(servers)
+        session.use(cloud_server)
         yield session
 
 
@@ -46,7 +43,6 @@ def nptype2otp(dtype):
 
 class TestOHLCV:
     @our_backoff
-    @pytest.mark.integration
     @pytest.mark.parametrize('tz', ['GMT', 'EST5EDT', 'Pacific/Chatham'])
     @pytest.mark.parametrize('exch', ['all', 'main', 'USPRIM'])
     def test_types_and_schema(self, session, exch, tz):
@@ -77,7 +73,6 @@ class TestOHLCV:
             assert nptype2otp(type(df[name][0])) is dtype, f'field {name} has wrong type'
 
     @our_backoff
-    @pytest.mark.integration
     @pytest.mark.parametrize('tz', ['GMT', 'EST5EDT', 'Pacific/Chatham'])
     @pytest.mark.parametrize('exch', ['all', 'main', 'USPRIM', 'USCOMP', 'NOT_EXISTED'])
     def test_exch_selection(self, session, exch, tz):
@@ -100,7 +95,6 @@ class TestOHLCV:
             assert all(df['EXCH'] == [exch])
 
     @our_backoff
-    @pytest.mark.integration
     def test_from_doc(self, session):
         src = otp.oqd.sources.OHLCV(exch="USPRIM")
         df = otp.run(src,
@@ -118,7 +112,6 @@ class TestOHLCV:
 class TestCorporateActions:
 
     @our_backoff
-    @pytest.mark.integration
     def test_doc_test_example(self, session):
         # test example from docs
         src = otp.oqd.sources.CorporateActions()
@@ -132,7 +125,6 @@ class TestCorporateActions:
         print(df)
 
     @our_backoff
-    @pytest.mark.integration
     def test_types_and_schemas(self, session):
         src = otp.oqd.sources.CorporateActions()
         src = src.first()
@@ -168,7 +160,6 @@ class TestCorporateActions:
         print(df)
 
     @our_backoff
-    @pytest.mark.integration
     def test_from_doc(self, session):
         src = otp.oqd.sources.CorporateActions()
         df = otp.run(src,
@@ -192,7 +183,6 @@ class TestCorporateActions:
 class TestDescriptiveFields:
 
     @our_backoff
-    @pytest.mark.integration
     def test_types_and_schemas(self, session):
         src = otp.oqd.sources.DescriptiveFields()
         src = src.first()
@@ -228,7 +218,6 @@ class TestDescriptiveFields:
         print(df)
 
     @our_backoff
-    @pytest.mark.integration
     def test_year_9999_in_enddate_field(self, session):
         src = otp.oqd.sources.DescriptiveFields()
         df = otp.run(src,
@@ -240,7 +229,6 @@ class TestDescriptiveFields:
         print(df)
 
     @our_backoff
-    @pytest.mark.integration
     def test_from_doc(self, session):
         src = otp.oqd.sources.DescriptiveFields()
         df = otp.run(src,
@@ -269,7 +257,6 @@ class TestDescriptiveFields:
 class TestCorporateActionsFunc:
 
     @our_backoff
-    @pytest.mark.integration
     def test_corp_actions_ep(self, session):
         src = otp.DataSource('US_COMP', tick_type='TRD', start=otp.dt(2022, 5, 20, 9, 30), end=otp.dt(2022, 5, 24, 16))
         src.sink(otq.CorpActions(
@@ -282,7 +269,6 @@ class TestCorporateActionsFunc:
         assert df["PRICE"][0] == 1.36649931675
 
     @our_backoff
-    @pytest.mark.integration
     def test_corp_actions_change_price(self, session):
         src = otp.DataSource('US_COMP',
                              tick_type='TRD',
@@ -304,7 +290,6 @@ class TestCorporateActionsFunc:
         assert df2["PRICE"][0] == 1.36649931675  # adjusted price
 
     @our_backoff
-    @pytest.mark.integration
     @pytest.mark.parametrize("adjustment_date", [
         otp.date(2022, 5, 24),
         otp.datetime(2022, 5, 24),
@@ -385,7 +370,6 @@ class TestCorporateActionsFunc:
                                  fields="PRICE")
 
     @our_backoff
-    @pytest.mark.integration
     def test_corp_actions_date_input_default(self, session):
         src = otp.DataSource('US_COMP', tick_type='TRD')
         src = otp.corp_actions(src, fields="PRICE")
@@ -396,7 +380,6 @@ class TestCorporateActionsFunc:
         assert df["PRICE"][0] == 1.36649931675
 
     @our_backoff
-    @pytest.mark.integration
     @pytest.mark.parametrize("adjustment_date", [
         otp.datetime(2022, 5, 24, 13),
         datetime.datetime(2022, 5, 24, 13),
@@ -421,7 +404,6 @@ class TestCorporateActionsFunc:
 
 class TestSharesOutstanding:
     @our_backoff
-    @pytest.mark.integration
     def test_from_doc(self, session):
         src = otp.oqd.sources.SharesOutstanding()
         df = otp.run(src,
@@ -441,7 +423,6 @@ class TestSharesOutstanding:
 
 
 @our_backoff
-@pytest.mark.integration
 def test_x(session):
     df = otp.run(otp.DataSource(db='US_COMP', tick_type='TRD').first(),
                  symbols='TDEQ::::AAPL',
@@ -454,7 +435,6 @@ def test_x(session):
 
 
 @our_backoff
-@pytest.mark.integration
 def test_bbgsym(session):
     src = otp.oqd.eps.OqdSourceBbgbsym().tick_type('OQD::*')
 
@@ -468,7 +448,6 @@ def test_bbgsym(session):
 
 
 @our_backoff
-@pytest.mark.integration
 def test_cacts(session):
     # # *All, *Exch
     # # Time     OID    EXCH CURRENCY     OPEN      HIGH     LOW   CLOSE      VOLUME
@@ -494,7 +473,6 @@ def test_cacts(session):
 
 
 @our_backoff
-@pytest.mark.integration
 def test_oqs_source_des(session):
     # print(otp.dt(3055, 1, 1))
 
@@ -507,7 +485,6 @@ def test_oqs_source_des(session):
 
 
 @our_backoff
-@pytest.mark.integration
 def test_corp_actions_with_mocked_refdb():
     # Mock the refdb for corporate actions
     # This example is for the case when the corporate action is a stock split

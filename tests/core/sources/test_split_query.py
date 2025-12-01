@@ -73,14 +73,8 @@ def test_non_supported_type(session):
 
 @pytest.mark.integration
 @pytest.mark.skip(reason='integration test with cloud')
-def test_csv(cur_dir):
-    locator = otp.RemoteTS(
-        otp.LoadBalancing(
-            "development-queryhost.preprod-solutions.parent.onetick.com:50015",
-            "development-queryhost-2.preprod-solutions.parent.onetick.com:50015"
-        )
-    )
-    cfg = otp.Config(locator=locator)
+def test_csv(cur_dir, cloud_server):
+    cfg = otp.Config(locator=cloud_server)
 
     with otp.Session(cfg):
 
@@ -120,14 +114,8 @@ def test_csv(cur_dir):
 
 @pytest.mark.integration
 @pytest.mark.skip(reason='integration test with cloud')
-def test_csv_as_in_docs(cur_dir):
-    locator = otp.RemoteTS(
-        otp.LoadBalancing(
-            "development-queryhost.preprod-solutions.parent.onetick.com:50015",
-            "development-queryhost-2.preprod-solutions.parent.onetick.com:50015"
-        )
-    )
-    cfg = otp.Config(locator=locator)
+def test_csv_as_in_docs(cur_dir, cloud_server):
+    cfg = otp.Config(locator=cloud_server)
 
     with otp.Session(cfg):
 

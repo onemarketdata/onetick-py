@@ -789,3 +789,10 @@ def is_symbols_prepend_db_name_supported():
 def is_diff_show_all_ticks_supported():
     # 20250919: Implemented 0036784: Add SHOW_ALL_TICKS(false by default) ep parameter to DIFF EP.
     return hasattr(otq.Diff.Parameters, 'show_all_ticks')
+
+
+def is_max_spread_supported():
+    # 20250819: Implemented 0036522: The book EPs that support parameter MAX_DEPTH_FOR_PRICE
+    # should also support parameter MAX_SPREAD
+    return _is_min_build_or_version(None, None,
+                                    20251010120000)

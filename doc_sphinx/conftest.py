@@ -11,21 +11,14 @@ from onetick.py.otq import otq
 
 
 @pytest.fixture(scope='session')
-def real_db_schemas():
+def real_db_schemas(cloud_server):
     """ A temporary session that helps to get real database schemas to
     generate realistic ticks """
 
     res = {}
 
     with otp.Session() as session:
-        servers = otp.RemoteTS(
-            otp.LoadBalancing(
-                "development-queryhost.preprod-solutions.parent.onetick.com:50015",
-                "development-queryhost-2.preprod-solutions.parent.onetick.com:50015"
-            )
-        )
-
-        session.use(servers)
+        session.use(cloud_server)
 
         res['us_comp_trd'] = otp.databases()['US_COMP'].schema(
             tick_type='TRD',

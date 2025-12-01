@@ -10,7 +10,7 @@ from onetick.py import types as ott
 if TYPE_CHECKING:
     from onetick.py.core.source import Source   # hack for annotations
 from onetick.py.core.column import _Column
-from onetick.py.compatibility import is_supported_otq_ob_summary
+from onetick.py.compatibility import is_supported_otq_ob_summary, is_max_spread_supported
 from ._base import _Aggregation, get_seconds_from_time_offset
 from ._docs import (_running_doc,
                     _bucket_interval_doc,
@@ -25,6 +25,7 @@ from ._docs import (_running_doc,
                     _min_levels_doc,
                     _max_depth_shares_doc,
                     _max_depth_for_price_doc,
+                    _max_spread_doc,
                     _book_uncross_method_doc,
                     _dq_events_that_clear_book_doc,
                     _best_ask_price_field_doc,
@@ -44,7 +45,7 @@ OB_SNAPSHOT_DOC_PARAMS = [
     _running_doc,
     _bucket_interval_doc, _bucket_time_doc, _bucket_units_ob_doc,
     _bucket_end_condition_doc, _end_condition_per_group_doc, _group_by_doc, _groups_to_display_doc,
-    _side_doc, _max_levels_doc, _max_depth_shares_doc, _max_depth_for_price_doc,
+    _side_doc, _max_levels_doc, _max_depth_shares_doc, _max_depth_for_price_doc, _max_spread_doc,
     _book_uncross_method_doc, _dq_events_that_clear_book_doc, _identify_source_doc,
     _show_full_detail_doc, _show_only_changes_doc, _book_delimiters_doc,
     _max_initialization_days_doc, _state_key_max_inactivity_sec_doc,
@@ -55,7 +56,7 @@ OB_SNAPSHOT_WIDE_DOC_PARAMS = [
     _running_doc,
     _bucket_interval_doc, _bucket_time_doc, _bucket_units_ob_doc, _bucket_end_condition_doc,
     _end_condition_per_group_doc, _group_by_doc, _groups_to_display_doc,
-    _max_levels_doc, _max_depth_shares_doc, _max_depth_for_price_doc,
+    _max_levels_doc, _max_depth_shares_doc, _max_depth_for_price_doc, _max_spread_doc,
     _book_uncross_method_doc, _dq_events_that_clear_book_doc,
     _book_delimiters_doc,
     _max_initialization_days_doc, _state_key_max_inactivity_sec_doc,
@@ -77,7 +78,7 @@ OB_SUMMARY_DOC_PARAMS = [
     _running_doc,
     _bucket_interval_doc, _bucket_time_doc, _bucket_units_ob_doc,
     _bucket_end_condition_doc, _end_condition_per_group_doc, _group_by_doc, _groups_to_display_doc,
-    _side_doc, _max_levels_doc, _min_levels_doc, _max_depth_shares_doc, _max_depth_for_price_doc,
+    _side_doc, _max_levels_doc, _min_levels_doc, _max_depth_shares_doc, _max_depth_for_price_doc, _max_spread_doc,
     _book_uncross_method_doc, _dq_events_that_clear_book_doc, _max_initialization_days_doc,
     _state_key_max_inactivity_sec_doc, _size_max_fractional_digits_doc,
     _include_market_order_ticks_doc,
@@ -87,7 +88,7 @@ OB_SIZE_DOC_PARAMS = [
     _running_doc,
     _bucket_interval_doc, _bucket_time_doc, _bucket_units_ob_doc,
     _bucket_end_condition_doc, _end_condition_per_group_doc, _group_by_doc, _groups_to_display_doc,
-    _side_doc, _max_levels_doc, _max_depth_for_price_doc,
+    _side_doc, _max_levels_doc, _max_depth_for_price_doc, _max_spread_doc,
     _book_uncross_method_doc, _dq_events_that_clear_book_doc, _max_initialization_days_doc,
     _best_ask_price_field_doc, _best_bid_price_field_doc,
 ]
@@ -114,6 +115,7 @@ class _OrderBookAggregation(_Aggregation, ABC):
         'max_levels': 'MAX_LEVELS',
         'max_depth_shares': 'MAX_DEPTH_SHARES',
         'max_depth_for_price': 'MAX_DEPTH_FOR_PRICE',
+        'max_spread': 'MAX_SPREAD',
         'max_initialization_days': 'MAX_INITIALIZATION_DAYS',
         'book_uncross_method': 'BOOK_UNCROSS_METHOD',
         'dq_events_that_clear_book': 'DQ_EVENTS_THAT_CLEAR_BOOK',
@@ -123,6 +125,7 @@ class _OrderBookAggregation(_Aggregation, ABC):
         'max_levels': None,
         'max_depth_shares': None,
         'max_depth_for_price': None,
+        'max_spread': None,
         'max_initialization_days': 1,
         'book_uncross_method': None,
         'dq_events_that_clear_book': None,
@@ -135,6 +138,7 @@ class _OrderBookAggregation(_Aggregation, ABC):
                  max_levels: Optional[int] = None,
                  max_depth_shares: Optional[int] = None,
                  max_depth_for_price: Optional[float] = None,
+                 max_spread: Optional[float] = None,
                  max_initialization_days: int = 1,
                  book_uncross_method: Optional[Literal['REMOVE_OLDER_CROSSED_LEVELS']] = None,
                  dq_events_that_clear_book: Optional[List[str]] = None,
@@ -143,6 +147,7 @@ class _OrderBookAggregation(_Aggregation, ABC):
         self.max_levels = max_levels
         self.max_depth_shares = max_depth_shares
         self.max_depth_for_price = max_depth_for_price
+        self.max_spread = max_spread
         self.max_initialization_days = max_initialization_days
         self.book_uncross_method = book_uncross_method
         self.dq_events_that_clear_book = ','.join(dq_events_that_clear_book) if dq_events_that_clear_book else None
@@ -163,6 +168,13 @@ class _OrderBookAggregation(_Aggregation, ABC):
         if self.bucket_units not in valid_units:
             raise ValueError("'bucket_units' can be one of the following: "
                              f"'{', '.join(valid_units)}'; however, '{self.bucket_units}' was passed")
+
+        if self.max_spread is not None:
+            if self.side:
+                raise ValueError('Parameters `max_spread` and `side` shouldn\'t be specified both at the same time')
+
+            if not is_max_spread_supported():
+                raise RuntimeError('Parameter `max_spread` is not supported on this OneTick version')
 
     def disable_ob_input_columns_validation(self):
         self._validate_ob_input_columns = False
@@ -295,7 +307,7 @@ class ObSnapshotFlat(ObSnapshot):
     FIELDS_TO_SKIP = [
         *ObSnapshot.FIELDS_TO_SKIP,
         'side', 'identify_source', 'show_only_changes',
-        'book_delimiters', 'max_depth_shares', 'max_depth_for_price',
+        'book_delimiters', 'max_depth_shares', 'max_depth_for_price', 'max_spread',
     ]
 
     def validate_input_columns(self, src: 'Source'):

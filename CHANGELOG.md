@@ -10,6 +10,24 @@
 
 ### Removed
 
+## [1.177.0] - 2025-12-01
+
+### Added
+
+- Added support of parameter `max_spread` for `ObSnapshot`, `ObSnapshotWide`, `ObSummary` and `ObSize`
+- Added `unit(durations)` Gitlab test job
+
+### Changed
+
+- Regenerated `.test_durations` file
+
+### Fixed
+
+- Change addresses of the cloud servers in tests
+- Fixed pytest marker for `test_otq.py`
+
+### Removed
+
 ## [1.176.0] - 2025-11-24
 
 ### Added

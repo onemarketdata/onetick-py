@@ -47,3 +47,17 @@ def pytest_sessionstart(session):
 
     if os.getenv('OTP_WEBAPI_TEST_MODE'):
         os.system(f'rm -rf {WEBAPI_TEST_MODE_SHARED_CONFIG}/*')
+
+
+@pytest.fixture(scope='session')
+def cloud_server():
+    yield otp.RemoteTS(
+        otp.LoadBalancing(
+            "development-queryhost.preprod-solutions.parent.onetick.com:50015",
+            "development-queryhost.preprod-solutions.parent.onetick.com:50016",
+            "development-queryhost.preprod-solutions.parent.onetick.com:50017",
+            "development-queryhost.preprod-solutions.parent.onetick.com:50018",
+            "development-queryhost.preprod-solutions.parent.onetick.com:50019",
+            "development-queryhost.preprod-solutions.parent.onetick.com:50020",
+        )
+    )
