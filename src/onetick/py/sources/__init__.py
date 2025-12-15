@@ -6,6 +6,7 @@ from .data_source import DataSource, Custom
 from .cache import ReadCache
 from .csv import CSV, LocalCSVTicks
 from .data_file import DataFile
+from .dataframe import ReadFromDataFrame
 from .empty import Empty
 from .custom import Orders, Quotes, Trades, NBBO
 from .order_book import ObSnapshot, ObSnapshotFlat, ObSnapshotWide, ObSummary, ObSize, ObVwap, ObNumLevels

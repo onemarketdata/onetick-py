@@ -1854,6 +1854,42 @@ def type2np(t):
         return np.dtype(t)
 
 
+def np2type(t):
+    if not isinstance(t, (np.dtype, pd.api.extensions.ExtensionDtype)):
+        raise ValueError(f'Unsupported value passed to `np2type`: `{t}` not numpy dtype')
+
+    if t.name == 'int64':
+        return int
+    elif t.name == 'int8':
+        return byte
+    elif t.name == 'int16':
+        return short
+    elif t.name == 'int32':
+        return _int
+    elif t.name == 'uint64':
+        return ulong
+    elif t.name == 'uint32':
+        return uint
+    elif t.name == 'float64':
+        return float
+    elif t.name == 'boolean':
+        return bool
+    elif t.name.startswith('datetime64[ns'):
+        return nsectime
+    elif t.name.startswith('datetime64[ms'):
+        return msectime
+    elif t.name == 'object':
+        return str
+    elif t.str.startswith('<U'):
+        length = t.name[2:]
+        if length:
+            return string[int(length)]
+        else:
+            return str
+
+    raise ValueError(f'Unknown numpy dtype passed to `np2type`: `{t}`')
+
+
 # TODO: move this union of types to some common place
 def datetime2expr(
     dt_obj: Union[_datetime, _date, pd.Timestamp, date, datetime],

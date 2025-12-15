@@ -10,6 +10,27 @@
 
 ### Removed
 
+## [1.178.0] - 2025-12-09
+
+### Added
+
+- Added console command `onetick-render` for `otp.utils.render_otq`
+- Added `otp.ReadFromDataFrame` source
+- Added link to Github issues to the PyPI page
+
+### Changed
+
+- Improve time to get schema in `otp.DataSource`
+- Add cache when getting schema, configured time ranges and access info of the database
+- Deprecated generating ticks in `otp.Ticks` from pandas dataframe
+- Improved documentation about testing
+
+### Fixed
+
+- Fixed `webapi` tests on latest `urllib3` version
+
+### Removed
+
 ## [1.177.0] - 2025-12-01
 
 ### Added

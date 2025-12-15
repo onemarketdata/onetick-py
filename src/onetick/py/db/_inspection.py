@@ -1,7 +1,9 @@
 import itertools
 import warnings
-from typing import Union, Iterable, Tuple, Optional, Any, Literal
+from collections import defaultdict
+from typing import Union, Iterable, Tuple, Optional, Literal
 from datetime import date as dt_date, datetime, timedelta
+from functools import wraps
 
 import pandas as pd
 from dateutil.tz import gettz
@@ -17,6 +19,39 @@ from onetick.py.otq import otq
 def _datetime2date(dt: Union[dt_date, datetime]) -> dt_date:
     """ Convert datetime and date explicitly into the datetime.date """
     return dt_date(dt.year, dt.month, dt.day)
+
+
+def _method_cache(meth):
+    """
+    Cache the output of class method.
+    Cache is created inside of the self object (in self.__cache property)
+    and will be deleted when self object is destroyed.
+
+    This is a rewrite of functools.cache,
+    but it doesn't add self argument to cache key and thus doesn't keep reference to self forever.
+    """
+    @wraps(meth)
+    def wrapper(self, *args, **kwargs):
+
+        # cache key is a tuple of all arguments
+        key = args
+        for kw_tup in kwargs.items():
+            key += kw_tup
+        key = hash(key)
+
+        if not hasattr(self, '__cache'):
+            self.__cache = defaultdict(dict)
+
+        method_cache = self.__cache[meth.__name__]
+
+        miss = object()
+        result = method_cache.get(key, miss)
+        if result is miss:
+            result = meth(self, *args, **kwargs)
+            method_cache[key] = result
+        return result
+
+    return wrapper
 
 
 class DB:
@@ -37,7 +72,11 @@ class DB:
         self._locator_date_ranges = None
 
     def __eq__(self, obj):
-        return str(self) == str(obj)
+        return all((
+            self.name == obj.name,
+            self.description == obj.description,
+            self.context == obj.context,
+        ))
 
     def __lt__(self, obj):
         return str(self) < str(obj)
@@ -45,6 +84,7 @@ class DB:
     def __str__(self):
         return self.name
 
+    @_method_cache
     def access_info(self, deep_scan=False, username=None) -> Union[pd.DataFrame, dict]:
         """
         Get access info for this database and ``username``.
@@ -111,13 +151,19 @@ class DB:
             >> otq.WhereClause(where=f'DB_NAME = "{name}"')
         )
         graph = otq.GraphQuery(node)
+
+        self._set_intervals()
+        # start and end times don't matter, but need to fit in the configured time ranges
+        start, end = self._locator_date_ranges[-1]
+
         df = otp.run(graph,
-                     symbols='LOCAL::',
-                     # start and end times don't matter
-                     start=db_constants.DEFAULT_START_DATE,
-                     end=db_constants.DEFAULT_END_DATE,
+                     symbols=f'{self.name}::',
+                     start=start,
+                     end=end,
                      # and timezone is GMT, because timestamp parameters in ACL are in GMT
                      timezone='GMT',
+                     # ACCESS_INFO can return ACL violation error if we use database name as symbol
+                     query_properties={'IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE': 'TRUE'},
                      username=username,
                      context=self.context)
         if not df.empty:
@@ -255,6 +301,20 @@ class DB:
         end = start + otp.Day(1)
         return self._fit_time_interval_in_acl(start, end, timezone)
 
+    @_method_cache
+    def _show_configured_time_ranges(self):
+        graph = otq.GraphQuery(otq.DbShowConfiguredTimeRanges(db_name=self.name).tick_type("ANY")
+                               >> otq.Table(fields='long START_DATE, long END_DATE'))
+        result = otp.run(graph,
+                         symbols=f'{self.name}::',
+                         # start and end times don't matter for this query, use some constants
+                         start=db_constants.DEFAULT_START_DATE,
+                         end=db_constants.DEFAULT_END_DATE,
+                         # GMT, because start/end timestamp in locator are in GMT
+                         timezone='GMT',
+                         context=self.context)
+        return result
+
     def _set_intervals(self):
         """
         Finds all date ranges from locators.
@@ -264,18 +324,7 @@ class DB:
         """
 
         if self._locator_date_ranges is None:
-            graph = otq.GraphQuery(otq.DbShowConfiguredTimeRanges(db_name=self.name).tick_type("ANY")
-                                   >> otq.Table(fields='long START_DATE, long END_DATE'))
-
-            result = otp.run(graph,
-                             symbols=f'{self.name}::',
-                             # start and end times don't matter for this query, use some constants
-                             start=db_constants.DEFAULT_START_DATE,
-                             end=db_constants.DEFAULT_END_DATE,
-                             # GMT, because start/end timestamp in locator are in GMT
-                             timezone='GMT',
-                             context=self.context)
-
+            result = self._show_configured_time_ranges()
             date_ranges = []
 
             tz_gmt = gettz('GMT')
@@ -316,10 +365,20 @@ class DB:
 
     def _show_loaded_time_ranges(self, start, end, only_last=False, prefer_speed_over_accuracy=False):
         kwargs = {}
+        # PY-1421: we aim to make this query as fast as possible
+        # There are two problems with this EP:
+        #   1. executing this query without using cache
+        #      and/or without setting prefer_speed_over_accuracy parameter
+        #      may be very slow for big time range
+        #   2. using cache sometimes returns not precise results
+        # So in case prefer_speed_over_accuracy parameter is available we are disabling cache.
         if prefer_speed_over_accuracy:
-            kwargs['prefer_speed_over_accuracy'] = prefer_speed_over_accuracy
+            kwargs['prefer_speed_over_accuracy'] = True
+            kwargs['use_cache'] = False
+        else:
+            kwargs['use_cache'] = True
 
-        eps = otq.DbShowLoadedTimeRanges(use_cache=True, **kwargs).tick_type('ANY')
+        eps = otq.DbShowLoadedTimeRanges(**kwargs).tick_type('ANY')
         eps = eps >> otq.WhereClause(where='NUM_LOADED_PARTITIONS > 0')
         if only_last:
             eps = eps >> otq.LastTick()
@@ -528,31 +587,44 @@ class DB:
         ['QTE', 'TRD']
         """
         date = self.last_date if date is None else date
+
         if timezone is None:
             timezone = configuration.config.tz
-        time_params: dict[str, Any] = {}
 
-        if date is not None:
-            time_params['start'], time_params['end'] = self._fit_date_in_acl(date, timezone=timezone)
+        if date is None:
+            # in the usual case it would mean that there is no data in the database,
+            # but _show_loaded_time_ranges doesn't return dates for database views
+            # in this case let's just try to get the database schema with default time range
+            start = end = utils.adaptive
+            # also it seems that show_schema=True doesn't work for views either
+            show_schema = False
+        else:
+            start, end = self._fit_date_in_acl(date, timezone=timezone)  # type: ignore[assignment]
+            show_schema = True
 
         # PY-458: don't use cache, it can return different result in some cases
-        result = otp.run(otq.DbShowTickTypes(use_cache=False,
-                                             show_schema=False,
-                                             include_memdb=True),
-                         symbols=f'{self.name}::',
-                         **time_params,
-                         timezone=timezone,
-                         context=self.context)
-
+        result = self._get_schema(use_cache=False, start=start, end=end, timezone=timezone, show_schema=show_schema)
         if len(result) == 0:
             return []
 
-        return result['TICK_TYPE_NAME'].tolist()
+        return result['TICK_TYPE_NAME'].unique().tolist()
 
     def min_locator_date(self):
         self._set_intervals()
         min_date = min(obj[0] for obj in self._locator_date_ranges)
         return _datetime2date(min_date)
+
+    @_method_cache
+    def _get_schema(self, start, end, timezone, use_cache, show_schema):
+        ep = otq.DbShowTickTypes(use_cache=use_cache,
+                                 show_schema=show_schema,
+                                 include_memdb=True)
+        return otp.run(ep,
+                       symbols=f'{self.name}::',
+                       start=start,
+                       end=end,
+                       timezone=timezone,
+                       context=self.context)
 
     def schema(self, date=None, tick_type=None, timezone=None, check_index_file=utils.adaptive) -> dict[str, type]:
         """
@@ -615,25 +687,18 @@ class DB:
 
         start, end = self._fit_date_in_acl(date, timezone=timezone)
 
-        # TODO: refactor into global method, use in tick_types()
-        def get_schema(use_cache: bool = True):
-            return otp.run(otq.DbShowTickTypes(use_cache=use_cache,
-                                               show_schema=True,
-                                               include_memdb=True)
-                           >> otq.WhereClause(where=f'TICK_TYPE_NAME="{tick_type}"'),
-                           symbols=f'{self.name}::',
-                           start=start,
-                           end=end,
-                           timezone=timezone,
-                           context=self.context)
-
-        result = get_schema(use_cache=True)
+        kwargs = dict(
+            start=start, end=end, timezone=timezone, show_schema=True,
+        )
+        # PY-458, BEXRTS-1220, PY-1421
+        # the results of the query may vary depending on using use_cache parameter, so we are trying both
+        result = self._get_schema(use_cache=False, **kwargs)
         if result.empty:
-            # in case cache settings in database are bad (e.g. BEXRTS-1220)
-            result = get_schema(use_cache=False)
+            result = self._get_schema(use_cache=True, **kwargs)
 
-        fields: Iterable
+        fields: Iterable = []
         if len(result):
+            result = result[result['TICK_TYPE_NAME'] == tick_type]
             # filter schema by date
             date_to_filter = None
             if orig_date:
@@ -648,8 +713,6 @@ class DB:
             fields = zip(result['FIELD_NAME'].tolist(),
                          result['FIELD_TYPE_NAME'].tolist(),
                          result['FIELD_SIZE'].tolist())
-        else:
-            fields = []
 
         schema = {}
 

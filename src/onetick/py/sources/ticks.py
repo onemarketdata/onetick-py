@@ -378,6 +378,8 @@ def Ticks(data=None,  # NOSONAR
 
         * :pandas:`DataFrame <pandas.DataFrame>`
 
+        .. deprecated:: 1.178.0
+
         * ``None`` -- ``inplace_data`` will be used
 
     symbol: str, list of str, :class:`Source`, :class:`query`, :py:func:`eval query <onetick.py.eval>`
@@ -448,8 +450,8 @@ def Ticks(data=None,  # NOSONAR
     >>> time_array = [start_datetime + otp.Hour(1) + otp.Nano(1)]
     >>> a_array = [start_datetime - otp.Day(15) - otp.Nano(7)]
     >>> df = pd.DataFrame({'Time': time_array,'A': a_array})
-    >>> data = otp.Ticks(df)
-    >>> otp.run(data, start=start_datetime, end=start_datetime + otp.Day(1))
+    >>> data = otp.Ticks(df)  # doctest: +SKIP
+    >>> otp.run(data, start=start_datetime, end=start_datetime + otp.Day(1))  # doctest: +SKIP
                                Time                             A
     0 2023-01-01 13:00:00.000000001 2022-12-17 11:59:59.999999993
 
@@ -485,6 +487,12 @@ def Ticks(data=None,  # NOSONAR
         db = configuration.config.get('default_db')
 
     if isinstance(data, pd.DataFrame):
+        warnings.warn(
+            "Using pandas DataFrame as `data` parameter is deprecated, "
+            "use `otp.ReadFromDataFrame` source instead.",
+            FutureWarning,
+        )
+
         if offset is not utils.adaptive:
             raise ValueError("Parameter 'offset' can't be set when passing pandas.DataFrame.")
         if data.empty:

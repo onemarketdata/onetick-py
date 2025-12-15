@@ -1,23 +1,25 @@
 .. _onetick py test features:
 
 
-Plugin features
-===============
+onetick-py-test plugin features
+===============================
 
-Fixtures
---------
+``pytest`` introduces fixtures to simplify testing and share common resources between tests.
 
-`pytest` introduces fixtures to simplify testing and share common resources between tests.
-More about fixtures is in `official pytest documentation
-<https://docs.pytest.org/en/latest/reference.html#fixtures-api>`_ as well as
-see the `list <https://docs.pytest.org/en/latest/reference/fixtures.html#fixture>`_ of fixtures
+For more information about fixtures see
+`api <https://docs.pytest.org/en/latest/reference.html#fixtures-api>`_
+and `fixtures <https://docs.pytest.org/en/latest/fixture.html>`_
+in the official pytest documentation.
+
+Also see the `list <https://docs.pytest.org/en/latest/reference/fixtures.html#fixture>`_ of fixtures
 provided by pytest package itself.
 
+Below are listed the fixtures provided by ``onetick-py-test`` package.
 
 Location fixtures
-`````````````````
+-----------------
 
-Fixtures that helps to get directories
+Fixtures that help to get directories.
 
 ======================  ==============================================================
 Name                    Description
@@ -28,21 +30,63 @@ Name                    Description
 ----------------------  --------------------------------------------------------------
 ``keep_generated_dir``  returns the absolute path to the folder were the test will be
                         saved if the ``keep-generated`` flag is specified.
+----------------------  --------------------------------------------------------------
+``otq_path``            Allows to specify `OTQ_PATH` in :class:`onetick-py session config <onetick.py.session.Config>`
+                        with the location of OTQ files.
+                        By default `OTQ_PATH` is not specified for session fixtures.
+
+                        You need to override this fixture to specify your own value.
+
+                        ::
+
+                          import pytest
+
+                          @pytest.fixture
+                          def otq_path(cur_dir):
+                              return cur_dir / 'otqs'
+
+                          def test_1(f_session):
+                              # an instance of that `f_session` will search for otqs in
+                              # specified path
+                              ...
+
+                          def test_2(f_session):
+                              # the same with this instance of the `f_session`
+                              ...
+
+                        .. note::
+                           The ``otq_path`` fixture will be automatically applied for all
+                           tests with the same scope. Scope visibility could be adjusted
+                           using modules and classes.
+                           For example
+
+                           ::
+
+                              class TestCustomOTQS:
+                                  @pytest.fixture
+                                  def otq_path(self, cur_dir):
+                                      # this fixture will be used by any session fixtrue
+                                      # in this class
+                                      ...
+
+
+                              def test_1(f_session):
+                                  # ... but makes not effect on this session
 ======================  ==============================================================
 
 
 Session fixtures
-````````````````
+----------------
 
 Session fixtures provide an instance of :class:`otp.Session <onetick.py.Session>`
-to a test and take care of gracefully destroying after.
+to a test and take care of gracefully destroying it after.
 
 
 ================  ==============================================================
 Name              Description
 ================  ==============================================================
 ``f_session``     The ``function`` scope session. A session instance is created
-                  before a test and destroyed after.
+                  before the test and destroyed after.
 
                   Example:
 
@@ -86,57 +130,11 @@ Name              Description
 ----------------  --------------------------------------------------------------
 ``m_session``     The ``module`` scope session; it is created on the first
                   usage and destroyed only when all tests in the test file are executed.
-----------------  --------------------------------------------------------------
-``otq_path``      Allows to specify `OTQ_PATH` in :class:`ontick config <onetick.py.Config>`
-                  with the location of OTQ files.
-                  By default `OTQ_PATH` is not specified for session fixtures.
-
-                  You need to override this fixture to specify your own value.
-
-                  ::
-
-                    import pytest
-
-
-                    @pytest.fixture
-                    def otq_path(cur_dir):
-                        return cur_dir / 'otqs'
-
-
-                    def test_1(f_session):
-                        # an instance of that `f_session` will search for otqs in
-                        # specified path
-                        ...
-
-                    def test_2(f_session):
-                        # the same with this instance of the `f_session`
-                        ...
-
-                  .. note::
-                     The ``otq_path`` fixture will be automatically applied for all
-                     tests with the same scope. Scope visibility could be adjusted
-                     using modules and classes.
-                     For example
-
-                     ::
-
-                        class TestCustomOTQS:
-
-                            @pytest.fixture
-                            def otq_path(self, cur_dir):
-                                # this fixture will be used by any session fixtrue
-                                # in this class
-                                ...
-
-
-                        def test_1(f_session):
-                            # ... but makes not effect on this session
-
 ================  ==============================================================
 
 
 Default values fixtures
-```````````````````````
+-----------------------
 
 ======================  =======================================  =============  ===================
 Name                    Description                              Expected type  Default
@@ -160,11 +158,11 @@ Name                    Description                              Expected type  
                         everywhere where OneTick expects it
 ======================  =======================================  =============  ===================
 
-These fixtures are automatically picked up by the provided session fixtures such as `f_session`.
+These fixtures are automatically picked up by the provided session fixtures such as ``f_session``.
 You just need to override a fixture with your value and it will be automatically picked up for all
 fixtures with the same scope.
 
-For example
+For example:
 
 ::
 
@@ -181,22 +179,23 @@ For example
 .. note::
 
    Default values come from the default OneTick installation that distributes a sample of trades
-   in the DEMO_L1 database. Using this default values helps share issues
+   in the **DEMO_L1** database. Using this default values helps share issues
    with the OneTick support team.
 
 
 The ``--keep-generated`` flag
-`````````````````````````````
+-----------------------------
 
 .. _keep generated flag:
 
 The plugin adds a custom ``--keep-generated`` flag to `pytest` that allows to control
-the lifetime of generated resources during tests: config files for ``otp.Session``, databases, OTQ queries, etc.
+the lifetime of generated resources during tests: config files for
+:class:`otp.Session <onetick.py.Session>`, databases, OTQ queries, etc.
 
 It's helpful in case something goes wrong and a developer wants to take a closer look
 into the resources generated during testing.
 
-Description from the ``pytest -h``
+Description from the ``pytest -h``:
 
 ::
 
@@ -210,9 +209,10 @@ Description from the ``pytest -h``
         Example: pytest --keep-generated=fail
 
 
-This flag handles only folders and files that are created using the :class:`otp.TmpFile <onetick.py.utils.temp.TmpFile>`
+This flag handles the folders and files that are created using the :class:`otp.TmpFile <onetick.py.utils.temp.TmpFile>`
 and :class:`otp.TmpDir <onetick.py.utils.temp.TmpDir>` correspondingly.
-We use theses classes to create databases,
+
+These classes are used in onetick-py internally to create databases,
 log files and any configuration files related to the :class:`otp.Session <onetick.py.Session>`.
 
 Developers could also use these classes in code and tests to handle them in case of testing
@@ -221,12 +221,12 @@ and debugging.
 
 Example:
 
-::
+.. code-block:: bash
 
-    pytest -vs --keep-generated=always
+    $ pytest -vs --keep-generated=always
 
 
-This command will print out the path to a folder with the saved resources
+This command will print out the path to a folder with the saved resources:
 
 .. code-block:: bash
 
@@ -250,7 +250,10 @@ This command will print out the path to a folder with the saved resources
     [[ Generated resources: /tmp/test_user/run_20231129_101141_23129/test_my/test_simple ]]
 
 
-This ``[[ Generated resources: /tmp/test_user/run_20231129_101141_23129/test_my/test_simple ]]`` line points us where we could find the resources. Let's go there and list the folder
+This ``[[ Generated resources: /tmp/test_user/run_20231129_101141_23129/test_my/test_simple ]]`` line
+points us where we could find the resources.
+
+Let's go there and list the folder:
 
 .. code-block:: bash
 
@@ -262,16 +265,19 @@ This ``[[ Generated resources: /tmp/test_user/run_20231129_101141_23129/test_my/
 
 * ``dancing-wombat.cfg`` is a OneTick config file that the test's session creates and uses
 * ``tunneling-hippo.acl`` is the ACL that the ``dancing-wombat.cfg`` config points to
-* ``boisterous-ant.locator`` is a locator file that the ``dancing-wombat.cfg`` config points to; it consists of databases that have been added into the test's session
-* ``green-buffalo.run.otq`` is a query that has been passed into ``otp.run`` during tests; every call of that function dumps a query that can then be viewed as an OTQ
-* the ``run.sh`` script allows to spin up a tick server using the saved configs and to play with the saved OTQ queries (On Windows it is the ``run.bat`` script)
+* ``boisterous-ant.locator`` is a locator file that the ``dancing-wombat.cfg`` config points to;
+  it consists of databases that have been added into the test's session
+* ``green-buffalo.run.otq`` is a query that has been passed into ``otp.run`` during tests;
+  every call of that function dumps a query that can then be viewed as an OTQ
+* the ``run.sh`` script allows to spin up a tick server using the saved configs and to play with the saved OTQ queries
+  (On Windows it is the ``run.bat`` script)
 
 The ``--show-stack-trace`` flag
-```````````````````````````````
+-------------------------------
 
 .. _show stack trace flag:
 
-Show stack trace with a line of `onetick.py` code where the issues has happened
+Show stack trace with a line of ``onetick.py`` code where the issues has happened
 in case of failure.
 
 .. note :
@@ -279,15 +285,16 @@ in case of failure.
    It slows down a test run and could be sensitive if you have a lot of tests.
 
 
-This flag enables the same mechanism like the :class:`otp.config['show_stack_info'] <onetick.py.configuration.Config>` flag does.
+This flag enables the same mechanism like
+the :class:`otp.config['show_stack_info'] <onetick.py.configuration.Config>` flag does.
 
 Other
 `````
 
 Our plugin adds OneTick version into the pytest output. You might find it in the
-header of the output where pytest lists the plugins and their versions.
+header of the output where ``pytest`` lists the plugins and their versions.
 
-In the following example
+In the following example:
 
 .. code-block:: bash
 
@@ -300,7 +307,7 @@ In the following example
     cachedir: .pytest_cache
     ...
 
-the following line shows OneTick related dependencies
+The following line shows OneTick related dependencies:
 
 .. code-block:: bash
 

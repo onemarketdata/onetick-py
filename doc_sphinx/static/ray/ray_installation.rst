@@ -17,7 +17,7 @@ Ask your OneMarketData rep for a username and password, also ask for onetick-py 
 Then run the commands below (replacing USERNAME, PASSWORD and OTP_VERSION with your values):
 
 ::
-    
+
     pip install -U --index-url https://USERNAME:PASSWORD@pip.distribution.sol.onetick.com/simple/ onetick-query-stubs[ray23] onetick-py==OTP_VERSION
     export OTP_SKIP_OTQ_VALIDATION=1
 
@@ -28,7 +28,7 @@ To simplify Ray initialization in the future, add a new environment variable wit
 
     export RAY_ADDRESS="ray://<URL>:10001"
 
-Now you can start coding in your IDE and you could do ``import onetick.py`` as well. 
+Now you can start coding in your IDE and you could do ``import onetick.py`` as well.
 But you can't run your code locally, because you don't have OneTick installed.
 
 To run your code remotely on Ray, proceed to :ref:`static/ray/ray_remote:Remote OTP with Ray` for details.

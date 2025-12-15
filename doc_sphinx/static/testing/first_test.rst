@@ -14,33 +14,37 @@ The first test
 
 Let's add a simple test to the project. A few words about naming first.
 
-`pytest` has an `auto discovery <https://docs.pytest.org/en/latest/goodpractices.html#conventions-for-python-test-discovery>`_ mechanism, and ``test_*.py`` or ``*_test.py`` files are included as files containing tests.
-Every test case is either a Python function or method starting with the ``test_`` prefix or ending with the ``_test`` suffix. They can be combined into classes with the ``Test`` prefix.
+``pytest`` has an `auto discovery <https://docs.pytest.org/en/latest/goodpractices.html#conventions-for-python-test-discovery>`_ mechanism,
+and ``test_*.py`` or ``*_test.py`` files are included as files containing tests.
+Every test case is either a Python function or method starting with the ``test_`` prefix or ending with the ``_test`` suffix.
+They can be combined into classes with the ``Test`` prefix.
 
-The best practices say to keep tests in the ``tests`` folder. Lets add a first test
+The best practices say to keep tests in the ``tests`` folder.
+Lets add a first test into the new file ``test_simple.py``:
 
-::
+.. code-block:: bash
 
     project-folder/
-                   tests/
-                         test_simple.py
+    └── tests/
+        └── test_simple.py
 
 
-with the following logic
+with the following logic:
 
-::
+.. code-block:: python
 
     def test_first():
         print('Hey-ho!')
 
 
-You can easily run it inside the ``project-folder`` folder
+You can easily run it inside the ``project-folder`` folder:
 
-::
+.. code-block:: bash
 
     $ pytest -vs
 
-pytest automatically finds the test and runs it. The output should be look like
+pytest automatically finds the test and runs it.
+The output should look like this:
 
 .. code-block:: bash
 
@@ -59,51 +63,60 @@ Plugins import
 --------------
 
 We need to import our ``onetick-py-test`` pytest plugin into the project.
-pytest recommends creating a ``conftest.py`` file in the root of the project and keeping plugin imports and  common helpers there.
 
-::
+``pytest`` recommends creating a ``conftest.py`` file in the root of the project
+and keeping plugin imports and common helpers there.
+
+.. code-block:: bash
 
     project-folder/
-                   conftest.py
-                   tests/
-                         test_simple.py
+    ├── conftest.py
+    └── tests/
+        └── test_simple.py
 
 
-Let's add the following line to `conftest.py` to import our plugin:
+Let's add the following line to ``conftest.py`` to import our plugin:
 
 ::
 
     pytest_plugins = ['onetick.test']
 
 
-Everything imported in ``conftest.py`` automatically becomes available in all tests starting from the folder where it's placed and down to all sub-folders recursively.
+Everything imported in ``conftest.py`` automatically becomes available in all tests starting from the folder
+where it's placed and down to all sub-folders recursively.
 
 
 .. note::
 
     What does it import and add?
 
-    Our plugin exposes common fixtures
-    (`fixture` is the pytest features: see `api
-    <https://docs.pytest.org/en/latest/reference.html#fixtures-api>`_ and `fixtures <https://docs.pytest.org/en/latest/fixture.html>`_) and helpers for debugging.
+    Our plugin exposes different onetick-py configurations as common pytest fixtures
+    (see `api <https://docs.pytest.org/en/latest/reference.html#fixtures-api>`_
+    and `fixtures <https://docs.pytest.org/en/latest/fixture.html>`_) and helpers for debugging.
 
-    More details are :ref:`here <onetick py test features>`.
+    More details can be found in the :ref:`list of onetick-py-test fixtures <onetick py test features>`.
 
 
 Test onetick.py code
 ---------------------
 
-Let's consider ``onetick.py`` code that calculates directional volume imbalance in a window of a given length. The code also sets a flag to 1 if the buy size exceeds the sell size by at least the given threshold and to -1 if the opposite is true.
+Let's consider ``onetick.py`` code that calculates directional volume imbalance in a window of a given length.
+
+The code also sets a flag to 1 if the buy size exceeds the sell size by at least the given threshold and to -1 if the opposite is true.
 
 
 ::
 
+    import onetick.py as otp
+
     def trades_imbalance(orders: otp.Source,
                          threshold: int,
                          window_in_sec: int):
-        ''' Build `window_in_sec`-second buckets of buy and sell orders,
+        '''
+        Build `window_in_sec`-second buckets of buy and sell orders,
         join them and compare whether the volume was more than the `threshold`
-        on one of the sides '''
+        on one of the sides
+        '''
         buy, sell = orders[(orders['SIDE'] == 'BUY')]
 
         buy = buy.agg({'BUY_SIZE': otp.agg.sum('SIZE'),
@@ -117,17 +130,20 @@ Let's consider ``onetick.py`` code that calculates directional volume imbalance 
 
         result = result.where((result['BUY_COUNT'] > 0) | (result['SELL_COUNT'] > 0))
 
-        result['FLAG'] = result.apply(lambda tick:
-                            otp.math.sign(tick['BUY_SIZE'] - tick['SELL_SIZE']) \
-                            if abs(tick['BUY_SIZE'] - tick['SELL_SIZE']) > threshold \
-                            else 0)
+        result['FLAG'] = result.apply(
+            lambda tick:
+                otp.math.sign(tick['BUY_SIZE'] - tick['SELL_SIZE'])
+                if abs(tick['BUY_SIZE'] - tick['SELL_SIZE']) > threshold
+                else 0
+        )
 
         return result
 
 
 The ``trades_imbalance`` interface allows passing a data source.
+
 We will use :class:`otp.Ticks <onetick.py.Ticks>` to generate ticks with the goal of
-checking that the code is at least runnable
+checking that the code is at least runnable:
 
 ::
 
@@ -158,11 +174,13 @@ checking that the code is at least runnable
 
 
 In this test we create a data source, pass it to the function we'd like to test, and check
-the result. The ``m_session`` object is a `onetick-py-test` session fixture.
+the result. The ``m_session`` object is a ``onetick-py-test`` session *fixture*.
 
-You may notice that there is no specified symbols and start / end times. Our framework
-has predefined default values to make it easier to write tests.
-We allow developers to change the defaults as we describe later.
+.. note::
+
+    You may notice that there is no specified symbols and start / end times. Our framework
+    has predefined default values to make it easier to write tests.
+    We allow developers to change the defaults as we describe later.
 
 Let's run it:
 
@@ -191,8 +209,8 @@ Let's run it:
 Same test -- different parameters
 ---------------------------------
 
-pytest allows to run the same test with different sets of parameters.
-Let's give it a try
+``pytest`` allows to run the same test with different sets of parameters.
+Let's give it a try:
 
 ::
 
@@ -225,17 +243,18 @@ Let's give it a try
         assert all(df['FLAG'] == expected_res)
 
 
-This is a standard pytest technique. More about it could be found on the official site.
+This is a standard ``pytest`` technique. More about it could be found on the official site.
 
 Add databases
 --------------
 
 In some cases a developer may want to use ticks from a OneTick database.
+
 We suggest using :class:`otp.DB <onetick.py.db.db.DB>` for this goal. A developer can
 create a new database, add ticks there under the specified tick type, symbol and date, and then
 use it the code.
 
-Let's change our test example to use ticks from a database
+Let's change our test example to use ticks from a database:
 
 ::
 
@@ -264,11 +283,10 @@ Let's change our test example to use ticks from a database
         f_session.use(db)
 
         # read ticks from our database
-        src = otp.DataSource(
-                    db='SOME_DB',
-                    tick_type='ORDER',
-                    symbol='MSFT',
-                    date=otp.dt(2023, 1, 1))
+        src = otp.DataSource(db='SOME_DB',
+                             tick_type='ORDER',
+                             symbol='MSFT',
+                             date=otp.dt(2023, 1, 1))
 
         # use ticks from the database instead of Ticks
         res = trades_imbalance(src,
@@ -285,10 +303,10 @@ Note that we use the ``f_session`` fixture here. If we added a database into the
 then it would be available for every test in a module that uses that fixture;
 for the ``f_session`` it available only for this test.
 
-We recommend to re-use databases as much as possible because database creation mechanism
-works with the filesystem objects that could slow down a test. The following example shows
-how to re-use databases
+We recommend to re-use databases as much as possible because the database creation mechanism
+works with the filesystem objects that could slow down a test.
 
+The following example shows how to re-use databases:
 
 ::
 
@@ -327,17 +345,17 @@ how to re-use databases
         ...
 
 
-Here we create a fixture based on the default module scope session, add databases there,
+Here we create a fixture based on the default *module* scope session, add databases there,
 re-use it as a fixture in tests; the added databases are available for all tests where the
 common fixture is used.
 
 OTQ query
 ---------
 
-pytest can be used to test queries written in OneTick Query Designer (OTQs).
+``pytest`` can be used to test queries written in OneTick Query Designer (OTQs).
 
 A developer can point to a query from some OTQ file on the local filesystem using
-:class:`otp.query <onetick.py.sources.query>`:
+:class:`otp.query <onetick.py.query>`:
 
 .. code-block:: python
 
@@ -346,14 +364,15 @@ A developer can point to a query from some OTQ file on the local filesystem usin
     query = otp.query("my.otq::Query")
 
 
-It also allows to bind parameters to the query as key-value arguments. Let's consider an
-example of how to test a Bollinger Bands query :download:`this otq <../../../doctest_resources/test_existed.otq>`
+It also allows to pass parameters to the query as key-value arguments.
+
+Let's consider an example of how to test a
+:download:`Bollinger Bands query <../../../doctest_resources/test_existed.otq>`:
 
 .. testcode::
 
-    path = "test_existed.otq::bollinger_bands"
-    query = otp.query(path,
-                      # parameters then
+    query = otp.query("test_existed.otq::bollinger_bands",
+                      # query parameters
                       INTERVAL_UNITS="SECONDS",
                       INTERVAL=3)
     data = otp.Ticks(PRICE=[1.45, 1.55, 1.45, 1.30, 1.40],
@@ -367,11 +386,11 @@ The result is:
 .. testoutput::
 
                      Time  PRICE   AVERAGE   STDDEV  LOWER_BAND  UPPER_BAND
-    0 2003-12-01 00:00:00  1.45   1.450000  0.00000  1.450000    1.450000
-    1 2003-12-01 00:00:01  1.55   1.500000  0.05000  1.450000    1.550000
-    2 2003-12-01 00:00:02  1.45   1.483333  0.04714  1.436193    1.530474
-    3 2003-12-01 00:00:04  1.30   1.375000  0.07500  1.300000    1.450000
-    4 2003-12-01 00:00:10  1.40   1.400000  0.00000  1.400000    1.400000
+    0 2003-12-01 00:00:00   1.45  1.450000  0.00000    1.450000    1.450000
+    1 2003-12-01 00:00:01   1.55  1.500000  0.05000    1.450000    1.550000
+    2 2003-12-01 00:00:02   1.45  1.483333  0.04714    1.436193    1.530474
+    3 2003-12-01 00:00:04   1.30  1.375000  0.07500    1.300000    1.450000
+    4 2003-12-01 00:00:10   1.40  1.400000  0.00000    1.400000    1.400000
 
 
 .. note::
@@ -391,18 +410,24 @@ cases however sometimes a developer wants to change a default value to something
 
 Here are two ways we could recommend:
 
-- use fixtures like ``default_tz`` to override default values as described in this :ref:`doc <onetick py test features>`
+- use fixtures like ``default_tz`` to override default values as described in this :ref:`onetick py test features`.
 
-- patch the :class:`otp.config <onetick.py.config>` using the ``monkeypatch`` default pytest fixture, or simply just change the default values directly in the ``conftest.py`` file
+- patch the :class:`otp.config <onetick.py.configuration.Config>` using the ``monkeypatch`` default pytest fixture,
+  or simply just change the default values directly in the ``conftest.py`` file.
 
 
 Sessions customization
 ----------------------
 
-The default sessions like the ``f_session`` could be customized a bit. For example a developer
-can extend the default ``OTQ_PATH`` and ``CSV_PATH`` config variables using the ``otq_path`` and ``csv_path`` fixtures correspondingly. More about is in the :ref:`doc <onetick py test features>`.
+The default sessions like the ``f_session`` could be customized a bit.
 
-Also a developer can create a fully custom session using :class:`otp.Session <onetick.py.Session>` and use it instead of the default fixtures, for example
+For example a developer can extend the default ``OTQ_PATH`` and ``CSV_PATH`` OneTick config variables
+using the ``otq_path`` and ``csv_path`` fixtures correspondingly.
+
+More about it in the :ref:`onetick py test features`.
+
+Also a developer can create a fully custom session using :class:`otp.Session <onetick.py.Session>`
+and use it instead of the default fixtures, for example:
 
 ::
 

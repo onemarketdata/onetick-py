@@ -56,6 +56,9 @@ RUN sudo -E pip --no-cache-dir install --upgrade pip --ignore-installed \
 RUN sudo -E pip install onetick.query_webapi==${ONETICK_QUERY_WEBAPI_VERSION} \
     --extra-index-url "https://${LOCAL_PIP_URL}"
 
+# needed to fix the problem with urllib3==2.6.0
+RUN sudo -E pip install backports.zstd
+
 ENV OTP_WEBAPI=1
 ENV OTP_OTQ_DEBUG_MODE=1
 ENV OTP_WEBAPI_TEST_MODE=1

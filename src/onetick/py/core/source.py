@@ -432,7 +432,7 @@ class Source:
                end_time_expression=None,
                symbol_date=None):
         """
-        Save data source to .otq file and return path to the saved file.
+        Save :class:`otp.Source <onetick.py.Source>` object to .otq file and return path to the saved file.
 
         Parameters
         ----------
@@ -474,10 +474,17 @@ class Source:
 
         Returns
         -------
-
         result: str
             Relative (if ``file_name`` is relative) or absolute path to the created query
             in the format ``file_name::query_name``
+
+        Examples
+        --------
+        Create the .otq file from a :class:`otp.Source <onetick.py.Source>` object:
+
+        >>> t = otp.Tick(A=1)
+        >>> t.to_otq()  # doctest: +SKIP
+        '/tmp/test_user/run_20251202_181018_11054/impetuous-bullfrog.to_otq.otq::query'
         """
         if raw is not None:
             warnings.warn('The "raw" flag is deprecated and makes no effect', FutureWarning)

@@ -68,3 +68,4 @@ from .file import (
 )
 from .render import render_otq
 from . import perf
+from .debug import debug

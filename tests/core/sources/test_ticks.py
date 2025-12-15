@@ -253,6 +253,7 @@ class TestAbsoluteTickTimes:
         assert df['Time'][3] == otp.datetime(2020, 1, 2, nanosecond=4) + otp.Hour(6)
 
 
+@pytest.mark.filterwarnings("ignore:Using pandas DataFrame:FutureWarning")
 class TestSourcesFromPandasDataFrame:
     def test_from_ticks(self, session):
         a_array = [1, 2, 3]
@@ -385,6 +386,7 @@ def test_empty_time_interval(session):
 
 
 class TestOffsetParameter:
+    @pytest.mark.filterwarnings("ignore:Using pandas DataFrame:FutureWarning")
     def test_errors(self, session):
         err_msg = "Parameter 'offset' and column 'offset' can't be set at the same time."
         with pytest.raises(ValueError, match=err_msg):
