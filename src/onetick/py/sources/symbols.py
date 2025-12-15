@@ -27,7 +27,9 @@ class Symbols(Source):
         Name of the database where to search symbols.
         By default the database used by :py:func:`otp.run <onetick.py.run>` will be inherited.
     keep_db: bool
-        Flag that indicates whether symbols should have a db prefix.
+        Flag that indicates whether symbols should have a database name prefix in the output.
+        If True, symbols are returned in *DB_NAME::SYMBOL_NAME* format.
+        Otherwise just symbol names are returned.
     pattern: str
         Usual and special characters can be used to search for symbols.
         Special characters are:
@@ -350,16 +352,12 @@ class Symbols(Source):
             self._tmp_otq.merge(_tmp_otq)
 
     def base_ep(self, ep_tick_type, keep_db, **params):
-        use_prepend_db_name = is_symbols_prepend_db_name_supported()
-        if use_prepend_db_name and not keep_db:
-            params['prepend_db_name'] = False
-
         src = Source(otq.FindDbSymbols(**params))
 
         update_node_tick_type(src, ep_tick_type)
         src.schema['SYMBOL_NAME'] = str
 
-        if not keep_db and not use_prepend_db_name:
+        if not keep_db:
             src["SYMBOL_NAME"] = src["SYMBOL_NAME"].str.regex_replace('.*::', '')
 
         return src

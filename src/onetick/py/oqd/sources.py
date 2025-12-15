@@ -14,12 +14,29 @@ COMMON_SOURCE_DOC_PARAMS = [_start_doc, _end_doc, _symbol_doc]
 OQD_TICK_TYPE = 'OQD::*'
 
 
+def _parse_time(time_expr):
+    # get datetime from string in OneTick
+    return f'parse_time("%Y%m%d %H:%M:%S.%q", {time_expr}, "GMT")'
+
+
+def _get_start_time_start_of_day():
+    # getting the beggining of the start date day
+    # (e.g. from 2025-01-01 14:00:00 to 2025-01-01 00:00:00)
+    return _parse_time('time_format("%Y%m%d", _START_TIME, _TIMEZONE) + " 00:00:00.000"')
+
+
+def _get_end_time_end_of_day():
+    # by default we change the end time to the end of the day
+    # (e.g. from 2025-01-01 15:00:00 to 2025-01-01 24:00:00)
+    end_of_day = _parse_time('time_format("%Y%m%d", _END_TIME, _TIMEZONE) + " 24:00:00.000"')
+    # but if we have end time as the start of the next day (e.g. 2025-01-02 00:00:00) then we keep it
+    return f'case(time_format("%H%M%S%J", _END_TIME, _TIMEZONE), "000000000000000", _END_TIME, {end_of_day})'
+
+
 def _modify_query_times(src):
     src.sink(otq.ModifyQueryTimes(
-        start_time=('parse_time("%Y%m%d %H:%M:%S.%q", '
-                    'time_format("%Y%m%d", _START_TIME, _TIMEZONE) + " 00:00:00.000", "GMT")'),
-        end_time=('parse_time("%Y%m%d %H:%M:%S.%q", '
-                  'time_format("%Y%m%d", _END_TIME, _TIMEZONE) + " 24:00:00.000", "GMT")'),
+        start_time=_get_start_time_start_of_day(),
+        end_time=_get_end_time_end_of_day(),
         output_timestamp='min(max(TIMESTAMP,_START_TIME),_END_TIME)'
     ))
 
@@ -111,7 +128,7 @@ class CorporateActions(otp.Source):
     actions for a symbol.
 
     This source will return all corporate action fields available for a symbol
-    with EX-Dates between the query start time and end time.  The
+    with EX-Dates between the query start time and end time (end time is not inclusive).  The
     timestamp of the series is equal to the EX-Date of the corporate
     action with a time of 0:00:00 GMT.
 
@@ -130,9 +147,6 @@ class CorporateActions(otp.Source):
           CASH:0.205@USD                         NORMAL
     1 2021-05-07  9706   17098817  CASH_DIVIDEND          0.220             USD  20210428  20210507  20210513  20210510\
            CASH:0.22@USD                         NORMAL
-    2 2021-08-06  9706   17331864  CASH_DIVIDEND          0.220             USD  20210727  20210806  20210812  20210809\
-           CASH:0.22@USD                         NORMAL
-
     """
 
     @docstring(parameters=COMMON_SOURCE_DOC_PARAMS, add_self=True)

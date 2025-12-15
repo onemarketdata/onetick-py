@@ -10,6 +10,26 @@
 
 ### Removed
 
+## [1.179.0] - 2025-12-15
+
+### Added
+
+- Add `build-docs(latest)` Gitlab job
+- Added parameter `tick_offset` for `otp.Source.limit`
+
+### Changed
+
+### Fixed
+
+- Fixed compatibility check for `show_all_ticks` parameter
+- Fixed getting onetick version from remote databases
+- Reverted using native `prepend_db_name` in `otp.Symbols`
+- Fixed setting end time for `OQD` sources
+- Fixed symbol date passed to queries
+- Fixed some tests on latest OneTick build `20251010-2`
+
+### Removed
+
 ## [1.178.0] - 2025-12-09
 
 ### Added

@@ -3,6 +3,9 @@ import pytest
 import onetick.py as otp
 
 
+pytestmark = pytest.mark.skipif(otp.compatibility.is_not_fixed_bds_484(), reason="broken in OneTick")
+
+
 @pytest.mark.parametrize('autogenerate_file', [False, True])
 def test_dict_sources(session, autogenerate_file):
     sources = {

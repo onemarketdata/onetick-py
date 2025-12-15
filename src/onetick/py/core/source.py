@@ -642,7 +642,22 @@ class Source:
                                                  timezone=timezone,
                                                  symbol_date=symbol_date)
 
-        return query_to_run, require_dict, node_name
+        # PY-1423: we should set symbol_date in otp.run always
+        symbol_date_to_run = None
+        if symbol_date is not None:
+            symbol_date_to_run = utils.symbol_date_to_str(symbol_date)
+        else:
+            symbol_dates_in_tmp_otq = obj._tmp_otq._get_symbol_dates()
+            if symbol_dates_in_tmp_otq:
+                symbol_date_to_run = symbol_dates_in_tmp_otq[0]
+                if len(set(symbol_dates_in_tmp_otq)) > 1:
+                    warnings.warn(
+                        f'There are different symbol dates in resulting .otq file: {set(symbol_dates_in_tmp_otq)}.'
+                        'But no symbol date were specified in otp.run.\n'
+                        f'In this case the first symbol_date ({symbol_date_to_run}) will be used automatically.'
+                    )
+
+        return query_to_run, require_dict, node_name, symbol_date_to_run
 
     def __call__(self, *args, **kwargs):
         """

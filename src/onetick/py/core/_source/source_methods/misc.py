@@ -1,9 +1,10 @@
 import functools
 import re
+import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
-from onetick.py.backports import Literal
 
 import onetick.py as otp
+from onetick.py.backports import Literal
 from onetick.py import types as ott
 from onetick.py import utils
 from onetick.py.core.column import _Column
@@ -1109,16 +1110,26 @@ def book_diff(self: 'Source', include_initial_book: bool = False, inplace=False)
 
 
 @inplace_operation
-def limit(self: 'Source', tick_limit: int, inplace=False) -> Optional['Source']:
+def limit(self: 'Source',
+          tick_limit: int,
+          tick_offset: Optional[int] = None,
+          inplace=False) -> Optional['Source']:
     """
-    Propagates ticks until the count limit is reached. Once the limit is reached,
+    Propagates ticks until the count limit is reached.
+
+    Once the limit is reached,
     hidden ticks will still continue to propagate until the next regular tick appears.
 
     Parameters
     ----------
     tick_limit: int
-        The number of regular ticks to propagate. Must be a non-negative integer or -1, which will mean no limit.
-    inplace : bool
+        The number of regular ticks to propagate.
+        Must be a non-negative integer or -1, which means no limit.
+    tick_offset: int
+        The number of regular ticks to skip before starting to propagate.
+        Must be a non-negative integer.
+        By default no ticks are skipped.
+    inplace: bool
         The flag controls whether operation should be applied inplace or not.
         If ``inplace=True``, then it returns nothing. Otherwise method returns a new modified
         object.
@@ -1134,14 +1145,15 @@ def limit(self: 'Source', tick_limit: int, inplace=False) -> Optional['Source']:
     Examples
     --------
 
-    Basic example
+    Simple example, get first 3 ticks:
 
     .. testcode::
        :skipif: not otp.compatibility.is_limit_ep_supported()
 
        data = otp.Ticks(X=[1, 2, 3, 4, 5, 6])
-       data = data.limit(tick_limit=3)
-       print(otp.run(data))
+       data = data.limit(3)
+       df = otp.run(data)
+       print(df)
 
     .. testoutput::
 
@@ -1150,14 +1162,15 @@ def limit(self: 'Source', tick_limit: int, inplace=False) -> Optional['Source']:
        1 2003-12-01 00:00:00.001  2
        2 2003-12-01 00:00:00.002  3
 
-    Disable limit
+    Disable limit by setting it to -1:
 
     .. testcode::
        :skipif: not otp.compatibility.is_limit_ep_supported()
 
        data = otp.Ticks(X=[1, 2, 3, 4, 5, 6])
-       data = data.limit(tick_limit=-1)
-       print(otp.run(data))
+       data = data.limit(-1)
+       df = otp.run(data)
+       print(df)
 
     .. testoutput::
 
@@ -1168,14 +1181,61 @@ def limit(self: 'Source', tick_limit: int, inplace=False) -> Optional['Source']:
        3 2003-12-01 00:00:00.003  4
        4 2003-12-01 00:00:00.004  5
        5 2003-12-01 00:00:00.005  6
+
+    Setting parameter ``tick_offset`` can be used to skip first ticks before propagating them.
+
+    For example, we can skip first 2 ticks and propagate all other:
+
+    .. testcode::
+       :skipif: not otp.compatibility.is_limit_tick_offset_supported()
+
+       data = otp.Ticks(X=[1, 2, 3, 4, 5, 6])
+       data = data.limit(-1, tick_offset=2)
+       df = otp.run(data)
+       print(df)
+
+    .. testoutput::
+
+                            Time  X
+       0 2003-12-01 00:00:00.002  3
+       1 2003-12-01 00:00:00.003  4
+       2 2003-12-01 00:00:00.004  5
+       3 2003-12-01 00:00:00.005  6
+
+    Or we can return ticks from the middle of the stream
+    by skipping first 2 ticks and then returning next 2 ticks like this:
+
+    .. testcode::
+       :skipif: not otp.compatibility.is_limit_tick_offset_supported()
+
+       data = otp.Ticks(X=[1, 2, 3, 4, 5, 6])
+       data = data.limit(2, tick_offset=2)
+       df = otp.run(data)
+       print(df)
+
+    .. testoutput::
+
+                            Time  X
+       0 2003-12-01 00:00:00.002  3
+       1 2003-12-01 00:00:00.003  4
     """
-    if not hasattr(otq, 'Limit'):
+    if not otp.compatibility.is_limit_ep_supported():
         raise RuntimeError('LIMIT EP isn\'t supported by the current OneTick version.')
 
     if tick_limit < 0 and tick_limit != -1:
         raise ValueError('Negative values, except -1, not allowed as `tick_limit` in `limit` method.')
 
-    self.sink(otq.Limit(tick_limit=tick_limit))
+    ep_kwargs = {}
+    if tick_offset is not None:
+        if not isinstance(tick_offset, int) or tick_offset < 0:
+            raise ValueError("Parameter 'tick_offset' must be non-negative.")
+
+        if not otp.compatibility.is_limit_tick_offset_supported():
+            warnings.warn("Parameter 'tick_offset' is set, but is not supported on this OneTick version")
+        else:
+            ep_kwargs = {'tick_offset': tick_offset}
+
+    self.sink(otq.Limit(tick_limit=tick_limit, **ep_kwargs))
     return self
 
 

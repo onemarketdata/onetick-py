@@ -108,6 +108,14 @@ class TmpOtq:
         res.merge(self)
         return res
 
+    def _get_symbol_dates(self) -> list[str]:
+        # check if any of the saved queries have symbol date set and return them (as strings in %Y%m%d format)
+        return [
+            utils.symbol_date_to_str(query_params['symbol_date'])
+            for _, query_params in self.queries.values()
+            if 'symbol_date' in query_params
+        ]
+
     def save_to_file(self, query=None, query_name="main_query", file_path=None, file_suffix="",
                      start=None, end=None, start_time_expression=None, end_time_expression=None, timezone=None,
                      running_query_flag=None,

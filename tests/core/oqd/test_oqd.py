@@ -175,8 +175,6 @@ class TestCorporateActions:
                       20210208  CASH:0.205@USD                         NORMAL
         1 2021-05-07  9706   17098817  CASH_DIVIDEND          0.220             USD  20210428  20210507  20210513\
                       20210510   CASH:0.22@USD                         NORMAL
-        2 2021-08-06  9706   17331864  CASH_DIVIDEND          0.220             USD  20210727  20210806  20210812\
-                      20210809   CASH:0.22@USD                         NORMAL
         """, str(df), doctest.NORMALIZE_WHITESPACE)
 
 

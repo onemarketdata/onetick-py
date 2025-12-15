@@ -400,7 +400,6 @@ def test_force_presort(session, monkeypatch):
     assert list(df['A']) == [1, 2]
 
 
-@pytest.mark.xfail(os.getenv('OTP_WEBAPI_TEST_MODE'), reason='BDS-470', strict=True)
 @pytest.mark.skipif(not otp.compatibility.is_symbol_time_override_fixed(),
                     reason='Not supported on older OneTick versions')
 def test_symbol_date(session):

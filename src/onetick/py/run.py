@@ -465,9 +465,6 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
                              "by installed onetick.query_webapi library.")
 
     output_structure, output_structure_for_otq = _process_output_structure(output_structure)
-    if symbol_date:
-        # otq.run supports only strings and datetime.date
-        symbol_date = utils.symbol_date_to_str(symbol_date)
 
     require_dict = require_dict or _is_dict_required(symbols)
 
@@ -495,6 +492,10 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         # we assume it's a dictionary of sources for the MultiOutputSource object
         query = otp.MultiOutputSource(query)
 
+    if symbol_date:
+        # otq.run supports only strings and datetime.date
+        symbol_date = utils.symbol_date_to_str(symbol_date)
+
     params_saved_to_otq = {}
     if isinstance(query, (otp.Source, otp.MultiOutputSource)):
         start = None if start is utils.adaptive else start
@@ -512,8 +513,9 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
                                                  end_time_expression=end_time_expression,
                                                  require_dict=require_dict,
                                                  running_query_flag=running,
-                                                 node_name=node_name, has_output=None)
-        query, require_dict, node_name = param_upd
+                                                 node_name=node_name, has_output=None,
+                                                 symbol_date=symbol_date)
+        query, require_dict, node_name, symbol_date_to_run = param_upd
         # symbols and start/end times should be already stored in the query and should not be passed again
         symbols = None
         start = None
@@ -521,6 +523,8 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         start_time_expression = None
         end_time_expression = None
         time_as_nsec = True
+        # PY-1423: except for symbol date
+        symbol_date = symbol_date_to_run
 
     elif isinstance(query, (otq.graph_components.EpBase, otq.Chainlet)):
         query = otq.GraphQuery(query)

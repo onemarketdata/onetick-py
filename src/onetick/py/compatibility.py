@@ -4,6 +4,7 @@ from dataclasses import dataclass, astuple
 from datetime import datetime
 from typing import Optional
 
+import pandas as pd
 from packaging.version import parse as parse_version
 
 import onetick.py as otp
@@ -103,6 +104,36 @@ def _parse_release_string(release_string: str, build_number: int) -> OnetickVers
     raise ValueError(f"Unknown release type '{release_type}' in release string '{release_string}'")
 
 
+def _get_locator_min_date(db_name, context):
+    graph = otq.GraphQuery(otq.DbShowConfiguredTimeRanges(db_name=db_name).tick_type('ANY')
+                           >> otq.Table(fields='long START_DATE, long END_DATE'))
+    symbols = f'{db_name}::'
+    result = otq.run(graph,
+                     symbols=symbols,
+                     # start and end times don't matter for this query, use some constants
+                     start=datetime(2003, 12, 1),
+                     end=datetime(2003, 12, 1),
+                     # GMT, because start/end timestamp in locator are in GMT
+                     timezone='GMT',
+                     context=context)
+    data = result.output(symbols).data
+    first_date = data['START_DATE'][0]
+    return datetime.fromtimestamp(first_date / 1000)
+
+
+def _get_onetick_version(symbols, context, start, end):
+    node = otq.TickGenerator(bucket_interval=0,
+                             fields='BUILD=GET_ONETICK_VERSION(), RELEASE=GET_ONETICK_RELEASE()')
+    graph = otq.GraphQuery(node.tick_type('DUMMY'))
+    result = otq.run(graph,
+                     symbols=symbols,
+                     start=start,
+                     end=end,
+                     context=context,
+                     timezone='UTC')
+    return result
+
+
 @cache
 def get_onetick_version(db=None, context=None) -> OnetickVersionFromServer:
     """
@@ -132,27 +163,31 @@ def get_onetick_version(db=None, context=None) -> OnetickVersionFromServer:
         s = otp.Session()
     else:
         _ = otli.OneTickLib()
-    p = otq.TickGenerator(bucket_interval=0,
-                          fields='BUILD=GET_ONETICK_VERSION(), RELEASE=GET_ONETICK_RELEASE()')
-    graph = otq.GraphQuery(p.tick_type('DUMMY'))
 
     # if otp.config.default_db is set, then we use it to check compatibility
     # otherwise we use LOCAL database available everywhere
     db = db or otp.config.get('default_db', 'LOCAL')
-    dummy_symbol = f'{db}::'
+    symbols = f'{db}::'
     context = context or otp.config.context
 
-    result = otq.run(graph,
-                     symbols=dummy_symbol,
-                     start=datetime(2003, 12, 1),
-                     end=datetime(2003, 12, 2),
-                     context=context,
-                     timezone='UTC')
-    if s:
-        s.close()
+    try:
+        # let's try some default time range first
+        start = end = datetime(2003, 12, 1)
+        result = _get_onetick_version(symbols, context, start, end)
+    except Exception:
+        if db != 'LOCAL':
+            # for real db we need to set time range correctly
+            # otherwise we may get error "Database locator has a gap"
+            start = end = _get_locator_min_date(db, context)
+            result = _get_onetick_version(symbols, context, start, end)
+        else:
+            raise
+    finally:
+        if s:
+            s.close()
 
-    build_number = result[dummy_symbol]["BUILD"][0]
-    release_string = result[dummy_symbol]["RELEASE"][0]
+    build_number = result[symbols]["BUILD"][0]
+    release_string = result[symbols]["RELEASE"][0]
 
     try:
         onetick_version = _parse_release_string(release_string, build_number=build_number)
@@ -667,7 +702,22 @@ def is_percentile_bug_fixed():
 
 
 def is_limit_ep_supported():
-    return hasattr(otq, 'Limit')
+    # Implemented 0034293: LIMIT ep
+    return (
+        hasattr(otq, 'Limit') and
+        _is_min_build_or_version(1.25, 20241229055942,
+                                 20241018120000, min_update_number=1)
+    )
+
+
+def is_limit_tick_offset_supported():
+    # Implemented OTDEV-37257: LIMIT EP should support TICK_OFFSET parameter
+    return (
+        is_limit_ep_supported() and
+        'tick_offset' in otq.Limit.Parameters.list_parameters() and
+        _is_min_build_or_version(None, None,
+                                 20251010120000, min_update_number=2)
+    )
 
 
 def is_prefer_speed_over_accuracy_supported(**kwargs):
@@ -733,8 +783,11 @@ def is_multi_column_generic_aggregations_supported():
 
 
 def is_max_concurrency_with_webapi_supported():
+    # 0036758: in onetick.query_webapi: max_concurrency is not being saved in otq file when set on otq.Query
+    # 0036759: in onetick.query_webapi:
+    # it's not possible to pass max_concurrency 0 in method otq.run when using otq file
     return _is_min_build_or_version(None, None,
-                                    20250227120000, min_update_number=2)
+                                    20250727120000, min_update_number=3)
 
 
 def is_nanoseconds_fixed_in_run():
@@ -783,12 +836,16 @@ def is_show_db_list_show_description_supported():
 
 def is_symbols_prepend_db_name_supported():
     # 20250924: Implemented 0036753: FIND_DB_SYMBOLS should have EP parameter PREPEND_DB_NAME (true by default)
-    return hasattr(otq.FindDbSymbols.Parameters, 'prepend_db_name')
+    return hasattr(otq.FindDbSymbols.Parameters, 'prepend_db_name') and _is_min_build_or_version(
+        None, None, 20251010120000,
+    )
 
 
 def is_diff_show_all_ticks_supported():
     # 20250919: Implemented 0036784: Add SHOW_ALL_TICKS(false by default) ep parameter to DIFF EP.
-    return hasattr(otq.Diff.Parameters, 'show_all_ticks')
+    return hasattr(otq.Diff.Parameters, 'show_all_ticks') and _is_min_build_or_version(
+        None, None, 20251010120000,
+    )
 
 
 def is_max_spread_supported():
@@ -796,3 +853,9 @@ def is_max_spread_supported():
     # should also support parameter MAX_SPREAD
     return _is_min_build_or_version(None, None,
                                     20251010120000)
+
+
+def is_not_fixed_bds_484():
+    # BDS-484: seems like timezone is ignored in otq.run in some cases
+    return _is_min_build_or_version(None, None,
+                                    20251010120000, min_update_number=2)

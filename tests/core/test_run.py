@@ -1012,7 +1012,6 @@ def test_start_end_timezone(session, run_timezone, datetime_with_timezone):
     assert otp.dt(res['Time'][0], tz=run_timezone).timestamp() == datetime_with_timezone.timestamp()
 
 
-@pytest.mark.xfail(os.getenv('OTP_WEBAPI_TEST_MODE'), reason='BDS-469', strict=True)
 @pytest.mark.skipif(not otp.compatibility.is_get_query_property_flag_supported(),
                     reason="Second parameter of GET_QUERY_PROPERTY was not supported before")
 @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False) and not is_max_concurrency_with_webapi_supported(),
