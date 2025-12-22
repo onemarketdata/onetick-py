@@ -219,6 +219,8 @@ bibtex_bibfiles = ['references.bib']
 
 # ------- Jupyter
 nb_execution_cache_path = './.jupyter_cache'
+# TODO: skip until BDS-488 is fixed
+nb_execution_excludepatterns = ['markouts.ipynb']
 if is_markdown:
     nb_execution_mode = 'off'
     nb_remove_code_outputs = True

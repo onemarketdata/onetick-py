@@ -8,6 +8,7 @@ from onetick.py.compatibility import is_existing_fields_handling_supported
 from onetick.py.core._internal._state_objects import _StateColumn
 from onetick.py.core.column import _Column, _ColumnAggregation, _LagOperator
 from onetick.py.core.column_operations._methods.methods import is_arithmetical, is_compare
+from onetick.py.core.column_operations._methods.op_types import are_ints_not_time
 from onetick.py.core.column_operations.base import _Operation
 from onetick.py.core.cut_builder import _BaseCutBuilder
 from onetick.py.core.lambda_object import _LambdaIfElse
@@ -280,6 +281,13 @@ def _update_field(self: 'Source', field, value):
         elif issubclass(field.dtype, str) and base_type is int:
             type_changes = True
             convert_to_type = int
+        elif (
+            are_ints_not_time(field.dtype, value_dtype) and
+            not issubclass(field.dtype, bool) and not issubclass(value_dtype, bool) and
+            value_dtype is not field.dtype
+        ):
+            # case for converting values between int based types, like long or byte
+            convert_to_type = value_dtype
         else:
             if issubclass(value_dtype, bool):
                 value_dtype = float

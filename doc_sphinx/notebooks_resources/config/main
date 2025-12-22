@@ -9,3 +9,6 @@ ONE_TICK_LICENSE_FILE="/license/license.dat"
 LICENSE_REPOSITORY_DIR="/license/"
 
 USER=${USER}
+
+# do not show warnings from OneTick in Jupyter notebooks
+LOG.SEVERITIES_TO_SKIP="INFO,WARNING"

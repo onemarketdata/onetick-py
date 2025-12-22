@@ -1,3 +1,4 @@
+import os
 import sys
 import pytest
 import math
@@ -215,11 +216,18 @@ class TestNow:
 
         timestamp_before = int(datetime.datetime.now().timestamp() * 10**9)
 
-        df = otp.run(data, start=otp.math.now(), end=otp.math.now() + 5, timezone='GMT')
+        df = otp.run(data, start=otp.math.now(), end=otp.math.now() + 1000, timezone='GMT')
 
         timestamp_after = int(datetime.datetime.now().timestamp() * 10**9)
 
         assert timestamp_before < int(df['Time'][0].timestamp() * 10**9) < timestamp_after
+
+    @pytest.mark.skipif(os.environ.get('OTP_WEBAPI', False), reason="WebAPI works fine")
+    @pytest.mark.xfail(strict=True, reason='PY-1437, BDS-489')
+    def test_small_difference(self):
+        # PY-1437, BDS-489
+        data = otp.Tick(X=1)
+        otp.run(data, start=otp.math.now(), end=otp.math.now() + 1, timezone='GMT')
 
 
 class TestFloatNan:

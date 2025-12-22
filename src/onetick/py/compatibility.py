@@ -859,3 +859,9 @@ def is_not_fixed_bds_484():
     # BDS-484: seems like timezone is ignored in otq.run in some cases
     return _is_min_build_or_version(None, None,
                                     20251010120000, min_update_number=2)
+
+
+def is_webapi_access_token_scope_supported():
+    # 20251030: Fixed OTDEV-37063: onetick.query_webapi.get_access_token method must take scope as a parameter
+    return _is_min_build_or_version(None, None,
+                                    20251010120000, min_update_number=2)

@@ -259,16 +259,27 @@ def write(
             raise ValueError('LOAD out_of_range_tick_action cannot be used with start_date+end_date, use date instead')
     elif out_of_range_tick_action.upper() == 'EXCEPTION':
         if start_date and end_date:
+            end = end_date + otp.Day(1)  # end_date is inclusive
+
             # WRITE_TO_ONETICK_DB use DAY_BOUNDARY_TZ and DAY_BOUNDARY_OFFSET
             # to check tick timestamp is out of range or not
             # so we mimic it here with THROW event processor
-            src = otp.Source(otq.DbShowConfig(str(db), 'DB_TIME_INTERVALS'))
+            src = otp.Source(otq.DbShowConfig(str(db), 'DB_TIME_INTERVALS'), schema={
+                'DAY_BOUNDARY_TZ': int, 'DAY_BOUNDARY_OFFSET': int, 'START_DATE': int, 'END_DATE': int,
+            })
+
+            # Filter not relevant locator time intervals
+            src, _ = src[
+                (src['START_DATE'].astype(otp.msectime) <= otp.dt(start_date).to_operation()) &
+                (src['END_DATE'].astype(otp.msectime) > otp.dt(end).to_operation())
+            ]
             src.table(inplace=True, DAY_BOUNDARY_TZ=str, DAY_BOUNDARY_OFFSET=int)
             # DAY_BOUNDARY_OFFSET offset are in seconds
             src['DAY_BOUNDARY_OFFSET'] = src['DAY_BOUNDARY_OFFSET'] * 1000
             src.rename(
                 {'DAY_BOUNDARY_TZ': '__DAY_BOUNDARY_TZ', 'DAY_BOUNDARY_OFFSET': '__DAY_BOUNDARY_OFFSET'}, inplace=True
             )
+
             self = self.join_with_query(src, symbol=f"{str(db)}::DUMMY", caching='per_symbol')
             timezone = self['__DAY_BOUNDARY_TZ']
             offset = self['__DAY_BOUNDARY_OFFSET']
@@ -288,7 +299,6 @@ def write(
                 inplace=True,
             )
 
-            end = end_date + otp.Day(1)  # end_date is inclusive
             end_formatted = end.strftime('%Y-%m-%d')
             end_op = otp.dt(end).to_operation(timezone=timezone) + offset
             self.throw(

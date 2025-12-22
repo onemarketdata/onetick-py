@@ -644,6 +644,13 @@ class Config:
         env_var_name='OTP_ACCESS_TOKEN_URL',
     )
 
+    access_token_scope = OtpProperty(
+        description='Scope for obtaining SSO access token.',
+        base_default=None,
+        allowed_types=str,
+        env_var_name='OTP_ACCESS_TOKEN_SCOPE',
+    )
+
     trusted_certificates_file = OtpProperty(
         description='Either a boolean, in which case it controls whether we verify the server TLS certificate '
                     'or a string with the path to the file with list of '

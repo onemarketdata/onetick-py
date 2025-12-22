@@ -398,3 +398,39 @@ def test_start_end_with_day_boundary_offset(session, set_date):
     data = otp.DataSource('DB_DAY_BOUNDARY_TZ', symbol='SYM', tick_type='TT', schema_policy='manual')
     df = otp.run(data, timezone="UTC", date=date)
     assert list(df['A']) == list(range(12))
+
+
+def test_multiple_locations_case(session):
+    import datetime
+    db_name = 'MULTI_LOC_DB'
+    db = otp.DB(
+        db_name,
+        db_locations=[
+            {
+                'start_time': datetime.datetime(2023, 1, 1),
+                'end_time': datetime.datetime(2025, 1, 1),
+                'day_boundary_tz': 'UTC',
+            },
+            {
+                'start_time': datetime.datetime(2025, 1, 1),
+                'end_time': datetime.datetime(2030, 12, 31),
+                'day_boundary_tz': 'UTC',
+            }
+        ]
+    )
+    session.use(db)
+    date = otp.dt(2023, 1, 1)
+    ticks = otp.Ticks({'A': list(range(5))}, start=date, end=date + otp.Hour(1))
+    write_query = ticks.write(
+        db=db_name,
+        symbol='SYM',
+        tick_type='TT',
+        start_date=date,
+        end_date=date,
+        append=False,
+        out_of_range_tick_action='exception'
+    )
+
+    df = otp.run(write_query, timezone="UTC")
+
+    assert list(df['A']) == [0, 1, 2, 3, 4]

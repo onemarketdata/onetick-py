@@ -10,6 +10,25 @@
 
 ### Removed
 
+## [1.180.0] - 2025-12-22
+
+### Added
+
+- Added support of `scope` parameter for WebAPI access token retrieval
+
+### Changed
+
+### Fixed
+
+- Fix `otp.Source.write` method writing ticks multiple times with `out_of_range_tick_action=exception` and
+  multiple `db_locations`
+- Do not show warnings from OneTick in Jupyter notebooks
+- Fixed unstable test using `otp.math.now`
+- Fixed conversions between `int` types with `astype`
+- Skip failing Jupyter notebook
+
+### Removed
+
 ## [1.179.0] - 2025-12-15
 
 ### Added

@@ -891,3 +891,28 @@ def test_astype_int_combinations(session):
         assert src.schema['BB'] is type_
         assert src.schema['CC'] is type_
         assert src.schema['DD'] is type_
+
+
+def test_astype_int_data_loss_update(session):
+    # just checking if conversion with adding new field and applying astype are the same
+    # not checking if conversion was made correct or not
+    test_data = [
+        (otp.byte, 255), (otp.short, 32000), (int, 2000000000), (otp.uint, 4000000000),
+        (otp.long, 18000000000000000000), (otp.ulong, 36000000000000000000),
+    ]
+    for _type, value in test_data:
+        idx = 0
+        _smaller_type = test_data[idx][0]
+        while _smaller_type is not _type and idx < len(test_data):
+            src = otp.Tick(A=value)
+            src['ORIG_A'] = src['A']
+            src['B'] = src['A'].astype(_smaller_type)
+            src['A'] = src['A'].astype(_smaller_type)
+            assert src.schema['B'] is _smaller_type
+            assert src.schema['A'] is _smaller_type
+            df = otp.run(src)
+            assert list(df['B']) == list(df['A'])
+            assert all(df['B'] <= df['ORIG_A'])
+
+            idx += 1
+            _smaller_type = test_data[idx][0]

@@ -58,7 +58,10 @@ elif otp.__webapi__:
 
     def run(*args, **kwargs):
         from onetick.py import config  # noqa
-        from onetick.py.compatibility import is_max_concurrency_with_webapi_supported
+        from onetick.py.compatibility import (
+            is_max_concurrency_with_webapi_supported,
+            is_webapi_access_token_scope_supported
+        )
 
         if not config.http_address and 'http_address' not in kwargs:
             raise ValueError('otp.run() http_address keyword param, '
@@ -149,7 +152,20 @@ elif otp.__webapi__:
                 if not param_value:
                     raise ValueError(f'`access_token_url` parameter set, however `{param_name}` parameter missing.')
 
-            kwargs['access_token'] = otq.get_access_token(access_token_url, client_id, client_secret)
+            token_kwargs = {}
+
+            if 'scope' in kwargs:
+                scope = kwargs.pop('scope')
+            else:
+                scope = config.access_token_scope
+
+            if scope:
+                if not is_webapi_access_token_scope_supported():
+                    raise RuntimeError('Parameter `scope` is not supported on used version of OneTick')
+
+                token_kwargs['scope'] = scope
+
+            kwargs['access_token'] = otq.get_access_token(access_token_url, client_id, client_secret, **token_kwargs)
 
             if 'access_token_url' in kwargs:
                 del kwargs['access_token_url']
