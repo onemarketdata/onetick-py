@@ -1497,7 +1497,7 @@ class TestLargeInts:
     def test_wrong(self):
         with pytest.raises(ValueError, match="Wrong value for First aggregation 'large_ints' parameter: WRONG"):
             otp.agg.first('A', large_ints='WRONG')
-        with pytest.raises(Exception, match='encountered value is too high to be accurately represented as double'):
+        with pytest.raises(Exception, match='value( which)? is too high to be accurately represented as double'):
             data = otp.Ticks(A=[9007199254740992, 9007199254740993, 9007199254740994])
             data = data.agg({'F': otp.agg.first('A')})
             otp.run(data)

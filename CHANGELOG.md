@@ -10,6 +10,23 @@
 
 ### Removed
 
+## [1.181.0] - 2025-12-29
+
+### Added
+
+- Added parameters `concurrency`, `batch_size` and `shared_thread_count` to `otp.Source.join_with_query`
+- Support setting `concurrency` and `batch_size` in internally generated OTQ queries
+
+### Changed
+
+- Improved `otp.Symbols` documentation
+
+### Fixed
+
+- Fixed some tests on latest OneTick build `20251010-3`
+
+### Removed
+
 ## [1.180.0] - 2025-12-22
 
 ### Added

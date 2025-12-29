@@ -544,6 +544,8 @@ def join_with_query(
     default_fields_for_outer_join=None,
     symbol_time=None,
     concurrency=None,
+    batch_size=None,
+    shared_thread_count=None,
     process_query_async: bool = True,
     **kwargs,
 ) -> 'Source':
@@ -621,7 +623,12 @@ def join_with_query(
     symbol_time : :py:class:`otp.datetime <onetick.py.datetime>`, :py:class:`otp.Operation <onetick.py.Operation>`
         Time that will be used by Onetick to map the symbol with which ``query`` is executed to the reference data.
         This parameter is only necessary if the query is expected to perform symbology conversions.
-    concurrency : int
+    concurrency: int
+        Specifies concurrency for the joined ``query`` execution.
+        Default is 1 (no concurrency).
+    batch_size: int
+        Specifies batch size for the joined ``query`` execution. Default is 0.
+    shared_thread_count: int
         Specifies number of threads for asynchronous processing of ``query`` per unbound symbol list.
         By default, the number of threads is 1.
     process_query_async: bool
@@ -904,11 +911,23 @@ def join_with_query(
     columns.update(self._get_columns_with_prefix(sub_source, prefix))
     columns.update(self.columns(skip_meta_fields=True))
 
+    otq_properties = {}
+    if concurrency is not None:
+        if not isinstance(concurrency, int) or concurrency <= 0:
+            raise ValueError(f"Parameter 'concurrency' should be a positive integer, got {concurrency}")
+        otq_properties['concurrency'] = concurrency
+
+    if batch_size is not None:
+        if not isinstance(batch_size, int) or batch_size < 0:
+            raise ValueError(f"Parameter 'batch_size' should be a non-negative integer, got {batch_size}")
+        otq_properties['batch_size'] = batch_size
+
     res = self.copy(columns=columns)
 
     res._merge_tmp_otq(sub_source)
     query_name = sub_source._store_in_tmp_otq(
-        res._tmp_otq, symbols='_NON_EXISTING_SYMBOL_', operation_suffix="join_with_query"
+        res._tmp_otq, symbols='_NON_EXISTING_SYMBOL_', operation_suffix="join_with_query",
+        **otq_properties,
     )  # TODO: combine with _convert_symbol_to_string
     # ------------------------------------ #
 
@@ -928,10 +947,10 @@ def join_with_query(
         default_fields_for_outer_join=default_fields_for_outer_join_str,
         process_query_asynchronously=process_query_async,
     )
-    if concurrency is not None:
-        if not isinstance(concurrency, int) or concurrency <= 0:
-            raise ValueError('Wrong value of concurrency parameter passed! concurrency should be a positive integer')
-        join_params['shared_thread_count'] = concurrency
+    if shared_thread_count is not None:
+        if not isinstance(shared_thread_count, int) or shared_thread_count <= 0:
+            raise ValueError("Parameter 'shared_thread_count' should be a positive integer")
+        join_params['shared_thread_count'] = shared_thread_count
 
     start_time = kwargs.get('start_time', start)
     end_time = kwargs.get('end_time', end)

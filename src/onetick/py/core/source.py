@@ -526,7 +526,8 @@ class Source:
                                          symbol_date=symbol_date)
 
     def _store_in_tmp_otq(self, tmp_otq, operation_suffix="tmp_query", symbols=None, start=None, end=None,
-                          raw=None, add_passthrough=True, name=None, timezone=None, symbol_date=None):
+                          raw=None, add_passthrough=True, name=None, timezone=None, symbol_date=None,
+                          concurrency=None, batch_size=None):
         """
         Adds this source to the tmp_otq storage
 
@@ -573,7 +574,13 @@ class Source:
             else:
                 graph.time_interval_properties().set_timezone(timezone)
 
-        params = {'symbol_date': symbol_date} if symbol_date is not None else {}
+        params = {}
+        if symbol_date is not None:
+            params['symbol_date'] = symbol_date
+        if concurrency is not None:
+            params['concurrency'] = concurrency
+        if batch_size is not None:
+            params['batch_size'] = batch_size
         suffix = self._name_suffix(suffix=operation_suffix, separator='__', remove_invalid_symbols=True)
         return tmp_otq.add_query(graph, suffix=suffix, name=name, params=params)
 

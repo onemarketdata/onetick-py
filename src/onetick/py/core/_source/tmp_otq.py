@@ -63,6 +63,14 @@ class TmpOtq:
     def __init__(self):
         self.queries = {}
 
+    def __check_params(self, params):
+        supported_query_parameters = ('running_query_flag', 'symbol_date', 'concurrency', 'batch_size')
+        for param in params:
+            if param not in supported_query_parameters:
+                raise ValueError(
+                    f"Query parameter '{param}' is not one of the supported parameters: {supported_query_parameters}"
+                )
+
     def add_query(self, query, suffix="", name=None, params=None):
         """
         Adds query with a unique generated name to the storage.
@@ -89,6 +97,7 @@ class TmpOtq:
             raise ValueError(f"There is already a query with name '{name}' in {self.__class__.__name__} storage")
         if params is None:
             params = {}
+        self.__check_params(params)
         self.queries[name] = (query, params)
         return name
 
@@ -119,7 +128,9 @@ class TmpOtq:
     def save_to_file(self, query=None, query_name="main_query", file_path=None, file_suffix="",
                      start=None, end=None, start_time_expression=None, end_time_expression=None, timezone=None,
                      running_query_flag=None,
-                     symbol_date=None):
+                     symbol_date=None,
+                     concurrency=None,
+                     batch_size=None):
         """
         Saves all queries from the query dict and one more query (if passed);
         returns absolute path to passed query in file (if passed) or path of resulted file
@@ -146,8 +157,16 @@ class TmpOtq:
             end time expression for the resulting .otq file
         timezone: str
             timezone for the resulting .otq file
+        running_query_flag:
+            Will be applied only to the query specified in the ``query`` parameter.
         symbol_date: :py:class:`otp.datetime <onetick.py.datetime>` or :py:class:`datetime.datetime` or int
             Symbol date for the query or integer in the YYYYMMDD format.
+            Will be applied only to the query specified in the ``query`` parameter.
+        concurrency: int
+            Concurrency set for the query.
+            Will be applied only to the query specified in the ``query`` parameter.
+        batch_size: int
+            Batch size set for the query.
             Will be applied only to the query specified in the ``query`` parameter.
 
         Returns
@@ -178,6 +197,10 @@ class TmpOtq:
                 query_params['running_query_flag'] = running_query_flag
             if symbol_date is not None:
                 query_params['symbol_date'] = symbol_date
+            if concurrency is not None:
+                query_params['concurrency'] = concurrency
+            if batch_size is not None:
+                query_params['batch_size'] = batch_size
             queries_dict[query_name] = (query, query_params)
 
         # defining file-wise start/end times and time expressions
@@ -217,6 +240,11 @@ class TmpOtq:
                 if stored_symbol_date is not None:
                     stored_symbol_date = int(utils.symbol_date_to_str(stored_symbol_date))
                     stored_query.set_symbol_date(stored_symbol_date)
+            if stored_query_params.get('concurrency') is not None:
+                stored_query.set_max_concurrency(stored_query_params['concurrency'])
+            if stored_query_params.get('batch_size') is not None:
+                stored_query.set_batch_size(stored_query_params['batch_size'])
+
             query_list.append(stored_query)
 
         _ = otli.OneTickLib()

@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 
 import onetick.py as otp
+from onetick.py.otq import otq
 from onetick.py.types import string
 from onetick.py.utils import TmpFile
 
@@ -1554,3 +1555,50 @@ def test_symbology_mapping_dest_symbology_onetick_param(f_session):
                 break
 
     assert found
+
+
+@pytest.mark.skipif(os.name == 'nt', reason='Our Windows test machine is old and has different number of threads')
+# TODO: this needs to be investigated, seems like WebAPI has different logic
+@pytest.mark.skipif(os.environ.get('OTP_WEBAPI', False), reason="WebAPI has different number of threads")
+@pytest.mark.parametrize(
+    'main_query_concurrency,joined_query_concurrency,expected_thread_number',
+    [
+        (1, 1, 1),
+        (1, 5, 6),  # for some reason, one thread more on top of concurrency may be used
+        (3, 3, 12),  # for each of the main query threads, 3+1 jwq threads would run joined query
+    ]
+)
+def test_concurrency_threads(f_session, main_query_concurrency,
+                             joined_query_concurrency, expected_thread_number):
+
+    # 30 ticks, should be enough for all examples to populate expected number of threads
+    main_src = otp.Ticks(A=list(range(30)))
+    main_src['MAIN_SYMBOL'] = main_src['_SYMBOL_NAME']
+    main_src['JWQ_SYMBOL'] = 'SYMB_' + main_src['_SYMBOL_NAME'] + '_' + main_src['A'].astype(str)
+
+    joined_src = otp.Tick(JWQ_THREAD_ID=otp.raw('GET_THREAD_ID()', int))
+    # we need to spend some time in the query
+    # otherwise OneTick may use less threads, because all queries are completed too fast
+    joined_src.sink(otq.Pause(delay=100, busy_waiting=True))
+
+    main_src = main_src.join_with_query(
+        joined_src,
+        symbol=main_src['JWQ_SYMBOL'],
+        concurrency=joined_query_concurrency,
+    )
+
+    symbols = [f'S{i}' for i in range(main_query_concurrency)]
+    # query concurrency will be set with otp.merge, not in otp.run
+    main_src = otp.funcs.merge([main_src], symbols=symbols, concurrency=main_query_concurrency, batch_size=1)
+
+    kwargs = {}
+    if not otp.__webapi__:
+        kwargs = dict(batch_size=1)
+    df = otp.run(main_src, concurrency=1, **kwargs)
+
+    unique_threads = df['JWQ_THREAD_ID'].unique()
+    if joined_query_concurrency == 1:
+        assert len(unique_threads) == 1
+    else:
+        assert len(unique_threads) > 1
+        assert len(unique_threads) == pytest.approx(expected_thread_number, abs=1)
