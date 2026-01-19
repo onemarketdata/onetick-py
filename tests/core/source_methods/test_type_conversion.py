@@ -897,8 +897,12 @@ def test_astype_int_data_loss_update(session):
     # just checking if conversion with adding new field and applying astype are the same
     # not checking if conversion was made correct or not
     test_data = [
-        (otp.byte, 255), (otp.short, 32000), (int, 2000000000), (otp.uint, 4000000000),
-        (otp.long, 18000000000000000000), (otp.ulong, 36000000000000000000),
+        (otp.byte, 255),
+        (otp.short, 32000),
+        (otp.int, 2000000000),
+        (otp.uint, 4000000000),
+        (int, 18000000000000000000), (otp.long, 18000000000000000000),
+        (otp.ulong, 36000000000000000000),
     ]
     for _type, value in test_data:
         idx = 0

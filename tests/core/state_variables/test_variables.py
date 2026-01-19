@@ -702,3 +702,14 @@ class TestScope:
         data = otp.Ticks(dict(X=[1, 2]))
         with pytest.raises(ValueError):
             data.state_vars["S"] = otp.state.var(1, scope)
+
+
+def test_otp_int_with_state_var(session):
+    # PY-1449
+    t = otp.Tick(SIZE_INT=10, SIZE_OTP_INT=otp.int(100))
+    t.state_vars['SUMSIZE'] = 0
+    t.state_vars['SUMSIZE'] += t['SIZE_OTP_INT']
+    t.state_vars['SUMSIZE'] += t['SIZE_INT']
+    t['SUMSIZE'] = t.state_vars['SUMSIZE']
+    df = otp.run(t)
+    assert df['SUMSIZE'][0] == 110

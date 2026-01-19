@@ -1000,3 +1000,65 @@ def character_present(
     ))
 
     return self
+
+
+def primary_exch(self: 'Source', discard_on_match: bool = False) -> Tuple['Source', 'Source']:
+    """
+    Propagates the tick if its exchange is the PRIMARY exchange of the security. The primary exchange information
+    is supplied through the Reference Database. It expects the security level symbol (IBM, not IBM.N) and works
+    by looking for a field called ``EXCHANGE`` and filtering out ticks where the field does not match
+    the primary exchange for the security.
+
+    .. note::
+        This EP may not work correctly with OneTick Cloud databases, due to differences
+        in format of exchange names in RefDB and in tick data.
+
+    Parameters
+    ----------
+    discard_on_match: bool
+        When set to ``True`` only ticks from non-primary exchange are propagated,
+        otherwise ticks from primary exchange are propagated.
+
+    See also
+    --------
+    **PRIMARY_EXCH** OneTick event processor
+
+    Returns
+    -------
+    Two :class:`Source` for each of if-else branches
+
+    Examples
+    --------
+
+    Get ticks from primary exchange:
+
+    >>> src = otp.DataSource('SOME_DB', tick_type='TRD', symbols='AAA', date=otp.date(2003, 12, 1))  # doctest: +SKIP
+    >>> src, _ = src.primary_exch()  # doctest: +SKIP
+    >>> otp.run(src, symbol_date=otp.date(2003, 12, 1))  # doctest: +SKIP
+                         Time  PRICE  SIZE EXCHANGE
+    0 2003-12-01 00:00:00.001   26.5   150        B
+    1 2003-12-01 00:00:00.002   25.7    20        B
+
+    Get all ticks, but mark ticks from primary exchange in column ``T``:
+
+    >>> src = otp.DataSource('SOME_DB', tick_type='TRD', symbols='AAA', date=otp.date(2003, 12, 1))  # doctest: +SKIP
+    >>> primary, other = src.primary_exch()  # doctest: +SKIP
+    >>> primary['T'] = 1  # doctest: +SKIP
+    >>> other['T'] = 0  # doctest: +SKIP
+    >>> data = otp.merge([primary, other])  # doctest: +SKIP
+    >>> otp.run(src, symbol_date=otp.date(2003, 12, 1))  # doctest: +SKIP
+                         Time  PRICE  SIZE EXCHANGE  T
+    0 2003-12-01 00:00:00.000   25.2   100        A  0
+    1 2003-12-01 00:00:00.001   26.5   150        B  1
+    2 2003-12-01 00:00:00.002   25.7    20        B  1
+    3 2003-12-01 00:00:00.003   24.8    40        A  0
+    """
+    source = self.copy(ep=otq.PrimaryExch(discard_on_match=discard_on_match))
+
+    if_source = source.copy()
+    if_source.node().out_pin("IF")
+
+    else_source = source.copy()
+    else_source.node().out_pin("ELSE")
+
+    return if_source, else_source

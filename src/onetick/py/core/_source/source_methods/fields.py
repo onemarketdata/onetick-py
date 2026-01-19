@@ -285,6 +285,7 @@ def _update_field(self: 'Source', field, value):
             are_ints_not_time(field.dtype, value_dtype) and
             not issubclass(field.dtype, bool) and not issubclass(value_dtype, bool) and
             value_dtype is not field.dtype
+            and not isinstance(field, _StateColumn)
         ):
             # case for converting values between int based types, like long or byte
             convert_to_type = value_dtype
@@ -297,6 +298,9 @@ def _update_field(self: 'Source', field, value):
             else:
                 field._dtype = value_dtype
                 type_changes = True
+
+    if isinstance(field, _StateColumn) and (convert_to_type is not None or type_changes):
+        raise ValueError(f"The type of the state variable {field.name} can't be changed")
 
     # for aliases, TIMESTAMP ~ Time as an example
     key = str(field)

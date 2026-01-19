@@ -1689,6 +1689,7 @@ class Source:
         time_filter,
         skip_bad_tick,
         character_present,
+        primary_exch,
     )
     from ._source.source_methods.drops import (  # type: ignore[misc]
         drop,

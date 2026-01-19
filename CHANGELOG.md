@@ -10,6 +10,21 @@
 
 ### Removed
 
+## [1.182.0] - 2026-01-19
+
+### Added
+
+- Added `otp.Source.primary_exch`
+- `render_otq`: add rendering node names in the graph
+
+### Changed
+
+### Fixed
+
+- Fixed updating state variable with `otp.int` type
+
+### Removed
+
 ## [1.181.0] - 2025-12-29
 
 ### Added

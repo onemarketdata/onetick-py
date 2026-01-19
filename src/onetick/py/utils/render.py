@@ -163,6 +163,7 @@ class Node:
     params: dict = field(default_factory=dict)
     sinks: List[str] = field(default_factory=list)
     symbols: list = field(default_factory=list)
+    name: Optional[str] = field(default=None)
 
 
 @dataclass
@@ -776,6 +777,8 @@ def read_otq(path: str, parse_eval_from_params: bool = False) -> Optional[Graph]
                     _save_dependency(security[0], current_query)
                 elif node_param == "TICK_TYPE":
                     current_query.nodes[node_id].tick_type = value
+                elif node_param == "NAME":
+                    current_query.nodes[node_id].name = value
                 else:
                     _save_param(current_query.nodes[node_id].config, node_param, value)
 
@@ -943,6 +946,9 @@ def build_node(graphs: GraphStorage, node: Node, config: Config):
 
     if node.tick_type:
         table.cell([node.tick_type])
+
+    if node.name:
+        table.cell([f"<I>{node.name}</I>"])
 
     if config.render_debug_info:
         table.cell([node.id])
