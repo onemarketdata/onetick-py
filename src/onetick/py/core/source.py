@@ -5,7 +5,7 @@ import warnings
 from collections import defaultdict
 from datetime import datetime, date
 import pandas as pd
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 from onetick.py.otq import otq
 
@@ -979,6 +979,8 @@ class Source:
         render_debug_info: bool = False,
         debug: bool = False,
         graphviz_compat_mode: bool = False,
+        font_family: Optional[str] = None,
+        font_size: Optional[Union[int, float]] = None,
         **kwargs,
     ):
         """
@@ -1011,6 +1013,12 @@ class Source:
         graphviz_compat_mode: bool
             Change internal parameters of result graph for better compatibility with old `Graphviz` versions.
             Could produce larger and less readable graphs.
+        font_family: str, optional
+            Font name
+
+            Default: **Monospace**
+        font_size: int, float, str, optional
+            Font size
         kwargs:
             Additional arguments to be passed to :py:meth:`onetick.py.Source.to_otq` method (except
             ``file_name``, ``file_suffix`` and ``query_name`` parameters)
@@ -1043,7 +1051,7 @@ class Source:
         otq_path = self.to_otq(**kwargs)
         return render_otq(
             otq_path, image_path, output_format, load_external_otqs, view, line_limit, parse_eval_from_params,
-            render_debug_info, debug, graphviz_compat_mode,
+            render_debug_info, debug, graphviz_compat_mode, font_family, font_size,
         )
 
     def copy(self, ep=None, columns=None, deep=False) -> 'Source':
@@ -1652,7 +1660,7 @@ class Source:
         ranking, percentile, find_value_for_percentile,
         exp_w_average, exp_tw_average, standardized_moment,
         portfolio_price, multi_portfolio_price, return_ep, implied_vol,
-        linear_regression,
+        linear_regression, partition_evenly_into_groups,
         process_by_group,
     )
     from ._source.source_methods.joins import (  # type: ignore[misc]

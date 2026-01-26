@@ -3,7 +3,7 @@ from .functions import (compute, max, min, high_tick, low_tick, high_time, low_t
                         ob_num_levels, ob_size, ob_snapshot, ob_snapshot_wide, ob_snapshot_flat, ob_summary, ob_vwap,
                         generic, correlation, option_price, ranking, variance, percentile, find_value_for_percentile,
                         exp_w_average, exp_tw_average, standardized_moment, portfolio_price, multi_portfolio_price,
-                        return_ep, implied_vol, linear_regression)
+                        return_ep, implied_vol, linear_regression, partition_evenly_into_groups)
 
 try:
     from .num_distinct import num_distinct

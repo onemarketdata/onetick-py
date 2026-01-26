@@ -1,5 +1,6 @@
 import os
 import pytest
+from functools import partial
 
 
 from locator_parser.io import LinesReader, FileReader, PrintWriter, FileWriter
@@ -517,3 +518,27 @@ def test_get_all_recursively(writer, monkeypatch):
     res = set(map(lambda x: x.id, action.result))
 
     assert res == set(["A", "B", "C"])
+
+
+def test_condition_shared_between_root_tags(writer):
+    # PY-1438
+
+    locator = """
+    <VERSION_INFO VERSION="2"/>
+    <DATABASES>
+    <DB ID="DB1">
+      <LOCATIONS>
+      </LOCATIONS>
+    </DB>
+    </DATABASES>
+    <TICK_SERVERS>
+      <location location="${TEST}" />
+    </TICK_SERVERS>
+    """
+    action = GetAll()
+    action.add_where(DB, id="DB1")
+    action.add_where(Location)
+
+    apply_actions(partial(parse_locator, recursively=True), LinesReader(locator), writer, [action])
+
+    assert action.result == []

@@ -1432,7 +1432,8 @@ class TestSymbolTime:
             prefix='2_',
             symbol_time=otp.dt(2022, 5, 20)
         )
-        df = otp.run(src, symbols=f'{self.der_db_name}::SYMB_1', start=otp.dt(2022, 5, 1), end=otp.dt(2022, 5, 30))
+        df = otp.run(src, symbols=f'{self.der_db_name}::SYMB_1', start=otp.dt(2022, 5, 1), end=otp.dt(2022, 5, 30),
+                     print_symbol_errors=False)
         assert len(df) == 1
         assert df['1_PRICE'][0] == pytest.approx(0.0733)
         assert math.isnan(df['2_PRICE'][0])
@@ -1450,7 +1451,8 @@ class TestSymbolTime:
             prefix='2_',
             symbol_time=src['_START_TIME'] + otp.Day(20)
         )
-        df = otp.run(src, symbols=f'{self.der_db_name}::SYMB_1', start=otp.dt(2022, 5, 1), end=otp.dt(2022, 5, 30))
+        df = otp.run(src, symbols=f'{self.der_db_name}::SYMB_1', start=otp.dt(2022, 5, 1), end=otp.dt(2022, 5, 30),
+                     print_symbol_errors=False)
         assert len(df) == 1
         assert df['1_PRICE'][0] == pytest.approx(0.0733)
         assert math.isnan(df['2_PRICE'][0])
@@ -1468,7 +1470,8 @@ class TestSymbolTime:
             prefix='2_',
             symbol_time='20220521000000'
         )
-        df = otp.run(src, symbols=f'{self.der_db_name}::SYMB_1', start=otp.dt(2022, 5, 1), end=otp.dt(2022, 5, 30))
+        df = otp.run(src, symbols=f'{self.der_db_name}::SYMB_1', start=otp.dt(2022, 5, 1), end=otp.dt(2022, 5, 30),
+                     print_symbol_errors=False)
         assert len(df) == 1
         assert df['1_PRICE'][0] == pytest.approx(0.0733)
         assert math.isnan(df['2_PRICE'][0])
@@ -1496,7 +1499,8 @@ class TestSymbolTime:
                 prefix='2_',
                 params=dict(_SYMBOL_TIME=src['_START_TIME'] + otp.Day(20))
             )
-        df = otp.run(src, symbols=f'{self.der_db_name}::SYMB_1', start=otp.dt(2022, 5, 1), end=otp.dt(2022, 5, 30))
+        df = otp.run(src, symbols=f'{self.der_db_name}::SYMB_1', start=otp.dt(2022, 5, 1), end=otp.dt(2022, 5, 30),
+                     print_symbol_errors=False)
         assert len(df) == 1
         assert df['1_PRICE'][0] == pytest.approx(0.0733)
         assert math.isnan(df['2_PRICE'][0])
@@ -1523,7 +1527,8 @@ class TestSymbolTime:
                 prefix='2_',
                 symbol=dict(_PARAM_SYMBOL_TIME=src['_START_TIME'] + otp.Day(20))
             )
-        df = otp.run(src, symbols=f'{self.der_db_name}::SYMB_1', start=otp.dt(2022, 5, 1), end=otp.dt(2022, 5, 30))
+        df = otp.run(src, symbols=f'{self.der_db_name}::SYMB_1', start=otp.dt(2022, 5, 1), end=otp.dt(2022, 5, 30),
+                     print_symbol_errors=False)
         assert len(df) == 1
         assert df['1_PRICE'][0] == pytest.approx(0.0733)
         assert math.isnan(df['2_PRICE'][0])

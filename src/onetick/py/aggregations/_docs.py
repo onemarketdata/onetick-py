@@ -858,6 +858,44 @@ _expiration_date_field_doc = param_doc(
     annotation=Union[str, Column],
     default='',
 )
+_dependent_variable_field_name_doc = param_doc(
+    name='dependent_variable_field_name',
+    desc='''
+    Specifies the attribute used as the dependent variable in the calculation of the slope and intercept.
+    The ticks in the input time series must contain this attribute.
+    ''',
+    annotation=Union[str, Column],
+)
+_independent_variable_field_name_doc = param_doc(
+    name='independent_variable_field_name',
+    desc='''
+    Specifies the attribute used as the independent variable in the calculation of the slope and intercept.
+    The ticks in the input time series must contain this attribute.
+    ''',
+    annotation=Union[str, Column],
+)
+_field_to_partition_doc = param_doc(
+    name='field_to_partition',
+    desc='''
+    Specifies the tick field that will be partitioned.
+    ''',
+    annotation=Union[str, Column],
+)
+_weight_field_doc = param_doc(
+    name='weight_field',
+    desc='''
+    Specifies the tick field, the values of which are evaluated as weight; and then, the partitioning is be applied,
+    so that the total weight of the groups are as close as possible.
+    ''',
+    annotation=Union[str, Column],
+)
+_number_of_groups_doc = param_doc(
+    name='number_of_groups',
+    desc='''
+    Specifies the target number of partitions to which the tick should be divided.
+    ''',
+    annotation=int,
+)
 
 
 class DocMetaclass(type):

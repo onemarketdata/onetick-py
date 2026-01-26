@@ -103,7 +103,9 @@ def throw(
     >>> t = otp.Ticks(A=[1, 2, 3, 4])
     >>> t = t.throw(message='warning A=1', scope='symbol', error_code=2, where=(t['A']==1))
     >>> t = t.throw(message='error A=3', scope='symbol', error_code=1502, where=(t['A']==3))
-    >>> otp.run(t)
+    >>> otp.run(t)  # doctest: +SKIP
+    UserWarning: Symbol error: [2] warning A=1
+    UserWarning: Symbol error: [1502] error A=3
                          Time  A
     0 2003-12-01 00:00:00.000  1
     1 2003-12-01 00:00:00.001  2
@@ -246,7 +248,17 @@ def dump(
 
     # print <no data> in case there are 0 ticks
     if hasattr(otq, 'InsertAtEnd'):
-        self_c.sink(otq.InsertAtEnd(delimiter_name='AT_END'))
+        ep_kwargs = {}
+        if {'propagate_ticks', 'insert_if_input_is_empty', 'fields_of_added_tick'}.issubset(
+            otq.InsertAtEnd.Parameters.list_parameters()
+        ):
+            # if supported, fix PY-1433
+            ep_kwargs = dict(
+                propagate_ticks=True,
+                insert_if_input_is_empty=True,
+                fields_of_added_tick='AT_END=1'
+            )
+        self_c.sink(otq.InsertAtEnd(delimiter_name='AT_END', **ep_kwargs))
         self_c.schema['AT_END'] = int
         self_c.state_vars['COUNT'] = otp.state.var(0, scope='branch')
         self_c.state_vars['COUNT'] += 1

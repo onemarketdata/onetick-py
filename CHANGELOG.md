@@ -10,6 +10,28 @@
 
 ### Removed
 
+## [1.183.0] - 2026-01-26
+
+### Added
+
+- Added support of setting font family and size in `otp.utils.render_otq`
+- Added `otp.Source.partition_evenly_into_groups` and `otp.aggregations.partition_evenly_into_groups`
+- Added parameter `print_symbol_errors` to `otp.run`
+
+### Changed
+
+- Print symbol errors as warnings when returning DataFrame from `otp.run`
+
+### Fixed
+
+- Fixed locator parser where conditions match between different root tags
+- Fixed `otp.Source.linear_regression` documentation
+- Fixed `otp.Source.dump` after merging databases with different symbologies
+- Fixed WebAPI tests to use `pandas<3.0.0`
+- Fixed getting OneTick version number
+
+### Removed
+
 ## [1.182.0] - 2026-01-19
 
 ### Added

@@ -92,10 +92,12 @@ class TestDbWithLimitedDate:
     def test_ignore_ticks_in_unentitled_time_range(self, session, monkeypatch):
         monkeypatch.setattr(otp.config, 'ignore_ticks_in_unentitled_time_range', True)
         data = otp.DataSource('DB_LIMITED', tick_type='TT', schema_policy='manual')
-        df = otp.run(data, symbols='S', start=otp.dt(2022, 1, 1), end=otp.dt(2022, 1, 4), timezone='GMT')
+        with pytest.warns(UserWarning, match='IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE'):
+            df = otp.run(data, symbols='S', start=otp.dt(2022, 1, 1), end=otp.dt(2022, 1, 4), timezone='GMT')
         assert list(df['A']) == [1, 2, 3, 4, 5]
-        data = otp.DataSource('DB_LIMITED', tick_type='TT', start=otp.dt(2022, 1, 1), end=otp.dt(2022, 1, 4))
-        df = otp.run(data, symbols='S', timezone='GMT')
+        with pytest.warns(UserWarning, match='IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE'):
+            data = otp.DataSource('DB_LIMITED', tick_type='TT', start=otp.dt(2022, 1, 1), end=otp.dt(2022, 1, 4))
+            df = otp.run(data, symbols='S', timezone='GMT')
         assert list(df['A']) == [1, 2, 3, 4, 5]
 
     def test_data_source(self, session, monkeypatch):

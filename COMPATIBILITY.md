@@ -1,7 +1,7 @@
 ## OneTick Build compatibility 
 
-* 20221108-release_1.22: 🆗 stable with minor issues (99.975% of tests passed)
-* 20230605-release_1.23: 🆗 stable with minor issues (99.976% of tests passed)
+* 20221108-release_1.22: 🆗 stable with minor issues (99.976% of tests passed)
+* 20230605-release_1.23: ✅ stable
 * 20240730-release_1.24: 🆗 stable with minor issues (99.976% of tests passed)
 * 20250227-5:            ✅ stable
 * 20250510-2:            ✅ stable

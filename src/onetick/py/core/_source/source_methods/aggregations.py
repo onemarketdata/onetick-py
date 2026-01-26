@@ -615,6 +615,12 @@ def linear_regression(self: 'Source', *args, **kwargs):
     pass
 
 
+@copy_method(aggregations.functions.partition_evenly_into_groups)
+def partition_evenly_into_groups(self: 'Source', *args, **kwargs):
+    # method implementation is copied by decorator
+    pass
+
+
 @inplace_operation
 def process_by_group(
     self: 'Source', process_source_func, group_by=None, source_name=None, num_threads=None, inplace=False

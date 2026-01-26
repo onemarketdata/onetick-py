@@ -1,14 +1,13 @@
 import os
 import warnings
 from dataclasses import dataclass, astuple
-from datetime import datetime
+from datetime import datetime, timezone as dt_timezone
 from typing import Optional
 
-import pandas as pd
 from packaging.version import parse as parse_version
 
 import onetick.py as otp
-from onetick.py.otq import otq, otli
+from onetick.py.otq import otq, otli, pyomd
 from onetick.py.backports import cache
 
 
@@ -104,34 +103,57 @@ def _parse_release_string(release_string: str, build_number: int) -> OnetickVers
     raise ValueError(f"Unknown release type '{release_type}' in release string '{release_string}'")
 
 
-def _get_locator_min_date(db_name, context):
+def _get_locator_intervals(db_name, context) -> list[tuple[datetime, datetime]]:
     graph = otq.GraphQuery(otq.DbShowConfiguredTimeRanges(db_name=db_name).tick_type('ANY')
                            >> otq.Table(fields='long START_DATE, long END_DATE'))
     symbols = f'{db_name}::'
+
+    # setting this is important so we don't get access error
+    qp = pyomd.QueryProperties()
+    qp.set_property_value('IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE', 'TRUE')
+
     result = otq.run(graph,
                      symbols=symbols,
                      # start and end times don't matter for this query, use some constants
                      start=datetime(2003, 12, 1),
                      end=datetime(2003, 12, 1),
-                     # GMT, because start/end timestamp in locator are in GMT
-                     timezone='GMT',
+                     # timezone is irrelevant, because times are returned as epoch numbers
+                     timezone='UTC',
+                     query_properties=qp,
                      context=context)
     data = result.output(symbols).data
-    first_date = data['START_DATE'][0]
-    return datetime.fromtimestamp(first_date / 1000)
+    if not data:
+        raise RuntimeError(f"Database '{db_name}' doesn't have locations")
+    return [
+        (
+            datetime.fromtimestamp(data['START_DATE'][i] / 1000, dt_timezone.utc).replace(tzinfo=None),
+            datetime.fromtimestamp(data['END_DATE'][i] / 1000, dt_timezone.utc).replace(tzinfo=None),
+        )
+        for i in range(len(data['START_DATE']))
+    ]
 
 
-def _get_onetick_version(symbols, context, start, end):
+def _get_onetick_version(db_name, context, start, end) -> dict:
     node = otq.TickGenerator(bucket_interval=0,
                              fields='BUILD=GET_ONETICK_VERSION(), RELEASE=GET_ONETICK_RELEASE()')
     graph = otq.GraphQuery(node.tick_type('DUMMY'))
+    symbols = f'{db_name}::'
+
+    # setting this is important so we don't get access error
+    qp = pyomd.QueryProperties()
+    qp.set_property_value('IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE', 'TRUE')
+
     result = otq.run(graph,
                      symbols=symbols,
                      start=start,
                      end=end,
                      context=context,
+                     query_properties=qp,
                      timezone='UTC')
-    return result
+    data = result.output(symbols).data
+    if not data:
+        raise RuntimeError(f"Can't get OneTick version from database '{db_name}'")
+    return data
 
 
 @cache
@@ -166,28 +188,33 @@ def get_onetick_version(db=None, context=None) -> OnetickVersionFromServer:
 
     # if otp.config.default_db is set, then we use it to check compatibility
     # otherwise we use LOCAL database available everywhere
-    db = db or otp.config.get('default_db', 'LOCAL')
-    symbols = f'{db}::'
+    db_name = db or otp.config.get('default_db', 'LOCAL')
     context = context or otp.config.context
 
     try:
-        # let's try some default time range first
-        start = end = datetime(2003, 12, 1)
-        result = _get_onetick_version(symbols, context, start, end)
-    except Exception:
-        if db != 'LOCAL':
+        if db_name == 'LOCAL':
+            # for LOCAL db any date will do
+            start = end = datetime(2003, 12, 1)
+            result_data = _get_onetick_version(db_name, context, start, end)
+        else:
             # for real db we need to set time range correctly
             # otherwise we may get error "Database locator has a gap"
-            start = end = _get_locator_min_date(db, context)
-            result = _get_onetick_version(symbols, context, start, end)
-        else:
-            raise
+            locator_intervals = _get_locator_intervals(db_name, context)
+            for i, (start, end) in enumerate(locator_intervals):
+                try:
+                    result_data = _get_onetick_version(db_name, context, start, end)
+                    break
+                except Exception as e:
+                    if i < len(locator_intervals) - 1:
+                        continue
+                    else:
+                        raise e
     finally:
         if s:
             s.close()
 
-    build_number = result[symbols]["BUILD"][0]
-    release_string = result[symbols]["RELEASE"][0]
+    build_number = result_data["BUILD"][0]
+    release_string = result_data["RELEASE"][0]
 
     try:
         onetick_version = _parse_release_string(release_string, build_number=build_number)

@@ -165,7 +165,9 @@ class DB:
                      # ACCESS_INFO can return ACL violation error if we use database name as symbol
                      query_properties={'IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE': 'TRUE'},
                      username=username,
-                     context=self.context)
+                     context=self.context,
+                     # don't print symbol error from onetick about start/end time adjusted due to entitlement checks
+                     print_symbol_errors=False)
         if not df.empty:
             df = df.drop(columns='Time')
         if deep_scan:

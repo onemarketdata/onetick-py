@@ -135,6 +135,11 @@ def parse_locator(reader, writer, action=DoNothing(), recursively=False):
         cep_tick_servers_p(reader, writer, action)
         includes_p(reader, writer, action)
 
+        # force reset not full conditions match after processing root tags
+        if 0 < list(action.conditions.values()).count(True) < len(action.conditions):
+            for k in action.conditions:
+                action.conditions[k] = False
+
 
 # ----------------------------------------- #
 # set parent

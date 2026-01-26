@@ -182,14 +182,16 @@ def test_ref_db_name(f_session, tz, ref_db_name):
 
     symbols = otp.Symbols(db=ref_db_name, for_tick_type='SYM')
     data_sym = otp.DataSource(db=ref_db_name, symbols=symbols, tick_type='SYM')
-    data_sym = otp.run(data_sym, start=otp.dt(2010, 1, 1, tz=tz), end=otp.dt(2010, 1, 5, tz=tz), timezone=tz)
 
     if ref_db_name.startswith('REF_DATA'):
+        data_sym = otp.run(data_sym, start=otp.dt(2010, 1, 1, tz=tz), end=otp.dt(2010, 1, 5, tz=tz), timezone=tz)
         assert b'Total ticks 8' in err and b'Total symbols 6' in err
         assert len(data_symb) == 1
         assert len(data_sym) == 4
         f_session.use(db)
     else:
+        with pytest.warns(UserWarning, match='Eval statement returned no symbols'):
+            data_sym = otp.run(data_sym, start=otp.dt(2010, 1, 1, tz=tz), end=otp.dt(2010, 1, 5, tz=tz), timezone=tz)
         # loader should return error
         assert b'ERROR' in err and b'Reference database should have REF_DATA prefix' in err
         assert len(data_symb) == 0
@@ -299,7 +301,8 @@ def test_symbol_name_history(f_session, tz, data):
                                           (otp.dt(2010, 1, 2, tz=tz), 2),
                                           (otp.dt(2010, 1, 3, tz=tz), 1),
                                           (otp.dt(2010, 1, 4, tz=tz), 1)]:
-            data = otp.run(trd, symbols=symbol_name, start=s, end=e, timezone=tz, symbol_date=symbol_date)
+            data = otp.run(trd, symbols=symbol_name, start=s, end=e, timezone=tz, symbol_date=symbol_date,
+                           print_symbol_errors=False)
             assert len(data) == expected_len, f'For symbol_name={symbol_name} and symbol_date={symbol_date}' \
                                               f' expected {expected_len} ticks'
 
@@ -308,7 +311,8 @@ def test_symbol_name_history(f_session, tz, data):
                                           (otp.dt(2010, 1, 2, tz=tz), 1),
                                           (otp.dt(2010, 1, 3, tz=tz), 2),
                                           (otp.dt(2010, 1, 4, tz=tz), 1)]:
-            data = otp.run(trd, symbols=symbol_name, start=s, end=e, timezone=tz, symbol_date=symbol_date)
+            data = otp.run(trd, symbols=symbol_name, start=s, end=e, timezone=tz, symbol_date=symbol_date,
+                           print_symbol_errors=False)
             assert len(data) == expected_len, f'For symbol_name={symbol_name} and symbol_date={symbol_date}' \
                                               f' expected {expected_len} ticks'
 
@@ -389,7 +393,8 @@ def test_symbology_mapping(f_session, tz, data):
                                       (otp.dt(2010, 1, 2, tz=tz), 2),
                                       (otp.dt(2010, 1, 3, tz=tz), 0),
                                       (otp.dt(2010, 1, 4, tz=tz), 0)]:
-        data = otp.run(trd, symbols=symbol_name, start=s, end=e, timezone=tz, symbol_date=symbol_date)
+        data = otp.run(trd, symbols=symbol_name, start=s, end=e, timezone=tz, symbol_date=symbol_date,
+                       print_symbol_errors=False)
         assert len(data) == expected_len, f'For symbol_name={symbol_name} and symbol_date={symbol_date}' \
                                           f' expected {expected_len} ticks'
 
@@ -398,7 +403,8 @@ def test_symbology_mapping(f_session, tz, data):
                                       (otp.dt(2010, 1, 2, tz=tz), 0),
                                       (otp.dt(2010, 1, 3, tz=tz), 2),
                                       (otp.dt(2010, 1, 4, tz=tz), 0)]:
-        data = otp.run(trd, symbols=symbol_name, start=s, end=e, timezone=tz, symbol_date=symbol_date)
+        data = otp.run(trd, symbols=symbol_name, start=s, end=e, timezone=tz, symbol_date=symbol_date,
+                       print_symbol_errors=False)
         assert len(data) == expected_len, f'For symbol_name={symbol_name} and symbol_date={symbol_date}' \
                                           f' expected {expected_len} ticks'
 

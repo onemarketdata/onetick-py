@@ -20,6 +20,51 @@ def session(m_session):
     yield m_session
 
 
+def test_merge_with_empty_db_and_symbols(f_session):
+    # PY-1450
+    f_session.use(otp.DB('A', otp.Tick(A=1)))
+    f_session.use(otp.DB('B', otp.Tick(B=2)))
+    f_session.use(otp.DB('C'))
+
+    a = otp.DataSource(db='A', tick_type='TRD', symbols='AAPL')
+    b = otp.DataSource(db='B', tick_type='TRD', symbols='AAPL')
+    c = otp.DataSource(db='C', tick_type='TRD', symbols='AAPL')
+
+    #         Time  A  B
+    # 0 2003-12-01  1  0
+    # 1 2003-12-01  0  2
+    df = otp.run(otp.merge([a, b]))
+    assert list(df['A']) == [1, 0]
+    assert list(df['B']) == [0, 2]
+
+    #         Time  A
+    # 0 2003-12-01  1
+    df = otp.run(otp.merge([a, c]))
+    assert list(df['A']) == [1]
+
+    a = otp.DataSource(db='A', tick_type='TRD', symbols=otp.Symbols('A'))
+    b = otp.DataSource(db='B', tick_type='TRD', symbols=otp.Symbols('B'))
+    c = otp.DataSource(db='C', tick_type='TRD', symbols=otp.Symbols('C'))
+
+    with pytest.warns(UserWarning, match='Eval statement returned no symbols'):
+        df = otp.run(c)
+    assert df.empty
+
+    #         Time  A  B
+    # 0 2003-12-01  1  0
+    # 1 2003-12-01  0  2
+    df = otp.run(otp.merge([a, b]))
+    assert list(df['A']) == [1, 0]
+    assert list(df['B']) == [0, 2]
+
+    # Empty DataFrame
+    # Columns: [A, Time]
+    # Index: []
+    with pytest.warns(UserWarning, match='Eval statement returned no symbols'):
+        df = otp.run(otp.merge([a, c]))
+    assert df.empty
+
+
 def test_merge(session):
     t1 = otp.Tick(x="a")
     t2 = otp.Tick(x=otp.string[1024]("b"))

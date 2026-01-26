@@ -60,7 +60,8 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         max_expected_ticks_per_symbol: Optional[int] = None,
         log_symbol: Union[bool, Type[utils.default]] = utils.default,
         encoding: Optional[str] = None,
-        manual_dataframe_callback: bool = False):
+        manual_dataframe_callback: bool = False,
+        print_symbol_errors: bool = True):
     """
     Executes a query and returns its result.
 
@@ -214,6 +215,9 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         Create dataframe manually with ``callback`` mode.
         Only works if ``output_structure='df'`` is specified and parameter ``callback`` is not.
         May improve performance in some cases.
+    print_symbol_errors_from_onetick: bool
+        Applicable only when ``output_structure`` is set to *df*.
+        Print symbol errors from OneTick as python warnings.
 
     Returns
     -------
@@ -614,7 +618,8 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         _process_empty_results(result, query_schema, output_structure)
 
     return _format_call_output(result, output_structure=output_structure,
-                               require_dict=require_dict, node_names=node_names)
+                               require_dict=require_dict, node_names=node_names,
+                               print_symbol_errors=print_symbol_errors)
 
 
 async def run_async(*args, **kwargs):
@@ -698,7 +703,7 @@ def _filter_returned_map_by_node(result, _node_names):
 
 def _filter_returned_list_by_node(result, node_names):
     """
-    Here, result has the following format: [(symbol, data_1, data_2, node_name)]
+    Here, result has the following format: [(symbol, ticks_data, error_data, node_name)]
     We need to filter by correct node_names
     """
     if not node_names:
@@ -708,12 +713,12 @@ def _filter_returned_list_by_node(result, node_names):
 
     res = []
     empty_result = True
-    for symbol, data_1, data_2, node, *_ in result:
-        if len(data_1) > 0:
+    for symbol, ticks_data, error_data, node, *_ in result:
+        if len(ticks_data) > 0:
             empty_result = False
         if node in node_names:
             node_found = True
-            res.append((symbol, data_1, data_2, node))
+            res.append((symbol, ticks_data, error_data, node))
 
     if not empty_result and not node_found:
         # TODO: Do we even want to raise it?
@@ -721,19 +726,19 @@ def _filter_returned_list_by_node(result, node_names):
     return res
 
 
-def _form_dict_from_list(data_list, output_structure):
+def _form_dict_from_list(data_list, output_structure, print_symbol_errors):
     """
-    Here, data_list has the following format: [(symbol, data_1, data_2, node_name), ...]
+    Here, data_list has the following format: [(symbol, ticks_data, error_data, node_name), ...]
     We need to create the following result:
-    either {symbol: DataFrame(data_1)} if there is only one result per symbol
-    or {symbol: [DataFrame(data_1)]} if there are multiple results for symbol for a single node_name
-    or {symbol: {node_name: DataFrame(data_1)}} if there are single results for multiple node names for a symbol
-    or {symbol: {node_name: [DataFrame(data_1)]}} if there are multiple results for multiple node names for a symbol
+    either {symbol: DataFrame(ticks_data)} if there is only one result per symbol
+    or {symbol: [DataFrame(ticks_data)]} if there are multiple results for symbol for a single node_name
+    or {symbol: {node_name: DataFrame(ticks_data)}} if there are single results for multiple node names for a symbol
+    or {symbol: {node_name: [DataFrame(ticks_data)]}} if there are multiple results for multiple node names for a symbol
     """
 
     def form_node_name_dict(lst):
         """
-        lst is a lit of (node, dataframe)
+        lst is a list of (node, dataframe)
         """
         d = defaultdict(list)
         for node, df in lst:
@@ -760,7 +765,12 @@ def _form_dict_from_list(data_list, output_structure):
             return polars.DataFrame()
 
     symbols_dict = defaultdict(list)
-    for symbol, data, _, node, *_ in data_list:
+    for symbol, data, error_data, node, *_ in data_list:
+
+        if print_symbol_errors:
+            for err_code, err_msg, *_ in error_data:
+                warnings.warn(f"Symbol error: [{err_code}] {err_msg}")
+
         df = get_dataframe(data)
 
         list_item = (node, df)
@@ -772,7 +782,7 @@ def _form_dict_from_list(data_list, output_structure):
     return dict(symbols_dict)
 
 
-def _format_call_output(result, output_structure, node_names, require_dict):
+def _format_call_output(result, output_structure, node_names, require_dict, print_symbol_errors):
     """Formats output of otq.run() according to passed parameters.
     See parameters' description for more information
 
@@ -795,6 +805,8 @@ def _format_call_output(result, output_structure, node_names, require_dict):
     require_dict: bool
         If True, forces output for output_structure='df' to always be a dictionary, even if only one symbol is returned
         Has no effect for other values of output_structure
+    print_symbol_errors: bool
+        Print OneTick symbol errors in when ``output_structure`` is set to 'df' or not.
 
     Returns
     ----------
@@ -811,7 +823,7 @@ def _format_call_output(result, output_structure, node_names, require_dict):
 
     # "df" output structure implies that raw results came as a list
     result_list = _filter_returned_list_by_node(result, node_names)
-    result_dict = _form_dict_from_list(result_list, output_structure)
+    result_dict = _form_dict_from_list(result_list, output_structure, print_symbol_errors)
 
     if len(result_dict) == 1 and not require_dict:
         return list(result_dict.values())[0]

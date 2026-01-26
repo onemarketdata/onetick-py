@@ -1212,6 +1212,8 @@ def render_otq(
     render_debug_info: bool = False,
     debug: bool = False,
     graphviz_compat_mode: bool = False,
+    font_family: Optional[str] = None,
+    font_size: Optional[Union[int, float]] = None,
 ) -> str:
     """
     Render queries from .otq files.
@@ -1245,6 +1247,12 @@ def render_otq(
     graphviz_compat_mode: bool
         Change internal parameters of result graph for better compatibility with old `Graphviz` versions.
         Could produce larger and less readable graphs.
+    font_family: str, optional
+        Font name
+
+        Default: **Monospace**
+    font_size: int, float, optional
+        Font size
 
     Returns
     -------
@@ -1268,6 +1276,10 @@ def render_otq(
     Render specific queries from multiple files:
 
     >>> otp.utils.render_otq(["./first.otq", "./second.otq::some_query"])  # doctest: +SKIP
+
+    Change font type to **Times New Roman** and text size to **10**:
+
+    >>> otp.utils.render_otq("./test.otq", font_family="Times-Roman", font_size=10)  # doctest: +SKIP
     """
     if line_limit is None:
         line_limit = (0, 0)
@@ -1355,9 +1367,31 @@ def render_otq(
     if not image_path:
         image_path = TmpFile().path
 
+    graph_kwargs = {}
+    node_kwargs = {}
+    edge_kwargs = {}
+
+    if font_size is not None:
+        if font_size <= 0:
+            raise ValueError("Parameter `font_size` should be greater than zero")
+
+        font_size_str = str(font_size)
+
+        graph_kwargs["fontsize"] = font_size_str
+        node_kwargs["fontsize"] = font_size_str
+        edge_kwargs["fontsize"] = font_size_str
+
+    if font_family is None:
+        font_family = "Monospace"
+
+    graph_kwargs["fontname"] = font_family
+    node_kwargs["fontname"] = font_family
+    edge_kwargs["fontname"] = font_family
+
     gr = gv.Digraph(format=output_format, filename=image_path, engine="dot")
-    gr.attr("graph", compound="true")
-    gr.attr("node", shape="plaintext", margin="0")
+    gr.attr("graph", compound="true", **graph_kwargs)
+    gr.attr("node", shape="plaintext", margin="0", **node_kwargs)
+    gr.attr("edge", **edge_kwargs)
 
     idx = 0
     for otq_path, graph in graphs.items():

@@ -53,7 +53,7 @@ RUN sudo -E pip --no-cache-dir install --upgrade pip --ignore-installed \
        --extra-index-url "https://${LOCAL_PIP_URL}"
 
 # install onetick.query_webapi
-RUN sudo -E pip install onetick.query_webapi==${ONETICK_QUERY_WEBAPI_VERSION} \
+RUN sudo -E pip install onetick.query_webapi==${ONETICK_QUERY_WEBAPI_VERSION} 'pandas<3.0.0' \
     --extra-index-url "https://${LOCAL_PIP_URL}"
 
 # needed to fix the problem with urllib3==2.6.0

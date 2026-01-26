@@ -5,7 +5,7 @@ from onetick.py.aggregations.other import (First, Last, FirstTime, LastTime, Cou
                                            Sum, Average, StdDev, TimeWeightedAvg, LastTick, Variance,
                                            Percentile, FindValueForPercentile, ExpWAverage, ExpTwAverage,
                                            StandardizedMoment, PortfolioPrice, MultiPortfolioPrice, Return,
-                                           ImpliedVol, LinearRegression)
+                                           ImpliedVol, LinearRegression, PartitionEvenlyIntoGroups)
 from onetick.py.aggregations.high_low import Max, Min, HighTime, LowTime, HighTick, LowTick
 from onetick.py.compatibility import (is_percentile_bug_fixed,
                                       is_supported_agg_option_price,
@@ -1714,3 +1714,23 @@ class TestLinearRegression:
         assert set(df.keys()) == {'Time', 'SLOPE', 'INTERCEPT'}
         assert df['SLOPE'] == [-1.0]
         assert df['INTERCEPT'] == [5.5]
+
+
+class TestPartitionEvenlyIntoGroups:
+    def test_simple(self):
+        data = otp.Ticks(
+            X=['A', 'B', 'A', 'C', 'A', 'D'], SIZE=[10, 30, 15, 20, 15, 14], PRICE=[100, 110, 115, 95, 104, 100],
+        )
+        agg = PartitionEvenlyIntoGroups(field_to_partition=data['X'], weight_field='SIZE', number_of_groups=3)
+        data = agg.apply(data)
+        assert data.schema == {'FIELD_TO_PARTITION': str, 'GROUP_ID': int}
+        df = otp.run(data).to_dict(orient='list')
+        del df['Time']
+        assert df == {
+            'FIELD_TO_PARTITION': ['A', 'B', 'C', 'D'],
+            'GROUP_ID': [0, 1, 2, 2],
+        }
+
+    def test_exceptions(self):
+        with pytest.raises(ValueError, match='number_of_groups'):
+            PartitionEvenlyIntoGroups(field_to_partition='TEST', weight_field='SIZE', number_of_groups=-10)

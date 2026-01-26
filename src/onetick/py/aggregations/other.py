@@ -1012,3 +1012,56 @@ class LinearRegression(_Aggregation, _MultiColumnAggregation):
             'SLOPE': float,
             'INTERCEPT': float,
         }
+
+
+class PartitionEvenlyIntoGroups(_Aggregation, _MultiColumnAggregation):
+    NAME = 'PARTITION_EVENLY_INTO_GROUPS'
+    EP = otq.PartitionEvenlyIntoGroups
+
+    FIELDS_MAPPING = deepcopy(_Aggregation.FIELDS_MAPPING)
+    FIELDS_MAPPING['field_to_partition'] = 'FIELD_TO_PARTITION'
+    FIELDS_MAPPING['weight_field'] = 'WEIGHT_FIELD'
+    FIELDS_MAPPING['number_of_groups'] = 'NUMBER_OF_GROUPS'
+
+    FIELDS_TO_SKIP = ['column_name', 'output_field_name']
+
+    def __init__(
+        self,
+        field_to_partition: Union[_Column, str, OnetickParameter],
+        weight_field: Union[_Column, str, OnetickParameter],
+        number_of_groups: Union[int, OnetickParameter],
+        *args, **kwargs,
+    ):
+        if isinstance(field_to_partition, _Column):
+            field_to_partition = str(field_to_partition)
+        if isinstance(weight_field, _Column):
+            weight_field = str(weight_field)
+
+        if number_of_groups <= 0:
+            raise ValueError('Parameter `number_of_groups` value should be greater than zero')
+
+        self.field_to_partition = field_to_partition
+        self.weight_field = weight_field
+        self.number_of_groups = number_of_groups
+
+        super().__init__(_Column('TIMESTAMP'), *args, **kwargs)
+
+    def validate_input_columns(self, src: 'Source'):
+        super().validate_input_columns(src)
+
+        for column in [self.field_to_partition, self.weight_field]:
+            if isinstance(column, OnetickParameter):
+                continue
+
+            if column not in src.schema:
+                raise TypeError(f"Aggregation `{self.NAME}` uses column `{column}` as input, which doesn't exist")
+
+        for out_field in ['FIELD_TO_PARTITION', 'GROUP_ID']:
+            if out_field in src.schema:
+                raise TypeError(f"Field `{out_field}`, which is `{self.NAME}` aggregation output column, is in schema.")
+
+    def _get_output_schema(self, src: 'Source', name: Optional[str] = None) -> dict:
+        return {
+            'FIELD_TO_PARTITION': str,
+            'GROUP_ID': int,
+        }

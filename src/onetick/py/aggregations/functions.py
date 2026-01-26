@@ -9,7 +9,7 @@ from .other import (First, Last, FirstTime, LastTime, Count, Vwap, FirstTick,
                     Median, Correlation, OptionPrice, Ranking, Variance,
                     Percentile, FindValueForPercentile, ExpWAverage, ExpTwAverage,
                     StandardizedMoment, PortfolioPrice, MultiPortfolioPrice, Return, ImpliedVol,
-                    LinearRegression)
+                    LinearRegression, PartitionEvenlyIntoGroups)
 from .order_book import (ObSnapshot, OB_SNAPSHOT_DOC_PARAMS,
                          ObSnapshotWide, OB_SNAPSHOT_WIDE_DOC_PARAMS,
                          ObSnapshotFlat, OB_SNAPSHOT_FLAT_DOC_PARAMS,
@@ -64,7 +64,13 @@ from ._docs import (_column_doc,
                     _strike_price_field_doc,
                     _days_in_year_doc,
                     _days_till_expiration_field_doc,
-                    _expiration_date_field_doc)
+                    _expiration_date_field_doc,
+                    _dependent_variable_field_name_doc,
+                    _independent_variable_field_name_doc,
+                    _field_to_partition_doc,
+                    _weight_field_doc,
+                    _number_of_groups_doc)
+
 from onetick.py.docs.utils import docstring, param_doc
 
 # This module mostly focused on providing annotations and documentation for end user
@@ -2183,7 +2189,8 @@ def implied_vol(*args, **kwargs):
     return ImpliedVol(*args, **kwargs)
 
 
-@docstring(parameters=[_running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
+@docstring(parameters=[_dependent_variable_field_name_doc, _independent_variable_field_name_doc,
+                       _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
                        _boundary_tick_bucket_doc,
                        ])
@@ -2214,3 +2221,38 @@ def linear_regression(*args, **kwargs):
     0 2003-12-04   -0.3        6.7
     """
     return LinearRegression(*args, **kwargs)
+
+
+@docstring(parameters=[_field_to_partition_doc, _weight_field_doc, _number_of_groups_doc,
+                       _running_doc, _bucket_interval_doc, _bucket_time_doc,
+                       _bucket_units_doc, _bucket_end_condition_doc, _boundary_tick_bucket_doc,
+                       ])
+def partition_evenly_into_groups(*args, **kwargs):
+    """
+    ``PARTITION_EVENLY_INTO_GROUPS`` aggregation.
+
+     For each bucket, this EP breaks ticks into the specified number of groups (``number_of_groups``)
+     by the specified field (``field_to_partition``) in a way that the sums
+     of the specified weight fields (``weight_field``) in each group are as close as possible.
+
+    See also
+    --------
+    **PARTITION_EVENLY_INTO_GROUPS** OneTick event processor
+
+    Examples
+    --------
+
+    >>> data = otp.Ticks(X=['A', 'B', 'A', 'C', 'D'], SIZE=[10, 30, 20, 15, 14])
+    >>> data = data.partition_evenly_into_groups(
+    ...     field_to_partition=data['X'],
+    ...     weight_field=data['SIZE'],
+    ...     number_of_groups=3,
+    ... )
+    >>> otp.run(data)
+            Time FIELD_TO_PARTITION  GROUP_ID
+    0 2003-12-04                  A         0
+    1 2003-12-04                  B         1
+    2 2003-12-04                  C         2
+    3 2003-12-04                  D         2
+    """
+    return PartitionEvenlyIntoGroups(*args, **kwargs)

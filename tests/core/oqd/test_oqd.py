@@ -436,12 +436,13 @@ def test_x(session):
 def test_bbgsym(session):
     src = otp.oqd.eps.OqdSourceBbgbsym().tick_type('OQD::*')
 
-    df = otp.run(src,
-                 symbols='BTKR::::GOOGL US',
-                 start=otp.dt(2018, 8, 1),
-                 end=otp.dt(2018, 8, 2),
-                 symbol_date=otp.dt(2018, 8, 1),
-                 timezone='GMT')
+    with pytest.warns(UserWarning, match='Symbol error:.*Reverse symbology mapping is missing'):
+        df = otp.run(src,
+                     symbols='BTKR::::GOOGL US',
+                     start=otp.dt(2018, 8, 1),
+                     end=otp.dt(2018, 8, 2),
+                     symbol_date=otp.dt(2018, 8, 1),
+                     timezone='GMT')
     print(df)
 
 
@@ -462,11 +463,12 @@ def test_cacts(session):
     # print('------------------')
 
     ep = otp.oqd.OqdSourceCact().tick_type('__OQD__::*')
-    df = otp.run(otq.GraphQuery(ep),
-                 symbols='ANN_DATE',
-                 start=otp.dt(2021, 1, 1),
-                 end=otp.dt(2022, 10, 4),
-                 symbol_date=otp.dt(2021, 2, 18))
+    with pytest.warns(UserWarning, match='Symbol error:.*symbol name history was not found in the reference data'):
+        df = otp.run(otq.GraphQuery(ep),
+                     symbols='ANN_DATE',
+                     start=otp.dt(2021, 1, 1),
+                     end=otp.dt(2022, 10, 4),
+                     symbol_date=otp.dt(2021, 2, 18))
     print(df)
 
 

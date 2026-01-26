@@ -44,6 +44,14 @@ def parse_args():
         help='Change internal parameters of result graph for better compatibility with old `Graphviz` versions',
         action=argparse.BooleanOptionalAction,
     )
+    parser.add_argument(
+        '--font-family', help='Font family',
+        type=str,
+    )
+    parser.add_argument(
+        '--font-size', help='Font size',
+        type=int,
+    )
 
     args = parser.parse_args()
     return args
@@ -70,7 +78,7 @@ def render_otq(
 
     for param_name in [
         'output_format', 'load_external_otqs', 'view', 'parse_eval_from_params', 'render_debug_info',
-        'debug', 'graphviz_compat_mode',
+        'debug', 'graphviz_compat_mode', 'font_family', 'font_size',
     ]:
         if kwargs.get(param_name) is not None:
             call_kwargs[param_name] = kwargs[param_name]

@@ -11,6 +11,26 @@ if os.getenv('OTP_WEBAPI_TEST_MODE'):
 
 
 @pytest.mark.platform("linux")
+def test_insert_at_end(f_session):
+    # PY-1433
+    f_session.use(otp.DB('A', otp.Tick(A=1), db_properties={'symbology': 'BZX'}))
+    f_session.use(otp.DB('B', otp.Tick(B=2), db_properties={'symbology': 'DTKR'}))
+
+    a = otp.DataSource(db='A', tick_type='TRD', symbols='AAPL')
+    b = otp.DataSource(db='B', tick_type='TRD', symbols='AAPL')
+    data = otp.merge([a, b])
+
+    df = otp.run(data)
+    assert list(df['A']) == [1, 0]
+    assert list(df['B']) == [0, 2]
+
+    data.dump()
+    df = otp.run(data)
+    assert list(df['A']) == [1, 0]
+    assert list(df['B']) == [0, 2]
+
+
+@pytest.mark.platform("linux")
 class TestDump:
 
     @pytest.fixture(autouse=True)
