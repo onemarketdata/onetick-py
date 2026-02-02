@@ -212,7 +212,14 @@ def test_timezone(tz, f_session):
 @pytest.mark.integration
 @pytest.mark.skipif(os.name == "nt", reason="Default windows user in CI doesn't have access")
 def test_remote(cloud_server):
-    with otp.Session(otp.Config(locator=cloud_server)):
+    with otp.Session(
+        otp.Config(locator=cloud_server,
+                   # needed for PY-1463
+                   variables={'USE_GRANT_LICENSE_MODE': False},
+                   license=otp.license.Default())
+    ) as s:
+        from pathlib import Path
+        print(Path(s.config.file).read_text())
         dbs = databases()
 
         db = dbs['US_COMP']

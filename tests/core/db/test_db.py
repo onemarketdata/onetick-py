@@ -379,6 +379,11 @@ def test_db_with_destroy(f_session):
 
 
 def _stub_writer(data, db, **kwargs):
+    otp.config['tz'] = 'EST5EDT'
+    otp.config['default_db'] = 'DEMO_L1'
+    otp.config['default_symbol'] = 'AAPL'
+    otp.config['default_start_time'] = datetime.datetime(2003, 12, 1, 0, 0, 0)
+    otp.config['default_end_time'] = datetime.datetime(2003, 12, 4, 0, 0, 0)
     src = otp.Ticks(data)
     src.sink(otq.Pause(delay="2000"))
     otp.db.write_to_db(src, db, otp.config['default_start_time'], src["SN"], "TT", **kwargs)

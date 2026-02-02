@@ -114,7 +114,7 @@ class Server(_LicenseBase):
         if file is None:
             file = utils.TmpFile()
         else:
-            if isinstance(reload, pd.tseries.offsets.Tick):
+            if isinstance(reload, pd.offsets.Tick):
                 modify = datetime.fromtimestamp(os.path.getmtime(file))
                 current = datetime.now()
                 diff_ms = (current - modify).total_seconds() * 1000000

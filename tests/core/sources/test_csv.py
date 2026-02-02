@@ -92,10 +92,10 @@ def test_csv_names(data_dir, m_session):
     df = otp.run(data)
     assert len(df) == 84
     assert df.dtypes['idx2'] == np.dtype('int64')
-    assert df.dtypes['stock2'] == np.dtype('O')  # dtype('O') is for string in pandas
+    assert pd.api.types.is_string_dtype(df.dtypes['stock2'])
     assert df.dtypes['time_number2'] == np.dtype('int64')
     assert df.dtypes['px2'] == float
-    assert df.dtypes['side2'] == np.dtype('O')  # dtype('O') is for string in pandas
+    assert pd.api.types.is_string_dtype(df.dtypes['side2'])
     assert df.dtypes['clOrdId2'] == np.dtype('int64')
 
 
@@ -111,7 +111,7 @@ class TestCSVSchema:
                 converters={"px": str},
                 dtype={"px": int},  # this int() must raise exception on "30.89" value, but it doesn't!
             )
-        assert df.dtypes['px'] == np.dtype("O")
+        assert pd.api.types.is_string_dtype(df.dtypes['px'])
 
     def test_read_csv_auto_types_schema(self, data_dir, m_session):
         data = otp.CSV(
@@ -119,10 +119,10 @@ class TestCSVSchema:
         df = otp.run(data)
         assert len(df) == 84
         assert df.dtypes['idx'] == np.dtype('int64')
-        assert df.dtypes['stock'] == np.dtype('O')  # dtype('O') is for string in pandas
+        assert pd.api.types.is_string_dtype(df.dtypes['stock'])
         assert df.dtypes['time_number'] == np.dtype('int64')
         assert df.dtypes['px'] == float
-        assert df.dtypes['side'] == np.dtype('O')  # dtype('O') is for string in pandas
+        assert pd.api.types.is_string_dtype(df.dtypes['side'])
         assert df.dtypes['clOrdId'] == np.dtype('int64')
 
     def test__convert_pandas_types(self, data_dir, m_session):
@@ -148,7 +148,7 @@ class TestCSVSchema:
         assert data.schema['px'] == float
 
         df = otp.run(data)
-        assert df.dtypes['clOrdId'] == np.dtype('O')  # dtype('O') is for string in pandas
+        assert pd.api.types.is_string_dtype(df.dtypes['clOrdId'])
         assert df.dtypes['px'] == float
 
     def test_bad_dtype(self, data_dir, m_session):
@@ -178,9 +178,9 @@ class TestCSVSchema:
         assert csv.schema['time_number'] == otp.nsectime
 
         assert df.dtypes['idx'] == np.dtype('int64')
-        assert df.dtypes['stock'] == np.dtype('O')
+        assert pd.api.types.is_string_dtype(df.dtypes['stock'])
         assert df.dtypes['px'] == float
-        assert df.dtypes['side'] == np.dtype('O')
+        assert pd.api.types.is_string_dtype(df.dtypes['side'])
         assert df.dtypes['clOrdId'] == np.dtype('int64')
         assert df.dtypes['time_number'].type == np.datetime64
 
@@ -386,8 +386,14 @@ class TestCSVTimestamp:
         assert csv.schema['time_formatted'] == str
         assert csv.schema['time_formatted_2'] == str
         assert df.dtypes['Time'].type == np.datetime64
-        assert df.dtypes['time_formatted'].type == np.dtype('O')
-        assert df.dtypes['time_formatted_2'].type == np.dtype('O')
+        assert (
+            df.dtypes['time_formatted'].type == np.dtype('O') or
+            pd.api.types.is_string_dtype(df.dtypes['time_formatted'].type)
+        )
+        assert (
+            df.dtypes['time_formatted_2'].type == np.dtype('O') or
+            pd.api.types.is_string_dtype(df.dtypes['time_formatted_2'].type)
+        )
         assert df['Time'][0] == otp.dt(2022, 5, 17, 11, 10, 56, 123123, 123)
         assert df['time_formatted'][0] == '6/18/23-12:11:57.124124124'
         assert df['time_formatted_2'][0] == '2023-06-18 12:11:57.654321'
@@ -406,7 +412,10 @@ class TestCSVTimestamp:
         assert csv.schema['time_formatted_2'] == str
         assert df.dtypes['Time'].type == np.datetime64
         assert df.dtypes['time_formatted'].type == np.datetime64
-        assert df.dtypes['time_formatted_2'].type == np.dtype('O')
+        assert (
+            df.dtypes['time_formatted_2'].type == np.dtype('O') or
+            pd.api.types.is_string_dtype(df.dtypes['time_formatted_2'].type)
+        )
         assert df['Time'][0] == otp.dt(2022, 5, 17, 11, 10, 56, 123123, 123)
         assert df['time_formatted'][0] == otp.dt(2023, 6, 18, 12, 11, 57, 124124, 124)
         assert df['time_formatted_2'][0] == '2023-06-18 12:11:57.654321'

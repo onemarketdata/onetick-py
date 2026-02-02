@@ -1,5 +1,6 @@
 import random
 import pytest
+import pandas as pd
 
 import onetick.py as otp
 
@@ -29,8 +30,9 @@ class TestToStr:
         precision = random.randint(2, 10)
         length = random.randint(precision + 1, 20)
         data["str"] = data["x"].float.str(length, precision)
+        assert data.schema['str'] == otp.string[length]
         data = otp.run(data)
-        assert data["str"].dtype == otp.string[length]
+        assert pd.api.types.is_string_dtype(data["str"].dtype)
 
 
 class TestCmpAndEq:

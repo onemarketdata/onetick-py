@@ -1,6 +1,5 @@
 import os
 import pytest
-import shutil
 from datetime import datetime
 
 # do not remove it, it allows to load OneTick dynamic libraries correctly,

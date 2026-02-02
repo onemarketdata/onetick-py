@@ -44,7 +44,7 @@ def inspect_by_pandas(path_to_csv, first_line_is_title=True, names=None, field_d
         first_column = "COLUMN_0"
         if names:
             first_column = names[0]
-        if len(df) > 0 and len(df.columns) > 0 and df.dtypes[first_column] == np.dtype("O"):
+        if len(df) > 0 and len(df.columns) > 0 and pd.api.types.is_string_dtype(df.dtypes[first_column]):
             if df[first_column][0].startswith("#"):
                 raise ValueError(
                     "If first line of CSV starts with #, you must set first_line_is_title=True, "

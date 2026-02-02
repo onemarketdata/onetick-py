@@ -847,13 +847,14 @@ class TestEmptyResults:
         result_schema = self.get_result_schema(result, output_schema)
         result_schema = result_schema.get('DEMO_L1::A', result_schema.get('DEFAULT'))
 
-        assert result_schema == {
-            'A': 'int64',
-            'B': 'object' if output_schema == 'df' else '<U64',
-            'C': 'float64',
-            'D': 'uint64',
-            'Time': 'datetime64[ns]',
-        }
+        assert result_schema['A'] == 'int64'
+        assert result_schema['C'] == 'float64'
+        assert result_schema['D'] == 'uint64'
+        assert result_schema['Time'] == 'datetime64[ns]'
+        if output_schema == 'df':
+            assert result_schema['B'] in ('object', 'str')
+        else:
+            assert result_schema['B'] == '<U64'
 
     @pytest.mark.parametrize('output_schema', ['list', 'map', 'df'])
     def test_multi_symbol(self, session, cur_dir, output_schema):

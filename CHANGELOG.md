@@ -10,6 +10,21 @@
 
 ### Removed
 
+## [1.184.0] - 2026-02-02
+
+### Added
+
+- Added support of python 3.14 to description
+
+### Changed
+
+### Fixed
+
+- Fixed code and tests on `pandas==3.0.0`
+- Fixed tests on OneTick `20251218-1`
+
+### Removed
+
 ## [1.183.0] - 2026-01-26
 
 ### Added

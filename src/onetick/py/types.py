@@ -1211,7 +1211,12 @@ class datetime(AbstractTime):
             )
         if isinstance(first_arg, (datetime, date)):
             first_arg = first_arg.ts
-        result = pd.Timestamp(first_arg, tzinfo=tzinfo, tz=tz)
+        kwargs = {}
+        if tzinfo is not None:
+            kwargs['tzinfo'] = tzinfo
+        if tz is not None:
+            kwargs['tz'] = tz
+        result = pd.Timestamp(first_arg, **kwargs)
         return result
 
     @property
@@ -1876,9 +1881,13 @@ def np2type(t):
         return bool
     elif t.name.startswith('datetime64[ns'):
         return nsectime
+    elif t.name.startswith('datetime64[us'):
+        return nsectime
     elif t.name.startswith('datetime64[ms'):
         return msectime
     elif t.name == 'object':
+        return str
+    elif t.name == 'str':
         return str
     elif t.str.startswith('<U'):
         length = t.name[2:]

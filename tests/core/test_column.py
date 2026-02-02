@@ -1,7 +1,7 @@
 import pytest
 
 import onetick.py as otp
-import numpy as np
+import pandas as pd
 
 
 Column = otp.core.column._Column
@@ -98,7 +98,7 @@ class TestMap:
         assert data["Z"].dtype == str
         assert data.schema["Z"] == str
         df = otp.run(data)
-        assert df["Z"].dtype == np.dtype('O')
+        assert pd.api.types.is_string_dtype(df["Z"].dtype)
         assert all(df["Z"] == ["A", "", "BAB"])
 
     def test_map_mixed_value_types(self, session):
@@ -130,7 +130,7 @@ class TestMap:
         data["Z"] = data["X"].map({"a": "A", "bab": "BAB"})
         assert data["Z"].dtype == str
         df = otp.run(data)
-        assert df["Z"].dtype == np.dtype('O')
+        assert pd.api.types.is_string_dtype(df["Z"].dtype)
         assert all(df["Z"] == ["A", "", "BAB"])
 
     def test_map_int_float_type(self, session):

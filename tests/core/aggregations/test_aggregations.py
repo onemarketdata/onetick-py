@@ -647,7 +647,7 @@ class TestOptionPrice:
                 )
             })
             df = otp.run(data)
-            assert df['RESULT'][0] == 2.8009992601230636
+            assert df['RESULT'][0] == pytest.approx(2.800999260123, abs=1e-13)
         else:
             with pytest.raises(NotImplementedError):
                 data.agg({

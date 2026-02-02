@@ -572,7 +572,7 @@ def Ticks(data=None,  # NOSONAR
         offset_values = []
         offset_parts = []
         for ofv in data['offset']:
-            if isinstance(ofv, ott.offsets.Tick):
+            if isinstance(ofv, pd.offsets.BaseOffset):
                 offset_values.append(ofv.n)
                 try:
                     str_repr = str(ofv.datepart)[1:-1]
