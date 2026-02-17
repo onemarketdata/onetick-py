@@ -10,6 +10,24 @@
 
 ### Removed
 
+## [1.185.0] - 2026-02-16
+
+### Added
+
+- Add parameters `concurrency` and `batch_size` to `otp.Source.to_otq()`
+- Added `otp.RefData` source
+- Added support of decimal input columns in `max`, `min`, `first`, `last`, `sum` and `median` aggregations
+
+### Changed
+
+- Remove `onetick-init` submodule, copy `onetick/__init__.py` file
+
+### Fixed
+
+- Fixed compatibility checks in some cases returned `numpy.bool` instead of built-in Python `bool`
+
+### Removed
+
 ## [1.184.0] - 2026-02-02
 
 ### Added

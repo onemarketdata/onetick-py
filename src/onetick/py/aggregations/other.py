@@ -18,21 +18,24 @@ from ._base import (
     _KeepTs,
     _FloatAggregation,
     _ExpectLargeInts,
+    _ExpectDecimals,
     _MultiColumnAggregation,
     _AllColumnsAggregation,
     validate,
 )
 
 
-class First(_AggregationTSType, _ExpectLargeInts):
+class First(_AggregationTSType, _ExpectLargeInts, _ExpectDecimals):
     NAME = "FIRST"
     EP = otq.First
 
     FIELDS_MAPPING = deepcopy(_AggregationTSType.FIELDS_MAPPING)
     FIELDS_MAPPING.update(_ExpectLargeInts.FIELDS_MAPPING)
+    FIELDS_MAPPING.update(_ExpectDecimals.FIELDS_MAPPING)
     FIELDS_MAPPING['skip_tick_if'] = 'SKIP_TICK_IF'
     FIELDS_DEFAULT = deepcopy(_AggregationTSType.FIELDS_DEFAULT)
     FIELDS_DEFAULT.update(_ExpectLargeInts.FIELDS_DEFAULT)
+    FIELDS_DEFAULT.update(_ExpectDecimals.FIELDS_DEFAULT)
     FIELDS_DEFAULT['skip_tick_if'] = ''
 
     def __init__(self, *args, skip_tick_if=None, **kwargs):
@@ -257,9 +260,14 @@ class Distinct(_AggregationTSSelection):
         return res
 
 
-class Sum(_FloatAggregation):
+class Sum(_FloatAggregation, _ExpectDecimals):
     NAME = "SUM"
     EP = otq.Sum
+
+    FIELDS_MAPPING = deepcopy(_FloatAggregation.FIELDS_MAPPING)
+    FIELDS_MAPPING.update(_ExpectDecimals.FIELDS_MAPPING)
+    FIELDS_DEFAULT = deepcopy(_FloatAggregation.FIELDS_DEFAULT)
+    FIELDS_DEFAULT.update(_ExpectDecimals.FIELDS_DEFAULT)
 
 
 class Average(_FloatAggregation):
@@ -293,10 +301,15 @@ class TimeWeightedAvg(_AggregationTSType, _FloatAggregation):
         super().__init__(*args, **kwargs)
 
 
-class Median(_FloatAggregation):
+class Median(_FloatAggregation, _ExpectDecimals):
     NAME = "MEDIAN"
     EP = otq.Median
     output_field_type = float
+
+    FIELDS_MAPPING = deepcopy(_FloatAggregation.FIELDS_MAPPING)
+    FIELDS_MAPPING.update(_ExpectDecimals.FIELDS_MAPPING)
+    FIELDS_DEFAULT = deepcopy(_FloatAggregation.FIELDS_DEFAULT)
+    FIELDS_DEFAULT.update(_ExpectDecimals.FIELDS_DEFAULT)
 
 
 class OptionPrice(_Aggregation):

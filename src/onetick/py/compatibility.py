@@ -213,7 +213,7 @@ def get_onetick_version(db=None, context=None) -> OnetickVersionFromServer:
         if s:
             s.close()
 
-    build_number = result_data["BUILD"][0]
+    build_number = int(result_data["BUILD"][0])
     release_string = result_data["RELEASE"][0]
 
     try:
@@ -892,3 +892,20 @@ def is_webapi_access_token_scope_supported():
     # 20251030: Fixed OTDEV-37063: onetick.query_webapi.get_access_token method must take scope as a parameter
     return _is_min_build_or_version(None, None,
                                     20251010120000, min_update_number=2)
+
+
+def is_expect_decimals_supported(agg_name: str):
+    # 20251218 build
+    # 20251203: Implemented OTDEV-37054: Add parameter EXPECT_DECIMALS to LOW(_TICK), HIGH(_TICK), FIRST, and LAST EPs
+    # 20251117: Implemented OTDEV-37055: Add parameter EXPECT_DECIMALS to SUM and MEDIAN EPs
+
+    # 1.26 20251218 and 20251010-3 builds
+    # 20251208: Implemented OTDEV-37054: Add parameter EXPECT_DECIMALS to LOW(_TICK), HIGH(_TICK), FIRST, and LAST EPs
+    if agg_name in ['HIGH', 'LOW', 'FIRST', 'LAST']:
+        return _is_min_build_or_version(1.26, 20251217195357,
+                                        20251010120000, min_update_number=3)
+    elif agg_name in ['SUM', 'MEDIAN']:
+        return _is_min_build_or_version(None, None,
+                                        20251218120000)
+
+    raise ValueError(f'Unsupported aggregation `{agg_name}`')

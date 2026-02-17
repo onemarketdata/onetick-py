@@ -13,6 +13,7 @@ from onetick.py.core.column_operations.base import _Operation, OnetickParameter
 from onetick.py.core._source._symbol_param import _SymbolParamColumn
 from onetick.py import types as ott
 from onetick.py import utils
+from onetick.py.compatibility import is_expect_decimals_supported
 from onetick.py.otq import otq
 
 
@@ -632,6 +633,51 @@ class _ExpectLargeInts(_Aggregation):
             res.drop(to_drop, inplace=True)
         self.column_name = col.in_column
         return res
+
+
+class _ExpectDecimals(_Aggregation):
+    FIELDS_MAPPING = deepcopy(_Aggregation.FIELDS_MAPPING)
+    FIELDS_MAPPING['expect_decimals'] = 'EXPECT_DECIMALS'
+    FIELDS_DEFAULT = deepcopy(_Aggregation.FIELDS_DEFAULT)
+    FIELDS_DEFAULT['expect_decimals'] = False
+
+    def __init__(self, *args, expect_decimals: Optional[Union[bool, str]] = None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if expect_decimals is not None and expect_decimals not in [True, False, 'if_input_val_is_decimal']:
+            raise ValueError(
+                f'Unexpected value for `expect_decimals` passed: `{expect_decimals}`. '
+                'Expected values: `None`, `False`, `True`, "if_input_val_is_decimal"'
+            )
+        if isinstance(expect_decimals, str):
+            expect_decimals = expect_decimals.upper()
+
+        self._expect_decimals_auto = False
+        if expect_decimals is None:
+            self._expect_decimals_auto = True
+            expect_decimals = False
+
+        self.expect_decimals = expect_decimals
+
+    def validate_input_columns(self, src: 'Source'):
+        if (
+            self.expect_decimals or
+            (
+                self._expect_decimals_auto and
+                not isinstance(self.column_name, OnetickParameter) and src.schema.get(self.column_name) is ott.decimal
+            )
+        ):
+            is_supported = is_expect_decimals_supported(self.NAME)
+
+            if self.expect_decimals and not is_supported:
+                raise RuntimeError(
+                    'Current version of OneTick doesn\'t support using decimal input columns for this aggregation'
+                )
+
+            if self._expect_decimals_auto:
+                self.expect_decimals = is_supported
+
+        return super().validate_input_columns(src=src)
 
 
 class _MultiColumnAggregation:

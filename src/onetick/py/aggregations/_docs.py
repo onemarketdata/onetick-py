@@ -599,6 +599,34 @@ _null_int_val_doc = param_doc(
     annotation=int,
     default=0,
 )
+_expect_decimals_doc = param_doc(
+    name='expect_decimals',
+    desc="""
+    This parameter should be set to **True** if the input field of this EP may contain high-precision decimal values.
+    Such values require special handling and are represented using the **DECIMAL128** type.
+    If set to **True**, the output field will have the **DECIMAL128** type.
+
+    If it's set to **None** (default), acts as **True** if input column has :py:class:`~onetick.py.types.decimal` type
+    (only for OneTick versions which support **EXPECT_DECIMALS** parameter) and as **False** else.
+
+    When this parameter is set to **if_input_val_is_decimal**, the EP behaves the same way
+    as when it is set to **True** for input fields of type **DECIMAL128**, and the same way
+    as when it is set to **False** for other input types.
+    When set to **if_input_val_is_decimal** and the input field type changes during execution
+    (e.g., from **DOUBLE** to **DECIMAL128** or from **DECIMAL128** to **DOUBLE**),
+    the output field type is switched accordingly.
+    Switching from **DECIMAL128** to **DOUBLE** may result in loss of precision.
+
+    Note: ``expect_decimals`` can be used simultaneously with ``large_ints`` only if ``expect_decimals``
+    is set to **if_input_val_is_decimal** and ``large_ints`` is set to **if_input_val_is_long_integer**.
+    In this mode, each parameter adapts to the detected input type.
+    If the input becomes **DECIMAL128**, ``expect_decimals`` applies its logic.
+    If the input becomes a 64-bit integer, ``large_ints`` applies its logic.
+    If the input becomes **DOUBLE**, both parameters revert to false behavior.
+    """,
+    annotation=Optional[Union[bool, str]],
+    default=None,
+)
 _skip_tick_if_doc = param_doc(
     name='skip_tick_if',
     desc="""

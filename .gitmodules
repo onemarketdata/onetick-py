@@ -1,4 +1,0 @@
-[submodule "onetick-init"]
-	path = onetick-init
-	url = ../onetick-init.git
-	branch = master

@@ -9,20 +9,23 @@ from onetick.py import types as ott
 from onetick.py.otq import otq
 
 from ._base import (
-    _AggregationTSType, _AggregationTSSelection, _KeepTs, _FloatAggregation, _ExpectLargeInts, _AllColumnsAggregation,
+    _AggregationTSType, _AggregationTSSelection, _KeepTs, _FloatAggregation, _ExpectLargeInts, _ExpectDecimals,
+    _AllColumnsAggregation,
 )
 
 
-class Max(_AggregationTSType, _ExpectLargeInts):
+class Max(_AggregationTSType, _ExpectLargeInts, _ExpectDecimals):
 
     NAME = "HIGH"
     EP = otq.High
-    require_type = (int, float, ott.nsectime, ott._inf)
+    require_type = (int, float, ott.nsectime, ott._inf, ott.decimal)
 
     FIELDS_MAPPING = deepcopy(_AggregationTSType.FIELDS_MAPPING)
     FIELDS_MAPPING.update(_ExpectLargeInts.FIELDS_MAPPING)
+    FIELDS_MAPPING.update(_ExpectDecimals.FIELDS_MAPPING)
     FIELDS_DEFAULT = deepcopy(_AggregationTSType.FIELDS_DEFAULT)
     FIELDS_DEFAULT.update(_ExpectLargeInts.FIELDS_DEFAULT)
+    FIELDS_DEFAULT.update(_ExpectDecimals.FIELDS_DEFAULT)
 
 
 class Min(Max):

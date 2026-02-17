@@ -2,7 +2,7 @@ import os
 
 import onetick.py as otp
 from onetick.py.aggregations.other import (First, Last, FirstTime, LastTime, Count, Vwap, FirstTick, Distinct,
-                                           Sum, Average, StdDev, TimeWeightedAvg, LastTick, Variance,
+                                           Sum, Average, Median, StdDev, TimeWeightedAvg, LastTick, Variance,
                                            Percentile, FindValueForPercentile, ExpWAverage, ExpTwAverage,
                                            StandardizedMoment, PortfolioPrice, MultiPortfolioPrice, Return,
                                            ImpliedVol, LinearRegression, PartitionEvenlyIntoGroups)
@@ -11,7 +11,8 @@ from onetick.py.compatibility import (is_percentile_bug_fixed,
                                       is_supported_agg_option_price,
                                       is_supported_num_distinct,
                                       is_supported_large_ints_empty_interval,
-                                      is_standardized_moment_supported)
+                                      is_standardized_moment_supported,
+                                      is_expect_decimals_supported)
 from onetick.py.otq import otq
 import pytest
 import numpy as np
@@ -1410,7 +1411,7 @@ class TestReturnEP:
 
 class TestNewTypes:
     def test_sum(self):
-        dtypes = (int, float, otp.decimal, otp.uint, otp.ulong, otp.short, otp.byte, otp.int, otp.long)
+        dtypes = (int, float, otp.uint, otp.ulong, otp.short, otp.byte, otp.int, otp.long)
         data = {
             f'A_{i}': [cls(1), cls(2)]
             for i, cls in enumerate(dtypes)
@@ -1476,6 +1477,38 @@ class TestNewTypes:
         df = otp.run(t)
         for i in range(len(dtypes)):
             assert df[f'C_{i}'][0] == 5 / 3
+
+    @pytest.mark.parametrize('aggr,result', [
+        (Max, 2.0e-20), (Min, 1.0e-20), (First, 1.0e-20), (Last, 2.0e-20), (Sum, 3.0e-20), (Median, 1.5e-20)
+    ])
+    def test_expect_decimals_aggregations(self, aggr, result):
+        if not is_expect_decimals_supported(aggr.NAME):
+            pytest.skip(f'`expect_decimals` not supported on this OneTick build for `{aggr.NAME}` aggregation')
+            return
+
+        src = otp.Ticks(X=[otp.decimal('0.00000000000000000001'), otp.decimal('0.00000000000000000002')])
+        agg = aggr('X')
+        src = agg.apply(src)
+        assert agg.expect_decimals is True
+        df = otp.run(src)
+        assert df['X'].to_list() == [result]
+
+    @pytest.mark.skipif(
+        not is_expect_decimals_supported('HIGH'), reason='EXPECT_DECIMALS not supported on this OneTick build',
+    )
+    @pytest.mark.parametrize('value', [True, 'if_input_val_is_decimal'])
+    def test_expect_decimals_aggregations_forced(self, value):
+        src = otp.Ticks(X=[otp.decimal('0.00000000000000000001'), otp.decimal('0.00000000000000000002')])
+        agg = Max('X', expect_decimals=value)
+        src = agg.apply(src)
+
+        if isinstance(value, str):
+            assert agg.expect_decimals == value.upper()
+        else:
+            assert agg.expect_decimals == value
+
+        df = otp.run(src)
+        assert df['X'].to_list() == [2.0e-20]
 
 
 class TestApply:

@@ -191,7 +191,7 @@ from onetick.py.types import (
 from onetick.py.sources import (Tick, TTicks, Ticks, Orders, Trades, NBBO, Quotes, Query, CSV, ReadCache, ReadParquet,
                                 Custom, query, Symbols, Empty, DataSource, LocalCSVTicks, SymbologyMapping,
                                 ObSnapshot, ObSnapshotWide, ObSnapshotFlat, ObSummary, ObSize, ObVwap, ObNumLevels,
-                                by_symbol, ODBC, SplitQueryOutputBySymbol, DataFile, PointInTime,
+                                by_symbol, ODBC, SplitQueryOutputBySymbol, DataFile, PointInTime, RefData,
                                 ReadSnapshot, ShowSnapshotList, FindSnapshotSymbols, ReadFromDataFrame)
 from onetick.py.utils import adaptive, range, perf
 from onetick.py.session import Session, TestSession, Config, Locator, HTTPSession

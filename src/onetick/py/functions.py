@@ -2359,6 +2359,10 @@ def join_with_aggregated_window(
     else:
         boundary_aggr_tick_behavior = 'PREV_WINDOW'
 
+    # validation
+    for agg in aggregation.values():
+        agg.validate_input_columns(agg_src)
+
     aggregation_str = ','.join([
         str(aggr) + " " + name
         for name, aggr in aggregation.items()

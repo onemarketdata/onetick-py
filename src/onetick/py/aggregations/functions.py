@@ -39,6 +39,7 @@ from ._docs import (_column_doc,
                     _biased_doc,
                     _large_ints_doc,
                     _null_int_val_doc,
+                    _expect_decimals_doc,
                     _skip_tick_if_doc,
                     _default_tick_doc,
                     _decay_doc,
@@ -112,8 +113,7 @@ def compute(*args, **kwargs):
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc,
-                       _time_series_type_doc, _large_ints_doc,
-                       _null_int_val_doc])
+                       _time_series_type_doc, _large_ints_doc, _null_int_val_doc, _expect_decimals_doc])
 def max(*args, **kwargs):
     """
     Return maximum value of input ``column``
@@ -136,8 +136,7 @@ def max(*args, **kwargs):
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc,
-                       _time_series_type_doc, _large_ints_doc,
-                       _null_int_val_doc])
+                       _time_series_type_doc, _large_ints_doc, _null_int_val_doc, _expect_decimals_doc])
 def min(*args, **kwargs):
     """
     Return minimum value of input ``column``
@@ -261,7 +260,7 @@ def low_time(*args, **kwargs):
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc,
-                       _large_ints_doc, _null_int_val_doc,
+                       _large_ints_doc, _null_int_val_doc, _expect_decimals_doc,
                        _skip_tick_if_doc, _time_series_type_doc])
 def first(*args, **kwargs):
     """
@@ -287,7 +286,7 @@ def first(*args, **kwargs):
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc,
-                       _large_ints_doc, _null_int_val_doc,
+                       _large_ints_doc, _null_int_val_doc, _expect_decimals_doc,
                        _skip_tick_if_doc, _time_series_type_doc])
 def last(*args, **kwargs):
     """
@@ -536,7 +535,7 @@ def distinct(*args, **kwargs):
 
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
-                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc])
+                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _expect_decimals_doc])
 def sum(*args, **kwargs):
     r"""
     Implement sum aggregation
@@ -682,7 +681,7 @@ def tw_average(*args, **kwargs):
 
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
-                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc])
+                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _expect_decimals_doc])
 def median(*args, **kwargs):
     """
     Implement median aggregation

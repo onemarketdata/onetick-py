@@ -430,7 +430,9 @@ class Source:
                running=False,
                start_time_expression=None,
                end_time_expression=None,
-               symbol_date=None):
+               symbol_date=None,
+               concurrency=None,
+               batch_size=None):
         """
         Save :class:`otp.Source <onetick.py.Source>` object to .otq file and return path to the saved file.
 
@@ -470,6 +472,12 @@ class Source:
             End time onetick expression of the query. If specified, it will take precedence over ``end``.
         symbol_date: :py:class:`otp.datetime <onetick.py.datetime>` or :py:class:`datetime.datetime` or int
             Symbol date for the query or integer in the YYYYMMDD format.
+            Will be applied only to the main query.
+        concurrency: int
+            Concurrency set for the query.
+            Will be applied only to the main query.
+        batch_size: int
+            Batch size set for the query.
             Will be applied only to the main query.
 
         Returns
@@ -523,7 +531,8 @@ class Source:
                                          running_query_flag=running,
                                          start_time_expression=start_time_expression,
                                          end_time_expression=end_time_expression,
-                                         symbol_date=symbol_date)
+                                         symbol_date=symbol_date,
+                                         concurrency=concurrency, batch_size=batch_size)
 
     def _store_in_tmp_otq(self, tmp_otq, operation_suffix="tmp_query", symbols=None, start=None, end=None,
                           raw=None, add_passthrough=True, name=None, timezone=None, symbol_date=None,
