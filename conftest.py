@@ -53,10 +53,6 @@ def cloud_server():
     yield otp.RemoteTS(
         otp.LoadBalancing(
             "development-queryhost.preprod-solutions.parent.onetick.com:50015",
-            "development-queryhost.preprod-solutions.parent.onetick.com:50016",
-            "development-queryhost.preprod-solutions.parent.onetick.com:50017",
-            "development-queryhost.preprod-solutions.parent.onetick.com:50018",
-            "development-queryhost.preprod-solutions.parent.onetick.com:50019",
-            "development-queryhost.preprod-solutions.parent.onetick.com:50020",
+            "development-queryhost-2.preprod-solutions.parent.onetick.com:50015",
         )
     )

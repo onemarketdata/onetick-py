@@ -1301,6 +1301,65 @@ class datetime(AbstractTime):
         """
         return datetime(pd.Timestamp.now(tz))
 
+    def weekday(self):
+        """
+        Return the day of the week as an integer, where Monday is 0 and Sunday is 6.
+
+        Returns
+        -------
+        int
+            Day of the week (0=Monday, 1=Tuesday, ..., 6=Sunday).
+
+        Examples
+        --------
+        >>> otp.datetime(2026, 1, 23).weekday()  # Friday
+        4
+        >>> otp.datetime(2026, 1, 25).weekday()  # Sunday
+        6
+        >>> otp.datetime(2026, 1, 19).weekday()  # Monday
+        0
+
+        """
+        return self.ts.weekday()
+
+    @classmethod
+    def strptime(cls, date_string, format, *, tz=None, tzinfo=None):
+        """
+        Parse a string to datetime according to a format.
+
+        Parameters
+        ----------
+        date_string : str
+            The string to parse.
+        format : str
+            The format string for parsing.
+        tz : str, optional
+            Timezone name.
+        tzinfo : :py:class:`datetime.tzinfo`, optional
+            Timezone object.
+
+        Returns
+        -------
+        :py:class:`otp.datetime <onetick.py.datetime>`
+            The parsed datetime object.
+
+        Raises
+        ------
+        ValueError
+            If the string cannot be parsed according to the format,
+            or if both ``tz`` and ``tzinfo`` are specified.
+
+        Examples
+        --------
+        >>> otp.datetime.strptime('2026-01-23 14:30:00', '%Y-%m-%d %H:%M:%S')
+        2026-01-23 14:30:00
+        >>> otp.datetime.strptime('2026-01-23 14:30:00', '%Y-%m-%d %H:%M:%S', tz='GMT')
+        2026-01-23 14:30:00+00:00
+
+        """
+        parsed = pd.to_datetime(date_string, format=format)
+        return cls(parsed, tz=tz, tzinfo=tzinfo)
+
     def __add__(self, other):
         """
         Add :ref:`datetime offset <datetime_offsets>` to otp.datetime.
@@ -1367,7 +1426,7 @@ class datetime(AbstractTime):
 
     def tz_localize(self, tz):
         """
-        Localize tz-naive datetime object to a given timezone
+        Localize a timezone-naive datetime object to the specified timezone
 
         Parameters
         ----------
@@ -1389,7 +1448,7 @@ class datetime(AbstractTime):
 
     def tz_convert(self, tz):
         """
-        Convert tz-aware datetime object to another timezone
+        Convert a timezone-aware datetime object to a different timezone
 
         Parameters
         ----------

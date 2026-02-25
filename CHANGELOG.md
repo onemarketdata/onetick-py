@@ -10,6 +10,27 @@
 
 ### Removed
 
+## [1.186.0] - 2026-02-24
+
+### Added
+
+- Added `weekday` and `strptime` methods for `otp.datetime`
+
+### Changed
+
+- Use `uv` for project development
+- Update `sphinx` version
+- Remove `requirements.*` files, use `pyproject.toml` and dependency groups
+
+### Fixed
+
+- Fixed `send_onetick_release.sh` script
+- Fixed deleting files when uploading to Github
+- Fix updating string fields with `otp.decimal` type
+- Fix Windows and cloud tests
+
+### Removed
+
 ## [1.185.0] - 2026-02-16
 
 ### Added

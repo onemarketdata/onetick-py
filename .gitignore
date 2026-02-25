@@ -14,7 +14,6 @@ venv
 *.idea
 *.coverage
 *.ipynb_checkpoint*
-.python-version
 .vscode/
 !doc_sphinx/api/modules.rst
 doc_sphinx/_build/*
@@ -31,9 +30,9 @@ one_market_data*.tar.gz
 WebAPI_related/
 *.log
 *.whl
-acl.acl
-locator
-one_tick_config_webapi.txt
+webapi/acl.acl
+webapi/locator
+webapi/one_tick_config_webapi.txt
 webapi_rel/
 /*.txt
 onetick/eps_*

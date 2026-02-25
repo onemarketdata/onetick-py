@@ -93,16 +93,13 @@ The directory must be for the same python version as will be used by ``onetick.p
 Requirements
 :::::::::::::
 
-The ``onetick.py`` package has the following requirements
+The ``onetick.py`` depends on `pandas`, `numpy` and some other publicly available packages.
 
-.. include:: ../../../requirements.txt
-    :literal:
-
-These requirements are taken from the `requirements.txt` file and could be used as is for ``pip``.
+Full list of requirements can be displayed like this:
 
 ::
 
-    pip install -r requirements.txt
+    pip show onetick-py
 
 If you need to install strictly defined versions of the packages `numpy` and `pandas`,
 which is the most tested combination, then you can use the following command to install `onetick-py`:

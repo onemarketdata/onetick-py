@@ -41,23 +41,25 @@ RUN sudo apt-get install --no-install-recommends enchant-2 -y
 RUN sudo apt-get install --no-install-recommends zip -y
 RUN sudo apt-get install --no-install-recommends unixodbc libsqliteodbc -y
 
-# copy all requirements (easier to cache this layer)
 # COPY . /onetick-py/
-COPY requirements.dev.txt /onetick-py/requirements.dev.txt
-COPY requirements.strict.txt /onetick-py/requirements.strict.txt
-COPY requirements.txt /onetick-py/requirements.txt
+COPY pyproject.toml /onetick-py/pyproject.toml
 
-# install python dependenices based on the requirements.dev.txt file
-RUN sudo -E pip --no-cache-dir install --upgrade pip --ignore-installed \
-    && sudo -E pip --no-cache-dir install -r "/onetick-py/requirements.dev.txt" \
-       --extra-index-url "https://${LOCAL_PIP_URL}"
+# upgrade pip
+RUN sudo -E pip --no-cache-dir install --upgrade pip --ignore-installed
+# install uv
+RUN sudo -E pip --no-cache-dir install uv
+
+# install onetick-py development dependencies
+RUN sudo -E uv pip --no-cache-dir install --system --group "/onetick-py/pyproject.toml:dev" \
+                                          --extra-index-url "https://${LOCAL_PIP_URL}" \
+                                          --prerelease=allow
 
 # install onetick.query_webapi
-RUN sudo -E pip install onetick.query_webapi==${ONETICK_QUERY_WEBAPI_VERSION} \
-    --extra-index-url "https://${LOCAL_PIP_URL}"
+RUN sudo -E uv pip install --system onetick.query_webapi==${ONETICK_QUERY_WEBAPI_VERSION} \
+                           --extra-index-url "https://${LOCAL_PIP_URL}"
 
 # needed to fix the problem with urllib3==2.6.0
-RUN sudo -E pip install "backports.zstd; python_version < '3.14'"
+RUN sudo -E uv pip install --system "backports.zstd; python_version < '3.14'"
 
 ENV OTP_WEBAPI=1
 ENV OTP_OTQ_DEBUG_MODE=1

@@ -36,7 +36,7 @@ def get_timezone_from_datetime(dt) -> Optional[str]:
     if tzinfo is datetime.timezone.utc:
         return 'UTC'
     with suppress(ModuleNotFoundError):
-        import pytz
+        import pytz  # type: ignore
         if isinstance(tzinfo, pytz.BaseTzInfo):
             return tzinfo.zone
     if isinstance(tzinfo, zoneinfo.ZoneInfo):

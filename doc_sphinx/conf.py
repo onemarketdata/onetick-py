@@ -15,7 +15,7 @@ import sys
 import re
 from datetime import datetime
 
-import enchant.tokenize
+import spell_filters
 from sphinx.application import Sphinx
 from sphinx.ext.autodoc import (ClassDocumenter,
                                 MethodDocumenter,
@@ -64,14 +64,11 @@ extensions = [
     'sphinx_copybutton',
     'myst_nb',
     'jupyter_book',
-    'sphinx_thebe',
-    'sphinx_comments',
     'sphinx_external_toc',
     'sphinx.ext.intersphinx',
     'sphinx_book_theme',
-    'sphinxcontrib.bibtex',
     'sphinxcontrib.spelling',
-    'sphinx_reredirects'
+    'sphinx_reredirects',
 ]
 
 
@@ -105,7 +102,6 @@ autodoc_default_options = {
     'private-members': False,
 }
 autoclass_content = 'both'
-comments_config = {'hypothesis': False, 'utterances': False}
 
 add_module_names = False
 autodoc_preserve_defaults = True
@@ -133,31 +129,7 @@ nb_mime_priority_overrides = [
 # is markdown?
 is_markdown = os.environ.get('MARKDOWN', False)
 
-
-class CustomFilter(enchant.tokenize.Filter):
-    def _skip(self, word):
-        return (
-            # spell checker doesn't ignore :py:class: and other code contructions
-            word.startswith('onetick-py') or
-            word.startswith('onetick.py') or
-            word.startswith('otp.') or
-            word.startswith('onetick.query') or
-            word.startswith('otq.') or
-            word.startswith('pandas') or
-            word.startswith('pd.') or
-            # if word is enclosed in quotes, then it's probably a name
-            word[0] == '"' and word[-1] == '"' or
-            word[0] == "'" and word[-1] == "'" or
-            # popular file extensions
-            word.endswith('.otq') or
-            word.endswith('.exe') or
-            word.endswith('.py') or
-            word.endswith('.txt')
-        )
-
-
-spelling_filters = [CustomFilter]
-
+spelling_filters = ['spell_filters.CustomFilter']
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -166,6 +138,7 @@ exclude_patterns = ['**.ipynb_checkpoints',
                     '.jupyter_cache',
                     '.pytest_cache',
                     '_build',
+                    '_build_spelling',
                     'Thumbs.db',
                     '.DS_Store',
                     'README.md']
@@ -201,10 +174,27 @@ html_theme_options = {
         "version_match": version,
     },
     "check_switcher": False,
-    "navbar_end": ["version-switcher"],
+    "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
     "logo": {
         "link": "static/overview",
     },
+    "icon_links": [
+        {
+            "name": "OneTick",
+            "url": "https://onetick.com",
+            "icon": "fa-solid fa-house",
+        },
+        {
+            "name": "PyPI",
+            "url": "https://pypi.org/project/onetick-py",
+            "icon": "fa-brands fa-python",
+        },
+        {
+            "name": "GitHub",
+            "url": "https://github.com/onemarketdata/onetick-py",
+            "icon": "fa-brands fa-github",
+        },
+    ],
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -215,7 +205,6 @@ html_js_files = [
     "rag.js",
     "https://cdnjs.cloudflare.com/ajax/libs/marked/13.0.0/marked.min.js"
 ]
-bibtex_bibfiles = ['references.bib']
 
 # ------- Jupyter
 nb_execution_cache_path = './.jupyter_cache'
@@ -230,7 +219,7 @@ nb_execution_raise_on_error = True
 nb_execution_timeout = 60
 use_jupyterbook_latex = True
 
-language = None
+language = 'en'
 
 latex_engine = 'pdflatex'
 

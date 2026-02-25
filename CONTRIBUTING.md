@@ -2,13 +2,17 @@
 
 ## Source code
 
-You should already have been given the access to <https://gitlab.sol.onetick.com/>.
+The `onetick-py` codebase is located on internal OneTick server.
+You should already have been given the access to it: <https://gitlab.sol.onetick.com/>.
 
 Use `git clone --recursive` command to download source code of `onetick-py` and its submodules locally.
 
+`onetick-py` project is also uploaded to [GitHub](https://github.com/onemarketdata/onetick-py),
+but the copy there is not used for development and doesn't include all files and directories.
+
 ### Windows
 
-`onetick-py` project has some symbolic links in its source code.
+`onetick-py` project may have some symbolic links in its source code.
 
 Symbolic links don't work on Windows by default
 (more info here <https://github.com/git-for-windows/git/wiki/Symbolic-Links>).
@@ -17,6 +21,56 @@ To enable them, you need to configure git appropriately:
 
 ```bash
 git clone -c core.symlinks=true --recursive ...
+```
+
+## Development
+
+### uv
+
+`onetick-py` uses [uv](https://docs.astral.sh/uv) for project development.
+
+After cloning the project and installing `uv` use `uv` commands to easily set up development environment.
+
+For example, `uv run` will automatically
+create a python virtual environment in `.venv` directory for the default python version,
+install all the needed packages,
+and run the command in this environment:
+
+```bash
+uv run pytest tests/core
+```
+
+`uv` commands can be run with different python versions:
+
+```bash
+uv run --python 3.9 pytest tests/core/test_math.py
+```
+
+`uv add` command can be used to update project dependencies and the lockfile:
+
+```bash
+uv add 'pandas>100.0.0'        # project dependencies
+uv add --dev 'pytest>100.0.0'  # development dependencies
+```
+
+See the `uv` documentation for the full list of available features.
+
+### pip
+
+It should also be possible to set up the environment manually
+using standard python package manager [pip](https://pip.pypa.io/en/stable/getting-started/)
+and module [venv](https://docs.python.org/3/library/venv.html).
+
+This is pretty much the same thing that `uv` does:
+
+```bash
+# create virtual environment and activate it
+# (also update pip to support --group parameter)
+python -m venv --upgrade-deps .venv
+source .venv/bin/activate
+# install project's and development dependencies and install onetick-py from current directory in "editable" mode
+pip install --group pyproject.toml:dev -e .
+pytest tests/core
 ```
 
 ## Versioning
@@ -118,7 +172,7 @@ We have one special subsection name `### Backward incompatible changes`.
 
 ## Multiple Python versions support
 
-- We support multiple python versions **3.9, 3.10, 3.11, 3.12, 3.13**.
+- We support multiple python versions **3.9, 3.10, 3.11, 3.12, 3.13, 3.14**.
   But python version **3.12** is used for development and testing.
 - Keep in mind that some features are available only for specific versions.
   We collected backports in the `./onetick/py/backports.py` file,

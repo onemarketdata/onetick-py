@@ -21,8 +21,17 @@ RUN sudo apt-get install --no-install-recommends enchant-2 -y
 RUN sudo apt-get install --no-install-recommends zip -y
 RUN sudo apt-get install --no-install-recommends unixodbc libsqliteodbc -y
 
-# install python dependenices based on the requirements.dev.txt file
-RUN sudo -E pip --no-cache-dir install --upgrade pip --ignore-installed \
-    && sudo -E pip --no-cache-dir install -r "/onetick-py/requirements.dev.txt" \
-       --extra-index-url "https://${LOCAL_PIP_URL}" \
-    && [ -n "${STRICT_DEPENDENCIES}" ] && pip install -U /onetick-py/[strict] || pip install -U /onetick-py/
+# upgrade pip
+RUN sudo -E pip --no-cache-dir install --upgrade pip --ignore-installed
+# install uv
+RUN sudo -E pip --no-cache-dir install uv
+
+# install onetick-py with development dependencies
+RUN sudo -E uv pip --no-cache-dir install --system --group "/onetick-py/pyproject.toml:dev" \
+                                          --extra-index-url "https://${LOCAL_PIP_URL}" \
+                                          --prerelease=allow
+RUN if [ -n "${STRICT_DEPENDENCIES}" ]; then \
+        sudo -E uv pip install --system -U "/onetick-py[strict]"; \
+    else \
+        sudo -E uv pip install --system -U "/onetick-py"; \
+    fi

@@ -920,3 +920,22 @@ def test_astype_int_data_loss_update(session):
 
             idx += 1
             _smaller_type = test_data[idx][0]
+
+
+def test_string_to_decimal(session):
+    t = otp.Ticks({'A': ['1', '2', '3', 'nan']})
+    # new field
+    t['A_decimal'] = t['A'].astype(otp.decimal)
+    # update field
+    t['A'] = t['A'].astype(otp.decimal)
+
+    assert t.schema == {
+        'A': otp.decimal,
+        'A_decimal': otp.decimal,
+    }
+
+    df = otp.run(t)
+    assert list(df['A_decimal'])[:3] == [1.0, 2.0, 3.0]
+    assert pd.isna(list(df['A_decimal'])[3])
+    assert list(df['A'])[:3] == [1.0, 2.0, 3.0]
+    assert pd.isna(list(df['A'])[3])

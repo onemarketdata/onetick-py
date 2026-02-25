@@ -296,7 +296,6 @@ def _update_field(self: 'Source', field, value):
             if isinstance(field, _StateColumn):
                 pass  # do nothing
             else:
-                field._dtype = value_dtype
                 type_changes = True
 
     if isinstance(field, _StateColumn) and (convert_to_type is not None or type_changes):
@@ -309,10 +308,11 @@ def _update_field(self: 'Source', field, value):
         self._update_timestamp(key, value, str_value)
 
     elif type_changes:
-        if value_dtype in [otp.nsectime, int] and issubclass(field.dtype, str):
+        if value_dtype in [otp.nsectime, int, otp.decimal] and issubclass(field.dtype, str):
             # PY-416 string field changing the type from str to datetime leads to losing nanoseconds
             # BE-142 similar issue with int from string: OneTick convert str to float, and then to int
             # so we lose some precision for big integers
+            # PY-1473: similar issue with decimal
             # work around is: make a new column first, delete accessor column
             # and then recreate it with value from temp column
             self.sink(otq.AddField(field=f"_TMP_{key}", value=str_value))
@@ -321,6 +321,8 @@ def _update_field(self: 'Source', field, value):
             self.sink(otq.Passthrough(fields=f"_TMP_{key}", drop_fields=True))
         else:
             self.sink(otq.UpdateField(field=key, value=str_value))
+        # if type was changed, change dtype of column object
+        field._dtype = value_dtype
     else:
         self.sink(otq.UpdateFields(set=key + "=" + str_value))
     if names_mapping:

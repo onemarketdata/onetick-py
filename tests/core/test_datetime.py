@@ -45,13 +45,15 @@ class TestTimestamp:
         assert df["x"][0] == d
 
     # checking both boundaries of the random interval to reduce the probability of random test failures
-    @pytest.mark.parametrize('timestamp',
-                             [
-                                 otp.datetime(1970, 1, 1, tzinfo=dateutil.tz.gettz("EST5EDT")).timestamp(),
-                                 otp.datetime(2032, 1, 1, tzinfo=dateutil.tz.gettz("EST5EDT")).timestamp(),
-                                 1225606727,  # ambiguous dst time
-                                 'random'
-                             ])
+    @pytest.mark.parametrize(
+        'timestamp',
+        [
+            otp.datetime(1970, 1, 1, tzinfo=dateutil.tz.gettz("EST5EDT")).timestamp(),
+            otp.datetime(2032, 1, 1, tzinfo=dateutil.tz.gettz("EST5EDT")).timestamp(),
+            1225606727,  # ambiguous dst time
+            'random',
+        ],
+    )
     def test_random_timestamp(self, timestamp):
         if timestamp == 'random':
             timestamp = random.randrange(
@@ -190,7 +192,7 @@ class TestAssignment:
         data = otp.Ticks(dict(X=[1]))
         data["T"] = otp.dt(2019, 4, 12, 1, 2, 3, 456789, tzinfo=dateutil.tz.gettz('GMT'))
         df = otp.run(data, timezone='GMT')
-        expected = ("2019-04-12 01:02:03.456789", )
+        expected = ("2019-04-12 01:02:03.456789",)
         assert all(str(a) == e for a, e in zip(df["T"], expected))
 
 
@@ -275,7 +277,7 @@ class TestDateAdd:
         data["s1"] = data["x"] + otp.Second(120 * 60)
         data["s2"] = data["x"] + otp.Second(2)
         data["ms"] = data["x"] + otp.Milli(2 * 1000)
-        data["ns"] = data["x"] + otp.Nano(2 * 1000 ** 3)
+        data["ns"] = data["x"] + otp.Nano(2 * 1000**3)
         data = otp.run(data, timezone="GMT")
         assert all(data["y"] == data["q"])
         assert all(data["y"] == data["M"])
@@ -353,10 +355,12 @@ class TestDateAdd:
         # BDS-267 related
         offsets = [1, 3, 7]
         delta = otp.Nano(123456789)
-        data = otp.Ticks({
-            'A': offsets,
-            'offset': offsets,
-        })
+        data = otp.Ticks(
+            {
+                'A': offsets,
+                'offset': offsets,
+            }
+        )
         data['UPDATED_DATETIME'] = data['TIMESTAMP']
         data['UPDATED_DATETIME'] += delta
         df = otp.run(data)
@@ -513,22 +517,25 @@ class TestOffset:
         otp.run(data)
 
     def test_tick(self):
-        """ Implementation for a single tick or ticks with only one row differs from multiple """
+        """Implementation for a single tick or ticks with only one row differs from multiple"""
         data = otp.Ticks(X=[1], Y=['A'], offset=[otp.Nano(1)])
         otp.run(data)
 
 
 class TestNextDay:
-    @pytest.mark.parametrize('dt', [
-        otp.datetime(2022, 1, 1, 1, 2, 3),
-        otp.date(2022, 1, 1),
-        datetime.datetime(2022, 1, 1, 1, 2, 3),
-        datetime.date(2022, 1, 1),
-        pd.Timestamp(2022, 1, 1, 1, 2, 3),
-        otp.datetime(2022, 1, 1, 1, 2, 3, tz='America/New_York'),
-        datetime.datetime(2022, 1, 1, 1, 2, 3, tzinfo=zoneinfo.ZoneInfo('America/New_York')),
-        pd.Timestamp(2022, 1, 1, 1, 2, 3).replace(tzinfo=zoneinfo.ZoneInfo('America/New_York')),
-    ])
+    @pytest.mark.parametrize(
+        'dt',
+        [
+            otp.datetime(2022, 1, 1, 1, 2, 3),
+            otp.date(2022, 1, 1),
+            datetime.datetime(2022, 1, 1, 1, 2, 3),
+            datetime.date(2022, 1, 1),
+            pd.Timestamp(2022, 1, 1, 1, 2, 3),
+            otp.datetime(2022, 1, 1, 1, 2, 3, tz='America/New_York'),
+            datetime.datetime(2022, 1, 1, 1, 2, 3, tzinfo=zoneinfo.ZoneInfo('America/New_York')),
+            pd.Timestamp(2022, 1, 1, 1, 2, 3).replace(tzinfo=zoneinfo.ZoneInfo('America/New_York')),
+        ],
+    )
     def test_next_day(self, dt):
         assert ott.next_day(dt) == datetime.datetime(2022, 1, 2)
 
@@ -562,9 +569,7 @@ class TestDatetimeTimezoneAwareness:
 
     @pytest.fixture
     def date_columns(self, dates):
-        return {
-            f'T{i}': dt for i, dt in enumerate(dates)
-        }
+        return {f'T{i}': dt for i, dt in enumerate(dates)}
 
     @pytest.mark.parametrize('otp_config_tz', (None, 'Europe/Moscow'))
     def test_ticks_columns(self, otp_config_tz, dates):
@@ -608,8 +613,9 @@ class TestDatetimeTimezoneAwareness:
         data = otp.Tick(**date_columns)
         df = otp.run(data, timezone='GMT')
         for column, value in date_columns.items():
-            assert df[column][0].tz_localize('GMT') == \
-                   pd.Timestamp(2011, 1, 1, 1, 1, 1).tz_localize('Europe/Moscow').tz_convert('GMT')
+            assert df[column][0].tz_localize('GMT') == pd.Timestamp(2011, 1, 1, 1, 1, 1).tz_localize(
+                'Europe/Moscow'
+            ).tz_convert('GMT')
 
 
 class TestLocalTimezone:
@@ -671,3 +677,106 @@ class TestLocalTimezone:
             assert len(df) == 1
             assert df['A'][0] == 1
             assert df['B'][0] == 2
+
+
+class TestWeekday:
+    @pytest.mark.parametrize(
+        "date_args, expected_weekday",
+        [
+            # Monday
+            ((2026, 1, 19), 0),
+            # Tuesday
+            ((2026, 1, 20), 1),
+            # Wednesday
+            ((2026, 1, 21), 2),
+            # Thursday
+            ((2026, 1, 22), 3),
+            # Friday
+            ((2026, 1, 23), 4),
+            # Saturday
+            ((2026, 1, 24), 5),
+            # Sunday
+            ((2026, 1, 25), 6),
+            ((2026, 1, 26), 0),
+        ],
+    )
+    def test_weekday_all_days(self, date_args, expected_weekday):
+        dt = otp.datetime(*date_args)
+        assert dt.weekday() == expected_weekday
+
+    def test_weekday_with_time(self):
+        dt = otp.datetime(2026, 1, 23, 14, 30, 45)
+        assert dt.weekday() == 4  # Friday
+
+    def test_weekday_with_timezone(self):
+        dt = otp.datetime(2026, 1, 23, 14, 30, 45, tz="GMT")
+        assert dt.weekday() == 4  # Friday
+        dt = otp.datetime(2026, 1, 23, 14, 30, 45, tzinfo=zoneinfo.ZoneInfo("EST5EDT"))
+        assert dt.weekday() == 4  # Friday
+
+    def test_weekday_with_otp_date(self):
+        dt = otp.date(2026, 1, 23)
+        assert dt.weekday() == 4
+
+
+class TestStrptime:
+    def test_strptime_with_nanoseconds(self):
+        dt = otp.datetime.strptime("2026-01-23 14:30:45.123456789", "%Y-%m-%d %H:%M:%S.%f")
+        assert isinstance(dt, otp.datetime)
+        assert dt.year == 2026
+        assert dt.month == 1
+        assert dt.day == 23
+        assert dt.hour == 14
+        assert dt.minute == 30
+        assert dt.second == 45
+        assert dt.microsecond == 123456
+        assert dt.nanosecond == 789
+
+    def test_strptime_date_only(self):
+        dt = otp.datetime.strptime("2026-01-23", "%Y-%m-%d")
+        assert isinstance(dt, otp.datetime)
+        assert dt.year == 2026
+        assert dt.month == 1
+        assert dt.day == 23
+        assert dt.hour == 0
+        assert dt.minute == 0
+        assert dt.second == 0
+
+    def test_strptime_with_tz(self):
+        dt = otp.datetime.strptime("2026-01-23 14:30:00", "%Y-%m-%d %H:%M:%S", tz="GMT")
+        assert dt.tzinfo == zoneinfo.ZoneInfo("GMT")
+        assert dt.tz == zoneinfo.ZoneInfo("GMT")
+        assert dt.year == 2026
+        assert dt.hour == 14
+
+    def test_strptime_with_tzinfo(self):
+        dt = otp.datetime.strptime("2026-01-23 14:30:00", "%Y-%m-%d %H:%M:%S", tzinfo=zoneinfo.ZoneInfo("EST5EDT"))
+        assert dt.tzinfo == zoneinfo.ZoneInfo("EST5EDT")
+        assert dt.tz == zoneinfo.ZoneInfo("EST5EDT")
+
+    def test_strptime_mutually_exclusive_tz(self):
+        with pytest.raises(ValueError, match="tzinfo and tz params are mutually exclusive"):
+            otp.datetime.strptime(
+                "2026-01-23",
+                "%Y-%m-%d",
+                tz="GMT",
+                tzinfo=zoneinfo.ZoneInfo("EST5EDT"),
+            )
+
+    @pytest.mark.parametrize(
+        "date_string, format_str, expected",
+        [
+            ("23/01/2026", "%d/%m/%Y", (2026, 1, 23)),
+            ("01-23-2026", "%m-%d-%Y", (2026, 1, 23)),
+            ("20260123", "%Y%m%d", (2026, 1, 23)),
+            ("January 23, 2026", "%B %d, %Y", (2026, 1, 23)),
+            ("Jan 23, 2026", "%b %d, %Y", (2026, 1, 23)),
+        ],
+    )
+    def test_strptime_various_formats(self, date_string, format_str, expected):
+        dt = otp.datetime.strptime(date_string, format_str)
+        assert (dt.year, dt.month, dt.day) == expected
+
+    def test_strptime_invalid_format_raises(self):
+        with pytest.raises(ValueError):
+            otp.datetime.strptime("invalid-date", "%Y-%m-%d")

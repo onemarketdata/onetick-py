@@ -3,7 +3,7 @@
 mkdir -p ./packages
 python3 -m venv dev_env
 source ./dev_env/bin/activate
-python3 -m pip install -r ../requirements.dev.txt
+python3 -m pip install --group ../pyproject.toml:dev
 python3 -m pip install onetick-py-test
 
 LIBS_PATH=./dev_env/lib64/python3.9/site-packages

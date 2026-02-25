@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eu
+set -eux
 
 TAGS=${TAGS:-Nothing}
 TARGET=${1:-'html'}
@@ -32,7 +32,9 @@ make clean
 echo "Building sphinx with $TARGET target..."
 make $TARGET SPHINXOPTS="-T $WARNINGS_FLAG --keep-going -t $TAGS"
 if [ "$TARGET" == "html" ]; then
-    make spelling SPHINXOPTS="-T $WARNINGS_FLAG --keep-going"
+    echo "Building sphinx with spelling target..."
+    # using separate build directory to avoid strange warnings with this quote character ’
+    make spelling SPHINXOPTS="-T $WARNINGS_FLAG --keep-going" BUILDDIR=_build_spelling
 fi
 
 rm js/switcher.json
