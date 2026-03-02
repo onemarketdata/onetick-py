@@ -44,6 +44,14 @@ Generation html documentation
 To build the html documentation use:
 
     ./build.sh
+    # or
+    uv run doc_sphinx/build.sh
+
+You may need to manually install these dependencies in your system:
+
+    make
+    enchant-2
+    graphviz
 
 Possible way to host it using python:
 

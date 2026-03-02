@@ -223,9 +223,9 @@ class TestNow:
         assert timestamp_before < int(df['Time'][0].timestamp() * 10**9) < timestamp_after
 
     @pytest.mark.skipif(os.environ.get('OTP_WEBAPI', False), reason="WebAPI works fine")
-    @pytest.mark.xfail(strict=True, reason='PY-1437, BDS-489')
+    @pytest.mark.skipif(not otp.compatibility.is_now_in_start_end_time_expressions_fixed(),
+                        reason="Fixed on newer OneTick builds")
     def test_small_difference(self):
-        # PY-1437, BDS-489
         data = otp.Tick(X=1)
         otp.run(data, start=otp.math.now(), end=otp.math.now() + 1, timezone='GMT')
 

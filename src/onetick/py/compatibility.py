@@ -909,3 +909,11 @@ def is_expect_decimals_supported(agg_name: str):
                                         20251218120000)
 
     raise ValueError(f'Unsupported aggregation `{agg_name}`')
+
+
+def is_now_in_start_end_time_expressions_fixed():
+    # PY-1437, BDS-489, OTDEV-37551
+    # Fixed OTDEV-37551: NOW() evaluation causes "Start time of the query can not be greater or equal
+    # to the end time" for short (usually <20ms) intervals
+    return _is_min_build_or_version(1.26, 20260114173411,
+                                    20260216120000)

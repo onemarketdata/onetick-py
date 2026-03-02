@@ -10,6 +10,25 @@
 
 ### Removed
 
+## [1.187.0] - 2026-03-02
+
+### Added
+
+### Changed
+
+- Set default value of `otp.configuration.ignore_ticks_in_unentitled_time_range` to None
+- Do not set `IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE` query property by default
+- Improved `doc_sphinx/build.sh` script and documentation
+
+### Fixed
+
+- Fixed test on latest OneTick builds
+- Fixed calling remote queries in WebAPI mode
+- Fixed copying `otp.ReadFromDataFrame`
+- Fix onetick wheel compatibility
+
+### Removed
+
 ## [1.186.0] - 2026-02-24
 
 ### Added

@@ -10,6 +10,8 @@ if [ "$TARGET" == "markdown" ]; then
     WARNINGS_FLAG=''
 fi
 
+cd $FILE_DIR
+
 # make package available for jupyter notebook docs
 export PYTHONPATH=${FILE_DIR}/../src:${PYTHONPATH:-""}
 

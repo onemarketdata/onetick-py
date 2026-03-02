@@ -3318,6 +3318,8 @@ dev = [
     { name = "onetick-py-test" },
     { name = "polars", version = "1.36.1", source = { registry = "https://pip.sol.onetick.com/" }, marker = "python_full_version < '3.10'" },
     { name = "polars", version = "1.38.1", source = { registry = "https://pip.sol.onetick.com/" }, marker = "python_full_version >= '3.10'" },
+    { name = "pyarrow", version = "21.0.0", source = { registry = "https://pip.sol.onetick.com/" }, marker = "python_full_version < '3.10'" },
+    { name = "pyarrow", version = "23.0.1", source = { registry = "https://pip.sol.onetick.com/" }, marker = "python_full_version >= '3.10'" },
     { name = "pydata-sphinx-theme" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
@@ -3371,6 +3373,7 @@ dev = [
     { name = "matplotlib", specifier = ">=3.6.3" },
     { name = "onetick-py-test", specifier = "==1.2.9" },
     { name = "polars", specifier = ">=1.12.0" },
+    { name = "pyarrow", specifier = ">=21.0.0" },
     { name = "pydata-sphinx-theme", specifier = ">=0.16.1" },
     { name = "pytest-cov", specifier = "==5.0.0" },
     { name = "pytest-mock", specifier = "==1.11.0" },
@@ -4420,11 +4423,9 @@ resolution-markers = [
 ]
 dependencies = [
     { name = "colorama", marker = "python_full_version >= '3.12' and sys_platform == 'win32'" },
-    { name = "exceptiongroup", marker = "python_version < '0'" },
     { name = "iniconfig", version = "2.3.0", source = { registry = "https://pip.sol.onetick.com/" }, marker = "python_full_version >= '3.12'" },
     { name = "packaging", marker = "python_full_version >= '3.12'" },
     { name = "pluggy", marker = "python_full_version >= '3.12'" },
-    { name = "tomli", marker = "python_version < '0'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/58/2a/07c65fdc40846ecb8a9dcda2c38fcb5a06a3e39d08d4a4960916431951cb/pytest-7.3.2.tar.gz", hash = "sha256:ee990a3cc55ba808b80795a79944756f315c67c12b56abd3ac993a7b8c17030b", size = 1338457, upload-time = "2023-06-10T19:28:53.107Z" }
 wheels = [

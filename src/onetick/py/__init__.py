@@ -3,16 +3,40 @@ import os
 from . import _version
 __version__ = _version.VERSION
 __webapi__: bool = os.getenv('OTP_WEBAPI', default='').lower() not in ('0', 'false', 'no', '')
+del os
+
+
+def __get_onetick_relative_paths():
+    import os  # noqa
+    import sysconfig
+
+    config_vars = sysconfig.get_config_vars()
+
+    ot_bin_path = os.path.join("bin")
+    ot_python_path = os.path.join(ot_bin_path, "python")
+    ot_numpy_path = os.path.join(
+        ot_bin_path,
+        "numpy",
+        "python"
+        # short python version 27, 36, 37, etc
+        + config_vars["py_version_nodot"]
+        # suffix at the end, either empty string for python with the standard memory allocator,
+        # or 'm' for python with the py-malloc allocator
+        + config_vars["abiflags"],
+    )
+    return ot_bin_path, ot_python_path, ot_numpy_path
 
 
 def __validate_onetick_query_integration():  # noqa
-    """Logic that checks correctness of integration of python with onetick.query and/or onetick.query_webapi.
+    """
+    Logic that checks correctness of integration of python with onetick.query and/or onetick.query_webapi.
     One of the modules should be installed and available to import.
 
     We first try to import onetick.query and NumPy_OneTickQuery, and if it fails,
     before raising an exception, we check if onetick.query_webapi is installed.
     If it is installed, we set OTP_WEBAPI environment variable and avoid raising any exception/warning.
     """
+    import os  # noqa
     global __webapi__
 
     if os.getenv("OTP_SKIP_OTQ_VALIDATION"):
@@ -33,47 +57,20 @@ def __validate_onetick_query_integration():  # noqa
     except ImportError as e:
         _otq_import_ex = e
 
-    import sysconfig
-
-    config_vars = sysconfig.get_config_vars()
-
-    ot_bin_path = os.path.join("bin")
-    ot_python_path = os.path.join(ot_bin_path, "python")
-    ot_numpy_path = os.path.join(
-        ot_bin_path,
-        "numpy",
-        "python"
-        # short python version 27, 36, 37, etc
-        + config_vars["py_version_nodot"]
-        # suffix at the end, either empty string for python with the standard memory allocator,
-        # or 'm' for python with the py-malloc allocator
-        + config_vars["abiflags"],
-    )
-
-    pythonpath = os.environ.get('PYTHONPATH')
-
-    missed_required = __get_missed_paths(pythonpath, ot_bin_path, ot_python_path)
-    missed_optional = __get_missed_paths(pythonpath, ot_numpy_path)
+    ot_bin_path, ot_python_path, ot_numpy_path = all_paths = __get_onetick_relative_paths()
+    missed_required = __get_missed_pythonpaths(ot_bin_path, ot_python_path)
+    missed_optional = __get_missed_pythonpaths(ot_numpy_path)
 
     import warnings
     if len(missed_required + missed_optional) != 3:
-        # TODO: move to onetick.py.compatibility
         if _otq_import_ex is None and onetick.query.OneTickLib.get_build_number() >= 20230711120000:
             warnings.warn(
                 'Using PYTHONPATH to specify the location of OneTick python libraries is deprecated.'
-                ' Starting from OneTick build 20230711 onetick-py is also distributed as the part of the build,'
-                ' and it will override onetick-py you may have installed from pip.'
+                ' onetick-py you may have installed from pip may be overriden.'
                 ' Use MAIN_ONE_TICK_DIR instead.'
             )
 
-    try:
-        from .. import __search_main_one_tick_dir
-        main_one_tick_dirs = __search_main_one_tick_dir()
-    except ImportError:
-        # this exception will be raised if PYTHONPATH was used to specify the location of OneTick libraries
-        # and onetick-py doesn't exist in the specified OneTick or have older version than these lines
-        main_one_tick_dirs = None
-
+    # if we can import onetick.query then just return early
     if _otq_import_ex is None:
         return
 
@@ -86,7 +83,7 @@ def __validate_onetick_query_integration():  # noqa
     except ImportError:
         print('onetick.query_webapi is not available')
 
-    if isinstance(_otq_import_ex, ImportError):
+    if not isinstance(_otq_import_ex, ModuleNotFoundError):
         raise ImportError(
             'The above exception is probably raised '
             'because your python version is unsupported in this OneTick build'
@@ -96,10 +93,18 @@ def __validate_onetick_query_integration():  # noqa
     # so checking it only if we couldn't import library
     missed_paths = missed_required or missed_optional
 
+    try:
+        from .. import __search_main_one_tick_dir
+        main_one_tick_dirs = __search_main_one_tick_dir()
+    except ImportError:
+        # this exception will be raised if PYTHONPATH was used to specify the location of OneTick libraries
+        # and onetick-py doesn't exist in the specified OneTick or have older version than these lines
+        main_one_tick_dirs = None
+
     if missed_paths or not main_one_tick_dirs:
 
-        if not missed_paths:
-            missed_paths = [ot_bin_path, ot_python_path, ot_numpy_path]
+        if not main_one_tick_dirs:
+            missed_paths = all_paths
 
         missed_paths = ', '.join(
             "'" + os.path.join("<path-to-OneTick-dist>", p) + "'"
@@ -126,30 +131,25 @@ def __validate_onetick_query_integration():  # noqa
     raise _otq_import_ex
 
 
-def __get_missed_paths(env, *paths, found_callback=None):
+def __get_missed_pythonpaths(*paths):
+    import os  # noqa
     from pathlib import Path
 
+    pythonpath_list = os.environ.get('PYTHONPATH', '').split(os.pathsep)
     missed_paths = []
-    env = env or ''
-    global_python_path = env.split(os.pathsep)
     for p in paths:
-        match = False
-        for gb in global_python_path:
-            if Path(gb).match(f"*/{p}"):
-                match = True
-                if found_callback:
-                    found_callback(gb, p)
-                break
+        match = any(Path(gb).match(f"*/{p}") for gb in pythonpath_list)
         if not match:
             missed_paths.append(p)
     return missed_paths
 
 
 def __set_onetick_path_variables():
+    import os  # noqa
     if __webapi__ or os.getenv("OTP_SKIP_OTQ_VALIDATION"):
         return
     import warnings
-    import onetick.query as otq
+    import onetick.query as otq  # noqa
     from pathlib import Path
 
     onetick_query_init = Path(otq.__file__)

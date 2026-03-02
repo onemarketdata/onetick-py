@@ -6,7 +6,7 @@ import inspect
 from enum import Enum
 
 if os.getenv('OTP_WEBAPI', default='').lower() not in ('0', 'false', 'no', ''):
-    import onetick.query_webapi as otq
+    import onetick.query_webapi as otq  # noqa
 
     class OneTickLibMock:
         LOGGING_LEVEL_MIN = 0
@@ -23,8 +23,8 @@ if os.getenv('OTP_WEBAPI', default='').lower() not in ('0', 'false', 'no', ''):
     otq.OneTickLib = OneTickLibMock
 
 else:
-    import onetick.query as otq
-    import pyomd
+    import onetick.query as otq  # noqa
+    import pyomd  # noqa
 
 
 class LoggingLevel(Enum):

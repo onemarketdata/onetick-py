@@ -689,11 +689,13 @@ class Config:
     )
 
     ignore_ticks_in_unentitled_time_range = OtpProperty(
-        description='Default value for IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE query property.',
-        base_default=False,
+        description='Default value for IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE query property. '
+                    'By default it is set to None, which means that the property is not set in queries '
+                    'and the OneTick server may decide what to do, if configured.',
+        base_default=None,
         env_var_name='OTP_IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE',
         allowed_types=(str, bool, int),
-        env_var_func=parse_true,
+        env_var_func=parse_bool,
     )
 
     main_query_generated_filename = OtpProperty(

@@ -65,9 +65,9 @@ def test_save_symbols_to_source(cust_session, run_mode, require_dict, symbol_typ
             res = otp.run(source)
     elif run_mode == 'query_file':
         if require_dict:
-            res = otp.run(f"'{source.to_otq(file_name=main_query_file.path)}'", require_dict=require_dict)
+            res = otp.run(f"{source.to_otq(file_name=main_query_file.path)}", require_dict=require_dict)
         else:
-            res = otp.run(f"'{source.to_otq(file_name=main_query_file.path)}'")
+            res = otp.run(f"{source.to_otq(file_name=main_query_file.path)}")
     else:
         assert False, "Unknown run_mode test parameter"
 
@@ -112,10 +112,10 @@ def test_pass_symbols_external(cust_session, run_mode, require_dict, symbol_type
             res = otp.run(source, symbols=symbol)
     elif run_mode == 'query_file':
         if require_dict:
-            res = otp.run(f"'{source.to_otq(file_name=main_query_file.path)}'",
+            res = otp.run(f"{source.to_otq(file_name=main_query_file.path)}",
                           symbols=symbol, require_dict=require_dict)
         else:
-            res = otp.run(f"'{source.to_otq(file_name=main_query_file.path)}'", symbols=symbol)
+            res = otp.run(f"{source.to_otq(file_name=main_query_file.path)}", symbols=symbol)
     else:
         assert False, "Unknown run_mode test parameter"
 

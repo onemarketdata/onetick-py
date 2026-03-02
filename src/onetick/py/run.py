@@ -376,8 +376,9 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         query_properties.set_property_value('USE_FT', otp.config.default_fault_tolerance)  # type: ignore[union-attr]
 
     if 'IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE' not in qp_dict:
-        query_properties.set_property_value('IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE',  # type: ignore[union-attr]
-                                            str(otp.config.ignore_ticks_in_unentitled_time_range).upper())
+        if otp.config.ignore_ticks_in_unentitled_time_range is not None:
+            query_properties.set_property_value('IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE',  # type: ignore[union-attr]
+                                                str(otp.config.ignore_ticks_in_unentitled_time_range).upper())
 
     if date is not None:
         for v in (start, end, start_time_expression, end_time_expression):

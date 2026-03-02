@@ -27,7 +27,7 @@ class _ReadFromDataFrameSource(Source):
         schema=None,
         **kwargs,
     ):
-        if self._try_default_constructor(**kwargs):
+        if self._try_default_constructor(schema=schema, **kwargs):
             return
 
         if schema is None:

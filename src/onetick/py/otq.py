@@ -69,18 +69,14 @@ elif otp.__webapi__:
                              'environment variable are required '
                              'when using WebAPI mode.')
 
-        # TODO WEBAPI review this
-        # if file name is not in single quotes, then put it in single quotes
-        query_name = None
+        # onetick.query_webapi.run has a separate query_name parameter
+        # (though it doesn't work with remote:// queries)
         query = kwargs.get('query', None)
-        if isinstance(query, str):
-            if query[0] == "'" and query[-1] == "'":
-                query = query.replace("'", "")
-            if '::' in query:
-                query_name = query.split('::')[-1]
-                query = query.replace(f'::{query_name}', '')
+        if isinstance(query, str) and '::' in query and not query.startswith('remote://'):
+            query_name = query.split('::')[-1]
+            query = query.removesuffix(f'::{query_name}')
             kwargs['query'] = query
-        kwargs['query_name'] = query_name
+            kwargs['query_name'] = query_name
 
         del_params = [
             'start_time_expression',
