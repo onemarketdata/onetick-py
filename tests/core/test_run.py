@@ -703,8 +703,8 @@ def test_password_param(session):
         assert df['A'][0] == 1
 
 
-@pytest.mark.parametrize('value', [OnetickVersion(True, '1.22', None, 20230714120000),
-                                   OnetickVersion(False, None, 0, 20210714120000)])
+@pytest.mark.parametrize('value', [OnetickVersion('rel_1_22_20230714120000', '1.22', None, 20230714120000),
+                                   OnetickVersion('BUILD_initial_20210714120000', None, 0, 20210714120000)])
 def test_has_max_expected_ticks_per_symbol(session, mocker, value):
     mocker.patch('onetick.py.compatibility.get_onetick_version',
                  return_value=value)
@@ -712,8 +712,8 @@ def test_has_max_expected_ticks_per_symbol(session, mocker, value):
         has_max_expected_ticks_per_symbol(throw_warning=True)
 
 
-@pytest.mark.parametrize('value', [OnetickVersion(True, '1.22', None, 20230714120000),
-                                   OnetickVersion(False, None, 0, 20210714120000)])
+@pytest.mark.parametrize('value', [OnetickVersion('rel_1_22_20230714120000', '1.22', None, 20230714120000),
+                                   OnetickVersion('BUILD_initial_20210714120000', None, 0, 20210714120000)])
 def test_has_password_param(session, mocker, value):
     mocker.patch('onetick.py.compatibility.get_onetick_version',
                  return_value=value)
@@ -721,8 +721,8 @@ def test_has_password_param(session, mocker, value):
         has_password_param(throw_warning=True)
 
 
-@pytest.mark.parametrize('value', [OnetickVersion(True, '1.22', None, 20230714120000),
-                                   OnetickVersion(False, None, 0, 20210714120000)])
+@pytest.mark.parametrize('value', [OnetickVersion('rel_1_22_20230714120000', '1.22', None, 20230714120000),
+                                   OnetickVersion('BUILD_initial_20210714120000', None, 0, 20210714120000)])
 def test_has_timezone_parameter(session, mocker, value):
     mocker.patch('onetick.py.compatibility.get_onetick_version',
                  return_value=value)

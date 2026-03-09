@@ -1062,3 +1062,46 @@ def primary_exch(self: 'Source', discard_on_match: bool = False) -> Tuple['Sourc
     else_source.node().out_pin("ELSE")
 
     return if_source, else_source
+
+
+@inplace_operation
+def show_hidden_ticks(self: 'Source', inplace: bool = False) -> 'Source':
+    """
+    Propagates all of a tick's fields without changing their values. Propagates all ticks,
+    even those with a status not equal to 0, which are normally hidden.
+
+    Use this method to display all original ticks and correction ticks in the same time series in the same
+    time sequence in which they were originally sent with a filter to remove unneeded **TICK_STATUS** values.
+
+    Parameters
+    ----------
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    **SHOW_HIDDEN_TICKS** OneTick event processor
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
+    >>> data = data.show_hidden_ticks()  # doctest: +SKIP
+    >>> otp.run(data)  # doctest: +SKIP
+                         Time         UPDATE_TIME  PRICE  SIZE  BUY_SELL_FLAG  TICK_STATUS RECORD_TYPE
+    0 2003-12-01 00:00:00.000 1969-12-31 19:00:00      0     0              0           31
+    1 2003-12-01 00:00:00.000 2003-12-01 00:00:00    100    10              0            0           R
+    2 2003-12-01 00:00:00.001 2003-12-01 00:00:00     80    30              0           31           R
+    3 2003-12-01 00:00:00.002 2003-12-01 00:00:00     90    25              1            0           R
+    4 2003-12-01 00:00:00.003 2003-12-01 00:00:00    110   100              1            0           R
+    5 2003-12-01 00:00:00.004 2003-12-01 00:00:00    100    20              1           31           R
+    6 2003-12-01 00:00:00.005 2003-12-01 00:00:00     75    30              0            0           R
+    """
+    self.sink(otq.ShowHiddenTicks())
+    return self

@@ -4,8 +4,8 @@ from typing import Any, Dict, Optional
 import onetick.py as otp
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Render queries from otq file')
+def parser_impl(parser):
+    parser.description = 'Render queries from otq file'
 
     parser.add_argument('path', help='Path to otq file')
     parser.add_argument(
@@ -53,9 +53,6 @@ def parse_args():
         type=int,
     )
 
-    args = parser.parse_args()
-    return args
-
 
 def render_otq(
     path: str,
@@ -87,10 +84,11 @@ def render_otq(
     print(f'Rendered graph saved in {output_path}')
 
 
-def main():
-    args = parse_args()
+def run(args):
     render_otq(**vars(args))
 
 
 if __name__ == '__main__':
-    main()
+    arg_parser = argparse.ArgumentParser()
+    parser_impl(arg_parser)
+    run(arg_parser.parse_args())

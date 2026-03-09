@@ -61,7 +61,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         log_symbol: Union[bool, Type[utils.default]] = utils.default,
         encoding: Optional[str] = None,
         manual_dataframe_callback: bool = False,
-        print_symbol_errors: bool = True):
+        print_symbol_errors: Union[bool, Type[utils.default]] = utils.default):
     """
     Executes a query and returns its result.
 
@@ -132,12 +132,14 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         Note: not supported and ignored on older OneTick versions.
         By default, :py:attr:`otp.config.default_password<onetick.py.configuration.Config.default_password>` is used.
     batch_size: int
-        number of symbols to run in one batch.
+        Number of symbols to process in one batch. Larger batch sizes reduce overhead
+        but use more memory.
         By default, the value from
         :py:attr:`otp.config.default_batch_size<onetick.py.configuration.Config.default_batch_size>` is used.
         Not supported for WebAPI mode.
     running: bool, optional
-        Indicates whether a query is CEP or not. Default is `False`.
+        Set to True for CEP (Complex Event Processing) real-time streaming queries.
+        Default is False.
     query_properties: :py:class:`pyomd.QueryProperties` or dict, optional
        Query properties, such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc
     concurrency: int, optional
@@ -150,14 +152,16 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
 
         Note that those daily intervals are executed separately, so you don't have access
         to the data from previous or next days (see example in the next section).
-    symbol_date:
-        The symbol date used to look up symbology mapping information in the reference database,
-        expressed as datetime object or integer of YYYYMMDD format
+    symbol_date: :py:class:`datetime.datetime`, int, str, optional
+        Date used for resolving symbols in date-dependent symbologies, where the same
+        identifier can map to different instruments on different dates.
+        Accepts a datetime object or integer in ``YYYYMMDD`` format (e.g., ``20220301``).
     query_params: dict
         Parameters of the query.
     time_as_nsec: bool
-        Outputs timestamps up to nanoseconds granularity
-        (defaults to False: by default we output timestamps in microseconds granularity)
+        If True, output timestamps have nanosecond granularity.
+        If False, timestamps are truncated to microsecond granularity.
+        Default is True.
     treat_byte_arrays_as_strings: bool
         Outputs byte arrays as strings (defaults to True)
         Not supported for WebAPI mode.
@@ -177,7 +181,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
             or dictionary of symbol names and dataframe objects
             (**Only supported in WebAPI mode**).
     return_utc_times: bool
-        If True Return times in UTC timezone and in local timezone otherwise
+        If True, return timestamps in UTC timezone. If False, return in local timezone.
         Not supported for WebAPI mode.
     connection: :py:class:`pyomd.Connection`
         The connection to be used for discovering nested .otq files
@@ -196,7 +200,8 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         of the node to choose result from. If node_name was specified, query should be presented by path on the disk
         and output_structure should be `df`
     require_dict: bool
-        If set to True, result will be forced to be a dictionary even if it's returned for a single symbol
+        If True, the result is always returned as a dictionary keyed by symbol name,
+        even when only a single symbol is queried. Default is False.
     max_expected_ticks_per_symbol: int
         Expected maximum number of ticks per symbol (used for performance optimizations).
         By default, :py:attr:`otp.config.max_expected_ticks_per_symbol \
@@ -215,9 +220,11 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         Create dataframe manually with ``callback`` mode.
         Only works if ``output_structure='df'`` is specified and parameter ``callback`` is not.
         May improve performance in some cases.
-    print_symbol_errors_from_onetick: bool
-        Applicable only when ``output_structure`` is set to *df*.
-        Print symbol errors from OneTick as python warnings.
+    print_symbol_errors: bool
+        If True (default), symbol-level errors from OneTick are printed as Python warnings.
+        Applicable only when ``output_structure`` is ``'df'``.
+        By default, :py:attr:`otp.config.print_symbol_errors <onetick.py.configuration.Config.print_symbol_errors>`
+        is used, which is True by default.
 
     Returns
     -------
@@ -347,12 +354,149 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
             Time  A
     0 2003-12-01  1
     1 2003-12-02  2
+
+    Using `pandas.DataFrame` as a symbol list:
+
+    >>> symbols_df = pd.DataFrame({'SYMBOL_NAME': ['AAPL', 'MSFT'], 'SYMBOL_PARAM': ['a', 'b']})
+    >>> data = otp.Tick(A=1)
+    >>> data['SYMBOL_NAME'] = data.Symbol.name
+    >>> data['SYMBOL_PARAM'] = data.Symbol.get('SYMBOL_PARAM', otp.string[64])
+    >>> result = otp.run(data, symbols=symbols_df)
+    >>> result['AAPL']
+            Time  A SYMBOL_NAME SYMBOL_PARAM
+    0 2003-12-01  1        AAPL            a
+    >>> result['MSFT']
+            Time  A SYMBOL_NAME SYMBOL_PARAM
+    0 2003-12-01  1        MSFT            b
+
+    Setting ``timezone`` controls the output timestamp timezone.
+    When ``start``/``end`` are timezone-naive, it also defines their timezone:
+
+    >>> data = otp.Tick(A=1)
+    >>> otp.run(data, start=otp.dt(2003, 12, 1), end=otp.dt(2003, 12, 2), timezone='EST5EDT')
+            Time  A
+    0 2003-12-01  1
+
+    Use ``require_dict=True`` to always get a dictionary result,
+    even when running a single symbol:
+
+    >>> data = otp.Tick(A=1)
+    >>> result = otp.run(data, require_dict=True)
+    >>> type(result)
+    <class 'dict'>
+
+    Running for multiple symbols returns a dictionary keyed by symbol name:
+
+    >>> data = otp.DataSource(db='SOME_DB', tick_type='TT')
+    >>> result = otp.run(data, symbols=['S1', 'S2'])
+    >>> result['S1']
+                         Time  X
+    0 2003-12-01 00:00:00.000  1
+    1 2003-12-01 00:00:00.001  2
+    2 2003-12-01 00:00:00.002  3
+    >>> result['S2']
+                         Time  X
+    0 2003-12-01 00:00:00.000 -3
+    1 2003-12-01 00:00:00.001 -2
+    2 2003-12-01 00:00:00.002 -1
+
+    Using a :py:class:`~onetick.py.Source` as ``symbols`` creates a first-stage query
+    that dynamically generates the symbol list. The source must produce a ``SYMBOL_NAME`` column:
+
+    .. code-block:: python
+
+       # First-stage query: get symbols from a reference database
+       symbol_src = otp.DataSource('REF_DB', tick_type='SYMBOLS')
+       symbol_src = symbol_src[['SYMBOL_NAME']]
+
+       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       result = otp.run(data, symbols=symbol_src, date=otp.dt(2022, 3, 1))
+       # result is a dict keyed by symbol names from symbol_src
+
+    ``output_structure`` controls the format of the return value.
+    Use ``'list'`` to get raw results as a list of tuples:
+
+    .. code-block:: python
+
+       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       result = otp.run(data, symbols='AAPL', output_structure='list')
+       # result is [(symbol, ticks_data, error_data, node_name), ...]
+
+    Use ``output_structure='map'`` for a ``SymbolNumpyResultMap`` object:
+
+    .. code-block:: python
+
+       result = otp.run(data, symbols='AAPL', output_structure='map')
+
+    ``running=True`` marks the query as a CEP (Complex Event Processing) query
+    for real-time streaming:
+
+    .. code-block:: python
+
+       # CEP query for real-time data
+       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       result = otp.run(data, symbols='AAPL', running=True,
+                        start=otp.dt(2023, 1, 1), end=otp.dt(2099, 1, 1))
+
+    ``batch_size`` and ``concurrency`` tune performance for multi-symbol queries:
+
+    .. code-block:: python
+
+       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       result = otp.run(data, symbols=large_symbol_list,
+                        batch_size=50,    # process 50 symbols per batch
+                        concurrency=4)    # use 4 CPU cores
+
+    ``symbol_date`` specifies the date for resolving symbols
+    in date-dependent symbologies:
+
+    .. code-block:: python
+
+       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       result = otp.run(data, symbols=['AAPL', 'MSFT'],
+                        symbol_date=otp.dt(2022, 3, 1),
+                        date=otp.dt(2022, 3, 1))
+
+       # Also accepts integer YYYYMMDD format
+       result = otp.run(data, symbols=['AAPL'], symbol_date=20220301,
+                        date=otp.dt(2022, 3, 1))
+
+    ``start_time_expression`` and ``end_time_expression`` allow dynamic time boundaries
+    using OneTick expressions. They take precedence over ``start``/``end``:
+
+    .. code-block:: python
+
+       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       result = otp.run(data, symbols='AAPL',
+                        start_time_expression='20220301093000',
+                        end_time_expression='20220301160000')
+
+    ``query_properties`` passes OneTick query properties as a dict:
+
+    .. code-block:: python
+
+       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       result = otp.run(data, symbols='AAPL',
+                        query_properties={'ALLOW_GRAPH_REUSE': 'true'},
+                        date=otp.dt(2022, 3, 1))
+
+    ``node_name`` selects the output from a specific node when running
+    an OTQ file with multiple output nodes:
+
+    .. code-block:: python
+
+       result = otp.run('path/to/multi_output.otq',
+                        symbols='AAPL', node_name='OUTPUT_1',
+                        date=otp.dt(2022, 3, 1))
     """
     _ = otli.OneTickLib()
 
     query_schema = None
     if isinstance(query, otp.Source):
         query_schema = query.schema
+
+    if print_symbol_errors is utils.default:
+        print_symbol_errors = otp.config.print_symbol_errors
 
     if timezone is utils.default:
         timezone = configuration.config.tz

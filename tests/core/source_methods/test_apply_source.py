@@ -1149,6 +1149,54 @@ class TestTypes:
         assert np.isnan(df['B'][0])
         assert df['B'][1] == 4.0
 
+    def test_decimal_int(self):
+        """ check int-decimal casting to decimal """
+        data = otp.Ticks(dict(x=[1, -1]))
+
+        data.a = data.apply(lambda row: 1 if row.x > 0 else otp.decimal("1.5"))
+        assert data.a.dtype is otp.decimal
+
+        df = otp.run(data)
+        assert all(df["a"] == [1.0, 1.5])
+
+    def test_decimal_float(self):
+        """ check float-decimal casting to decimal """
+        data = otp.Ticks(dict(x=[1, -1]))
+
+        data.a = data.apply(lambda row: 1.1 if row.x > 0 else otp.decimal("1.5"))
+        assert data.a.dtype is otp.decimal
+
+        df = otp.run(data)
+        assert all(df["a"] == [1.1, 1.5])
+
+    @pytest.mark.skipif(
+        not otp.compatibility.is_double_nan_supported_when_the_result_type_is_decimal(),
+        reason='double NaN is converted to 0 in this OneTick build',
+    )
+    @pytest.mark.parametrize("value", [None, otp.nan, otp.raw("DECIMAL_NAN()", otp.decimal)])
+    def test_decimal_nan(self, value):
+        """ check nan-decimal casting to decimal """
+        data = otp.Ticks(dict(x=[1, -1]))
+
+        data.a = data.apply(lambda row: value if row.x > 0 else otp.decimal("1.5"))
+        assert data.a.dtype is otp.decimal
+
+        df = otp.run(data)
+        assert np.isnan(df["a"][0])
+        assert df["a"][1] == 1.5
+
+    @pytest.mark.parametrize("value", [otp.inf, otp.raw("DECIMAL_INFINITY()", otp.decimal)])
+    def test_decimal_inf(self, value):
+        """ check inf-decimal casting to decimal """
+        data = otp.Ticks(dict(x=[1, -1]))
+
+        data.a = data.apply(lambda row: value if row.x > 0 else otp.decimal("1.5"))
+        assert data.a.dtype is otp.decimal
+
+        df = otp.run(data)
+        assert np.isinf(df["a"][0])
+        assert df["a"][1] == 1.5
+
 
 class TestWrong:
     def test_different_types_1(self):

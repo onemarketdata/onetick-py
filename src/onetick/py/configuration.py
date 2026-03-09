@@ -758,6 +758,15 @@ class Config:
         env_var_name='OTP_DISABLE_COMPATIBILITY_CHECKS',
     )
 
+    print_symbol_errors = OtpProperty(
+        description='When calling otp.run that returns dataframe as result '
+                    'print symbol errors from OneTick as python warnings.',
+        base_default=True,
+        env_var_name='OTP_PRINT_SYMBOL_ERRORS',
+        allowed_types=bool,
+        env_var_func=parse_true,
+    )
+
 
 def get_options_table(cls):
     options_table = ('\n'

@@ -947,7 +947,7 @@ def get_type_by_objects(objs):
 
     # does not allow to mix string and numeric types
     dtype = None
-    if str in types and (float in types or int in types or bool in types or nsectime in types or msectime in types):
+    if str in types and any(t in types for t in (float, int, bool, nsectime, msectime, decimal)):
         raise TypeError("It is not allowed to return values of string type and numeric type in one function.")
 
     # if there is only one value there, then
@@ -957,7 +957,7 @@ def get_type_by_objects(objs):
         if dtype is bool:
             return dtype
 
-    # process numeric types: the most generic is float
+    # process numeric types: the most generic is decimal (in terms of precision)
     if int in types:
         dtype = int
     if bool in types:
@@ -965,6 +965,8 @@ def get_type_by_objects(objs):
     # None is equal to otp.nan
     if float in types or type(None) in types:
         dtype = float
+    if decimal in types:
+        dtype = decimal
 
     # process string types, taking into account OneTick long strings
     if str in types:

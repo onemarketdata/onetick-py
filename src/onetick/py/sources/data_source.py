@@ -32,6 +32,16 @@ _db_doc = param_doc(
     name='db',
     desc="""
     Name(s) of the database or the database object(s).
+
+    When passing a single database, the tick type can be embedded in the name
+    using ``'DB_NAME::TICK_TYPE'`` format (e.g., ``'NYSE_TAQ::TRD'``).
+
+    When passing a list of databases, each entry can include its own tick type
+    (e.g., ``['NYSE_TAQ::TRD', 'CME::QTE']``). If some entries lack a tick type,
+    the ``tick_type`` parameter is used to fill them in.
+
+    When ``None``, the database is expected to come as part of the symbol name
+    (e.g., ``'DB::SYMBOL'``), and ``tick_type`` must be set explicitly.
     """,
     str_annotation='str, list of str, :class:`otp.DB <onetick.py.DB>`',
     default=None,
@@ -59,9 +69,13 @@ _symbols_doc = param_doc(
 _tick_type_doc = param_doc(
     name='tick_type',
     desc="""
-    Tick type of the data.
-    If not specified, all ticks from `db` will be taken.
-    If ticks can't be found or there are many databases specified in `db` then default is "TRD".
+    Tick type of the data (e.g., ``'TRD'`` for trades, ``'QTE'`` for quotes).
+
+    When :py:class:`~onetick.py.adaptive` (default), the tick type is auto-detected from the
+    database. If auto-detection fails or multiple databases are specified, defaults to ``'TRD'``.
+
+    Can be a list of strings (e.g., ``['TRD', 'QTE']``) to merge multiple tick types
+    from the same database into a single data flow.
     """,
     str_annotation='str, list of str',
     default=utils.adaptive,
@@ -174,7 +188,9 @@ _guess_schema_doc = param_doc(
 _identify_input_ts_doc = param_doc(
     name='identify_input_ts',
     desc="""
-    If set to False, the fields SYMBOL_NAME and TICK_TYPE are not appended to the output ticks.
+    If True, adds ``SYMBOL_NAME`` and ``TICK_TYPE`` fields to every output tick,
+    identifying which symbol and tick type each tick came from.
+    Especially useful when merging multiple symbols to distinguish the source of each tick.
     """,
     annotation=bool,
     default=False,
@@ -182,9 +198,16 @@ _identify_input_ts_doc = param_doc(
 _back_to_first_tick_doc = param_doc(
     name='back_to_first_tick',
     desc="""
-    Determines how far back to go looking for the latest tick before ``start`` time.
-    If one is found, it is inserted into the output time series with the timestamp set to ``start`` time.
-    Note: it will be rounded to int, so otp.Millis(999) will be 0 seconds.
+    Determines how far back (in seconds) to search for the latest tick before ``start`` time.
+    If one is found, it is prepended to the output with its timestamp changed to ``start`` time.
+    This is useful for initializing state (e.g., getting the last known price before market open).
+
+    Accepts an integer (seconds), a time offset like ``otp.Day(1)`` or ``otp.Hour(2)``,
+    or an :class:`otp.expr <onetick.py.expr>` for dynamic values.
+
+    Note: the value is rounded to whole seconds, so ``otp.Millis(999)`` becomes 0.
+    Use with ``keep_first_tick_timestamp`` to preserve the original tick time,
+    and ``max_back_ticks_to_prepend`` to retrieve more than one historical tick.
     """,
     str_annotation=('int, :ref:`offset <datetime_offsets>`, '
                     ':class:`otp.expr <onetick.py.expr>`, '
@@ -194,10 +217,12 @@ _back_to_first_tick_doc = param_doc(
 _keep_first_tick_timestamp_doc = param_doc(
     name='keep_first_tick_timestamp',
     desc="""
-    If set, new field with this name will be added to source.
-    This field contains original timestamp of the tick that was taken from before the start time of the query.
-    For all other ticks value in this field will be equal to the value of Time field.
-    This parameter is ignored if ``back_to_first_tick`` is not set.
+    Name for a new :py:class:`~onetick.py.types.nsectime` field that stores
+    the original timestamp of prepended ticks. For ticks within the query interval,
+    this field equals the ``Time`` field. For ticks prepended by ``back_to_first_tick``,
+    it contains their true historical timestamp (before it was overwritten with ``start`` time).
+
+    This parameter is ignored if ``back_to_first_tick`` is 0.
     """,
     annotation=str,
     default=None,
@@ -205,10 +230,12 @@ _keep_first_tick_timestamp_doc = param_doc(
 _presort_doc = param_doc(
     name='presort',
     desc="""
-    Add the presort EP in case of bound symbols.
-    Applicable only when ``symbols`` is not None.
-    By default, it is set to True if ``symbols`` are set
-    and to False otherwise.
+    Controls whether to use a PRESORT Event Processor when querying multiple bound symbols.
+    PRESORT parallelizes data fetching across symbols and merges results in timestamp order,
+    which is generally faster than sequential MERGE for large symbol lists.
+
+    Applicable only when ``symbols`` is set. By default, True when ``symbols`` is set,
+    False otherwise. Set to False to use sequential MERGE instead.
     """,
     annotation=bool,
     default=utils.adaptive,
@@ -235,7 +262,9 @@ _concurrency_doc = param_doc(
 _batch_size_doc = param_doc(
     name='batch_size',
     desc="""
-    Specifies the query batch size for the ``presort``.
+    Number of symbols to process in each batch during ``presort`` execution.
+    Larger batch sizes reduce overhead but use more memory. Only applicable when ``presort`` is True.
+
     By default, the value from
     :py:attr:`otp.config.default_batch_size<onetick.py.configuration.Config.default_batch_size>` is used.
     """,
@@ -245,8 +274,18 @@ _batch_size_doc = param_doc(
 _schema_doc = param_doc(
     name='schema',
     desc="""
-    Dict of <column name> -> <column type> pairs that the source is expected to have.
-    If the type is irrelevant, provide None as the type in question.
+    Dict of column name to column type pairs that the source is expected to have.
+
+    Supported types: ``int``, ``float``, ``str``, :py:class:`otp.string[N] <onetick.py.types.string>`,
+    :py:class:`otp.varstring[N] <onetick.py.types.varstring>`,
+    :py:class:`otp.nsectime <onetick.py.types.nsectime>`,
+    :py:class:`otp.msectime <onetick.py.types.msectime>`,
+    :py:class:`otp.decimal <onetick.py.types.decimal>`, ``bytes``.
+
+    If the type of a column is irrelevant, provide ``None`` as the type.
+
+    How the schema is used depends on ``schema_policy``. When ``schema`` is set and
+    ``schema_policy`` is not explicitly provided, ``schema_policy`` defaults to ``'manual'``.
     """,
     annotation=Optional[Dict[str, type]],
     default=None,
@@ -265,9 +304,12 @@ _desired_schema_doc = param_doc(
 _max_back_ticks_to_prepend_doc = param_doc(
     name='max_back_ticks_to_prepend',
     desc="""
-    When the ``back_to_first_tick`` interval is specified, this parameter determines the maximum number
-    of the most recent ticks before start_time that will be prepended to the output time series.
-    Their timestamp will be changed to start_time.
+    Maximum number of the most recent ticks before ``start`` time to prepend to the output.
+    Only used when ``back_to_first_tick`` is non-zero. All prepended ticks have their
+    timestamp changed to ``start`` time. Must be at least 1.
+
+    For example, to get the last 5 trades before market open, set ``back_to_first_tick=otp.Day(1)``
+    and ``max_back_ticks_to_prepend=5``.
     """,
     annotation=int,
     default=1,
@@ -276,8 +318,12 @@ _max_back_ticks_to_prepend_doc = param_doc(
 _where_clause_for_back_ticks_doc = param_doc(
     name='where_clause_for_back_ticks',
     desc="""
-    A logical expression that is computed only for the ticks encountered when a query goes back from the start time,
-    in search of the ticks to prepend. If it returns false, a tick is ignored.
+    A filter expression applied only to ticks found during the backward search
+    (controlled by ``back_to_first_tick``). Ticks where this expression evaluates to
+    False are skipped and not prepended.
+
+    Must be an :py:func:`otp.raw <onetick.py.raw>` expression with ``dtype=bool``.
+    For example, ``otp.raw('SIZE>=100', dtype=bool)`` keeps only ticks with SIZE >= 100.
     """,
     annotation=Raw,
     default=None,
@@ -285,8 +331,14 @@ _where_clause_for_back_ticks_doc = param_doc(
 _symbol_date_doc = param_doc(
     name='symbol_date',
     desc="""
-    Symbol date or integer in the YYYYMMDD format.
-    Can only be specified if parameters ``symbols`` is set.
+    Date used for symbol resolution in date-dependent symbologies,
+    where the same symbol identifier can map to different instruments on different dates.
+
+    Accepts :py:class:`otp.datetime <onetick.py.datetime>`, :py:class:`datetime.datetime`,
+    or an integer in the ``YYYYMMDD`` format (e.g., ``20220301``).
+
+    Can only be specified when ``symbols`` is set. If ``symbols`` is a plain list of strings,
+    it is internally converted to a first-stage query with the given ``symbol_date``.
     """,
     str_annotation=':py:class:`otp.datetime <onetick.py.datetime>` or :py:class:`datetime.datetime` or int',
     default=None,
@@ -621,7 +673,7 @@ class DataSource(Source):
         Examples
         --------
 
-        Query a single symbol from a database:
+        Query a single symbol from a database, specifying ``db`` as a string:
 
         >>> data = otp.DataSource(db='SOME_DB', tick_type='TT', symbols='S1')
         >>> otp.run(data)
@@ -629,6 +681,36 @@ class DataSource(Source):
         0 2003-12-01 00:00:00.000  1
         1 2003-12-01 00:00:00.001  2
         2 2003-12-01 00:00:00.002  3
+
+        ``db`` can also be an :py:class:`~onetick.py.DB` object:
+
+        .. code-block:: python
+
+           db = otp.DB('NYSE_TAQ')
+           data = otp.DataSource(db=db, tick_type='TRD', symbols='AAPL')
+           otp.run(data)
+
+        ``db`` can be a list to merge data from multiple databases.
+        Each entry can embed its tick type using ``'DB_NAME::TICK_TYPE'`` format:
+
+        .. code-block:: python
+
+           data = otp.DataSource(
+               db=['NYSE_TAQ::TRD', 'CME::TRD'],
+               symbols='AAPL',
+           )
+           otp.run(data)
+
+        When some databases in the list lack a tick type, ``tick_type`` fills them in:
+
+        .. code-block:: python
+
+           # Equivalent to db=['NYSE_TAQ::TRD', 'CME::TRD']
+           data = otp.DataSource(
+               db=['NYSE_TAQ', 'CME'],
+               tick_type='TRD',
+               symbols='AAPL',
+           )
 
         Parameter ``symbols`` can be a list.
         In this case specified symbols will be merged into a single data flow:
@@ -671,6 +753,52 @@ class DataSource(Source):
         4 2003-12-01 00:00:00.002  3
         5 2003-12-01 00:00:00.002 -1
 
+        Use ``date`` to query a full day of data. It sets ``start`` to the beginning
+        of the day and ``end`` to the last millisecond of the day:
+
+        >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL', date=otp.dt(2022, 3, 1))
+        >>> otp.run(data)
+                             Time  PRICE  SIZE
+        0 2022-03-01 00:00:00.000    1.3   100
+        1 2022-03-01 00:00:00.001    1.4    10
+        2 2022-03-01 00:00:00.002    1.4    50
+
+        Alternatively, use ``start`` and ``end`` for a custom time interval.
+        Standard :py:class:`datetime.datetime` objects are also accepted:
+
+        .. code-block:: python
+
+           import datetime
+           data = otp.DataSource(
+               db='NYSE_TAQ', tick_type='TRD', symbols='AAPL',
+               start=datetime.datetime(2022, 3, 1, 9, 30),
+               end=datetime.datetime(2022, 3, 1, 16, 0),
+           )
+           otp.run(data)
+
+        Or using :py:class:`otp.datetime <onetick.py.datetime>`:
+
+        .. code-block:: python
+
+           data = otp.DataSource(
+               db='NYSE_TAQ', tick_type='TRD', symbols='AAPL',
+               start=otp.dt(2022, 3, 1, 9, 30),
+               end=otp.dt(2022, 3, 1, 16, 0),
+           )
+
+        If ``date`` is set together with ``start``/``end``, ``date`` takes precedence.
+
+        ``tick_type`` can be a list to merge data from multiple tick types:
+
+        .. code-block:: python
+
+           # Merge trades and quotes from the same database
+           data = otp.DataSource(
+               db='NYSE_TAQ', tick_type=['TRD', 'QTE'],
+               symbols='AAPL', identify_input_ts=True,
+           )
+           # Use identify_input_ts=True to tell which tick type each row came from
+
         Default schema policy is **tolerant** (unless you specified ``schema`` parameter and
         left ``schema_policy`` with default value, when it will be set to **manual**).
 
@@ -703,6 +831,49 @@ class DataSource(Source):
         Traceback (most recent call last):
           ...
         ValueError: No ticks found in database(-s) US_COMP::TRD
+
+        Schema policy **tolerant_strict** uses ``schema`` if provided, otherwise falls back to
+        the database schema. It still validates type compatibility:
+
+        >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL',
+        ...                       schema={'PRICE': float}, date=otp.dt(2022, 3, 1),
+        ...                       schema_policy='tolerant_strict')
+        >>> data.schema
+        {'PRICE': <class 'float'>}
+
+        Schema policy **manual_strict** uses exactly the provided ``schema``, no database
+        schema is consulted. Fields that don't exist in the database get default values
+        (0 for ``int``, NaN for ``float``, empty string for ``str``):
+
+        .. code-block:: python
+
+           data = otp.DataSource(
+               db='NYSE_TAQ', tick_type='TRD', symbols='AAPL',
+               schema={'PRICE': float, 'CUSTOM_FLAG': int},
+               schema_policy='manual_strict',
+           )
+           # CUSTOM_FLAG will be 0 for all ticks since it doesn't exist in the database
+
+        Schema policy **fail_strict** is like ``tolerant_strict`` but raises an exception
+        when the database schema cannot be determined.
+
+        The ``schema`` parameter accepts various types. Use ``None`` for columns
+        whose type is irrelevant:
+
+        .. code-block:: python
+
+           data = otp.DataSource(
+               db='NYSE_TAQ', tick_type='TRD', symbols='AAPL',
+               schema={
+                   'PRICE': float,              # 64-bit float
+                   'SIZE': int,                  # 64-bit integer
+                   'EXCHANGE': str,              # string (default length 64)
+                   'COND': otp.string[4],        # fixed-length string of 4 chars
+                   'MEMO': otp.varstring[256],   # variable-length string up to 256 chars
+                   'TRADE_TIME': otp.nsectime,   # nanosecond-precision timestamp
+                   'OTHER': None,                # type will be inferred from database
+               },
+           )
 
         ``back_to_first_tick`` sets how far back to go looking for the latest tick before ``start`` time:
 
@@ -761,6 +932,57 @@ class DataSource(Source):
            2 2022-03-02 00:00:00.000  2022-03-02 00:00:00.000    1.0   100
            3 2022-03-02 00:00:00.001  2022-03-02 00:00:00.001    1.1   101
            4 2022-03-02 00:00:00.002  2022-03-02 00:00:00.002    1.2   102
+
+        ``presort`` controls whether to use parallel data fetching when querying multiple
+        bound symbols. It defaults to True when ``symbols`` is set. Set to False to use
+        sequential MERGE instead (useful for debugging or when order must be strictly preserved):
+
+        .. code-block:: python
+
+           # With presort (default) - parallel fetching, faster for many symbols
+           data = otp.DataSource(
+               db='NYSE_TAQ', tick_type='TRD',
+               symbols=['AAPL', 'MSFT', 'GOOGL'],
+               presort=True,  # this is the default when symbols is set
+           )
+
+           # Without presort - sequential merge
+           data = otp.DataSource(
+               db='NYSE_TAQ', tick_type='TRD',
+               symbols=['AAPL', 'MSFT', 'GOOGL'],
+               presort=False,
+           )
+
+        ``batch_size`` and ``concurrency`` tune presort performance.
+        ``batch_size`` controls how many symbols are processed per batch,
+        and ``concurrency`` sets the number of CPU cores:
+
+        .. code-block:: python
+
+           data = otp.DataSource(
+               db='NYSE_TAQ', tick_type='TRD',
+               symbols=large_symbol_list,  # e.g., 500+ symbols
+               batch_size=50,              # process 50 symbols at a time
+               concurrency=4,              # use 4 CPU cores
+           )
+
+        ``symbol_date`` specifies the date for resolving symbols in date-dependent symbologies.
+        It is only applicable when ``symbols`` is set:
+
+        .. code-block:: python
+
+           data = otp.DataSource(
+               db='NYSE_TAQ', tick_type='TRD',
+               symbols=['AAPL', 'MSFT'],
+               symbol_date=otp.dt(2022, 3, 1),
+           )
+
+           # symbol_date also accepts integers in YYYYMMDD format
+           data = otp.DataSource(
+               db='NYSE_TAQ', tick_type='TRD',
+               symbols=['AAPL', 'MSFT'],
+               symbol_date=20220301,
+           )
         """
 
         self.logger = otp.get_logger(__name__, self.__class__.__name__)
@@ -922,6 +1144,16 @@ class DataSource(Source):
 
     @property
     def db(self):
+        """Database specification passed to the constructor.
+
+        Returns a list of strings in ``'DB_NAME::TICK_TYPE'`` format when ``db`` was a string
+        or list of strings, a :py:class:`~onetick.py.core._source._symbol_param._SymbolParamColumn`
+        when ``db`` is dynamic, or ``None`` when the database comes from the symbol name.
+
+        Returns
+        -------
+        list of str, :py:class:`~onetick.py.core._source._symbol_param._SymbolParamColumn`, or None
+        """
         return self._p_db
 
     def _create_source(self, passthrough_ep, back_to_first_tick=0, keep_first_tick_timestamp=None):

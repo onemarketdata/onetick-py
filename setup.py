@@ -16,7 +16,10 @@ setup(name='onetick-py',
       version=version,
       entry_points={
           'console_scripts': [
-              'onetick-render = onetick.py.utils.render_cli:main',
+              'onetick = onetick.py.cli:otp_cli',
               'jupyter-onetick_snippets = onetick.doc_utilities.snippets:main',
           ],
+          'onetick.py.cli.plugins': [
+              'render = onetick.py.cli.render'
+          ]
       })

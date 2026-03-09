@@ -10,6 +10,29 @@
 
 ### Removed
 
+## [1.188.0] - 2026-03-09
+
+### Added
+
+- Added `otp.Source.show_hidden_ticks`
+- Added `otp.config.print_symbol_errors`
+- More AI-ready examples on the most common classes and functions: `otp.DataSource`, `otp.run`.
+
+### Changed
+
+- Use local python docker image in scripts
+- `onetick-py` has internal support for `onetick` CLI command, without `onetick-cli` package
+- `onetick-render` CLI command renamed to `onetick render`
+- `.apply` method now preserves Decimal when mixed with int or float return values.
+Previously, results could be converted to lower-precision numeric types.
+
+### Fixed
+
+- Fixed passing `pandas.DataFrame` as symbols to `otp.run`
+- Fixed getting OneTick version number on exception
+
+### Removed
+
 ## [1.187.0] - 2026-03-02
 
 ### Added

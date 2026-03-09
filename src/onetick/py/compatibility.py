@@ -13,10 +13,17 @@ from onetick.py.backports import cache
 
 @dataclass
 class OnetickVersion:
-    is_release: bool
+    release_string: str
     release_version: Optional[str]
     update_number: Optional[int]
     build_number: int
+
+    @property
+    def is_release(self):
+        return self.release_version is not None
+
+    def get_compact_string(self):
+        return f'{self.release_string} ({self.build_number})'
 
 
 @dataclass
@@ -68,7 +75,7 @@ def _parse_release_string(release_string: str, build_number: int) -> OnetickVers
     #  rel_1_25_update1
 
     if release_string == 'dev_build':
-        return OnetickVersion(False, None, None, build_number)
+        return OnetickVersion(release_string, None, None, build_number)
 
     release_type, *release_info, release_suffix = release_string.split('_')
 
@@ -86,7 +93,7 @@ def _parse_release_string(release_string: str, build_number: int) -> OnetickVers
     if release_type == 'rel':
         release_version_string = '.'.join(release_info)
         release_version = parse_version(release_version_string)
-        return OnetickVersion(True, str(release_version), update_number, build_number)
+        return OnetickVersion(release_string, str(release_version), update_number, build_number)
 
     if release_type == 'BUILD':
         if release_format_version == 1:
@@ -98,7 +105,7 @@ def _parse_release_string(release_string: str, build_number: int) -> OnetickVers
             build_string = ''.join(release_info)
             _compare_build_string_and_number(build_string, build_number, release_format_version, release_string)
 
-        return OnetickVersion(False, None, update_number, build_number)
+        return OnetickVersion(release_string, None, update_number, build_number)
 
     raise ValueError(f"Unknown release type '{release_type}' in release string '{release_string}'")
 
@@ -218,10 +225,10 @@ def get_onetick_version(db=None, context=None) -> OnetickVersionFromServer:
 
     try:
         onetick_version = _parse_release_string(release_string, build_number=build_number)
-        return OnetickVersionFromServer(*astuple(onetick_version), db, context)  # type: ignore[call-arg]
+        return OnetickVersionFromServer(*astuple(onetick_version), db_name, context)  # type: ignore[call-arg]
     except Exception as err:
         warnings.warn(f"Unknown release format string: '{release_string}'.\n{err}")
-        return OnetickVersionFromServer(False, None, None, build_number, db, context)
+        return OnetickVersionFromServer(release_string, None, None, build_number, db_name, context)
 
 
 def _is_min_build_or_version(min_release_version=None,
@@ -276,12 +283,12 @@ def _add_version_info_to_exception(exc):
     """
     Add onetick-py and onetick version numbers to exception message.
     """
-    onetick_version = get_onetick_version()
-    if not onetick_version.is_release:
-        message = f'OneTick {onetick_version.build_number}'
+    if otp.__webapi__ and hasattr(otq, '__version__'):
+        onetick_version = f'{otq.__version__} [webapi]'
     else:
-        message = f'OneTick {onetick_version.release_version} ({onetick_version.build_number})'
-    message = f'onetick-py=={otp.__version__}, {message}'
+        onetick_version = get_onetick_version(db='LOCAL').get_compact_string()
+
+    message = f'onetick-py=={otp.__version__}, OneTick {onetick_version}'
     if exc.args:
         message = str(exc.args[0]) + os.linesep + message
     exc.args = (message, *exc.args[1:])
@@ -917,3 +924,11 @@ def is_now_in_start_end_time_expressions_fixed():
     # to the end time" for short (usually <20ms) intervals
     return _is_min_build_or_version(1.26, 20260114173411,
                                     20260216120000)
+
+
+def is_double_nan_supported_when_the_result_type_is_decimal():
+    # OTDEV-37217
+    # 20251114: Fixed OTDEV-37217: CASE built-in function produces 0
+    # when the result is double NAN and the result type is DECIMAL
+    return _is_min_build_or_version(None, None,
+                                    20251218120000)

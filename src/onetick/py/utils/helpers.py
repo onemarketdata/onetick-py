@@ -13,7 +13,9 @@ def get_symbol_list_from_df(df, symbol_name_column='SYMBOL_NAME'):
     if symbol_name_column not in df.columns:
         raise ValueError(f'Dataframe used as symbol list does not contain a {symbol_name_column} column')
 
-    df = df.drop(columns=['Time'])
+    # BDS-511: adding Time column to the query may result in problems with otq.run
+    if 'Time' in df.columns:
+        df = df.drop(columns=['Time'])
 
     def symbol_from_dict(params):
         name = params[symbol_name_column]
