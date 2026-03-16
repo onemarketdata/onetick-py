@@ -1,4 +1,3 @@
-import os
 from inspect import getframeinfo, stack
 from onetick.py.otq import otq
 

@@ -7,10 +7,7 @@ import tokenize
 import warnings
 from typing import Callable, Union, Any, Optional, Iterable, Type, Tuple, Dict, List, TypeVar
 from copy import deepcopy
-from functools import wraps
-
-from onetick.py.backports import astunparse, cached_property
-
+from functools import wraps, cached_property
 from collections import deque
 from contextlib import contextmanager
 
@@ -1069,7 +1066,7 @@ class CaseExpressionParser(ExpressionParser):
                 except Exception as err:
                     orig_err = err
                     uw = UserWarning(
-                        f"Function '{astunparse(expr)}' can't be called in python, "
+                        f"Function '{ast.unparse(expr)}' can't be called in python, "
                         "will try to parse it to OneTick expression. "
                         f"Use '{self.fun.arg_name}' in function's signature to indicate "
                         "that this function can be parsed to OneTick expression."
@@ -1098,7 +1095,7 @@ class CaseExpressionParser(ExpressionParser):
                 if orig_err is not None:
                     raise err from orig_err
                 raise ValueError(
-                    f"Can't convert function '{astunparse(expr)}' to CASE() expression."
+                    f"Can't convert function '{ast.unparse(expr)}' to CASE() expression."
                 ) from err
         try:
             with self._replace_context(fp.closure_vars):
@@ -1184,7 +1181,7 @@ class CaseStatementParser:
         stmts = []
         target = stmt.target
         assert isinstance(target, (ast.Name, ast.Tuple)), (
-            f"Unsupported expression '{astunparse(target)}' is used in for statement."
+            f"Unsupported expression '{ast.unparse(target)}' is used in for statement."
             " Please, use variable or tuple of variables instead."
         )
         if isinstance(target, ast.Tuple):
@@ -1574,7 +1571,7 @@ class StatementParser(CaseStatementParser):
             assert isinstance(self.fun.ast_node, ast.FunctionDef)
             msg = (f"Function '{self.fun.ast_node.name}'"
                    f" has return annotation '{self.fun.return_annotation.__name__}',"
-                   f" but the type of statement ({astunparse(stmt)}) is '{dtype.__name__}'")
+                   f" but the type of statement ({ast.unparse(stmt)}) is '{dtype.__name__}'")
             try:
                 widest_type = ott.get_type_by_objects([dtype, self.fun.return_annotation])
             except TypeError as e:
@@ -1742,7 +1739,7 @@ class StatementParser(CaseStatementParser):
         else:
             expression = self.expression_parser.expression(stmt.value)
         assert isinstance(expression.value, (str, _Operation)), (
-            f"The statement '{astunparse(stmt)}' can't be used here"
+            f"The statement '{ast.unparse(stmt)}' can't be used here"
             " because the value of such statement can be string only"
             " as it's value will be injected directly in per tick script."
         )
@@ -1847,7 +1844,7 @@ class LambdaBlockFinder:
                 assert self.brackets.pop() == self.CLOSING_BRACKETS[token]
             except (IndexError, AssertionError):
                 self.end = self.prev.end
-                raise EndOfBlock  # noqa: W0707
+                raise EndOfBlock
 
 
 def get_lambda_source(lines):

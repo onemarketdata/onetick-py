@@ -514,10 +514,11 @@ class _inner_string(type):
     def __repr__(cls):
         return str(cls)
 
-    # We have ot use functools.cache, because 'class' in python is an object,
+    # We have to use functools.cache, because 'class' in python is an object,
     # and _inner_str for the same item is different for every call,
     # but we want to make str[1024] be equal to another str[1024]
-    @functools.lru_cache(maxsize=None)  # noqa: W1518
+    # pylint: disable-next=method-cache-max-size-none
+    @functools.lru_cache(maxsize=None)
     def __getitem__(cls, item):
 
         if (not isinstance(item, int) or item < 1) and item is not Ellipsis:

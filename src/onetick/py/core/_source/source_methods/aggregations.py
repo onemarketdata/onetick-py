@@ -609,6 +609,12 @@ def implied_vol(self: 'Source', *args, **kwargs):
     pass
 
 
+@copy_method(aggregations.functions.option_price)
+def option_price(self: 'Source', *args, **kwargs):
+    # method implementation is copied by decorator
+    pass
+
+
 @copy_method(aggregations.functions.linear_regression)
 def linear_regression(self: 'Source', *args, **kwargs):
     # method implementation is copied by decorator

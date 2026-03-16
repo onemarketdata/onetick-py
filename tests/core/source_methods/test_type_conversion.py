@@ -238,7 +238,7 @@ def test_apply_str2int_add_2(session):
 def test_apply_str2int_large_number(session):
     src = otp.Ticks(X=['1688964028797322000'])
     src['X'] = src['X'].apply(int)
-    assert src.schema['X'] == int
+    assert src.schema['X'] is int
     df = otp.run(src)
     assert df['X'].dtype == np.dtype('int64')
     assert df['X'][0] == 1688964028797322000
@@ -365,7 +365,7 @@ def test_float2int(session):
 def test_float2int_samecolumn(session):
     data = otp.Ticks({"x": [1.1, 1.7, -1.2, -1.8]})
     data["x"] = data.x.apply(int)
-    assert data.schema["x"] == int
+    assert data.schema["x"] is int
 
 
 def test_int2float(session):

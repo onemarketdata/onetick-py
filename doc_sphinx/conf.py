@@ -25,11 +25,11 @@ from sphinx.ext.autodoc import (ClassDocumenter,
 
 sys.path.insert(0, os.path.abspath('..'))
 
-import onetick  #  for doc collection # noqa
-import onetick.py as otp  # for version     # noqa
-from onetick.py.core._source.symbol import SymbolType   # noqa
-from onetick.doc_utilities.napoleon import OTNumpyDocstring  # noqa
-from onetick.py.docs.docstring_parser import Docstring  # noqa
+import onetick  #  for doc collection
+import onetick.py as otp  # for version
+from onetick.py.core._source.symbol import SymbolType
+from onetick.doc_utilities.napoleon import OTNumpyDocstring
+from onetick.py.docs.docstring_parser import Docstring
 
 
 # -- Project information -----------------------------------------------------
@@ -145,7 +145,7 @@ exclude_patterns = ['**.ipynb_checkpoints',
 
 
 # Example of how to enable files only if it's for internal usage
-# if not tags.has('Internal'):  # noqa: E0602
+# if not tags.has('Internal'):
 #    exclude_patterns += ['static/getting_started/use_cases/bestex/*.rst']
 
 

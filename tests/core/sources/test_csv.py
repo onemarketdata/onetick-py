@@ -127,14 +127,14 @@ class TestCSVSchema:
 
     def test__convert_pandas_types(self, data_dir, m_session):
         from onetick.py.core._csv_inspector import _convert_pandas_types
-        assert _convert_pandas_types(get_dtype(np.int64)) == int
-        assert _convert_pandas_types(get_dtype(int)) == int
-        assert _convert_pandas_types(get_dtype(float)) == float
-        assert _convert_pandas_types(get_dtype(str)) == str
+        assert _convert_pandas_types(get_dtype(np.int64)) is int
+        assert _convert_pandas_types(get_dtype(int)) is int
+        assert _convert_pandas_types(get_dtype(float)) is float
+        assert _convert_pandas_types(get_dtype(str)) is str
 
     def test_inspect_by_pandas_default_types(self, data_dir, m_session):
         columns, _, _ = inspect_by_pandas(os.path.join(data_dir, "test_default_types.csv"))
-        assert columns['PRICE'] == float
+        assert columns['PRICE'] is float
         assert len(columns.keys()) == 2
 
     def test_read_csv_dtype(self, data_dir, m_session):
@@ -144,8 +144,8 @@ class TestCSVSchema:
                 "clOrdId": str,
                 "px": float,
             })
-        assert data.schema['clOrdId'] == str
-        assert data.schema['px'] == float
+        assert data.schema['clOrdId'] is str
+        assert data.schema['px'] is float
 
         df = otp.run(data)
         assert pd.api.types.is_string_dtype(df.dtypes['clOrdId'])
@@ -170,11 +170,11 @@ class TestCSVSchema:
         df = otp.run(csv)
         assert len(df) == 84
 
-        assert csv.schema['idx'] == int
-        assert csv.schema['stock'] == str
-        assert csv.schema['px'] == float
-        assert csv.schema['side'] == str
-        assert csv.schema['clOrdId'] == int
+        assert csv.schema['idx'] is int
+        assert csv.schema['stock'] is str
+        assert csv.schema['px'] is float
+        assert csv.schema['side'] is str
+        assert csv.schema['clOrdId'] is int
         assert csv.schema['time_number'] == otp.nsectime
 
         assert df.dtypes['idx'] == np.dtype('int64')
@@ -194,7 +194,7 @@ class TestCSVSchema:
         df = otp.run(csv)
         assert df.dtypes['PRICE'] == float
         assert df['PRICE'][0] == 1.0
-        assert csv.schema['PRICE'] == float
+        assert csv.schema['PRICE'] is float
 
     def test_bad_dtype_for_timestamp_field(self, data_dir, m_session):
         with pytest.raises(ValueError, match="expected resulted type is ott.msectime"):
@@ -383,8 +383,8 @@ class TestCSVTimestamp:
         )
         df = otp.run(csv, date=otp.dt(2022, 5, 17), timezone='GMT')
         assert csv.schema['Time'] == otp.nsectime
-        assert csv.schema['time_formatted'] == str
-        assert csv.schema['time_formatted_2'] == str
+        assert csv.schema['time_formatted'] is str
+        assert csv.schema['time_formatted_2'] is str
         assert df.dtypes['Time'].type == np.datetime64
         assert (
             df.dtypes['time_formatted'].type == np.dtype('O') or
@@ -409,7 +409,7 @@ class TestCSVTimestamp:
         df = otp.run(csv, date=otp.dt(2022, 5, 17), timezone='GMT')
         assert csv.schema['Time'] == otp.nsectime
         assert csv.schema['time_formatted'] == otp.nsectime
-        assert csv.schema['time_formatted_2'] == str
+        assert csv.schema['time_formatted_2'] is str
         assert df.dtypes['Time'].type == np.datetime64
         assert df.dtypes['time_formatted'].type == np.datetime64
         assert (
@@ -681,7 +681,7 @@ def test_quote_char(m_session, data_dir, quote_char):
 def test_bool_column_in_csv(m_session, data_dir):
     csv = os.path.join(data_dir, 'test_bool_column_in_csv.csv')
     query = otp.CSV(csv, first_line_is_title=True, field_delimiter=',')
-    assert query.schema['BOOL_COLUMN'] == float
+    assert query.schema['BOOL_COLUMN'] is float
     df = otp.run(query)
     true_only = df[df['BOOL_COLUMN'] == 1.0]
     assert not true_only.empty

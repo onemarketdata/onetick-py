@@ -104,5 +104,15 @@ dev = [
     "sphinx-togglebutton>=0.4.4",
     "sphinxcontrib-spelling>=8.0.0",
     "twine==6.1.0",
-    "wheel==0.38.4",
+    {include-group = "lint"},
+]
+lint = [
+    "pylint>=3.3.9",
+    "ruff>=0.15.5",
+    {include-group = "mypy"},
+]
+mypy = [
+    "mypy>=1.19.1",
+    "types-python-dateutil>=2.9.0.20260124",
+    "types-pyyaml>=6.0.12.20250915",
 ]

@@ -24,6 +24,8 @@ export OTP_DEFAULT_SYMBOL="AAPL"
 export OTP_DEFAULT_START_TIME="2003/12/01 00:00:00"
 export OTP_DEFAULT_END_TIME="2003/12/04 00:00:00"
 export OTP_DEFAULT_TZ="EST5EDT"
+export OTP_DEFAULT_LICENSE_DIR="${OTP_DEFAULT_LICENSE_DIR:-/license/}"
+export OTP_DEFAULT_LICENSE_FILE="${OTP_DEFAULT_LICENSE_FILE:-/license/license.dat}"
 
 echo "generate js/switcher.json for multiple versions of docs (works only when serving to root URL)"
 python make_switcher_js.py

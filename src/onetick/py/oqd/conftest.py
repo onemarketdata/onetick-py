@@ -2,7 +2,7 @@ import pytest
 import onetick.py as otp
 
 # do not remove it, it allows to load OneTick dynamic libraries correctly,
-from onetick.py.otq import otq  # noqa: F401
+from onetick.py.otq import otq
 
 
 @pytest.fixture(scope="function", autouse=True)

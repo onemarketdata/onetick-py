@@ -418,7 +418,7 @@ class TestBaseClass:
         data = otp.Ticks({'A': [1]})
         agg = Agg('A')
         data = agg.apply(data)
-        assert data.schema['A'] == float
+        assert data.schema['A'] is float
 
     @pytest.mark.parametrize('value', [1, 1.0, otp.config['default_start_time'], 'a'])
     def test_request_type(self, value):

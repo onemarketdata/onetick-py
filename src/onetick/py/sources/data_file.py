@@ -1,9 +1,8 @@
-from typing import Optional
+from typing import Optional, Literal
 
 from onetick.py.otq import otq
 
 from onetick.py.core.source import Source
-from onetick.py.backports import Literal
 
 from .. import utils
 from ..compatibility import (

@@ -1,7 +1,6 @@
-from typing import List, Union
+from typing import List, Union, Literal
 
 import onetick.py as otp
-from onetick.py.backports import Literal
 from onetick.py.core.source import Source
 from onetick.py.otq import otq
 

@@ -1,4 +1,4 @@
-# pylama:ignore=E402,W0611
+# pylint: disable=redefined-outer-name,import-error,no-name-in-module
 import os
 from . import _version
 __version__ = _version.VERSION
@@ -7,7 +7,7 @@ del os
 
 
 def __get_onetick_relative_paths():
-    import os  # noqa
+    import os
     import sysconfig
 
     config_vars = sysconfig.get_config_vars()
@@ -27,7 +27,7 @@ def __get_onetick_relative_paths():
     return ot_bin_path, ot_python_path, ot_numpy_path
 
 
-def __validate_onetick_query_integration():  # noqa
+def __validate_onetick_query_integration():
     """
     Logic that checks correctness of integration of python with onetick.query and/or onetick.query_webapi.
     One of the modules should be installed and available to import.
@@ -36,7 +36,7 @@ def __validate_onetick_query_integration():  # noqa
     before raising an exception, we check if onetick.query_webapi is installed.
     If it is installed, we set OTP_WEBAPI environment variable and avoid raising any exception/warning.
     """
-    import os  # noqa
+    import os
     global __webapi__
 
     if os.getenv("OTP_SKIP_OTQ_VALIDATION"):
@@ -46,7 +46,7 @@ def __validate_onetick_query_integration():  # noqa
 
     try:
         # this import will fail if onetick python directory is not in sys.path
-        import onetick.query  # noqa
+        import onetick.query
         try:
             # this import will fail if numpy directory is not in sys.path on old OneTick versions
             import NumPy_OneTickQuery
@@ -132,7 +132,7 @@ def __validate_onetick_query_integration():  # noqa
 
 
 def __get_missed_pythonpaths(*paths):
-    import os  # noqa
+    import os
     from pathlib import Path
 
     pythonpath_list = os.environ.get('PYTHONPATH', '').split(os.pathsep)
@@ -145,11 +145,11 @@ def __get_missed_pythonpaths(*paths):
 
 
 def __set_onetick_path_variables():
-    import os  # noqa
+    import os
     if __webapi__ or os.getenv("OTP_SKIP_OTQ_VALIDATION"):
         return
     import warnings
-    import onetick.query as otq  # noqa
+    import onetick.query as otq
     from pathlib import Path
 
     onetick_query_init = Path(otq.__file__)
@@ -202,7 +202,7 @@ from onetick.py.cache import create_cache, delete_cache, modify_cache_config
 from onetick.py import state
 from onetick.py.core.source import Source, MetaFields
 from onetick.py.core.multi_output_source import MultiOutputSource
-from onetick.py.core.eval_query import eval  # noqa: it is ok to redefine built-in function
+from onetick.py.core.eval_query import eval
 from onetick.py.core.per_tick_script import (
     # TODO: wanna access per_tick_script classes as otp.script.static and so on
     Static as static,
@@ -265,8 +265,8 @@ def __getattr__(name):
 
 
 # aliases
-funcs = functions  # type: ignore  # noqa
-agg = aggregations  # type: ignore  # noqa
+funcs = functions  # type: ignore
+agg = aggregations  # type: ignore
 
 
 # set pandas default pandas options to show all columns

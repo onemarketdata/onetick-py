@@ -102,11 +102,9 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
     start_time_expression: str, :py:class:`~onetick.py.Operation`, optional
         Start time onetick expression of the query. If specified, it will take precedence over ``start``.
         Supported only if query is Source, Graph or Event Processor.
-        Not supported for WebAPI mode.
     end_time_expression: str, :py:class:`~onetick.py.Operation`, optional
         End time onetick expression of the query. If specified, it will take precedence over ``end``.
         Supported only if query is Source, Graph or Event Processor.
-        Not supported for WebAPI mode.
     timezone: str, optional
          The timezone of output timestamps.
          Also, when start and/or end arguments are timezone-naive, it will define their timezone.
@@ -129,8 +127,9 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
     password: str, optional
         The password used for authentication.
         Needs to be set only when the tick server is configured to use password-based authentication.
-        Note: not supported and ignored on older OneTick versions.
         By default, :py:attr:`otp.config.default_password<onetick.py.configuration.Config.default_password>` is used.
+        Note: not supported and ignored on older OneTick versions.
+        Not supported for WebAPI mode.
     batch_size: int
         Number of symbols to process in one batch. Larger batch sizes reduce overhead
         but use more memory.
@@ -164,7 +163,6 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         Default is True.
     treat_byte_arrays_as_strings: bool
         Outputs byte arrays as strings (defaults to True)
-        Not supported for WebAPI mode.
     output_matrix_per_field: bool
         Changes output format to list of matrices per field.
         Not supported for WebAPI mode.
@@ -191,7 +189,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
          If set, the output of the query should be controlled with callbacks
          and this function returns nothing.
     svg_path: str, optional
-        Not supported for WebAPI mode.
+        Path to render graph in case ``otq.API_CONFIG['RENDER_GRAPH_ON_ERROR']`` is set.
     use_connection_pool: bool
         Default is False. If set to True, the connection pool is used.
         Not supported for WebAPI mode.
@@ -409,7 +407,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
        symbol_src = otp.DataSource('REF_DB', tick_type='SYMBOLS')
        symbol_src = symbol_src[['SYMBOL_NAME']]
 
-       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       data = otp.DataSource('US_COMP', tick_type='TRD')
        result = otp.run(data, symbols=symbol_src, date=otp.dt(2022, 3, 1))
        # result is a dict keyed by symbol names from symbol_src
 
@@ -418,7 +416,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
 
     .. code-block:: python
 
-       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       data = otp.DataSource('US_COMP', tick_type='TRD')
        result = otp.run(data, symbols='AAPL', output_structure='list')
        # result is [(symbol, ticks_data, error_data, node_name), ...]
 
@@ -434,7 +432,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
     .. code-block:: python
 
        # CEP query for real-time data
-       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       data = otp.DataSource('US_COMP', tick_type='TRD')
        result = otp.run(data, symbols='AAPL', running=True,
                         start=otp.dt(2023, 1, 1), end=otp.dt(2099, 1, 1))
 
@@ -442,7 +440,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
 
     .. code-block:: python
 
-       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       data = otp.DataSource('US_COMP', tick_type='TRD')
        result = otp.run(data, symbols=large_symbol_list,
                         batch_size=50,    # process 50 symbols per batch
                         concurrency=4)    # use 4 CPU cores
@@ -452,7 +450,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
 
     .. code-block:: python
 
-       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       data = otp.DataSource('US_COMP', tick_type='TRD')
        result = otp.run(data, symbols=['AAPL', 'MSFT'],
                         symbol_date=otp.dt(2022, 3, 1),
                         date=otp.dt(2022, 3, 1))
@@ -466,7 +464,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
 
     .. code-block:: python
 
-       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       data = otp.DataSource('US_COMP', tick_type='TRD')
        result = otp.run(data, symbols='AAPL',
                         start_time_expression='20220301093000',
                         end_time_expression='20220301160000')
@@ -475,7 +473,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
 
     .. code-block:: python
 
-       data = otp.DataSource('NYSE_TAQ', tick_type='TRD')
+       data = otp.DataSource('US_COMP', tick_type='TRD')
        result = otp.run(data, symbols='AAPL',
                         query_properties={'ALLOW_GRAPH_REUSE': 'true'},
                         date=otp.dt(2022, 3, 1))
@@ -744,7 +742,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
     except Exception as e:
         e = _add_stack_info_to_exception(e)
         e = _add_version_info_to_exception(e)
-        raise e  # noqa: W0707
+        raise e
 
     if output_mode == otq.QueryOutputMode.callback:
         if manual_dataframe_callback:

@@ -1,5 +1,3 @@
-# pylama:ignore=E731
-
 import os
 from typing import Any, Dict
 
@@ -223,7 +221,7 @@ class TestLambdas:
     def test_areas(self, n):
         data = dict(x=np.random.randint(-5, 5, n).tolist())
 
-        lam = lambda row: 1 if row["x"] < -3 else 2 if row["x"] < 0 else 3 if row["x"] < 2 else 4  # noqa # NOSONAR
+        lam = lambda row: 1 if row["x"] < -3 else 2 if row["x"] < 0 else 3 if row["x"] < 2 else 4  # NOSONAR
 
         ticks = otp.Ticks(data)
         ticks.z = ticks.apply(lam)

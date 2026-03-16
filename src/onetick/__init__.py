@@ -2,14 +2,14 @@
 
 def __search_main_one_tick_dir():
     try:
-        import onetick.query_webapi  # noqa
+        import onetick.query_webapi
         # if onetick.query_webapi is imported successfully, do not raise any warnings
         return __search_main_one_tick_dir_catch(show_warnings=False)
     except ImportError:
         return __search_main_one_tick_dir_catch(show_warnings=True)
 
 
-def __search_main_one_tick_dir_catch(show_warnings=True):  # noqa: C901
+def __search_main_one_tick_dir_catch(show_warnings=True):
     import os
     import warnings
     import sysconfig
@@ -17,7 +17,7 @@ def __search_main_one_tick_dir_catch(show_warnings=True):  # noqa: C901
 
     if os.environ.get('OTP_SKIP_OTQ_VALIDATION'):
         try:
-            import onetick_stubs  # noqa
+            import onetick_stubs
         except ImportError:
             if show_warnings:
                 warnings.warn(
@@ -60,7 +60,7 @@ def __search_main_one_tick_dir_catch(show_warnings=True):  # noqa: C901
         if not default_main_one_tick_dir:
             if show_warnings:
                 warnings.warn(message)
-            return
+            return None
         message += f" We will try to use default value for your system: {default_main_one_tick_dir}."
         if show_warnings:
             warnings.warn(message)
@@ -74,7 +74,7 @@ def __search_main_one_tick_dir_catch(show_warnings=True):  # noqa: C901
                 f"MAIN_ONE_TICK_DIR is set to '{main_one_tick_dir}',"
                 " but this path is not a directory or doesn't exist."
             )
-        return
+        return None
 
     ot_bin_path = main_one_tick_dir / ot_bin_path
     ot_python_path = main_one_tick_dir / ot_python_path
@@ -87,7 +87,7 @@ def __search_main_one_tick_dir_catch(show_warnings=True):  # noqa: C901
                     f" and it must contain '{directory}' directory,"
                     " but this path is not a directory or doesn't exist."
                 )
-            return
+            return None
 
     ot_numpy_path = main_one_tick_dir / ot_numpy_path
 
@@ -100,8 +100,9 @@ try:
     # this block works if we are in a onetick wheel build
     # (onetick binaries and onetick.query are installed with pip)
     # if we don't have import error, then sys.path was already modified in env.py from onetick wheel
+    # pylint: disable-next=import-self
     from . import env  # type: ignore
-    from .__version__ import __version__  # noqa
+    from .__version__ import __version__
     __build__ = ''
 except ImportError:
     # otherwise we are in a regular onetick-py installation and

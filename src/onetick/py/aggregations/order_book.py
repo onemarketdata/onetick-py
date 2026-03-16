@@ -1,5 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional, Union
-from onetick.py.backports import Literal
+from typing import TYPE_CHECKING, List, Optional, Union, Literal
 
 from abc import ABC
 

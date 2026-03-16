@@ -1,6 +1,7 @@
 import datetime
 import sys
 import warnings
+import zoneinfo
 
 from typing import Optional
 from contextlib import suppress
@@ -9,7 +10,6 @@ import dateutil.tz
 import tzlocal
 
 import onetick.py as otp
-from onetick.py.backports import zoneinfo
 
 
 def get_tzfile_by_name(timezone):

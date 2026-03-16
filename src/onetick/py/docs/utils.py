@@ -37,14 +37,13 @@ def param_doc(name,
     return doc, param
 
 
-def docstring(parameters: Optional[list] = None, add_self=False):
-    parameters = parameters or []
-
-    def _decorator(fun):
-        @wraps(fun)
-        def _inner(*args, **kwargs):
-            return fun(*args, **kwargs)
-        doc = fun.__doc__ or ''
+def docstring(*, parameters: list, add_self=False):
+    """
+    Modify object's docstring and signature by *adding* parameters described in ``parameters`` list.
+    Object can be a class or a function.
+    """
+    def _decorator(obj):
+        doc = obj.__doc__ or ''
         doc = Docstring(doc)
         sig = []
         if add_self:
@@ -53,9 +52,9 @@ def docstring(parameters: Optional[list] = None, add_self=False):
         for d, param in parameters:
             doc['Parameters'] = d
             sig.append(param)
-        _inner.__doc__ = doc.build()
-        _inner.__signature__ = Signature(sig)
-        return _inner
+        obj.__doc__ = doc.build()
+        obj.__signature__ = Signature(sig)
+        return obj
     return _decorator
 
 

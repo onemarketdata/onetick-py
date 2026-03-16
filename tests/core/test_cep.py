@@ -22,7 +22,7 @@ def session():
 
 class BaseRunning:
 
-    def run(self):  # noqa
+    def run(self):
         self.run = True
 
         thread = threading.Thread(target=self._check_loop)

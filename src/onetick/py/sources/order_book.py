@@ -87,7 +87,7 @@ class _ObSource(DataSource):
 
 @docstring(parameters=OB_SNAPSHOT_DOC_PARAMS + DATA_SOURCE_DOC_PARAMS)
 class ObSnapshot(_ObSource):
-    """
+    r"""
     Construct a source providing order book snapshot for a given ``db``.
     This is just a shortcut for
     :class:`~onetick.py.DataSource` + :func:`~onetick.py.agg.ob_snapshot`.
@@ -102,11 +102,15 @@ class ObSnapshot(_ObSource):
     Examples
     ---------
 
-    >>> data = otp.ObSnapshot(db='SOME_DB', tick_type='PRL', symbols='AA', max_levels=1) # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  PRICE             UPDATE_TIME  SIZE  LEVEL  BUY_SELL_FLAG
-    0 2003-12-04    2.0 2003-12-01 00:00:00.003     6      1              1
-    1 2003-12-04    5.0 2003-12-01 00:00:00.004     7      1              0
+    >>> data = otp.ObSnapshot(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24', max_levels=3)  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+                     Time     PRICE  SIZE  LEVEL                   UPDATE_TIME  BUY_SELL_FLAG
+    0 2024-02-01 10:00:00  17351.75     1      1 2024-02-01 09:59:59.701711193              1
+    1 2024-02-01 10:00:00  17352.00     3      2 2024-02-01 09:59:59.582195881              1
+    2 2024-02-01 10:00:00  17352.25     3      3 2024-02-01 09:59:59.580457957              1
+    3 2024-02-01 10:00:00  17351.25     1      1 2024-02-01 09:59:59.867609851              0
+    4 2024-02-01 10:00:00  17351.00     6      2 2024-02-01 09:59:59.867226023              0
+    5 2024-02-01 10:00:00  17350.75     2      3 2024-02-01 09:59:59.867226023              0
     """
     OB_AGG_FUNC = ob_snapshot
     OB_AGG_PARAMS = OB_SNAPSHOT_DOC_PARAMS
@@ -129,10 +133,17 @@ class ObSnapshotWide(_ObSource):
     Examples
     ---------
 
-    >>> data = otp.ObSnapshotWide(db='SOME_DB', tick_type='PRL', symbols='AA', max_levels=1) # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  BID_PRICE         BID_UPDATE_TIME  BID_SIZE  ASK_PRICE         ASK_UPDATE_TIME  ASK_SIZE  LEVEL
-    0 2003-12-03        5.0 2003-12-01 00:00:00.004         7        2.0 2003-12-01 00:00:00.003         6      1
+    >>> data = otp.ObSnapshotWide(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\\H24',
+    ...                           max_levels=3)  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+                     Time  BID_PRICE  BID_SIZE               BID_UPDATE_TIME  ASK_PRICE  ASK_SIZE \
+                                      ASK_UPDATE_TIME  LEVEL
+    0 2024-02-01 10:00:00   17351.25         1 2024-02-01 09:59:59.867609851   17351.75         1 \
+                        2024-02-01 09:59:59.701711193      1
+    1 2024-02-01 10:00:00   17351.00         6 2024-02-01 09:59:59.867226023   17352.00         3 \
+                        2024-02-01 09:59:59.582195881      2
+    2 2024-02-01 10:00:00   17350.75         2 2024-02-01 09:59:59.867226023   17352.25         3 \
+                        2024-02-01 09:59:59.580457957      3
     """
     OB_AGG_FUNC = ob_snapshot_wide
     OB_AGG_PARAMS = OB_SNAPSHOT_WIDE_DOC_PARAMS
@@ -140,7 +151,7 @@ class ObSnapshotWide(_ObSource):
 
 @docstring(parameters=OB_SNAPSHOT_FLAT_DOC_PARAMS + DATA_SOURCE_DOC_PARAMS)
 class ObSnapshotFlat(_ObSource):
-    """
+    r"""
     Construct a source providing order book flat snapshot for a given ``db``.
     This is just a shortcut for
     :class:`~onetick.py.DataSource` + :func:`~onetick.py.agg.ob_snapshot_flat`.
@@ -155,11 +166,12 @@ class ObSnapshotFlat(_ObSource):
     Examples
     ---------
 
-    >>> data = otp.ObSnapshotFlat(db='SOME_DB', tick_type='PRL', symbols='AA', max_levels=1) # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  BID_PRICE1        BID_UPDATE_TIME1  BID_SIZE1  ASK_PRICE1        ASK_UPDATE_TIME1  ASK_SIZE1
-    0 2003-12-03         5.0 2003-12-01 00:00:00.004          7         2.0 2003-12-01 00:00:00.003          6
-    """
+    >>> data = otp.ObSnapshotFlat(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24',
+    ...                           max_levels=3)  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+                     Time  BID_PRICE1  BID_SIZE1              BID_UPDATE_TIME1  ASK_PRICE1  ASK_SIZE1 ...
+    0 2024-02-01 10:00:00    17351.25          1 2024-02-01 09:59:59.867609851    17351.75          1 ...
+   """
     OB_AGG_FUNC = ob_snapshot_flat
     OB_AGG_PARAMS = OB_SNAPSHOT_FLAT_DOC_PARAMS
 
@@ -181,12 +193,12 @@ class ObSummary(_ObSource):
     Examples
     ---------
 
-    >>> data = otp.ObSummary(db='SOME_DB', tick_type='PRL', symbols='AA', max_levels=1) # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  BID_PRICE  BID_SIZE  BID_VWAP  BEST_BID_PRICE  WORST_BID_SIZE  NUM_BID_LEVELS  ASK_SIZE\
-              ASK_VWAP  BEST_ASK_PRICE  WORST_ASK_PRICE  NUM_ASK_LEVELS
-    0 2003-12-04        NaN         7       5.0             5.0             NaN               1         6\
-           2.0             2.0              2.0               1
+    >>> data = otp.ObSummary(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\\H24', max_levels=3)  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+                     Time  BID_SIZE      BID_VWAP  BEST_BID_PRICE  WORST_BID_PRICE  NUM_BID_LEVELS  ASK_SIZE \
+                             ASK_VWAP  BEST_ASK_PRICE  WORST_ASK_PRICE  NUM_ASK_LEVELS
+    0 2024-02-01 10:00:00         9  17350.972222        17351.25         17350.75               3         7 \
+                         17352.071429        17351.75         17352.25               3
     """
     OB_AGG_FUNC = ob_summary
     OB_AGG_PARAMS = OB_SUMMARY_DOC_PARAMS
@@ -194,7 +206,7 @@ class ObSummary(_ObSource):
 
 @docstring(parameters=OB_SIZE_DOC_PARAMS + DATA_SOURCE_DOC_PARAMS)
 class ObSize(_ObSource):
-    """
+    r"""
     Construct a source providing number of order book levels for a given ``db``.
     This is just a shortcut for
     :class:`~onetick.py.DataSource` + :func:`~onetick.py.agg.ob_size`.
@@ -209,10 +221,14 @@ class ObSize(_ObSource):
     Examples
     ---------
 
-    >>> data = otp.ObSize(db='SOME_DB', tick_type='PRL', symbols='AA', max_levels=10) # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  ASK_VALUE  BID_VALUE
-    0 2003-12-01      84800      64500
+    >>> data = otp.ObSize(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24',
+    ...                   bucket_interval=otp.Minute(5), max_levels=3)  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+                      Time  ASK_VALUE  BID_VALUE
+    0  2024-02-01 10:05:00       12.0       10.0
+    1  2024-02-01 10:10:00       12.0        5.0
+    2  2024-02-01 10:15:00       11.0       13.0
+    ...
     """
     OB_AGG_FUNC = ob_size
     OB_AGG_PARAMS = OB_SIZE_DOC_PARAMS
@@ -220,7 +236,7 @@ class ObSize(_ObSource):
 
 @docstring(parameters=OB_VWAP_DOC_PARAMS + DATA_SOURCE_DOC_PARAMS)
 class ObVwap(_ObSource):
-    """
+    r"""
     Construct a source providing the size-weighted price
     computed over a specified number of order book levels for a given ``db``.
     This is just a shortcut for
@@ -236,10 +252,14 @@ class ObVwap(_ObSource):
     Examples
     ---------
 
-    >>> data = otp.ObVwap(db='SOME_DB', tick_type='PRL', symbols='AA', max_levels=10) # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  ASK_VALUE  BID_VALUE
-    0 2003-12-01     23.313   23.20848
+    >>> data = otp.ObVwap(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24',
+    ...                   bucket_interval=otp.Minute(5))  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+                      Time     ASK_VALUE     BID_VALUE
+    0  2024-02-01 10:05:00  17493.087642  17013.839286
+    1  2024-02-01 10:10:00  17486.863024  17006.515027
+    2  2024-02-01 10:15:00  17494.471485  17014.829879
+    ...
     """
     OB_AGG_FUNC = ob_vwap
     OB_AGG_PARAMS = OB_VWAP_DOC_PARAMS
@@ -247,7 +267,7 @@ class ObVwap(_ObSource):
 
 @docstring(parameters=OB_NUM_LEVELS_DOC_PARAMS + DATA_SOURCE_DOC_PARAMS)
 class ObNumLevels(_ObSource):
-    """
+    r"""
     Construct a source providing the number of levels in the order book for a given ``db``.
     This is just a shortcut for
     :class:`~onetick.py.DataSource` + :func:`~onetick.py.agg.ob_num_levels`.
@@ -262,10 +282,14 @@ class ObNumLevels(_ObSource):
     Examples
     ---------
 
-    >>> data = otp.ObNumLevels(db='SOME_DB', tick_type='PRL', symbols='AA') # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  ASK_VALUE  BID_VALUE
-    0 2003-12-01        248         67
+    >>> data = otp.ObNumLevels(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24',
+    ...                        bucket_interval=otp.Second(300))  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11))  # doctest: +SKIP
+                      Time  ASK_VALUE  BID_VALUE
+    0  2024-02-01 10:05:00      743.0      830.0
+    1  2024-02-01 10:10:00      753.0      820.0
+    2  2024-02-01 10:15:00      741.0      831.0
+    ...
     """
     OB_AGG_FUNC = ob_num_levels
     OB_AGG_PARAMS = OB_NUM_LEVELS_DOC_PARAMS

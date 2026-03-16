@@ -1,4 +1,3 @@
-# pylama:ignore=E1123
 import pytest
 
 import onetick.py as otp
@@ -145,7 +144,7 @@ class TestObSnapshot:
         })
 
         data = otp.agg.ob_snapshot(size_max_fractional_digits=8).apply(data)
-        assert data.schema['SIZE'] == float
+        assert data.schema['SIZE'] is float
 
         df = otp.run(data)
         assert len(df) == 3
@@ -194,8 +193,8 @@ class TestObSnapshotWide:
         })
 
         data = otp.agg.ob_snapshot_wide(size_max_fractional_digits=8).apply(data)
-        assert data.schema['BID_SIZE'] == float
-        assert data.schema['ASK_SIZE'] == float
+        assert data.schema['BID_SIZE'] is float
+        assert data.schema['ASK_SIZE'] is float
 
         df = otp.run(data)
         assert set(df['BID_SIZE']) == {4.4, 7.5}
@@ -255,8 +254,8 @@ class TestObSnapshotFlat:
             size_max_fractional_digits=8, max_levels=2
         ).apply(data)
         for i in (1, 2):
-            assert data.schema[f'BID_SIZE{i}'] == float
-            assert data.schema[f'ASK_SIZE{i}'] == float
+            assert data.schema[f'BID_SIZE{i}'] is float
+            assert data.schema[f'ASK_SIZE{i}'] is float
 
         d = otp.run(data).iloc[0].to_dict()
 
@@ -322,8 +321,8 @@ class TestObSummary:
         })
 
         data = otp.agg.ob_summary(size_max_fractional_digits=8).apply(data)
-        assert data.schema['BID_SIZE'] == float
-        assert data.schema['ASK_SIZE'] == float
+        assert data.schema['BID_SIZE'] is float
+        assert data.schema['ASK_SIZE'] is float
 
         d = otp.run(data).iloc[0].to_dict()
 

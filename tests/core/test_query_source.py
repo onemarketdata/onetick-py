@@ -66,9 +66,9 @@ def test_query_config_3(cur_dir):
 
     out_schema = data.columns(skip_meta_fields=True)
     assert len(out_schema) == 3
-    assert "x" in out_schema and out_schema["x"] == int
-    assert "y" in out_schema and out_schema["y"] == str
-    assert "z" in out_schema and out_schema["z"] == float
+    assert "x" in out_schema and out_schema["x"] is int
+    assert "y" in out_schema and out_schema["y"] is str
+    assert "z" in out_schema and out_schema["z"] is float
 
 
 def test_query_config_4(cur_dir):
@@ -80,9 +80,9 @@ def test_query_config_4(cur_dir):
 
     out_schema = data.columns(skip_meta_fields=True)
     assert len(out_schema) == 3
-    assert "x" in out_schema and out_schema["x"] == int
-    assert "y" in out_schema and out_schema["y"] == str
-    assert "z" in out_schema and out_schema["z"] == float
+    assert "x" in out_schema and out_schema["x"] is int
+    assert "y" in out_schema and out_schema["y"] is str
+    assert "z" in out_schema and out_schema["z"] is float
 
 
 def test_query_config_5(cur_dir):
@@ -94,10 +94,10 @@ def test_query_config_5(cur_dir):
 
     out_schema = data.columns(skip_meta_fields=True)
     assert len(out_schema) == 4
-    assert "a" in out_schema and out_schema["a"] == int
-    assert "x" in out_schema and out_schema["x"] == int
-    assert "y" in out_schema and out_schema["y"] == str
-    assert "z" in out_schema and out_schema["z"] == float
+    assert "a" in out_schema and out_schema["a"] is int
+    assert "x" in out_schema and out_schema["x"] is int
+    assert "y" in out_schema and out_schema["y"] is str
+    assert "z" in out_schema and out_schema["z"] is float
 
 
 def test_query_config_6(cur_dir):
@@ -125,14 +125,14 @@ def test_query_config_6(cur_dir):
     out_schema_2 = res_2.columns(skip_meta_fields=True)
 
     assert len(out_schema_0) == 1
-    assert "a" in out_schema_0 and out_schema_0["a"] == int
+    assert "a" in out_schema_0 and out_schema_0["a"] is int
 
     assert len(out_schema_1) == 2
-    assert "a" in out_schema_1 and out_schema_1["a"] == int
-    assert "x" in out_schema_1 and out_schema_1["x"] == int
+    assert "a" in out_schema_1 and out_schema_1["a"] is int
+    assert "x" in out_schema_1 and out_schema_1["x"] is int
 
     assert len(out_schema_2) == 1
-    assert "x" in out_schema_2 and out_schema_2["x"] == int
+    assert "x" in out_schema_2 and out_schema_2["x"] is int
 
 
 def test_query_config_neg_0():

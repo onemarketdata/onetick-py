@@ -1,4 +1,3 @@
-# pylama:ignore=W0612
 import pytest
 import random
 import pandas as pd

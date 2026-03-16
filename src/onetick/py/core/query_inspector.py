@@ -419,7 +419,8 @@ def add_pins(otq_path, query_name, specification):
                 if res:
                     for inx, v in enumerate(specification):
                         node, pin_flag, pin_name = v
-                        if node.NUM == num:  # noqa
+                        # pylint: disable-next=used-before-assignment
+                        if node.NUM == num:
                             if pin_flag is None:
                                 continue
                             node_name = "NODE_" + str(num)

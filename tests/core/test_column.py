@@ -71,7 +71,7 @@ class TestIn:
         data = otp.Ticks(dict(X=["a", "ab", "bab"]))
         data["Z"] = data["X"].isin("ab")
         df = otp.run(data)
-        assert data["Z"].dtype == float
+        assert data["Z"].dtype is float
         assert df["Z"].dtype == float
         assert all(df == [0.0, 1.0, 0.0])
 
@@ -95,8 +95,8 @@ class TestMap:
     def test_map(self, session):
         data = otp.Ticks(dict(X=["a", "ab", "bab"]))
         data["Z"] = data["X"].map({"a": "A", "bab": "BAB"})
-        assert data["Z"].dtype == str
-        assert data.schema["Z"] == str
+        assert data["Z"].dtype is str
+        assert data.schema["Z"] is str
         df = otp.run(data)
         assert pd.api.types.is_string_dtype(df["Z"].dtype)
         assert all(df["Z"] == ["A", "", "BAB"])
@@ -126,19 +126,19 @@ class TestMap:
     def test_map_existing_column_type(self, session):
         data = otp.Ticks(dict(X=["a", "ab", "bab"]))
         data["Z"] = 123
-        assert data["Z"].dtype == int
+        assert data["Z"].dtype is int
         data["Z"] = data["X"].map({"a": "A", "bab": "BAB"})
-        assert data["Z"].dtype == str
+        assert data["Z"].dtype is str
         df = otp.run(data)
         assert pd.api.types.is_string_dtype(df["Z"].dtype)
         assert all(df["Z"] == ["A", "", "BAB"])
 
     def test_map_int_float_type(self, session):
         data = otp.Ticks(dict(X=[1.1, 2, 3]))
-        assert data.schema["X"] == float
+        assert data.schema["X"] is float
         # mix of int and float is ok
         data["Z"] = data["X"].map({1.1: 1.2, 4: 4})
-        assert data["Z"].dtype == float
+        assert data["Z"].dtype is float
         df = otp.run(data)
         assert df["Z"].dtype == float
         assert all(df["Z"] == [1.2, 0, 0])
@@ -168,7 +168,7 @@ def test_if():
 
     with pytest.raises(TypeError):
         # it is not allowed to use _Column in if-where clause
-        if (3 != 4) and Column("x"):    # noqa
+        if (3 != 4) and Column("x"):
             pass
 
     with pytest.raises(TypeError):

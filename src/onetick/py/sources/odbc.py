@@ -3,7 +3,6 @@ from typing import Optional, List
 import onetick.py as otp
 from onetick.py.otq import otq
 
-import onetick.py.db._inspection
 from onetick.py.core.source import Source
 
 from .. import utils, configuration

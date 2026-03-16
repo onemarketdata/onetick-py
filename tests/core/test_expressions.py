@@ -7,7 +7,6 @@ from onetick.py.core._internal._state_objects import _StateColumn
 from onetick.py.core.column import _Column
 
 import onetick.py as otp
-from onetick.test.fixtures import m_session as session
 
 
 class TestMethodOnExpressions:

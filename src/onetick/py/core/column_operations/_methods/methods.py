@@ -103,7 +103,7 @@ def _plus(prev_op, other, left, right, left_t, right_t):
         raise _type_error_for_op("+", f"'{left_t}' and '{right_t}'")
 
 
-def _minus(prev_op, other, left, right, left_t, right_t):  # noqa # NOSONAR
+def _minus(prev_op, other, left, right, left_t, right_t):  # NOSONAR
     op_str = f"{left} - {right}"
     # Between datetime (msectime and nsectime) types, only the - operator is allowed.
     if are_time(left_t, right_t):

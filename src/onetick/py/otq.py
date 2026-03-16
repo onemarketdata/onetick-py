@@ -1,3 +1,5 @@
+# pylint: disable=import-error,no-name-in-module
+
 # This file is used to import the correct query module:
 # onetick.query or onetick.query_webapi
 # based on the environment variable OTP_WEBAPI
@@ -33,8 +35,8 @@ class OneTickLib:
 
 
 if os.getenv("OTP_SKIP_OTQ_VALIDATION"):
-    import onetick_stubs as otq  # noqa: F401
-    import pyomd  # noqa: F401
+    import onetick_stubs as otq
+    import pyomd
 
     class ConfigStub:
         API_CONFIG: dict = {}
@@ -49,7 +51,7 @@ if os.getenv("OTP_SKIP_OTQ_VALIDATION"):
     setattr(otq, 'graph_components', otq)
 
 elif otp.__webapi__:
-    import onetick.query_webapi as otq  # noqa: F401
+    import onetick.query_webapi as otq
     setattr(otq, 'webapi', True)
 
     from onetick.py.pyomd_mock import pyomd
@@ -57,7 +59,7 @@ elif otp.__webapi__:
     __original_run = otq.run
 
     def run(*args, **kwargs):
-        from onetick.py import config  # noqa
+        from onetick.py import config
         from onetick.py.compatibility import (
             is_max_concurrency_with_webapi_supported,
             is_webapi_access_token_scope_supported
@@ -78,25 +80,20 @@ elif otp.__webapi__:
             kwargs['query'] = query
             kwargs['query_name'] = query_name
 
-        del_params = [
-            'start_time_expression',
-            'end_time_expression',
+        ignore_deleted_params = [
+            'time_as_nsec',
             'alternative_username',
+            'max_expected_ticks_per_symbol'
+        ]
+        del_params = [
             'batch_size',
-            'treat_byte_arrays_as_strings',
             'output_matrix_per_field',
             'return_utc_times',
             'connection',
             'svg_path',
             'use_connection_pool',
-            'time_as_nsec',
-            'max_expected_ticks_per_symbol',
-        ]
-        ignore_deleted_params = [
-            'treat_byte_arrays_as_strings',
-            'time_as_nsec',
-            'alternative_username',
-            'max_expected_ticks_per_symbol'
+            'password',
+            *ignore_deleted_params,
         ]
         for param in del_params:
             if param in kwargs:
@@ -104,21 +101,10 @@ elif otp.__webapi__:
                     warnings.warn(f'Parameter {param} is not supported in WebAPI mode and will be ignored.')
                 del kwargs[param]
 
-        from onetick.py import config  # noqa
-        if 'http_address' not in kwargs:
-            kwargs['http_address'] = config.http_address
-
-        if kwargs.get('username'):
-            kwargs['http_username'] = kwargs['username']
-            del kwargs['username']
-        else:
-            kwargs['http_username'] = config.http_username
-
-        if kwargs.get('password'):
-            kwargs['http_password'] = kwargs['password']
-            del kwargs['password']
-        else:
-            kwargs['http_password'] = config.http_password
+        from onetick.py import config
+        kwargs.setdefault('http_address', config.http_address)
+        kwargs.setdefault('http_username', config.http_username)
+        kwargs.setdefault('http_password', config.http_password)
 
         if 'access_token' not in kwargs:
             if config.access_token:
@@ -166,11 +152,8 @@ elif otp.__webapi__:
             if 'access_token_url' in kwargs:
                 del kwargs['access_token_url']
 
-        if 'http_proxy' not in kwargs:
-            kwargs['http_proxy'] = config.http_proxy
-
-        if 'https_proxy' not in kwargs:
-            kwargs['https_proxy'] = config.https_proxy
+        kwargs.setdefault('http_proxy', config.http_proxy)
+        kwargs.setdefault('https_proxy', config.https_proxy)
 
         webapi_run_parameters = inspect.signature(__original_run).parameters
 
@@ -203,20 +186,20 @@ elif otp.__webapi__:
 
     otq.OneTickLib = OneTickLib
 
-    class otli:  # type: ignore # noqa: F401
+    class otli:  # type: ignore
         OneTickLib = otq.OneTickLib  # NOSONAR
 
 else:
-    import onetick.query as otq  # type: ignore # noqa: F401
-    import pyomd  # type: ignore # noqa: F401
-    import onetick.lib.instance as otli  # type: ignore # noqa: F401
+    import onetick.query as otq  # type: ignore
+    import pyomd  # type: ignore
+    import onetick.lib.instance as otli  # type: ignore
     setattr(otq, 'webapi', False)
 
 
 def _tmp_otq_path():
     # copied from onetick.test.fixtures _keep_generated_dir() with replacement to /tmp
     # required with OTP_WEBAPI_TEST_MODE to separate otq files from shared dbs+config+locator+acl files
-    from onetick.py import utils  # noqa
+    from onetick.py import utils
     res = os.path.join(utils.TMP_CONFIGS_DIR(), os.environ.get("ONE_TICK_TMP_DIR", "otqs"))
     res = res.replace(utils.temp.WEBAPI_TEST_MODE_SHARED_CONFIG,
                       os.path.join(tempfile.gettempdir(), "test_" + getpass.getuser()))

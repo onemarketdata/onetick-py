@@ -1,6 +1,5 @@
 from onetick.py import types as ott
 from onetick.py.core.column_operations.accessors._accessor import _Accessor
-from onetick.py.core.column_operations.base import _Operation
 
 
 class _FloatAccessor(_Accessor):

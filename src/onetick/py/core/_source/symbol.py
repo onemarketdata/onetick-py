@@ -202,4 +202,4 @@ class SymbolType:
         return self._get(item, dtype)
 
 
-Symbol = SymbolType()  # noqa mypy fix
+Symbol = SymbolType()

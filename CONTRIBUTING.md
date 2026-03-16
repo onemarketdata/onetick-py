@@ -174,18 +174,15 @@ We have one special subsection name `### Backward incompatible changes`.
 
 - We support multiple python versions **3.9, 3.10, 3.11, 3.12, 3.13, 3.14**.
   But python version **3.12** is used for development and testing.
-- Keep in mind that some features are available only for specific versions.
+- Keep in mind that some language features are available only for specific versions.
   We collected backports in the `./onetick/py/backports.py` file,
-  so you can use it in your code to DRY with imports like `from onetick.py.backports import Literal`.
-- Current backported entities is: `Literal`, `zoneinfo`, `cached_property`, `ast.unparse()`
-  replaced with `astunparse()`, `singledispatchmethod`.
-  Add your backports there for the future usage by other, and update `CONTRIBUTING.md` file as well.
+  so you can use it in your code to DRY with imports like `from onetick.py.backports import LiteralString`.
 
 ## Documentation suggestions
 
 - start with the simplest example illustrating the most common functionality
 - try to come up with (simple) examples based on business cases
 - do not assume any knowledge of OneTick / don't use OneTick jargon (e.g., EP names)
-- use `otp.run(q, ...)` in the examples as opposed to `q.to_df()`, `q()`, etc
+- use `otp.run(q, ...)` in the examples as opposed to deprecated `q.to_df()`, `q()`, etc
 - spell check
 - give intuitive names to variables

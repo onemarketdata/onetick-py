@@ -1,5 +1,3 @@
-# pylama:ignore=E731,E131,R1727,C3001,W0612,E501
-
 import ast
 import os
 import time
@@ -513,7 +511,7 @@ X = (X) + (3);
 
         def func(tick):
             tick['X'] = 0
-            while True and tick['X'] < 5:  # noqa
+            while True and tick['X'] < 5:
                 tick['X'] += 1
 
         data = otp.Tick(A=1)
@@ -535,12 +533,12 @@ X = (X) + (1);
 
         def no_fun(tick):
             tick['X'] = 0
-            while True:  # noqa
+            while True:
                 tick['X'] += 1
 
         def fun(tick):
             tick['X'] = 0
-            while True:  # noqa
+            while True:
                 tick['X'] += 1
                 break
 

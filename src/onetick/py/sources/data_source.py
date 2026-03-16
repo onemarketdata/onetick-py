@@ -34,10 +34,10 @@ _db_doc = param_doc(
     Name(s) of the database or the database object(s).
 
     When passing a single database, the tick type can be embedded in the name
-    using ``'DB_NAME::TICK_TYPE'`` format (e.g., ``'NYSE_TAQ::TRD'``).
+    using ``'DB_NAME::TICK_TYPE'`` format (e.g., ``'US_COMP::TRD'``).
 
     When passing a list of databases, each entry can include its own tick type
-    (e.g., ``['NYSE_TAQ::TRD', 'CME::QTE']``). If some entries lack a tick type,
+    (e.g., ``['US_COMP::TRD', 'CME::QTE']``). If some entries lack a tick type,
     the ``tick_type`` parameter is used to fill them in.
 
     When ``None``, the database is expected to come as part of the symbol name
@@ -254,7 +254,7 @@ _concurrency_doc = param_doc(
     For the auxiliary queries (like first-stage queries) empty value means OneTick's default of 1.
     If :py:attr:`otp.config.presort_force_default_concurrency<onetick.py.configuration.Config.presort_force_default_concurrency>`
     is set then default concurrency value will be set in all PRESORT EPs in all queries.
-    """,  # noqa: E501
+    """,
     annotation=int,
     default=utils.default,
     str_default=' :py:class:`onetick.py.utils.default`',
@@ -686,7 +686,7 @@ class DataSource(Source):
 
         .. code-block:: python
 
-           db = otp.DB('NYSE_TAQ')
+           db = otp.DB('US_COMP')
            data = otp.DataSource(db=db, tick_type='TRD', symbols='AAPL')
            otp.run(data)
 
@@ -696,7 +696,7 @@ class DataSource(Source):
         .. code-block:: python
 
            data = otp.DataSource(
-               db=['NYSE_TAQ::TRD', 'CME::TRD'],
+               db=['US_COMP::TRD', 'CME::TRD'],
                symbols='AAPL',
            )
            otp.run(data)
@@ -705,9 +705,9 @@ class DataSource(Source):
 
         .. code-block:: python
 
-           # Equivalent to db=['NYSE_TAQ::TRD', 'CME::TRD']
+           # Equivalent to db=['US_COMP::TRD', 'CME::TRD']
            data = otp.DataSource(
-               db=['NYSE_TAQ', 'CME'],
+               db=['US_COMP', 'CME'],
                tick_type='TRD',
                symbols='AAPL',
            )
@@ -770,7 +770,7 @@ class DataSource(Source):
 
            import datetime
            data = otp.DataSource(
-               db='NYSE_TAQ', tick_type='TRD', symbols='AAPL',
+               db='US_COMP', tick_type='TRD', symbols='AAPL',
                start=datetime.datetime(2022, 3, 1, 9, 30),
                end=datetime.datetime(2022, 3, 1, 16, 0),
            )
@@ -781,7 +781,7 @@ class DataSource(Source):
         .. code-block:: python
 
            data = otp.DataSource(
-               db='NYSE_TAQ', tick_type='TRD', symbols='AAPL',
+               db='US_COMP', tick_type='TRD', symbols='AAPL',
                start=otp.dt(2022, 3, 1, 9, 30),
                end=otp.dt(2022, 3, 1, 16, 0),
            )
@@ -794,7 +794,7 @@ class DataSource(Source):
 
            # Merge trades and quotes from the same database
            data = otp.DataSource(
-               db='NYSE_TAQ', tick_type=['TRD', 'QTE'],
+               db='US_COMP', tick_type=['TRD', 'QTE'],
                symbols='AAPL', identify_input_ts=True,
            )
            # Use identify_input_ts=True to tell which tick type each row came from
@@ -848,7 +848,7 @@ class DataSource(Source):
         .. code-block:: python
 
            data = otp.DataSource(
-               db='NYSE_TAQ', tick_type='TRD', symbols='AAPL',
+               db='US_COMP', tick_type='TRD', symbols='AAPL',
                schema={'PRICE': float, 'CUSTOM_FLAG': int},
                schema_policy='manual_strict',
            )
@@ -863,7 +863,7 @@ class DataSource(Source):
         .. code-block:: python
 
            data = otp.DataSource(
-               db='NYSE_TAQ', tick_type='TRD', symbols='AAPL',
+               db='US_COMP', tick_type='TRD', symbols='AAPL',
                schema={
                    'PRICE': float,              # 64-bit float
                    'SIZE': int,                  # 64-bit integer
@@ -941,14 +941,14 @@ class DataSource(Source):
 
            # With presort (default) - parallel fetching, faster for many symbols
            data = otp.DataSource(
-               db='NYSE_TAQ', tick_type='TRD',
+               db='US_COMP', tick_type='TRD',
                symbols=['AAPL', 'MSFT', 'GOOGL'],
                presort=True,  # this is the default when symbols is set
            )
 
            # Without presort - sequential merge
            data = otp.DataSource(
-               db='NYSE_TAQ', tick_type='TRD',
+               db='US_COMP', tick_type='TRD',
                symbols=['AAPL', 'MSFT', 'GOOGL'],
                presort=False,
            )
@@ -960,7 +960,7 @@ class DataSource(Source):
         .. code-block:: python
 
            data = otp.DataSource(
-               db='NYSE_TAQ', tick_type='TRD',
+               db='US_COMP', tick_type='TRD',
                symbols=large_symbol_list,  # e.g., 500+ symbols
                batch_size=50,              # process 50 symbols at a time
                concurrency=4,              # use 4 CPU cores
@@ -972,14 +972,14 @@ class DataSource(Source):
         .. code-block:: python
 
            data = otp.DataSource(
-               db='NYSE_TAQ', tick_type='TRD',
+               db='US_COMP', tick_type='TRD',
                symbols=['AAPL', 'MSFT'],
                symbol_date=otp.dt(2022, 3, 1),
            )
 
            # symbol_date also accepts integers in YYYYMMDD format
            data = otp.DataSource(
-               db='NYSE_TAQ', tick_type='TRD',
+               db='US_COMP', tick_type='TRD',
                symbols=['AAPL', 'MSFT'],
                symbol_date=20220301,
            )

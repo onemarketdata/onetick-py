@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
+from functools import singledispatchmethod
+
 from onetick.py.otq import otq
-from onetick.py.backports import singledispatchmethod
 
 
 class _BaseCutBuilder(metaclass=ABCMeta):

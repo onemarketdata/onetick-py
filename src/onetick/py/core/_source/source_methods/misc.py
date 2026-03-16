@@ -1,10 +1,9 @@
 import functools
 import re
 import warnings
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, Literal
 
 import onetick.py as otp
-from onetick.py.backports import Literal
 from onetick.py import types as ott
 from onetick.py import utils
 from onetick.py.core.column import _Column

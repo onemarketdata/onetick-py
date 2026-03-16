@@ -1327,7 +1327,7 @@ class HTTPSession:
         This class must be used only for WebAPI connection,
         to set HTTP connection parameters.
         """
-        import onetick.py as otp  # noqa
+        import onetick.py as otp
         self._restore_config = {}
         for param in self.param_list:
             if locals()[param]:
@@ -1336,7 +1336,7 @@ class HTTPSession:
 
     def close(self):
         # restore config
-        import onetick.py as otp  # noqa
+        import onetick.py as otp
         for param, value in self._restore_config.items():
             otp.config.__setattr__(param, value)
 

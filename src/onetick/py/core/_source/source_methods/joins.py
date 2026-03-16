@@ -1,8 +1,7 @@
 import inspect
 import warnings
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional, Union
-from onetick.py.backports import Literal
+from typing import TYPE_CHECKING, List, Optional, Union, Literal
 
 from onetick import py as otp
 from onetick.py import types as ott
@@ -469,7 +468,8 @@ def join_with_collection(
         db=otp.config.default_db, tick_type="ANY", schema_policy="manual", schema=collection_schema,
     )
     if query_func is None:
-        query_func = lambda source: source  # noqa
+        def query_func(source):
+            return source
 
     converted_params = prepare_params(**params)
 
@@ -742,7 +742,7 @@ def join_with_query(
     ...     d = d.update(dict(TYPE="three"), where=(symbol.name == "3"))  # symbol is always converted to string
     ...     d["TYPE"] = pref + d["TYPE"] + post
     ...     return d
-    >>> # OTdirective: snippet-name: Special functions.join with query.with a function that takes params from fields;   # noqa
+    >>> # OTdirective: snippet-name: Special functions.join with query.with a function that takes params from fields;
     >>> data = otp.Ticks(A=[1, 2], B=[2, 4], PREF=["^", "_"], POST=["!", "$"])
     >>> res = data.join_with_query(func, how='inner', symbol=(data['A'] + data['B']),
     ...                            params=dict(pref=data["PREF"] + ".", post=data["POST"]))

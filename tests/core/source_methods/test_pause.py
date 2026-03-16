@@ -9,7 +9,7 @@ def test_int(session):
     with pytest.raises(ValueError):
         t = t.pause(-1)
     t = t.pause(1000)
-    t['C'] = otp.now()  # noqa: E1137 (false positive for some reason)
+    t['C'] = otp.now()
     df = otp.run(t)
     diff = df['C'][0] - df['B'][0]
     assert pd.Timedelta(seconds=1) <= diff < pd.Timedelta(seconds=2)
@@ -19,7 +19,7 @@ def test_busy_waiting(session):
     t = otp.Tick(A=1)
     t['B'] = otp.now()
     t = t.pause(1000, busy_waiting=True)
-    t['C'] = otp.now()  # noqa: E1137 (false positive for some reason)
+    t['C'] = otp.now()
     df = otp.run(t)
     diff = df['C'][0] - df['B'][0]
     assert pd.Timedelta(seconds=1) <= diff < pd.Timedelta(seconds=2)

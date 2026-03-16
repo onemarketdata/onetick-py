@@ -1143,7 +1143,8 @@ class Source:
         result._copy_state_vars_from(self)
 
         result._tmp_otq = self._tmp_otq.copy()
-        result.__name = self.__name     #noqa
+        # pylint: disable-next=unused-private-member
+        result.__name = self.__name
 
         result._copy_properties_from(self)
 
@@ -1668,7 +1669,8 @@ class Source:
         ob_size, ob_vwap, ob_num_levels,
         ranking, percentile, find_value_for_percentile,
         exp_w_average, exp_tw_average, standardized_moment,
-        portfolio_price, multi_portfolio_price, return_ep, implied_vol,
+        portfolio_price, multi_portfolio_price, return_ep,
+        implied_vol, option_price,
         linear_regression, partition_evenly_into_groups,
         process_by_group,
     )

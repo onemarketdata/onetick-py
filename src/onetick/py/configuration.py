@@ -459,12 +459,14 @@ class Config:
         env_var_name='OTP_DEFAULT_SYMBOLOGY',
     )
 
-    def _default_db_symbol(obj, docs=False):  # noqa
+    # pylint: disable-next=no-self-argument
+    def _default_db_symbol(obj, docs=False):
         try:
             return obj.default_db + '::' + obj.default_symbol
         except (ValueError, TypeError):
             if not docs:
                 raise
+            return None
 
     default_db_symbol = OtpDerivedProperty(
         description='Default symbol with database. '
@@ -473,12 +475,14 @@ class Config:
         definition_function=_default_db_symbol,
     )
 
-    def _default_date(obj, docs=False):  # noqa
+    # pylint: disable-next=no-self-argument
+    def _default_date(obj, docs=False):
         try:
             return datetime.combine(obj.default_start_time.date(), datetime.min.time())
         except (ValueError, TypeError, AttributeError):
             if not docs:
                 raise
+            return None
 
     default_date = OtpDerivedProperty(
         description='Default date. '

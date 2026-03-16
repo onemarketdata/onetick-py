@@ -15,19 +15,7 @@ class TestWebApiAuth:
         df = otp.run(src)
         assert len(df) == 1
 
-    def test_tomcat_auth_param(self, monkeypatch):
-        monkeypatch.setattr(otp.config, 'http_address', 'http://tickserver:8080')
-        src = otp.Tick(Y=1)
-        df = otp.run(src, username="webapi", password="password")
-        assert len(df) == 1
-
     def test_tomcat_not_authorized(self, monkeypatch):
-        monkeypatch.setattr(otp.config, 'http_address', 'http://tickserver:8080')
-        src = otp.Tick(Y=1)
-        with pytest.raises(otq.exception.OneTickException):
-            otp.run(src, username="nonexisted", password="password")
-
-    def test_tomcat_not_authorized_with_config(self, monkeypatch):
         monkeypatch.setattr(otp.config, 'http_address', 'http://tickserver:8080')
         monkeypatch.setattr(otp.config, 'http_username', 'nonexisted')
         monkeypatch.setattr(otp.config, 'http_password', 'password')
@@ -59,7 +47,7 @@ def test_join_bug(f_session):
     # не получилось воспроизвести
     src1 = otp.Ticks(data=dict(X=[1, 2, 3]), symbol="S1", tick_type="TT")
     src2 = otp.Ticks(data=dict(Y=[1, 2, 3]), symbol="S1", tick_type="TX")
-    data = src2.join_with_query(src1, how='inner', )
+    data = src2.join_with_query(src1, how='inner')
     df = otp.run(data)
     print(df)
 

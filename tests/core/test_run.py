@@ -24,7 +24,6 @@ from dateutil.tz import gettz
 import onetick.py as otp
 from onetick.py.types import time2nsectime
 from onetick.py.compatibility import is_supported_uint_numpy_interface
-from onetick.py.otq import pyomd
 
 DEFAULT_USE_FT = 'FALSE'
 

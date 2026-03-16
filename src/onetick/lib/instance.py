@@ -1,4 +1,5 @@
 # mypy: disable-error-code="attr-defined"
+# pylint: disable=import-error,no-name-in-module
 
 import os
 import gc
@@ -6,7 +7,7 @@ import inspect
 from enum import Enum
 
 if os.getenv('OTP_WEBAPI', default='').lower() not in ('0', 'false', 'no', ''):
-    import onetick.query_webapi as otq  # noqa
+    import onetick.query_webapi as otq
 
     class OneTickLibMock:
         LOGGING_LEVEL_MIN = 0
@@ -23,8 +24,8 @@ if os.getenv('OTP_WEBAPI', default='').lower() not in ('0', 'false', 'no', ''):
     otq.OneTickLib = OneTickLibMock
 
 else:
-    import onetick.query as otq  # noqa
-    import pyomd  # noqa
+    import onetick.query as otq
+    import pyomd
 
 
 class LoggingLevel(Enum):
@@ -136,6 +137,7 @@ class OneTickLib:
         if OneTickLib.__instance:
             raise RuntimeError('This method should be called before OneTickLib object is constructed to have effect.')
         try:
-            pyomd.OneTickLib.override_config_value(config_parameter_name, config_parameter_value)  # noqa
+            # pylint: disable-next=possibly-used-before-assignment
+            pyomd.OneTickLib.override_config_value(config_parameter_name, config_parameter_value)
         except NameError:
             raise RuntimeError('This method is not available in WebAPI mode')

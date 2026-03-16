@@ -10,6 +10,26 @@
 
 ### Removed
 
+## [1.189.0] - 2026-03-16
+
+### Added
+
+- Add `otp.Source.option_price`
+
+### Changed
+
+- Remove `pylama`, use `pylint` and `ruff`
+- Clean-up of `backports` module
+
+### Fixed
+
+- Fixed `otp.Symbols` and `otp.Tick` documentation
+- Fixed setting parameters in `otq.run` in WebAPI mode
+- Fixed examples for order book sources
+- Fixed `docstring` decorator for classes
+
+### Removed
+
 ## [1.188.0] - 2026-03-09
 
 ### Added
@@ -24,7 +44,7 @@
 - `onetick-py` has internal support for `onetick` CLI command, without `onetick-cli` package
 - `onetick-render` CLI command renamed to `onetick render`
 - `.apply` method now preserves Decimal when mixed with int or float return values.
-Previously, results could be converted to lower-precision numeric types.
+  Previously, results could be converted to lower-precision numeric types.
 
 ### Fixed
 

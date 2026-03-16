@@ -6,11 +6,10 @@ import dataclasses
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Optional, Union, Type, Tuple
+from functools import cache
 
 import pandas as pd
 import onetick.py as otp
-from onetick.py.otq import otq
-from onetick.py.backports import cache
 from onetick.py.core import query_inspector
 from . import adaptive
 
@@ -42,7 +41,7 @@ def _get_allocation_lib() -> Optional[str]:
 def _run_measure_perf(otq_file: str, summary_file: str, context: Optional[str] = None):
     if otp.__webapi__:
         raise RuntimeError("Can't use measure_perf.exe in WebAPI mode.")
-    if MEASURE_PERF is not None and not MEASURE_PERF.exists():  # noqa
+    if MEASURE_PERF is not None and not MEASURE_PERF.exists():
         raise RuntimeError(f"File {MEASURE_PERF} doesn't exist, can't execute it.")
     allocation_lib = _get_allocation_lib()
     cmd = allocation_lib or ''

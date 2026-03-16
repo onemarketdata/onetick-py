@@ -11,5 +11,5 @@ def test_if():
 
 def test_for():
     with pytest.raises(TypeError, match="object is not iterable"):
-        for _ in _Operation():  # noqa
+        for _ in _Operation():
             pass

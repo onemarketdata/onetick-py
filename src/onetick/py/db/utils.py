@@ -34,7 +34,7 @@ class TmpSession:
                     self.session.locator.remove(db)
 
     def __db_is_registered(self, db):
-        base_db = str(db).split("//")[0]    # noqa
+        base_db = str(db).split("//", maxsplit=1)[0]
         return (base_db in self.session.databases) or (base_db in self.session.locator.databases)
 
     def use(self, db):

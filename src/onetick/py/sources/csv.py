@@ -333,7 +333,7 @@ class _CSV(Source):
         self._to_drop = self._get_to_drop()
         self._has_time, self._start, self._end = self._get_start_end(**kwargs)
 
-        self._columns_with_bool_replaced = dict((n, c if c != bool else float) for n, c in self._columns.items())
+        self._columns_with_bool_replaced = dict((n, c if c is not bool else float) for n, c in self._columns.items())
 
         super().__init__(
             _symbols=self._symbols,

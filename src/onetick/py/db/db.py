@@ -1,4 +1,3 @@
-# pylama:ignore=W0237
 import logging
 import os
 import datetime as dt

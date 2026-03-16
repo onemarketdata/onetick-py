@@ -1,6 +1,5 @@
 import os
 import sys
-import gc
 import tempfile
 import getpass
 import pytest
@@ -13,7 +12,6 @@ import zoneinfo
 
 from pathlib import Path
 from onetick.py.utils import TmpFile
-from onetick.py.backports import zoneinfo
 
 
 @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False),

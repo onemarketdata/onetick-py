@@ -1,6 +1,5 @@
 import inspect
 import types
-import warnings
 
 from onetick import py as otp
 from onetick.py.core._source._symbol_param import _SymbolParamColumn, _SymbolParamSource

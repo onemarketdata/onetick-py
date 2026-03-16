@@ -704,7 +704,7 @@ def median(*args, **kwargs):
 
 @docstring(parameters=OB_SNAPSHOT_DOC_PARAMS)
 def ob_snapshot(*args, **kwargs):
-    """
+    r"""
     Returns the order book state at the end of each bucket interval:
     the price, the size, the side, and the time of the last update for a specified number of order book levels.
 
@@ -713,15 +713,18 @@ def ob_snapshot(*args, **kwargs):
     | :func:`onetick.py.ObSnapshot`
     | **OB_SNAPSHOT** OneTick event processor
 
-
     Examples
     --------
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = otp.agg.ob_snapshot(max_levels=1).apply(data)  # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  PRICE             UPDATE_TIME  SIZE  LEVEL  BUY_SELL_FLAG
-    0 2003-12-04    2.0 2003-12-01 00:00:00.003     6      1              1
-    1 2003-12-04    5.0 2003-12-01 00:00:00.004     7      1              0
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
+    >>> data = otp.agg.ob_snapshot(max_levels=3).apply(data)  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+                     Time     PRICE  SIZE  LEVEL                   UPDATE_TIME  BUY_SELL_FLAG
+    0 2024-02-01 10:00:00  17351.75     1      1 2024-02-01 09:59:59.701711193              1
+    1 2024-02-01 10:00:00  17352.00     3      2 2024-02-01 09:59:59.582195881              1
+    2 2024-02-01 10:00:00  17352.25     3      3 2024-02-01 09:59:59.580457957              1
+    3 2024-02-01 10:00:00  17351.25     1      1 2024-02-01 09:59:59.867609851              0
+    4 2024-02-01 10:00:00  17351.00     6      2 2024-02-01 09:59:59.867226023              0
+    5 2024-02-01 10:00:00  17350.75     2      3 2024-02-01 09:59:59.867226023              0
     """
     return ObSnapshot(*args, **kwargs)
 
@@ -739,18 +742,24 @@ def ob_snapshot_wide(*args, **kwargs):
 
     Examples
     --------
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = otp.agg.ob_snapshot_wide(max_levels=1).apply(data)  # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  BID_PRICE         BID_UPDATE_TIME  BID_SIZE  ASK_PRICE         ASK_UPDATE_TIME  ASK_SIZE  LEVEL
-    0 2003-12-03        5.0 2003-12-01 00:00:00.004         7        2.0 2003-12-01 00:00:00.003         6      1
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\\H24')  # doctest: +SKIP
+    >>> data = otp.agg.ob_snapshot_wide(max_levels=3).apply(data)  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+                     Time  BID_PRICE  BID_SIZE               BID_UPDATE_TIME  ASK_PRICE  ASK_SIZE \
+                                      ASK_UPDATE_TIME  LEVEL
+    0 2024-02-01 10:00:00   17351.25         1 2024-02-01 09:59:59.867609851   17351.75         1 \
+                        2024-02-01 09:59:59.701711193      1
+    1 2024-02-01 10:00:00   17351.00         6 2024-02-01 09:59:59.867226023   17352.00         3 \
+                        2024-02-01 09:59:59.582195881      2
+    2 2024-02-01 10:00:00   17350.75         2 2024-02-01 09:59:59.867226023   17352.25         3 \
+                        2024-02-01 09:59:59.580457957      3
     """
     return ObSnapshotWide(*args, **kwargs)
 
 
 @docstring(parameters=OB_SNAPSHOT_FLAT_DOC_PARAMS)
 def ob_snapshot_flat(*args, **kwargs):
-    """
+    r"""
     Returns the snapshot for a specified number of book levels as a single tick
     with multiple field groups corresponding to book levels.
 
@@ -761,11 +770,11 @@ def ob_snapshot_flat(*args, **kwargs):
 
     Examples
     --------
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = otp.agg.ob_snapshot_flat(max_levels=1).apply(data)  # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  BID_PRICE1        BID_UPDATE_TIME1  BID_SIZE1  ASK_PRICE1        ASK_UPDATE_TIME1  ASK_SIZE1
-    0 2003-12-03         5.0 2003-12-01 00:00:00.004          7         2.0 2003-12-01 00:00:00.003          6
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
+    >>> data = otp.agg.ob_snapshot_flat(max_levels=3).apply(data)  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+                     Time  BID_PRICE1  BID_SIZE1              BID_UPDATE_TIME1  ASK_PRICE1  ASK_SIZE1 ...
+    0 2024-02-01 10:00:00    17351.25          1 2024-02-01 09:59:59.867609851    17351.75          1 ...
     """
     return ObSnapshotFlat(*args, **kwargs)
 
@@ -781,23 +790,22 @@ def ob_summary(*args, **kwargs):
     | :func:`onetick.py.ObSummary`
     | **OB_SUMMARY** OneTick event processor
 
-
     Examples
     --------
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = otp.agg.ob_summary(max_levels=1).apply(data)  # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  BID_PRICE  BID_SIZE  BID_VWAP  BEST_BID_PRICE  WORST_BID_SIZE  NUM_BID_LEVELS  ASK_SIZE\
-              ASK_VWAP  BEST_ASK_PRICE  WORST_ASK_PRICE  NUM_ASK_LEVELS
-    0 2003-12-04        NaN         7       5.0             5.0             NaN               1         6\
-           2.0             2.0              2.0               1
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\\H24')  # doctest: +SKIP
+    >>> data = otp.agg.ob_summary(max_levels=3).apply(data)  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+                     Time  BID_SIZE      BID_VWAP  BEST_BID_PRICE  WORST_BID_PRICE  NUM_BID_LEVELS  ASK_SIZE \
+                             ASK_VWAP  BEST_ASK_PRICE  WORST_ASK_PRICE  NUM_ASK_LEVELS
+    0 2024-02-01 10:00:00         9  17350.972222        17351.25         17350.75               3         7 \
+                         17352.071429        17351.75         17352.25               3
     """
     return ObSummary(*args, **kwargs)
 
 
 @docstring(parameters=OB_SIZE_DOC_PARAMS)
 def ob_size(*args, **kwargs):
-    """
+    r"""
     Returns the total size for a specified number of order book levels at the end of each bucket interval.
 
     See also
@@ -808,26 +816,26 @@ def ob_size(*args, **kwargs):
     Examples
     --------
 
-    Basic example
+    Basic example:
 
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = otp.agg.ob_size(bucket_interval=otp.Second(300), max_levels=10).apply(data)  # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-                         Time  ASK_VALUE  BID_VALUE
-    0 2003-12-01 00:05:00.000     194800      47200
-    1 2003-12-01 00:10:00.000     194800      47200
-    2 2003-12-01 00:15:00.000     313400       7700
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
+    >>> data = otp.agg.ob_size(bucket_interval=otp.Minute(5), max_levels=3).apply(data)  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+                      Time  ASK_VALUE  BID_VALUE
+    0  2024-02-01 10:05:00       12.0       10.0
+    1  2024-02-01 10:10:00       12.0        5.0
+    2  2024-02-01 10:15:00       11.0       13.0
     ...
 
-    Selecting side via ``side`` parameter
+    Selecting side via ``side`` parameter:
 
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = otp.agg.ob_size(bucket_interval=otp.Second(300), max_levels=10, size='ASK').apply(data)  # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-                         Time   VALUE
-    0 2003-12-01 00:05:00.000  194800
-    1 2003-12-01 00:10:00.000  194800
-    2 2003-12-01 00:15:00.000  313400
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
+    >>> data = otp.agg.ob_size(bucket_interval=otp.Minute(5), max_levels=3, side='ASK').apply(data)  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+                      Time  VALUE
+    0  2024-02-01 10:05:00   12.0
+    1  2024-02-01 10:10:00   12.0
+    2  2024-02-01 10:15:00   11.0
     ...
     """
     return ObSize(*args, **kwargs)
@@ -835,7 +843,7 @@ def ob_size(*args, **kwargs):
 
 @docstring(parameters=OB_VWAP_DOC_PARAMS)
 def ob_vwap(*args, **kwargs):
-    """
+    r"""
     Returns the size-weighted price computed over a specified number of order book levels at the end of each interval.
 
     See also
@@ -846,26 +854,26 @@ def ob_vwap(*args, **kwargs):
     Examples
     --------
 
-    Basic example
+    Basic example:
 
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = otp.agg.ob_vwap(bucket_interval=otp.Second(300)).apply(data)  # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-                         Time  ASK_VALUE  BID_VALUE
-    0 2003-12-01 00:05:00.000   23.93496   23.80502
-    1 2003-12-01 00:10:00.000   23.93496   23.80502
-    2 2003-12-01 00:15:00.000   24.35387   24.35387
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
+    >>> data = otp.agg.ob_vwap(bucket_interval=otp.Minute(5)).apply(data)  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+                      Time     ASK_VALUE     BID_VALUE
+    0  2024-02-01 10:05:00  17493.087642  17013.839286
+    1  2024-02-01 10:10:00  17486.863024  17006.515027
+    2  2024-02-01 10:15:00  17494.471485  17014.829879
     ...
 
-    Selecting side via ``side`` parameter
+    Selecting side via ``side`` parameter:
 
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = otp.agg.ob_vwap(bucket_interval=otp.Second(300), size='BID').apply(data)  # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-                         Time     VALUE
-    0 2003-12-01 00:05:00.000  23.80502
-    1 2003-12-01 00:10:00.000  23.80502
-    2 2003-12-01 00:15:00.000  24.35387
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
+    >>> data = otp.agg.ob_vwap(bucket_interval=otp.Minute(5), side='BID').apply(data)  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+                      Time         VALUE
+    0  2024-02-01 10:05:00  17013.839286
+    1  2024-02-01 10:10:00  17006.515027
+    2  2024-02-01 10:15:00  17014.829879
     ...
     """
     return ObVwap(*args, **kwargs)
@@ -873,7 +881,7 @@ def ob_vwap(*args, **kwargs):
 
 @docstring(parameters=OB_NUM_LEVELS_DOC_PARAMS)
 def ob_num_levels(*args, **kwargs):
-    """
+    r"""
     Returns the number of levels in the order book at the end of each bucket.
 
     Note
@@ -888,15 +896,13 @@ def ob_num_levels(*args, **kwargs):
     Examples
     --------
 
-    Basic example
-
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
     >>> data = otp.agg.ob_num_levels(bucket_interval=otp.Second(300)).apply(data)  # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-                         Time  ASK_VALUE  BID_VALUE
-    0 2003-12-01 00:05:00.000        243         74
-    1 2003-12-01 00:10:00.000        243         74
-    2 2003-12-01 00:15:00.000        208         45
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+                      Time  ASK_VALUE  BID_VALUE
+    0  2024-02-01 10:05:00      743.0      830.0
+    1  2024-02-01 10:10:00      753.0      820.0
+    2  2024-02-01 10:15:00      741.0      831.0
     ...
     """
     return ObNumLevels(*args, **kwargs)

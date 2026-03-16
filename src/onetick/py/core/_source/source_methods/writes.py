@@ -1,7 +1,6 @@
 import warnings
 import datetime
-from typing import TYPE_CHECKING, Optional, Set, Type, Union
-from onetick.py.backports import Literal
+from typing import TYPE_CHECKING, Optional, Set, Type, Union, Literal
 
 from onetick import py as otp
 from onetick.py import configuration

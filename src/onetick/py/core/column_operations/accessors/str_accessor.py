@@ -1,10 +1,8 @@
-from typing import Optional
+from typing import Optional, Literal
 
 from onetick.py import types as ott
 from onetick.py import configuration, utils
 from onetick.py.core.column_operations.accessors._accessor import _Accessor
-from onetick.py.core.column_operations.base import _Operation
-from onetick.py.backports import Literal
 from onetick.py.docs.utils import alias
 from onetick.py.compatibility import is_ilike_supported
 

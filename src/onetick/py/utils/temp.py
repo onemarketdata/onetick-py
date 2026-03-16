@@ -457,7 +457,7 @@ def _gen_root_path_():
 
 
 TMP_CONFIGS_DIR = _gen_root_path_()
-def ONE_TICK_TMP_DIR():  # noqa # NOSONAR
+def ONE_TICK_TMP_DIR():  # NOSONAR
     if os.getenv('OTP_WEBAPI_TEST_MODE'):
         return WEBAPI_TEST_MODE_SHARED_CONFIG
     if 'ONE_TICK_TMP_DIR' not in os.environ:

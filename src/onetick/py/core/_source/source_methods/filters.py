@@ -2,8 +2,7 @@ import re
 import warnings
 from contextlib import suppress
 from datetime import time
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
-from onetick.py.backports import Literal
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union, Literal
 
 from onetick import py as otp
 from onetick.py import types as ott
@@ -527,7 +526,7 @@ def __getitem__(self: 'Source', item):
 
             if len(item_type) > 1:
                 raise AttributeError(f"Different types {item_type} in slice list is not supported")
-            if item_type[0] == tuple:
+            if item_type[0] is tuple:
                 item = dict(item)
 
     if isinstance(item, (list, str)):
@@ -986,7 +985,7 @@ def character_present(
         if value not in self.schema:
             raise ValueError(f'Field {value}, passed as parameter `{name}`, not in the schema.')
 
-        if not (self.schema[value] == str or issubclass(self.schema[value], otp.string)):
+        if not (self.schema[value] is str or issubclass(self.schema[value], otp.string)):
             raise TypeError(
                 f'Field {value}, passed as parameter `{name}`, has incompatible type: {self.schema[value]}, '
                 f'expected: str',

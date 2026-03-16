@@ -1,8 +1,8 @@
 import datetime
+from functools import cached_property
 
 import pandas as pd
 
-from onetick.py.backports import cached_property
 from onetick.py import utils
 from . import CallbackBase
 

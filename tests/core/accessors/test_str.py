@@ -278,7 +278,7 @@ class TestMatchRegexp:
     def test_regexp_compare(self, m_session):
         string = "...some text here..."
         data = otp.Tick(x=string)
-        filtered_data, _ = data[data["x"].str.match(".*text.*") == True]  # noqa
+        filtered_data, _ = data[data["x"].str.match(".*text.*") == True]
         assert len(otp.run(filtered_data)) == 1
 
     def test_exception_comprasion_to_number(self, m_session):

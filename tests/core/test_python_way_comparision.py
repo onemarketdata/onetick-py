@@ -1,6 +1,5 @@
 import pandas as pd
 import onetick.py as otp
-from onetick.test.fixtures import m_session as session
 
 from onetick.py import nsectime, msectime
 

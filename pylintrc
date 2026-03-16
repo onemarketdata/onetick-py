@@ -22,7 +22,7 @@ init-hook='import onetick.query'
 
 # Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
 # number of processors available to use.
-jobs=1
+jobs=0
 
 # Control the amount of potential inferred values when inferring a single
 # object. This can help the performance when dealing with large functions or
@@ -134,6 +134,9 @@ disable=blacklisted-name,
         raise-missing-from,
         use-dict-literal,
         unnecessary-dunder-call,
+        unspecified-encoding,
+        consider-using-f-string,
+        reimported,
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -267,7 +270,7 @@ output-format=text
 reports=no
 
 # Activate the evaluation score.
-score=no
+score=yes
 
 
 [REFACTORING]
@@ -402,7 +405,7 @@ variable-naming-style=snake_case
 [FORMAT]
 
 # Expected format of line ending, e.g. empty (any line ending), LF or CRLF.
-expected-line-ending-format=
+expected-line-ending-format=LF
 
 # Regexp for a line that is allowed to be longer than the limit.
 ignore-long-lines=^\s*(# )?<?https?://\S+>?$|^.*:ref:`.*$|^.*:attr:`.*$

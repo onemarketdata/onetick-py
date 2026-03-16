@@ -220,12 +220,12 @@ class TmpOtq:
 
         # constructing a list of otq.Query objects, which will hold graphs, names, start/end times etc.
         query_list = []
-        for stored_query_name in queries_dict.keys():   # noqa
-            stored_query = otq.Query(queries_dict[stored_query_name][0])
-            stored_query_params = queries_dict[stored_query_name][1]
+        for stored_query_name, stored_query_tuple in queries_dict.items():
+            stored_query = otq.Query(stored_query_tuple[0])
+            stored_query_params = stored_query_tuple[1]
             if timezone:
                 stored_query.set_timezone(timezone)
-            stored_query.set_symbols(queries_dict[stored_query_name][0].symbols())
+            stored_query.set_symbols(stored_query_tuple[0].symbols())
             stored_query.set_query_name(stored_query_name)
             stored_query.set_start_time(start)
             stored_query.set_end_time(end)

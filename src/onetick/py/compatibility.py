@@ -3,12 +3,12 @@ import warnings
 from dataclasses import dataclass, astuple
 from datetime import datetime, timezone as dt_timezone
 from typing import Optional
+from functools import cache
 
 from packaging.version import parse as parse_version
 
 import onetick.py as otp
 from onetick.py.otq import otq, otli, pyomd
-from onetick.py.backports import cache
 
 
 @dataclass

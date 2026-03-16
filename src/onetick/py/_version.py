@@ -1,2 +1,2 @@
 # This file was generated automatically. DO NOT CHANGE.
-VERSION = '1.188.0'
+VERSION = '1.189.0'

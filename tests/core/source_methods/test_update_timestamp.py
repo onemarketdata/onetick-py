@@ -67,7 +67,7 @@ def test_max_delay_of_original_timestamp(session):
         otp.run(res, start=otp.dt(2022, 1, 1), end=otp.dt(2022, 1, 2))
     data['NEW_START'] = data['_START_TIME']
     data = data.update_timestamp('NEW_TS', max_delay_of_original_timestamp=otp.Hour(12))
-    data['ORIG_START'] = data['_START_TIME']  # noqa: E1137 (false positive for some reason)
+    data['ORIG_START'] = data['_START_TIME']
     df = otp.run(data, start=otp.dt(2022, 1, 1), end=otp.dt(2022, 1, 2))
     assert list(df['Time']) == [otp.dt(2022, 1, 1, hour=12, microsecond=1000 * i) for i in range(3)]
     assert all(df['Time'] == df['NEW_TS'])
@@ -83,7 +83,7 @@ def test_max_delay_of_new_timestamp(session):
         otp.run(res, start=otp.dt(2021, 12, 31), end=otp.dt(2022, 1, 2))
     data['NEW_END'] = data['_END_TIME']
     data = data.update_timestamp('NEW_TS', max_delay_of_new_timestamp=otp.Hour(12))
-    data['ORIG_END'] = data['_END_TIME']  # noqa: E1137 (false positive for some reason)
+    data['ORIG_END'] = data['_END_TIME']
     df = otp.run(data, start=otp.dt(2021, 12, 31), end=otp.dt(2022, 1, 2))
     assert list(df['Time']) == [otp.dt(2021, 12, 31, hour=12, microsecond=1000 * i) for i in range(3)]
     assert all(df['Time'] == df['NEW_TS'])
@@ -226,7 +226,7 @@ def test_twice(session):
     data = otp.DataSource('DB', symbols='S1', tick_type='TT')
     data['NEW_TS'] = data['TIMESTAMP'] + otp.Nano(1)
     data = data.update_timestamp('NEW_TS', max_delay_of_original_timestamp=otp.Milli(1))
-    data['NEW_TS'] = data['TIMESTAMP'] + otp.Nano(1)  # noqa: E1137 (false positive for some reason)
+    data['NEW_TS'] = data['TIMESTAMP'] + otp.Nano(1)
     data = data.update_timestamp('NEW_TS', max_delay_of_original_timestamp=otp.Milli(1))
     with pytest.raises(
         Exception,

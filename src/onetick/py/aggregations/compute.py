@@ -1,4 +1,4 @@
-from typing import List, Dict, TYPE_CHECKING, Tuple, Optional, Union
+from typing import List, Dict, TYPE_CHECKING, Tuple
 from copy import deepcopy
 from collections import namedtuple
 from onetick.py.compatibility import is_supported_agg_option_price

@@ -28,8 +28,8 @@ else:
     os.environ["LICENSE_FILE"] = os.path.join(os.environ["LICENSE_DIR"], "license.dat")
 
 
-import onetick.py as otp  # noqa
-from onetick.py.otq import otq, otli  # noqa
+import onetick.py as otp
+from onetick.py.otq import otq, otli
 
 
 # ------------------------------------- Config tests -------------------------------------

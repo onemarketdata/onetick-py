@@ -1,9 +1,8 @@
-from typing import Union
+from typing import Union, Literal
 
 from onetick.py import configuration, utils
 from onetick.py import types as ott
 from onetick.py.core.column_operations.accessors._accessor import _Accessor
-from onetick.py.backports import Literal
 from onetick.py.types import datetime, value2str
 from onetick.py.docs.utils import docstring, param_doc
 from onetick.py.core.column import _Column

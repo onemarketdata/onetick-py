@@ -6,7 +6,7 @@ import datetime as dt
 from collections import defaultdict, Counter
 from functools import singledispatch
 from itertools import chain, zip_longest, repeat
-from typing import List, Union, Type, Optional, Sequence
+from typing import List, Union, Type, Optional, Sequence, Literal
 from enum import Enum
 
 from onetick.py.otq import otq
@@ -20,7 +20,6 @@ import onetick.py.types as ott
 from onetick.py.core.column import Column
 from onetick.py.core.column_operations.base import Operation
 from onetick.py.core.cut_builder import _QCutBuilder, _CutBuilder
-from onetick.py.backports import Literal
 from onetick.py.compatibility import (
     is_supported_join_with_aggregated_window,
     is_supported_next_in_join_with_aggregated_window,
@@ -217,7 +216,7 @@ def merge(sources, align_schema=True, symbols=None, identify_input_ts=False,
             Time  A  B
     0 2003-12-01  1  0
     1 2003-12-01  0  2
-    """  # noqa: E501
+    """
     from onetick.py.core.source import _Source
 
     if not sources:

@@ -1,10 +1,6 @@
-import datetime as dt
-
 import onetick.py as otp
 from onetick.py.otq import otq
 
-import onetick.py.core._source
-import onetick.py.functions
 import onetick.py.db._inspection
 from onetick.py.core.source import Source
 

@@ -1,5 +1,4 @@
-from typing import List, Dict, Union, Optional, Callable, TYPE_CHECKING
-from onetick.py.backports import Literal
+from typing import List, Dict, Union, Optional, Callable, TYPE_CHECKING, Literal
 
 from functools import wraps
 from inspect import Signature, Parameter

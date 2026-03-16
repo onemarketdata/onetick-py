@@ -1,9 +1,8 @@
 import typing
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union, Literal
 
 from onetick.py.otq import otq
 from onetick.py.core.column_operations.base import _Operation
-from onetick.py.backports import Literal
 from .misc import inplace_operation
 
 if TYPE_CHECKING:

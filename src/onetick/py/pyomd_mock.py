@@ -4,10 +4,10 @@ import onetick.py as otp
 
 if otp.__webapi__:
     try:
-        from onetick.query_webapi import QueryProperties  # noqa: E0611
+        from onetick.query_webapi import QueryProperties
     except ImportError as e:
         try:
-            import onetick.query_webapi  # noqa
+            import onetick.query_webapi
             raise RuntimeError("You're trying to use onetick.query_webapi module, "
                                "that is not compatible with onetick.py. "
                                "Please, use onetick.query module instead (unset OTP_WEBAPI), "

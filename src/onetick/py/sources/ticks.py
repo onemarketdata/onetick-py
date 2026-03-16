@@ -10,9 +10,7 @@ import onetick.py as otp
 from onetick.py.otq import otq
 import pandas as pd
 
-import onetick.py.core._source
 import onetick.py.functions
-import onetick.py.db._inspection
 from onetick.py.core.column import _Column
 from onetick.py.core.source import Source
 
@@ -63,32 +61,36 @@ class Tick(Source):
         Parameters
         ----------
         data: dict
-            dictionary of columns names with their values.
+            Dictionary of columns names with their values.
             If specified, then parameter ``kwargs`` can't be used.
         offset: int, :ref:`datetime offset <datetime_offsets>`,\
-                :py:class:`otp.timedelta <onetick.py.timedelta>`, default=0
-            tick timestamp offset from query start time in `offset_part`
-        offset_part: one of [nanosecond, millisecond, second, minute, hour, day, dayofyear, weekday, week, month, quarter, year], default=millisecond   #noqa
-            unit of time to calculate ``offset`` from.
+                :py:class:`otp.timedelta <onetick.py.timedelta>`
+            Tick timestamp offset from query start time in `offset_part`.
+            Default is 0 (tick timestamp will be the same as query start time).
+        offset_part: one of [nanosecond, millisecond, second, minute, hour,\
+                             day, dayofyear, weekday, week, month, quarter, year]
+            Unit of time to calculate ``offset`` from.
             Could be omitted if :ref:`datetime offset <datetime_offsets>` or
-            :py:class:`otp.timedelta <onetick.py.timedelta>` objects are set as ``offset``.
+            :py:class:`otp.timedelta <onetick.py.timedelta>` objects are set as ``offset``,
+            otherwise by default it is set to 'millisecond'.
         time: :py:class:`otp.datetime <onetick.py.datetime>`
-            fixed time to set to all ticks.
+            Fixed timestamp to set to all ticks.
             Note that this time should be inside time interval set by ``start`` and ``end`` parameters
             or by query time range.
         timezone_for_time: str
-            timezone of the ``time``
+            Timezone of the ``time``.
         symbol: str, list of str, :class:`Source`, :class:`query`, :py:func:`eval query <onetick.py.eval>`
             Symbol(s) from which data should be taken.
         db: str
-            Database to use for tick generation
+            Database name set in the OneTick graph node, which defines the server which processes the query.
+            By default the symbol set when running the query will be used.
         start: :py:class:`otp.datetime <onetick.py.datetime>`
             start time for tick generation. By default the start time of the query will be used.
         end: :py:class:`otp.datetime <onetick.py.datetime>`
             end time for tick generation. By default the end time of the query will be used.
-        date: :py:class:`otp.datetime <inetick.py.datetime>` – allows to specify a whole day
-            instead of passing explicitly start and end parameters. If it is set along with
-            the start and end parameters then last two are ignored.
+        date: :py:class:`otp.datetime <onetick.py.datetime>` – allows to specify a whole day
+            instead of passing explicitly ``start`` and ``end`` parameters. If it is set along with
+            the these parameters then they are ignored.
         tick_type: str
             By default, the tick type value is not significant, and a placeholder string constant will be utilized.
             If you prefer to use the sink node's tick type instead of specifying your own,
@@ -107,8 +109,9 @@ class Tick(Source):
             Default is 'seconds'.
         num_ticks_per_timestamp: int
             The number of ticks to generate for every value of timestamp.
+            Default is 1.
         kwargs:
-            dictionary of columns names with their values.
+            Dictionary of column names with their values.
             If specified, then parameter ``data`` can't be used.
 
         See also

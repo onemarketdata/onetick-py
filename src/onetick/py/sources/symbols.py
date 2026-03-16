@@ -4,7 +4,7 @@ import onetick.py as otp
 from onetick.py.otq import otq
 
 from onetick.py.core.source import Source
-from onetick.py.core.column_operations.base import Raw, OnetickParameter
+from onetick.py.core.column_operations.base import OnetickParameter
 from onetick.py.core.eval_query import _QueryEvalWrapper
 from onetick.py.core._source.tmp_otq import TmpOtq
 from onetick.py.compatibility import is_symbols_prepend_db_name_supported
@@ -29,20 +29,31 @@ class Symbols(Source):
     keep_db: bool
         Flag that indicates whether symbols should have a database name prefix in the output.
         If True, symbols are returned in *DB_NAME::SYMBOL_NAME* format.
-        Otherwise just symbol names are returned.
+        Otherwise only symbol names are returned.
     pattern: str
         Usual and special characters can be used to search for symbols.
-        Special characters are:
+        This parameter uses SQL LIKE syntax which has some special characters:
 
-        * ``%`` - any number of any characters (zero too)
-        * ``_`` - any single character
+        * ``%``  - any number of any characters (zero too)
+        * ``_``  - any single character
         * ``\\`` - used to escape special characters
 
         For example, if you want symbol name starting with ``NQ``, you should write ``NQ%``.
-        If you want symbol name to contain literal ``%`` character, you should write ``NQ\\%``.
-        ``\\`` is a special character too, so it need to be escaped too
-        if you want symbol name to contain literal backslash, e.g. ``NQ\\\\M23``.
-        Default is ``%`` (any symbol name).
+
+        If you want symbol name to contain literal ``%`` or ``_`` characters, you should write ``NQ\\%`` or ``NQ\\_``.
+
+        ``\\`` is a special character too, so, if you want symbol name to contain literal backslash,
+        it need to be escaped too, e.g.
+        to match ``NQ\\M23`` symbol name you need to set pattern ``NQ\\\\M23``.
+
+        .. note::
+
+          Python strings are also using ``\\`` as an escape character,
+          so in python code you need to escape backslash twice ``"NQ\\\\\\\\M23"``
+          or use python raw strings: ``r"NQ\\\\M23"``.
+          See examples below for details.
+
+        Default for this parameter is ``%`` (any symbol name).
 
     for_tick_type: str
         Fetch only symbols belong to this tick type, if specified.
@@ -84,6 +95,8 @@ class Symbols(Source):
             * *all_in_db*: All symbols are returned.
             * *with_tick_in_query_range*: Only the symbols which have ticks in the query time range are returned.
               This option is allowed only when ``cep_method`` is set to *use_cep_adapter*.
+
+        Default is *all_in_db*.
 
     _tick_type: str
         Custom tick type for the node of the graph.
@@ -268,21 +281,29 @@ class Symbols(Source):
 
     **Escaping special characters in the pattern**
 
-    When using patterns with special character, be aware that python strings ``\\`` is a special character too
+    When using ``pattern`` with special character ``\\``,
+    be aware that in python strings ``\\`` is a special character too
     and need to be escaped as well:
 
     >>> print('back\\\\slash')
     back\\slash
 
-    Pattern ``NQ\\\\M23`` in python should be written as ``NQ\\\\\\\\M23``:
+    So, firstly, symbol name ``NQ\\M23`` with SQL LIKE syntax should be matched with pattern ``NQ\\\\M23``:
+
+    >>> print('NQ\\\\M23')
+    NQ\\M23
+
+    Secondly, in python string ``"NQ\\\\M23"`` should be escaped as ``"NQ\\\\\\\\M23"``:
 
     >>> print('NQ\\\\\\\\M23')
     NQ\\\\M23
 
-    Escaping character ``\\`` in python can be avoided with raw strings:
+    Escaping character ``\\`` in python can be avoided with python "raw" strings syntax:
 
     >>> print(r'NQ\\\\M23')
     NQ\\\\M23
+
+    Using raw strings is recommended for readability.
     """
 
     _PROPERTIES = Source._PROPERTIES + ["_p_db",
@@ -345,12 +366,12 @@ class Symbols(Source):
         _tmp_otq = None
         if db:
             if isinstance(db, list):
-                _symbol = [f"{str(_db).split(':')[0]}::" for _db in db] # noqa
+                _symbol = [f"{str(_db).split(':', maxsplit=1)[0]}::" for _db in db]
             elif isinstance(db, _QueryEvalWrapper):
                 _tmp_otq = TmpOtq()
                 _symbol = db.to_eval_string(tmp_otq=_tmp_otq)
             else:
-                _symbol = f"{str(db).split(':')[0]}::"  # noqa
+                _symbol = f"{str(db).split(':', maxsplit=1)[0]}::"
 
         if find_params is not None:
             warnings.warn("In otp.Symbols parameter 'find_params' is deprecated."
