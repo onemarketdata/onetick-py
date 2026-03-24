@@ -17,7 +17,7 @@ venv
 .vscode/
 !doc_sphinx/api/modules.rst
 doc_sphinx/_build/
-doc_sphinx/_build_spelling/
+doc_sphinx/_build_other/
 doc_sphinx/jupyter_execute/*
 doc_sphinx/_build_multiversion/*
 .env

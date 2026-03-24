@@ -1,7 +1,7 @@
 Market impact
 ==============
 
-MI -- `market impact`. Positive values indicate that the price moved in a favorable direction (i.e., the price is more attractive at the markout time than at the arrival time). Positive values of markouts into the future indicate that the order’s impact did not result in an adverse price movement. Positive values for future markouts may be an indication of a toxic client flow
+MI -- `market impact`. Positive values indicate that the price moved in a favorable direction (i.e., the price is more attractive at the markout time than at the arrival time). Positive values of markouts into the future indicate that the order's impact did not result in an adverse price movement. Positive values for future markouts may be an indication of a toxic client flow
 
 Formula to calculate MI
 

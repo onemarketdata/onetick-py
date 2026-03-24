@@ -3574,6 +3574,7 @@ dev = [
     { name = "ruff" },
     { name = "sphinx" },
     { name = "sphinx-copybutton" },
+    { name = "sphinx-markdown-builder" },
     { name = "sphinx-reredirects", version = "0.1.6", source = { registry = "https://pip.sol.onetick.com/" }, marker = "python_full_version < '3.11'" },
     { name = "sphinx-reredirects", version = "1.1.0", source = { registry = "https://pip.sol.onetick.com/" }, marker = "python_full_version >= '3.11'" },
     { name = "sphinx-togglebutton" },
@@ -3648,6 +3649,7 @@ dev = [
     { name = "ruff", specifier = ">=0.15.5" },
     { name = "sphinx", specifier = ">=7.4.7" },
     { name = "sphinx-copybutton", specifier = ">=0.5.2" },
+    { name = "sphinx-markdown-builder", specifier = ">=0.6.10" },
     { name = "sphinx-reredirects", specifier = ">=0.1.3" },
     { name = "sphinx-togglebutton", specifier = ">=0.4.4" },
     { name = "sphinxcontrib-spelling", specifier = ">=8.0.0" },
@@ -5788,6 +5790,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/80/29/18a1fc30e9315e72f068637079169525069a7c0b2fbe51cf689af0576214/sphinx_jupyterbook_latex-1.0.0.tar.gz", hash = "sha256:f54c6674c13f1616f9a93443e98b9b5353f9fdda8e39b6ec552ccf0b3e5ffb62", size = 11945, upload-time = "2023-12-11T15:37:25.034Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/70/1f/1d4ecaf58b17fe61497644655f40b04d84a88348e41a6f0c6392394d95e4/sphinx_jupyterbook_latex-1.0.0-py3-none-any.whl", hash = "sha256:e0cd3e9e1c5af69136434e21a533343fdf013475c410a414d5b7b4922b4f3891", size = 13319, upload-time = "2023-12-11T15:37:23.25Z" },
+]
+
+[[package]]
+name = "sphinx-markdown-builder"
+version = "0.6.10"
+source = { registry = "https://pip.sol.onetick.com/" }
+dependencies = [
+    { name = "docutils" },
+    { name = "sphinx" },
+    { name = "tabulate" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a0/58/0b7b9a7d071140b3705885d51932e8b62f520388c2772e4952189971727b/sphinx_markdown_builder-0.6.10.tar.gz", hash = "sha256:cd5acf88d52ea0146a712fd557404f10326dff3428a78ba928e59b1727fd4a86", size = 22688, upload-time = "2026-03-11T10:56:57.639Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c2/8f/9fecf3d081d5cd49eff83a17b9fef50ed741e6223ab3bb906de4ab0068f9/sphinx_markdown_builder-0.6.10-py3-none-any.whl", hash = "sha256:16d86738b9ac69fcbc86e373c31c6402c30af1fa8d98d0f62cc5f38bfe5fc26e", size = 16700, upload-time = "2026-03-11T10:56:56.135Z" },
 ]
 
 [[package]]

@@ -1,3 +1,4 @@
+import os
 from io import StringIO
 from textwrap import dedent
 
@@ -43,7 +44,7 @@ class TestReadFromDataFrame:
             assert src.schema == schema
             native_result = otp.run(src, date=otp.date(2024, 1, 1))
 
-        src = otp.ReadFromDataFrame(dataframe.copy(), force_compatibility_mode=True, **kwargs)
+        src = otp.LoadTicksFromDataFrame(dataframe.copy(), **kwargs)
         assert src.schema == schema
         compat_result = otp.run(src, date=otp.date(2024, 1, 1))
 
@@ -57,7 +58,7 @@ class TestReadFromDataFrame:
 
             assert native_dict == compat_dict
 
-        return native_result, compat_result
+        return compat_result
 
     @pytest.mark.parametrize('timestamp_column', [
         'TIME', 'TiMe', 'Time', 'TIMESTAMP', 'Timestamp',
@@ -73,21 +74,21 @@ class TestReadFromDataFrame:
             'SYMBOL_NAME': str,
         }
 
-        _, compat = self.make_queries(dataframe, schema=src_schema)
+        result = self.make_queries(dataframe, schema=src_schema)
 
         if timestamp_column != 'TIMESTAMP':
             # Check explicit timestamp_column set
-            _, compat_with_ts = self.make_queries(dataframe, schema=src_schema, kwargs={
+            result_with_ts = self.make_queries(dataframe, schema=src_schema, kwargs={
                 'symbol': 'AAPL', 'timestamp_column': timestamp_column,
             })
-            assert compat.to_dict(orient='list') == compat_with_ts.to_dict(orient='list')
+            assert result.to_dict(orient='list') == result_with_ts.to_dict(orient='list')
 
         result_schema = {'Time', 'ID', 'SIDE', 'PRICE', 'FLOAT', 'SYMBOL_NAME'}
 
-        assert len(compat) == 5
-        assert set(compat.columns) == result_schema
+        assert len(result) == 5
+        assert set(result.columns) == result_schema
 
-        assert compat['Time'].to_list() == [
+        assert result['Time'].to_list() == [
             pd.Timestamp('2024-01-01 12:00:00.001'), pd.Timestamp('2024-01-01 12:00:02.000'),
             pd.Timestamp('2024-01-01 12:00:02.500'), pd.Timestamp('2024-01-01 12:00:03.100'),
             pd.Timestamp('2024-01-01 12:00:03.250')
@@ -104,13 +105,13 @@ class TestReadFromDataFrame:
             'FLOAT': float,
             'SYMBOL_NAME': str,
         }
-        _, compat = self.make_queries(
+        result = self.make_queries(
             dataframe, schema=src_schema, kwargs={'symbol': 'AAPL', 'timestamp_column': timestamp_column},
         )
 
         result_schema = {'Time', 'ID', 'SIDE', 'PRICE', 'FLOAT', 'SYMBOL_NAME'}
-        assert len(compat) == 5
-        assert set(compat.columns) == result_schema
+        assert len(result) == 5
+        assert set(result.columns) == result_schema
 
     def test_empty_timestamp_column(self, session):
         timestamp_column = 'TEST'
@@ -124,13 +125,13 @@ class TestReadFromDataFrame:
             'FLOAT': float,
             'SYMBOL_NAME': str,
         }
-        _, compat = self.make_queries(
+        result = self.make_queries(
             dataframe, schema=src_schema, kwargs={'symbol': 'AAPL'},
         )
 
         result_schema = {'Time', timestamp_column, 'ID', 'SIDE', 'PRICE', 'FLOAT', 'SYMBOL_NAME'}
-        assert len(compat) == 5
-        assert set(compat.columns) == result_schema
+        assert len(result) == 5
+        assert set(result.columns) == result_schema
 
     def test_datetime_timestamp_column(self, session):
         timestamp_column = 'Timestamp'
@@ -144,13 +145,13 @@ class TestReadFromDataFrame:
             'FLOAT': float,
             'SYMBOL_NAME': str,
         }
-        _, compat = self.make_queries(
+        result = self.make_queries(
             dataframe, schema=src_schema, kwargs={'symbol': 'AAPL'},
         )
 
         result_schema = {'Time', 'ID', 'SIDE', 'PRICE', 'FLOAT', 'SYMBOL_NAME'}
-        assert len(compat) == 5
-        assert set(compat.columns) == result_schema
+        assert len(result) == 5
+        assert set(result.columns) == result_schema
 
     def test_timestamp_column_without_autodetect(self, session):
         timestamp_column = 'Timestamp'
@@ -168,13 +169,13 @@ class TestReadFromDataFrame:
             'FLOAT': float,
             'SYMBOL_NAME': str,
         }
-        _, compat = self.make_queries(
+        result = self.make_queries(
             dataframe, schema=src_schema, kwargs={'symbol': 'AAPL', 'timestamp_column': None},
         )
 
         result_schema = {'Time', timestamp_column, 'TimestamP', 'ID', 'SIDE', 'PRICE', 'FLOAT', 'SYMBOL_NAME'}
-        assert len(compat) == 5
-        assert set(compat.columns) == result_schema
+        assert len(result) == 5
+        assert set(result.columns) == result_schema
 
     def test_special_values_compat(self, session):
         dataframe = self.get_test_data(timestamp_column='TIME', add_special_values=True)
@@ -186,13 +187,13 @@ class TestReadFromDataFrame:
             'FLOAT': float,
             'SYMBOL_NAME': str,
         }
-        _, compat = self.make_queries(
+        result = self.make_queries(
             dataframe, schema=src_schema, kwargs={'symbol': 'AAPL'}, drop_compare_for=['FLOAT'],
         )
 
         result_schema = {'Time', 'ID', 'SIDE', 'PRICE', 'FLOAT', 'SYMBOL_NAME'}
-        assert len(compat) == 6
-        assert set(compat.columns) == result_schema
+        assert len(result) == 6
+        assert set(result.columns) == result_schema
 
     def test_symbol_name_field(self, session):
         dataframe = self.get_test_data(timestamp_column='Timestamp', symbol_name_field='TEST', symbol_name='AAPL')
@@ -204,48 +205,60 @@ class TestReadFromDataFrame:
             'FLOAT': float,
             'TEST': str,
         }
-        _, compat = self.make_queries(dataframe, schema=src_schema, kwargs={'symbol_name_field': 'TEST'})
+        result = self.make_queries(dataframe, schema=src_schema, kwargs={'symbol_name_field': 'TEST'})
 
         result_schema = {'Time', 'ID', 'SIDE', 'PRICE', 'FLOAT', 'TEST'}
-        assert len(compat) == 5
-        assert set(compat.columns) == result_schema
+        assert len(result) == 5
+        assert set(result.columns) == result_schema
 
-    def test_exceptions(self, session):
+    @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason="Doesn't work in WebAPI test environment")
+    @pytest.mark.parametrize('source_type', ['ReadFromDataFrame', 'LoadTicksFromDataFrame'])
+    def test_exceptions(self, session, source_type):
+        if source_type == 'ReadFromDataFrame':
+            if not hasattr(otq, 'ReadFromDataFrame'):
+                pytest.mark.skip('Not supported on this OneTick version')
+                return
+            source = otp.ReadFromDataFrame
+        else:
+            source = otp.LoadTicksFromDataFrame
+
         df = self.get_test_data(timestamp_column='Timestamp')
 
         with pytest.raises(ValueError, match='DataFrame should be passed'):
-            otp.ReadFromDataFrame(symbol='AAPL')
+            source(symbol='AAPL')
 
         with pytest.raises(ValueError, match='expected to be pandas DataFrame'):
-            otp.ReadFromDataFrame(dataframe={'A': [1, 2, 3]})
+            source(dataframe={'A': [1, 2, 3]})
 
         for col in ['Time', 'TIMESTAMP']:
             df_ts = self.get_test_data(timestamp_column=col)
             df_ts['TEST'] = df_ts[col]
             with pytest.raises(ValueError, match='not allowed to both'):
-                otp.ReadFromDataFrame(
+                source(
                     self.get_test_data(timestamp_column=col), timestamp_column='TEST', symbol='AAPL',
                 )
 
             with pytest.raises(ValueError, match='not allowed to both'):
-                otp.ReadFromDataFrame(
+                source(
                     self.get_test_data(timestamp_column=col), timestamp_column=None, symbol='AAPL',
                 )
 
         df_ts = self.get_test_data(timestamp_column='TIMESTAMP')
         df_ts['TEST'] = df_ts['TIMESTAMP']
         with pytest.raises(ValueError, match='not allowed to both'):
-            otp.ReadFromDataFrame(df_ts, timestamp_column='TEST', symbol='AAPL')
+            source(df_ts, timestamp_column='TEST', symbol='AAPL')
 
         df_ts = self.get_test_data(timestamp_column='TIMESTAMP')
         df_ts['TiMe'] = df_ts['TIMESTAMP']
         df_ts['Timestamp'] = df_ts['TIMESTAMP']
         with pytest.raises(ValueError, match='Could not determine timestamp'):
-            otp.ReadFromDataFrame(df_ts, symbol='AAPL')
+            source(df_ts, symbol='AAPL')
 
         with pytest.raises(ValueError, match='not in dataframe'):
-            otp.ReadFromDataFrame(df, timestamp_column='MISSING', symbol='AAPL')
+            source(df, timestamp_column='MISSING', symbol='AAPL')
 
+    @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason="Doesn't work in WebAPI test environment")
+    @pytest.mark.skipif(not hasattr(otq, 'ReadFromDataFrame'), reason='Not supported on this OneTick version')
     def test_run(self, session):
         input_df = self.get_test_data()
         src = otp.ReadFromDataFrame(input_df)
@@ -261,6 +274,8 @@ class TestReadFromDataFrame:
         assert list(df['FLOAT']) == list(df['PRICE'])
         assert list(df['SYMBOL_NAME']) == ['AAPL', 'AAPL', 'AAPL', 'AAPL', 'AAPL']
 
+    @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason="Doesn't work in WebAPI test environment")
+    @pytest.mark.skipif(not hasattr(otq, 'ReadFromDataFrame'), reason='Not supported on this OneTick version')
     def test_copy(self, session):
         # PY-1484  (reproduces only with pyarrow installed)
         input_df = self.get_test_data()
@@ -278,6 +293,8 @@ class TestReadFromDataFrame:
         assert list(df['FLOAT']) == list(df['PRICE'])
         assert list(df['SYMBOL_NAME']) == ['AAPL', 'AAPL', 'AAPL', 'AAPL', 'AAPL']
 
+    @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason="Doesn't work in WebAPI test environment")
+    @pytest.mark.skipif(not hasattr(otq, 'ReadFromDataFrame'), reason='Not supported on this OneTick version')
     def test_update(self, session):
         # PY-1484 (reproduces only with pyarrow installed)
         csv_input = dedent(

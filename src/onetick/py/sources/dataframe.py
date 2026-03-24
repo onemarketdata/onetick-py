@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Type, Union
 
 import onetick.py as otp
 from onetick.py.otq import otq
@@ -111,62 +111,6 @@ def _get_offsets(dataframe, timestamp_column) -> Tuple[otp.datetime, list]:
     return ott.datetime(base_ts), offsets
 
 
-def _fallback_source(
-    dataframe,
-    timestamp_column=None,
-    symbol_value=None,
-    symbol_name_field=None,
-    db=utils.adaptive_to_default,
-    tick_type=utils.adaptive,
-):
-    rows_num = len(dataframe)
-    if symbol_value:
-        dataframe['SYMBOL_NAME'] = symbol_value
-
-    if symbol_name_field:
-        dataframe['SYMBOL_NAME'] = dataframe[symbol_name_field]
-
-    data = dataframe.to_dict(orient='list')
-
-    ticks_kwargs = {}
-    if timestamp_column:
-        if rows_num > 0:
-            base_ts, offsets = _get_offsets(dataframe, timestamp_column)
-            ticks_kwargs['offset'] = offsets
-            ticks_kwargs['start'] = base_ts
-
-        # remove original timestamp
-        del data[timestamp_column]
-
-    ts_column_mapping = []
-    save_ts_column_list = [
-        col for col in data.keys()
-        if col and col.lower() == 'timestamp'
-    ]
-    if save_ts_column_list:
-        # For some reason OneTick CSV_FILE_LISTING doesn't like timestamp columns with any case
-
-        for idx, col in enumerate(save_ts_column_list):
-            _mapping = (f'__TMP_TIMESTAMP_COLUMN_{idx}__', col)
-            ts_column_mapping.append(_mapping)
-            data[_mapping[0]] = data[_mapping[1]]
-            del data[_mapping[1]]
-
-    src = otp.Ticks(data=data, db=db, tick_type=tick_type, **ticks_kwargs)
-
-    if symbol_name_field:
-        src.drop(['SYMBOL_NAME'], inplace=True)
-
-    if not timestamp_column:
-        src['Time'] = otp.meta_fields.end_time
-
-    if ts_column_mapping:
-        for _mapping in ts_column_mapping:
-            src.rename({_mapping[0]: _mapping[1]}, inplace=True)
-
-    return src
-
-
 def _autodetect_timestamp_column(dataframe: pd.DataFrame) -> Optional[str]:
     timestamp_columns = [col for col in dataframe.columns if col.lower() in ['time', 'timestamp']]
     if len(timestamp_columns) > 1:
@@ -179,6 +123,75 @@ def _autodetect_timestamp_column(dataframe: pd.DataFrame) -> Optional[str]:
     return None
 
 
+def _process_dataframe(dataframe: Optional[pd.DataFrame]) -> pd.DataFrame:
+    if dataframe is None:
+        raise ValueError('DataFrame should be passed to `ReadFromDataFrame`/`LoadTicksFromDataFrame` constructor')
+
+    if not isinstance(dataframe, pd.DataFrame):
+        raise ValueError(f'`dataframe` parameter expected to be pandas DataFrame, got `{type(dataframe)}`')
+
+    return dataframe.copy(deep=True)
+
+
+def _process_timestamp(dataframe: pd.DataFrame, timestamp_column: Optional[str]) -> Optional[str]:
+    if ('TIMESTAMP' in dataframe.columns or 'Time' in dataframe.columns) and not (
+        timestamp_column in ['TIMESTAMP', 'Time'] or timestamp_column is utils.adaptive
+    ):
+        # Can't set meta fields
+        raise ValueError(
+            'It\'s not allowed to both have `TIMESTAMP` or `Time` column in DataFrame '
+            'and pass `timestamp_column` parameter with different column '
+            'or disable timestamp column autodetection'
+        )
+
+    if timestamp_column is utils.adaptive:
+        timestamp_column = _autodetect_timestamp_column(dataframe)
+
+    if timestamp_column:
+        if timestamp_column not in dataframe.columns:
+            raise ValueError(f'Column `{timestamp_column}` passed as `timestamp_column` parameter not in dataframe')
+
+        if ott.np2type(dataframe[timestamp_column].dtype) in [ott.nsectime, ott.msectime]:
+            # convert back to string
+            dataframe[timestamp_column] = (dataframe[timestamp_column].dt.strftime('%Y-%m-%d %H:%M:%S.%f') +
+                                           dataframe[timestamp_column].dt.nanosecond.astype(str).str.zfill(3))
+
+    return timestamp_column
+
+
+def _process_common_params(
+    dataframe, timestamp_column, symbol_name_field, symbol,
+) -> Tuple[pd.DataFrame, dict, Optional[str], Optional[str], Union[str, Type[utils.adaptive], None], Optional[str]]:
+    dataframe = _process_dataframe(dataframe)
+    timestamp_column = _process_timestamp(dataframe, timestamp_column)
+
+    columns = {}
+    for column, dtype in dataframe.dtypes.to_dict().items():
+        if timestamp_column == column:
+            continue
+        else:
+            dtype = ott.np2type(dtype)
+
+        columns[column] = dtype
+
+    if not symbol_name_field and symbol is utils.adaptive:
+        symbol = otp.config.get('default_symbol')
+
+    symbol_value = None
+    if symbol is not utils.adaptive:
+        if symbol_name_field:
+            raise ValueError('`symbol_name_field` parameter is passed while `symbol` parameter is defined')
+
+        symbol_value = symbol
+
+        # otq.ReadFromDataFrame adds this column in this case
+        columns['SYMBOL_NAME'] = str
+    elif symbol_name_field and symbol_name_field not in dataframe.columns:
+        raise ValueError(f'Column `{symbol_name_field}` passed as `symbol_name_field` parameter not in dataframe')
+
+    return dataframe, columns, timestamp_column, symbol_name_field, symbol, symbol_value
+
+
 def ReadFromDataFrame(
     dataframe=None,
     timestamp_column=utils.adaptive,
@@ -188,7 +201,6 @@ def ReadFromDataFrame(
     tick_type=utils.adaptive,
     start=utils.adaptive,
     end=utils.adaptive,
-    force_compatibility_mode=False,
     **kwargs,
 ):
     """
@@ -221,8 +233,10 @@ def ReadFromDataFrame(
         Custom start time of the query.
     end: :py:class:`otp.datetime <onetick.py.datetime>`
         Custom end time of the query.
-    force_compatibility_mode: bool
-        Force use of old dataframe load method
+
+    See also
+    --------
+    :py:func:`onetick.py.LoadTicksFromDataFrame`
 
     Examples
     --------
@@ -293,78 +307,147 @@ def ReadFromDataFrame(
     3 2024-01-01 12:00:03.100  SELL  49.98    80   AAPL
     4 2024-01-01 12:00:03.250   BUY  50.02   250   AAPL
     """
-    if dataframe is None:
-        raise ValueError('DataFrame should be passed to `ReadFromDataFrame` constructor')
+    if not hasattr(otq, 'ReadFromDataFrame'):
+        raise RuntimeError('Current version of OneTick doesn\'t support ReadFromDataFrame')
 
-    if not isinstance(dataframe, pd.DataFrame):
-        raise ValueError(f'`dataframe` parameter expected to be pandas DataFrame, got `{type(dataframe)}`')
+    dataframe, columns, timestamp_column, symbol_name_field, symbol, symbol_value = _process_common_params(
+        dataframe, timestamp_column, symbol_name_field, symbol,
+    )
 
-    dataframe = dataframe.copy(deep=True)
+    return _ReadFromDataFrameSource(
+        dataframe=dataframe,
+        timestamp_column=timestamp_column,
+        symbol_name_field=symbol_name_field,
+        symbol_value=symbol_value,
+        symbol=symbol,
+        db=db,
+        tick_type=tick_type,
+        start=start,
+        end=end,
+        schema=columns,
+        **kwargs,
+    )
 
-    if ('TIMESTAMP' in dataframe.columns or 'Time' in dataframe.columns) and not (
-        timestamp_column in ['TIMESTAMP', 'Time'] or timestamp_column is utils.adaptive
-    ):
-        # Can't set meta fields
-        raise ValueError(
-            'It\'s not allowed to both have `TIMESTAMP` or `Time` column in DataFrame '
-            'and pass `timestamp_column` parameter with different column '
-            'or disable timestamp column autodetection'
-        )
 
-    if timestamp_column is utils.adaptive:
-        timestamp_column = _autodetect_timestamp_column(dataframe)
+def LoadTicksFromDataFrame(
+    dataframe=None,
+    timestamp_column=utils.adaptive,
+    symbol_name_field=None,
+    symbol=utils.adaptive,
+    db=utils.adaptive_to_default,
+    tick_type=utils.adaptive,
+):
+    """
+    Load :pandas:`pandas.DataFrame` as data source
 
+    Relies on :py:class:`otp.Ticks <onetick.py.Ticks>`.
+    So unlike :py:func:`onetick.py.ReadFromDataFrame` filtering by symbols via `symbols` parameter
+    in :py:func:`otp.run<onetick.py.run>` don't affect output.
+
+    Also, it can be used in older OneTick versions.
+
+    Parameters
+    ----------
+    dataframe: :pandas:`pandas.DataFrame`
+        Pandas DataFrame to load.
+    timestamp_column: str, optional
+        Column containing time info.
+
+        If parameter not set and DataFrame has one of columns ``TIME`` or ``Timestamp`` (case-insensitive),
+        it will be automatically used as ``timestamp_column``. To disable this, set ``timestamp_column=None``.
+
+        Timestamp column dtype should be either datetime related or string.
+    symbol_name_field: str, optional
+        Column containing symbol name.
+    symbol: str
+        Symbol(s) from which data should be taken.
+
+        If both `symbol_name_field` and `symbol` are omitted
+        :py:attr:`otp.config.default_symbol<onetick.py.configuration.Config.default_symbol>` value will be used.
+    db: str
+        Custom database name for the node of the graph.
+    tick_type: str
+        Tick type.
+        Default: ANY.
+
+    See also
+    --------
+    :py:func:`onetick.py.ReadFromDataFrame`
+
+    Examples
+    --------
+
+    All examples for :py:func:`onetick.py.ReadFromDataFrame` suitable for this data source.
+
+    Let's look at differences. Here's :py:func:`onetick.py.ReadFromDataFrame` output
+    with `symbols` parameter in :py:func:`otp.run<onetick.py.run>`:
+
+    >>> src = otp.ReadFromDataFrame(dataframe, symbol_name_field='SYMBOL_NAME')  # doctest: +SKIP
+    >>> otp.run(data, date=otp.dt(2024, 1, 1), symbols=['AAA'])  # doctest: +SKIP
+                         Time SYMBOL_NAME  PRICE
+    0 2024-01-01 12:00:00.001         AAA  50.05
+    1 2024-01-01 12:00:02.000         AAA  50.05
+    2 2024-01-01 12:00:03.100         AAA  49.98
+
+    Same example for `LoadTicksFromDataFrame`. As you can see, ticks weren't filtered by symbol name:
+
+    >>> dataframe['_SYMBOL'] = dataframe['SYMBOL_NAME']  # doctest: +SKIP
+    >>> src = otp.LoadTicksFromDataFrame(dataframe)  # doctest: +SKIP
+    >>> otp.run(src, date=otp.date(2024, 1, 1))  # doctest: +SKIP
+                         Time  PRICE _SYMBOL
+    0 2024-01-01 12:00:00.001  50.05     AAA
+    1 2024-01-01 12:00:02.000  50.05     AAA
+    2 2024-01-01 12:00:02.500  49.95     BBB
+    3 2024-01-01 12:00:03.100  49.98     AAA
+    4 2024-01-01 12:00:03.250  50.02     BBB
+    """
+    dataframe, _, timestamp_column, symbol_name_field, _, symbol_value = _process_common_params(
+        dataframe, timestamp_column, symbol_name_field, symbol,
+    )
+
+    rows_num = len(dataframe)
+    if symbol_value:
+        dataframe['SYMBOL_NAME'] = symbol_value
+
+    if symbol_name_field:
+        dataframe['SYMBOL_NAME'] = dataframe[symbol_name_field]
+
+    data = dataframe.to_dict(orient='list')
+
+    ticks_kwargs = {}
     if timestamp_column:
-        if timestamp_column not in dataframe.columns:
-            raise ValueError(f'Column `{timestamp_column}` passed as `timestamp_column` parameter not in dataframe')
+        if rows_num > 0:
+            base_ts, offsets = _get_offsets(dataframe, timestamp_column)
+            ticks_kwargs['offset'] = offsets
+            ticks_kwargs['start'] = base_ts
 
-        if ott.np2type(dataframe[timestamp_column].dtype) in [ott.nsectime, ott.msectime]:
-            # convert back to string
-            dataframe[timestamp_column] = (dataframe[timestamp_column].dt.strftime('%Y-%m-%d %H:%M:%S.%f') +
-                                           dataframe[timestamp_column].dt.nanosecond.astype(str).str.zfill(3))
+        # remove original timestamp
+        del data[timestamp_column]
 
-    columns = {}
-    for column, dtype in dataframe.dtypes.to_dict().items():
-        if timestamp_column == column:
-            continue
-        else:
-            dtype = ott.np2type(dtype)
+    ts_column_mapping = []
+    save_ts_column_list = [
+        col for col in data.keys()
+        if col and col.lower() == 'timestamp'
+    ]
+    if save_ts_column_list:
+        # For some reason OneTick CSV_FILE_LISTING doesn't like timestamp columns with any case
 
-        columns[column] = dtype
+        for idx, col in enumerate(save_ts_column_list):
+            _mapping = (f'__TMP_TIMESTAMP_COLUMN_{idx}__', col)
+            ts_column_mapping.append(_mapping)
+            data[_mapping[0]] = data[_mapping[1]]
+            del data[_mapping[1]]
 
-    if not symbol_name_field and symbol is utils.adaptive:
-        symbol = otp.config.get('default_symbol')
+    src = otp.Ticks(data=data, db=db, tick_type=tick_type, **ticks_kwargs)
 
-    symbol_value = None
-    if symbol is not utils.adaptive:
-        if symbol_name_field:
-            raise ValueError('`symbol_name_field` parameter is passed while `symbol` parameter is defined')
+    if symbol_name_field:
+        src.drop(['SYMBOL_NAME'], inplace=True)
 
-        symbol_value = symbol
+    if not timestamp_column:
+        src['Time'] = otp.meta_fields.end_time
 
-        # otq.ReadFromDataFrame adds this column in this case
-        columns['SYMBOL_NAME'] = str
-    elif symbol_name_field and symbol_name_field not in dataframe.columns:
-        raise ValueError(f'Column `{symbol_name_field}` passed as `symbol_name_field` parameter not in dataframe')
+    if ts_column_mapping:
+        for _mapping in ts_column_mapping:
+            src.rename({_mapping[0]: _mapping[1]}, inplace=True)
 
-    if hasattr(otq, 'ReadFromDataFrame') and not force_compatibility_mode:
-        return _ReadFromDataFrameSource(
-            dataframe=dataframe,
-            timestamp_column=timestamp_column,
-            symbol_name_field=symbol_name_field,
-            symbol_value=symbol_value,
-            symbol=symbol,
-            db=db,
-            tick_type=tick_type,
-            start=start,
-            end=end,
-            schema=columns,
-            **kwargs,
-        )
-    else:
-        return _fallback_source(
-            dataframe=dataframe,
-            timestamp_column=timestamp_column,
-            symbol_name_field=symbol_name_field,
-            symbol_value=symbol_value,
-        )
+    return src

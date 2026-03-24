@@ -5,10 +5,11 @@ set -eux
 TAGS=${TAGS:-Nothing}
 TARGET=${1:-'html'}
 FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-WARNINGS_FLAG='-W'
+WARNINGS_FLAG=${WARNINGS_FLAG:-'-W --keep-going'}
 if [ "$TARGET" == "markdown" ]; then
     WARNINGS_FLAG=''
 fi
+SPHINXOPTS=${SPHINXOPTS:-"-T -t $TAGS"}
 
 cd $FILE_DIR
 
@@ -34,11 +35,29 @@ echo "Cleaning build directory..."
 make clean
 
 echo "Building sphinx with $TARGET target..."
-make $TARGET SPHINXOPTS="-T $WARNINGS_FLAG --keep-going -t $TAGS"
+make $TARGET SPHINXOPTS="$SPHINXOPTS $WARNINGS_FLAG"
 if [ "$TARGET" == "html" ]; then
     echo "Building sphinx with spelling target..."
-    # using separate build directory to avoid strange warnings with this quote character ’
-    make spelling SPHINXOPTS="-T $WARNINGS_FLAG --keep-going" BUILDDIR=_build_spelling
+    # TODO: seems like both spelling and markdown targets have malformed results
+    # if they are built after html in the same directory
+    # using separate directory to avoid these issues
+    make clean BUILDDIR=_build_other
+    make spelling SPHINXOPTS="$SPHINXOPTS $WARNINGS_FLAG" BUILDDIR=_build_other
+    # TODO: disabling warnings for markdown for now, we have some problems
+    make markdown SPHINXOPTS="$SPHINXOPTS" BUILDDIR=_build_other
+    cd _build_other/markdown
+    # concatenate all markdown files into llms-full.txt file and move it to html docs source
+    find -type f -name '*.md' -exec sh -c 'file_path="${1#./}";\
+                                           echo;\
+                                           echo ----------------------------------------------------------------------------------;\
+                                           echo source: \"https://docs.pip.distribution.sol.onetick.com/${file_path%.md}.html.md\";\
+                                           echo ----------------------------------------------------------------------------------;\
+                                           echo;\
+                                           cat $1' sh {} \; > ../../_build/html/llms-full.txt
+    # move all markdown files to _build/html directory, we want to publish them too
+    # also rename them so they have .html.md extension so we can add .md suffix for each html page
+    find -type f -name '*.md' -exec sh -c 'mv -v $1 ../../_build/html/${1%.md}.html.md' sh {} \;
+    cd -
 fi
 
 rm js/switcher.json

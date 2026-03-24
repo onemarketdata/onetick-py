@@ -334,6 +334,10 @@ class OptionPrice(_Aggregation):
     FIELDS_MAPPING['days_in_year'] = 'DAYS_IN_YEAR'
     FIELDS_MAPPING['days_till_expiration_field_name'] = 'DAYS_TILL_EXPIRATION_FIELD_NAME'
     FIELDS_MAPPING['expiration_date_field_name'] = 'EXPIRATION_DATE_FIELD_NAME'
+    FIELDS_MAPPING['all_fields_for_running'] = 'ALL_FIELDS_FOR_RUNNING'
+
+    FIELDS_DEFAULT = deepcopy(_Aggregation.FIELDS_DEFAULT)
+    FIELDS_DEFAULT['all_fields_for_running'] = False
 
     FIELDS_TO_SKIP: List = ['column_name', 'all_fields', 'end_condition_per_group', 'group_by', 'output_field_name']
 
@@ -357,7 +361,12 @@ class OptionPrice(_Aggregation):
                  days_in_year: int = 365,
                  days_till_expiration_field_name: str = '',
                  expiration_date_field_name: str = '',
+                 all_fields_for_running: bool = False,
                  *args, **kwargs):
+        self.all_fields_for_running = all_fields_for_running
+        if self.all_fields_for_running:
+            # all_fields parameter is not available for this aggregation, but it's used to set the schema correctly
+            kwargs['all_fields'] = True
         super().__init__(column=_Column('PRICE'), *args, **kwargs)  # type: ignore
         self.volatility = volatility
         self.interest_rate = interest_rate

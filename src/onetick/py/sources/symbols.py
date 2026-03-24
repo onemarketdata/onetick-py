@@ -267,17 +267,17 @@ class Symbols(Source):
     ...                    symbology='FGV', show_original_symbols=True)                     # doctest: +SKIP
     >>> otp.run(data, start=otp.dt(2023, 5, 15, 9, 30), end=otp.dt(2023, 5, 15, 9, 30, 1))  # doctest: +SKIP
                          Time   SYMBOL_NAME  ORIGINAL_SYMBOL_NAME
-    0     2023-05-15 09:30:00  BBG000C2V3D6            US_COMP::A
-    1     2023-05-15 09:30:00  BBG00B3T3HD3           US_COMP::AA
-    2     2023-05-15 09:30:00  BBG01B0JRCS6          US_COMP::AAA
-    3     2023-05-15 09:30:00  BBG00LPXX872         US_COMP::AAAU
-    4     2023-05-15 09:30:00  BBG00YZC2Z91          US_COMP::AAC
+    0     2023-05-15 09:30:00  BBG000C2V3D6                     A
+    1     2023-05-15 09:30:00  BBG00B3T3HD3                    AA
+    2     2023-05-15 09:30:00  BBG01B0JRCS6                   AAA
+    3     2023-05-15 09:30:00  BBG00LPXX872                  AAAU
+    4     2023-05-15 09:30:00  BBG00YZC2Z91                   AAC
     ...                   ...           ...                   ...
-    10946 2023-05-15 09:30:00                      US_COMP::ZXIET
-    10947 2023-05-15 09:30:00                      US_COMP::ZXZZT
-    10948 2023-05-15 09:30:00  BBG019XSYC89         US_COMP::ZYME
-    10949 2023-05-15 09:30:00  BBG007BBS8B7         US_COMP::ZYNE
-    10950 2023-05-15 09:30:00  BBG000BJBXZ2         US_COMP::ZYXI
+    10946 2023-05-15 09:30:00                               ZXIET
+    10947 2023-05-15 09:30:00                               ZXZZT
+    10948 2023-05-15 09:30:00  BBG019XSYC89                  ZYME
+    10949 2023-05-15 09:30:00  BBG007BBS8B7                  ZYNE
+    10950 2023-05-15 09:30:00  BBG000BJBXZ2                  ZYXI
 
     **Escaping special characters in the pattern**
 
@@ -441,6 +441,9 @@ class Symbols(Source):
 
         if not keep_db:
             src["SYMBOL_NAME"] = src["SYMBOL_NAME"].str.regex_replace('.*::', '')
+            if params['symbology'] and params['show_original_symbols']:
+                src.schema['ORIGINAL_SYMBOL_NAME'] = str
+                src['ORIGINAL_SYMBOL_NAME'] = src['ORIGINAL_SYMBOL_NAME'].str.regex_replace('.*::', '')  # NOSONAR
 
         return src
 

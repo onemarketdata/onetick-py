@@ -220,7 +220,7 @@ that bound symbols should depend on unbound symbols.
 Note that in onetick.py code, if the source passed to :func:`onetick.py.eval` is a function,
 then ``symbol`` object will be passed as a parameter to this function.
 But if the source is passed as an :class:`onetick.py.Source` object (as in the example above),
-then it does not matter what object is passed as ``symbol`` parameter – Onetick would correctly use unbound symbol
+then it does not matter what object is passed as ``symbol`` parameter - Onetick would correctly use unbound symbol
 to calculate bound symbols as long as you pass anything. For convenience, the following empty object can be used:
 
 .. testcode::

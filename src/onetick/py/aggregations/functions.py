@@ -663,11 +663,11 @@ def tw_average(*args, **kwargs):
     --------
     >>> data = otp.Ticks(X=[1, 2, 3, 4], offset=[0, 1000, 1500, 3000])
     >>> otp.run(data, start=otp.dt(2023, 4, 25), end=otp.dt(2023, 4, 25)+otp.Second(4))
-                        Time	X
-    0	2023-04-25 00:00:00.000	1
-    1	2023-04-25 00:00:01.000	2
-    2	2023-04-25 00:00:01.500	3
-    3	2023-04-25 00:00:03.000	4
+                         Time  X
+    0 2023-04-25 00:00:00.000  1
+    1 2023-04-25 00:00:01.000  2
+    2 2023-04-25 00:00:01.500  3
+    3 2023-04-25 00:00:03.000  4
 
     >>> # OTdirective: snippet-name: Aggregations.time weighted average;
     >>> data = otp.Ticks(X=[1, 2, 3, 4], offset=[0, 1000, 1500, 3000])
@@ -1026,12 +1026,12 @@ def option_price(*args, **kwargs):
     Parameters
     ----------
     volatility: float
-        The historical volatility of the asset’s returns.
+        The historical volatility of the asset's returns.
     interest_rate: float
         The risk-free interest rate.
     compute_model: str
         Allowed values are `BS` and `CRR`.
-        Choose between Black–Scholes (`BS`) and Cox-Ross-Rubinstein (`CRR`) models for computing call/put option price.
+        Choose between Black-Scholes (`BS`) and Cox-Ross-Rubinstein (`CRR`) models for computing call/put option price.
         Default: `BS`
     number_of_steps: int
         Specifies the number of time steps between the valuation and expiration dates.
@@ -1052,7 +1052,7 @@ def option_price(*args, **kwargs):
         Specifies whether Rho is to be computed or not. This parameter is used only in case of `BS` model.
         Default: False
     volatility_field_name: str
-        Specifies name of the field, which carries the historical volatility of the asset’s returns.
+        Specifies name of the field, which carries the historical volatility of the asset's returns.
         Default: empty
     interest_rate_field_name: str
         Specifies name of the field, which carries the risk-free interest rate.
@@ -1073,6 +1073,9 @@ def option_price(*args, **kwargs):
     expiration_date_field_name: str
         Specifies name of the field, which carries the expiration date of the option, in YYYYMMDD format.
         Default: empty
+    all_fields_for_running: bool
+        Specifies whether all input tick fields should be present in the output ticks when ``running`` is set to True.
+        Default: False.
 
     See also
     --------
@@ -1080,21 +1083,52 @@ def option_price(*args, **kwargs):
 
     Examples
     ---------
-    Black–Scholes with parameters passed through symbol params and calculated delta:
+    Black-Scholes with parameters passed through symbol params and calculated delta:
 
-    >>> symbol = otp.Tick(SYMBOL_NAME='SYMB')
-    >>> symbol['OPTION_TYPE'] = 'CALL'
-    >>> symbol['STRIKE_PRICE'] = 100.0
-    >>> symbol['DAYS_TILL_EXPIRATION'] = 30
-    >>> symbol['VOLATILITY'] = 0.25
-    >>> symbol['INTEREST_RATE'] = 0.05
-    >>> data = otp.Ticks(PRICE=[100.7, 101.1, 99.5], symbol=symbol)
-    >>> data = otp.agg.option_price(compute_delta=True).apply(data)
-    >>> otp.run(data)['SYMB']
-            Time     VALUE    DELTA
-    0 2003-12-04  2.800999  0.50927
-    >>> data.schema
-    {'VALUE': <class 'float'>, 'DELTA': <class 'float'>}
+    .. testcode::
+
+        symbol = otp.Tick(SYMBOL_NAME='SYMB')
+        symbol['OPTION_TYPE'] = 'CALL'
+        symbol['STRIKE_PRICE'] = 100.0
+        symbol['DAYS_TILL_EXPIRATION'] = 30
+        symbol['VOLATILITY'] = 0.25
+        symbol['INTEREST_RATE'] = 0.05
+        data = otp.Ticks(PRICE=[100.7, 101.1, 99.5], symbol=symbol)
+        data = otp.agg.option_price(compute_delta=True).apply(data)
+        df = otp.run(data)['SYMB']
+        print(df)
+
+    .. testoutput::
+
+                Time     VALUE    DELTA
+        0 2003-12-04  2.800999  0.50927
+
+    .. testcode::
+
+        print(data.schema)
+
+    .. testoutput::
+
+        {'VALUE': <class 'float'>, 'DELTA': <class 'float'>}
+
+    Enable aggregation over running window and keep all fields in the output:
+
+    .. testcode::
+        :skipif: not otp.compatibility.is_all_fields_for_running_supported()
+
+        data = otp.Ticks(PRICE=[100.7, 101.1, 99.5], symbol=symbol)
+        data = otp.agg.option_price(compute_delta=True,
+                                    running=True,
+                                    all_fields_for_running=True).apply(data)
+        df = otp.run(data)['SYMB']
+        print(df)
+
+    .. testoutput::
+
+                             Time  PRICE     VALUE     DELTA
+        0 2003-12-01 00:00:00.000  100.7  3.452071  0.575541
+        1 2003-12-01 00:00:00.001  101.1  3.686610  0.597086
+        2 2003-12-01 00:00:00.002   99.5  2.800999  0.509270
 
     Cox-Ross-Rubinstein with parameters passed through fields:
 
@@ -1119,7 +1153,7 @@ def option_price(*args, **kwargs):
             Time     VALUE
     0 2003-12-04  2.937537
 
-    Black–Scholes with some parameters passed through parameters:
+    Black-Scholes with some parameters passed through parameters:
 
     >>> data = otp.Ticks(
     ...     PRICE=[100.7, 101.1, 99.5],
@@ -1158,10 +1192,10 @@ def option_price(*args, **kwargs):
     ...    bucket_units='ticks',
     ... ).apply(data)
     >>> otp.run(data)
-                           Time 	VALUE
-    0 	2003-12-01 00:00:00.000 	2.742714
-    1 	2003-12-01 00:00:00.001 	0.212927
-    2 	2003-12-01 00:00:00.002 	3.945447
+                         Time     VALUE
+    0 2003-12-01 00:00:00.000  2.742714
+    1 2003-12-01 00:00:00.001  0.212927
+    2 2003-12-01 00:00:00.002  3.945447
 
     Usage with the ``.agg()`` method (on the latest OneTick builds).
 
@@ -1479,7 +1513,6 @@ def option_price(*args, **kwargs):
         THETA, -78.5502018957506, -78.550202017431814100, -78.550
         VEGA, 7.399735802451228, 7.399735802451227600, 7.400
         RHO, -0.9694344974913363, -0.969434449866586000, -0.969
-
     """
 
     return OptionPrice(*args, **kwargs)

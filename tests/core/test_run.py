@@ -1212,6 +1212,36 @@ class TestPolars:
         assert res.schema == {'A': polars_m.Int64, 'Time': polars_m.Datetime(time_unit='ns', time_zone=None)}
 
 
+@pytest.mark.skipif(not os.getenv('OTP_WEBAPI_TEST_MODE', False), reason='pandas output is only supported in webapi')
+@pytest.mark.skipif(not hasattr(otq.QueryOutputMode, 'pandas'), reason='Not supported on current onetick query version')
+def test_output_mode_pandas(session):
+    data = otp.Tick(A=1, B='str')
+
+    res = otp.run(data, output_structure='pandas')
+    assert isinstance(res, pd.DataFrame)
+    res_dict = res.to_dict(orient='list')
+    del res_dict['Time']
+    assert res_dict == {'A': [1], 'B': ['str']}
+
+    # test many symbols
+    data = otp.Tick(S=otp.meta_fields.symbol_name)
+    res = otp.run(data, output_structure='pandas', symbols=['AA', 'BB'])
+    assert isinstance(res, dict)
+    assert isinstance(res['AA'], pd.DataFrame)
+    assert isinstance(res['BB'], pd.DataFrame)
+    assert list(res['AA']['S']) == ['AA']
+    assert list(res['BB']['S']) == ['BB']
+
+    # test empty
+    data = otp.Tick(A=1)
+    data, _ = data[data['A'] == 2]
+    res = otp.run(data, output_structure='pandas')
+    assert isinstance(res, pd.DataFrame)
+    assert res.empty
+    assert res.dtypes['A'] == np.int64
+    assert res.dtypes['Time'].type == np.datetime64
+
+
 def test_run_with_otq_and_start_end_dt_defaults(session, monkeypatch):
     monkeypatch.setattr(otp.config, 'default_start_time', otp.dt(2003, 12, 1))
     monkeypatch.setattr(otp.config, 'default_end_time', otp.dt(2003, 12, 1, 0, 0, 20))

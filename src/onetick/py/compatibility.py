@@ -932,3 +932,9 @@ def is_double_nan_supported_when_the_result_type_is_decimal():
     # when the result is double NAN and the result type is DECIMAL
     return _is_min_build_or_version(None, None,
                                     20251218120000)
+
+
+def is_all_fields_for_running_supported():
+    # Fixed 0031925: OPTION_PRICE behaves as if some of its parameters were not set when ALL_FIELDS_FOR_RUNNING=true
+    return _is_min_build_or_version(1.24, 20240116201311,
+                                    20240205120000)

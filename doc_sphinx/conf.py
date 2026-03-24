@@ -69,6 +69,7 @@ extensions = [
     'sphinx_book_theme',
     'sphinxcontrib.spelling',
     'sphinx_reredirects',
+    'sphinx_markdown_builder',
 ]
 
 
@@ -138,7 +139,7 @@ exclude_patterns = ['**.ipynb_checkpoints',
                     '.jupyter_cache',
                     '.pytest_cache',
                     '_build',
-                    '_build_spelling',
+                    '_build_other',
                     'Thumbs.db',
                     '.DS_Store',
                     'README.md']
@@ -160,9 +161,10 @@ suppress_warnings = ['toc.excluded', 'etoc.ref']
 html_baseurl = ''
 html_favicon = 'static/favicon.ico'
 html_logo = 'static/logo.png'
-html_show_sourcelink = False
-html_show_sphinx = False
+html_copy_source = True
+html_show_sourcelink = True
 html_sourcelink_suffix = ''
+html_show_sphinx = True
 html_theme = 'pydata_sphinx_theme'
 html_theme_options = {
     "search_bar_text": "Type your question or search query...",
@@ -175,6 +177,7 @@ html_theme_options = {
     },
     "check_switcher": False,
     "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
+    "secondary_sidebar_items": ["page-toc", "sourcelink", "sourcelink-md"],
     "logo": {
         "link": "static/overview",
     },

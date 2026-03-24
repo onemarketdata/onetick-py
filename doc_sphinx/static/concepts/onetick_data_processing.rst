@@ -141,7 +141,7 @@ There are two common operations that can be done with state variables:
    Therefore, most operations done to state variables (other than initialization)
    are triggered by tick passage through the query.
    So, to know which value the state variable will hold for a particular tick,
-   it’s important to understand the overall order of tick processing.
+   it's important to understand the overall order of tick processing.
 
 Depending on the tick accumulation happening in the graph,
 results of the operations with state vars may be different!

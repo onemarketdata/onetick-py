@@ -1,0 +1,11 @@
+{#
+  Displays a link to the .md source of the current page.
+  Copy-pasted from https://github.com/pydata/pydata-sphinx-theme/blob/main/src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/sourcelink.html
+#}
+{% if show_source and has_source and sourcename %}
+  <div class="tocsection sourcelink">
+    <a href="{{ pathto(pagename + '.html.md', true)|e }}">
+      <i class="fa-solid fa-file-lines"></i> {{ _("Show Markdown") }}
+    </a>
+  </div>
+{% endif %}

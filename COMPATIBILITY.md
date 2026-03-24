@@ -4,7 +4,7 @@
 * 20230605-release_1.23: ✅ stable
 * 20240730-release_1.24: ✅ stable
 * 20250227-5:            ✅ stable
-* 20250510-2:            ✅ stable
+* 20250510-2:            🆗 stable with minor issues (99.976% of tests passed)
 * 20250727-1:            ✅ stable
 * 20251010-2:            ✅ stable
 * 20251102-release_1.25: 🆗 stable with minor issues (99.834% of tests passed)

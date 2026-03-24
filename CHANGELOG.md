@@ -10,6 +10,28 @@
 
 ### Removed
 
+## [1.190.0] - 2026-03-24
+
+### Added
+
+- Add parameter `all_fields_for_running` to `option_price` aggregation
+- Add markdown files to public documentation and a link to them
+- Add `llms-full.txt` file to the documentation
+- Add `otp.LoadTicksFromDataFrame`
+- Add support of `otput_mode=pandas` in `otp.run`
+
+### Changed
+
+- Remove compatibility mode from `otp.ReadFromDataFrame`
+
+### Fixed
+
+- Fixed output of original symbol names in `otp.Symbols`
+- Fixed `SonarQube` issues
+- Fixed `option_price` documentation tests
+
+### Removed
+
 ## [1.189.0] - 2026-03-16
 
 ### Added

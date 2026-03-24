@@ -88,7 +88,7 @@ class Tick(Source):
             start time for tick generation. By default the start time of the query will be used.
         end: :py:class:`otp.datetime <onetick.py.datetime>`
             end time for tick generation. By default the end time of the query will be used.
-        date: :py:class:`otp.datetime <onetick.py.datetime>` – allows to specify a whole day
+        date: :py:class:`otp.datetime <onetick.py.datetime>` - allows to specify a whole day
             instead of passing explicitly ``start`` and ``end`` parameters. If it is set along with
             the these parameters then they are ignored.
         tick_type: str
@@ -492,7 +492,7 @@ def Ticks(data=None,  # NOSONAR
     if isinstance(data, pd.DataFrame):
         warnings.warn(
             "Using pandas DataFrame as `data` parameter is deprecated, "
-            "use `otp.ReadFromDataFrame` source instead.",
+            "use `otp.LoadTicksFromDataFrame` source instead.",
             FutureWarning,
         )
 

@@ -178,6 +178,14 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
             `polars.DataFrame <https://docs.pola.rs/api/python/stable/reference/dataframe/index.html>`_ object
             or dictionary of symbol names and dataframe objects
             (**Only supported in WebAPI mode**).
+          - `pandas` - the result is returned as :pandas:`pandas.DataFrame`
+            (**Only supported in WebAPI mode**).
+
+        `df` output structure is default for both standard and WebAPI modes.
+        In this mode `onetick-py` converts `numpy` data structure returned from `onetick.query` to `pandas.Dataframe`.
+
+        `pandas` output structure (available only in WebAPI mode), instead, returns `pandas.Dataframe`
+        directly from OneTick.
     return_utc_times: bool
         If True, return timestamps in UTC timezone. If False, return in local timezone.
         Not supported for WebAPI mode.
@@ -610,6 +618,12 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         except AttributeError:
             raise ValueError("Parameter output_structure='polars' is specified, but it's not supported "
                              "by installed onetick.query_webapi library.")
+    if output_structure == 'pandas':
+        try:
+            output_mode = otq.QueryOutputMode.pandas
+        except AttributeError:
+            raise ValueError("Parameter output_structure='pandas' is specified, but it's not supported "
+                             "by installed onetick.query_webapi library.")
 
     output_structure, output_structure_for_otq = _process_output_structure(output_structure)
 
@@ -896,7 +910,7 @@ def _form_dict_from_list(data_list, output_structure, print_symbol_errors):
         return d
 
     def get_dataframe(data):
-        if output_structure == 'df':
+        if output_structure in ['df', 'pandas']:
             return pd.DataFrame(dict(data))
         else:
             import polars
@@ -931,8 +945,8 @@ def _format_call_output(result, output_structure, node_names, require_dict, prin
 
     Parameters
     ----------
-    output_structure: ['df', 'list', 'map']
-        If 'df': forms pandas.DataFrame from the result.
+    output_structure: ['df', 'list', 'map', 'polars', 'pandas']
+        If 'df' or 'pandas': forms pandas.DataFrame from the result.
 
         Returns a dictionary with symbols as keys if there's more than one symbol
         in returned data of if require_dict = True.
@@ -961,8 +975,10 @@ def _format_call_output(result, output_structure, node_names, require_dict, prin
     elif output_structure == 'map':
         return _filter_returned_map_by_node(result, node_names)
 
-    assert output_structure in ('df', 'polars'), (f'Output structure should be one of: "df", "map", "list", "polars" '
-                                                  f'instead "{output_structure}" was passed')
+    assert output_structure in ('df', 'polars', 'pandas'), (
+        f'Output structure should be one of: "df", "map", "list", "polars", "pandas" '
+        f'instead "{output_structure}" was passed'
+    )
 
     # "df" output structure implies that raw results came as a list
     result_list = _filter_returned_list_by_node(result, node_names)
@@ -1069,6 +1085,8 @@ def _process_output_structure(output_structure):
         output_structure_for_otq = "symbol_result_map"
     elif output_structure == "polars":
         output_structure = "polars"
+        output_structure_for_otq = "symbol_result_list"
+    elif output_structure == "pandas":
         output_structure_for_otq = "symbol_result_list"
     else:
         raise ValueError("output_structure support only the following values: df, list, map and polars")

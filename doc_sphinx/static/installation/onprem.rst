@@ -135,7 +135,7 @@ Then you can install `onetick-py` with the following command:
         extra-index-url = https://pip.sol.onetick.com
 
     - for Windows
-        create pip.ini file
+        create `pip.ini` file
 
     ::
 
