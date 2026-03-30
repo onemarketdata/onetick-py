@@ -24,7 +24,6 @@ docker login -u AWS -p $(aws ecr get-login-password --region us-east-1) 97732080
 # MAIN_TS_PORT=12345
 # HTTP_SERVER_PORT=48028
 # DEBUGPY_PORT=48029
-# DEBUGPY_PORT=48029
 # WEBAPI_SERVER_ONETICK_BUILD=20250727-0
 # ONETICK_QUERY_WEBAPI_VERSION=20250727.0.0
 docker-compose -f docker-compose-webapi.yml up -d
@@ -33,7 +32,7 @@ docker-compose -f docker-compose-webapi.yml up -d
 Run tests:
 
 ```bash
-docker-compose exec otpwebapi sudo -E -u onetick pytest -Wdefault
+docker-compose -f docker-compose-webapi.yml exec otpwebapi sudo -E -u onetick pytest -Wdefault --exitfirst tests/core
 ```
 
 ## Debugging tests

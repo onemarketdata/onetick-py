@@ -29,9 +29,4 @@ RUN sudo -E pip --no-cache-dir install uv
 # install onetick-py with development dependencies
 RUN sudo -E uv pip --no-cache-dir install --system --group "/onetick-py/pyproject.toml:dev" \
                                           --extra-index-url "https://${LOCAL_PIP_URL}" \
-                                          --prerelease=allow
-RUN if [ -n "${STRICT_DEPENDENCIES}" ]; then \
-        sudo -E uv pip install --system -U "/onetick-py[strict]"; \
-    else \
-        sudo -E uv pip install --system -U "/onetick-py"; \
-    fi
+                                          -e "/onetick-py[${STRICT_DEPENDENCIES}]"

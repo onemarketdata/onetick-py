@@ -410,6 +410,13 @@ class _CSV(Source):
             obj_to_inspect = io.StringIO(self._file_contents)
 
         if isinstance(obj_to_inspect, str) and not os.path.exists(obj_to_inspect):
+            # in WebAPI mode, if we can't find file locally, let WebAPI server check it on its side
+            if otp.__webapi__:
+                columns = {name: str for name in self._names or []}
+                default_types = {}
+                forced_title = self._first_line_is_title
+                symbols = str(obj_to_inspect)
+                return columns, default_types, forced_title, symbols
             # if not found, probably, CSV file is located in OneTick CSV_FILE_PATH, check it for inspect_by_pandas()
             csv_paths = otp.utils.get_config_param(os.environ["ONE_TICK_CONFIG"], "CSV_FILE_PATH", default="")
             if csv_paths:

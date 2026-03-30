@@ -64,7 +64,9 @@ class TmpOtq:
         self.queries = {}
 
     def __check_params(self, params):
-        supported_query_parameters = ('running_query_flag', 'symbol_date', 'concurrency', 'batch_size')
+        supported_query_parameters = (
+            'running_query_flag', 'symbol_date', 'concurrency', 'batch_size', 'query_properties',
+        )
         for param in params:
             if param not in supported_query_parameters:
                 raise ValueError(
@@ -88,6 +90,9 @@ class TmpOtq:
             Can specify additional parameters with which this query will be saved to file.
             Currently, only "running_query_flag" and "symbol_date" are supported
 
+            You can also specify query properties, such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.,
+            through `query_properties` parameter with `dict` or :py:class:`pyomd.QueryProperties` value.
+
         Returns
         -------
             result: str , name of the query in the file (without THIS:: prefix).
@@ -98,6 +103,7 @@ class TmpOtq:
         if params is None:
             params = {}
         self.__check_params(params)
+
         self.queries[name] = (query, params)
         return name
 
@@ -130,7 +136,8 @@ class TmpOtq:
                      running_query_flag=None,
                      symbol_date=None,
                      concurrency=None,
-                     batch_size=None):
+                     batch_size=None,
+                     query_properties=None):
         """
         Saves all queries from the query dict and one more query (if passed);
         returns absolute path to passed query in file (if passed) or path of resulted file
@@ -168,6 +175,9 @@ class TmpOtq:
         batch_size: int
             Batch size set for the query.
             Will be applied only to the query specified in the ``query`` parameter.
+        query_properties: :py:class:`pyomd.QueryProperties` or dict, optional
+            Query properties, such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+            Query properties will be saved only for main query. If other queries
 
         Returns
         -------
@@ -218,6 +228,9 @@ class TmpOtq:
                 end_time_expression = datetime2expr(end)
             end = None
 
+        if query_properties and isinstance(query_properties, dict):
+            query_properties = utils.query_properties_from_dict(query_properties)
+
         # constructing a list of otq.Query objects, which will hold graphs, names, start/end times etc.
         query_list = []
         for stored_query_name, stored_query_tuple in queries_dict.items():
@@ -244,6 +257,15 @@ class TmpOtq:
                 stored_query.set_max_concurrency(stored_query_params['concurrency'])
             if stored_query_params.get('batch_size') is not None:
                 stored_query.set_batch_size(stored_query_params['batch_size'])
+
+            if stored_query_name == query_name and query_properties:
+                stored_query.set_query_properties(query_properties)
+            elif stored_query_params.get('query_properties'):
+                current_query_properties = stored_query_params['query_properties']
+                if isinstance(current_query_properties, dict):
+                    current_query_properties = utils.query_properties_from_dict(current_query_properties)
+
+                stored_query.set_query_properties(current_query_properties)
 
             query_list.append(stored_query)
 

@@ -221,11 +221,12 @@ def test_session_1():
 @pytest.mark.skipif(os.environ.get('OTP_WEBAPI', False), reason="Skip for WebAPI as OneTickLib ")
 def test_session_2():
     session = otp.Session()
-
-    session.locator.reload()
-    session.use(otp.DB('TAQ_NBBO'))
-    session.locator.reload()
-    session.close()
+    try:
+        session.locator.reload()
+        session.use(otp.DB('TAQ_NBBO'))
+        session.locator.reload()
+    finally:
+        session.close()
 
     with pytest.raises(AttributeError):
         session.locator.reload()
@@ -246,22 +247,22 @@ def test_two_sessions_1():
     config = otp.utils.tmp_config(locator.path)
 
     session = otp.Session(config.path)
-
-    with pytest.raises(Exception):
-        # it is not allowed to have two sessions simultaneously
-        otp.Session(config.path)
-
-    session.close()
+    try:
+        with pytest.raises(Exception):
+            # it is not allowed to have two sessions simultaneously
+            otp.Session(config.path)
+    finally:
+        session.close()
 
 
 def test_two_sessions_2():
     session = otp.Session()
-
-    with pytest.raises(Exception):
-        # it is not allowed to have two sessions simultaneously
-        otp.Session()
-
-    session.close()
+    try:
+        with pytest.raises(Exception):
+            # it is not allowed to have two sessions simultaneously
+            otp.Session()
+    finally:
+        session.close()
 
 
 def test_two_sessions_3():
@@ -289,23 +290,23 @@ def test_session_files_1():
 
     # ------------>
     session = otp.Session(config.path)
+    try:
+        assert os.path.exists(locator.path)
+        assert os.path.exists(config.path)
 
-    assert os.path.exists(locator.path)
-    assert os.path.exists(config.path)
+        # make sure that locator is copied
+        assert locator.path != session.locator.path
+        assert config.path != session.config.path
 
-    # make sure that locator is copied
-    assert locator.path != session.locator.path
-    assert config.path != session.config.path
+        assert os.path.exists(session.locator.path)
+        assert os.path.exists(session.acl.path)
+        assert os.path.exists(session.config.path)
 
-    assert os.path.exists(session.locator.path)
-    assert os.path.exists(session.acl.path)
-    assert os.path.exists(session.config.path)
-
-    assert session.locator.path
-    assert session.acl.path
-    assert session.config.path
-
-    session.close()
+        assert session.locator.path
+        assert session.acl.path
+        assert session.config.path
+    finally:
+        session.close()
     # <------------
 
     assert os.path.exists(locator.path)
@@ -318,16 +319,16 @@ def test_session_files_2():
     and they are destroyed after session
     """
     session = otp.Session()
+    try:
+        assert session.locator.path
+        assert session.acl.path
+        assert session.config.path
 
-    assert session.locator.path
-    assert session.acl.path
-    assert session.config.path
-
-    assert os.path.exists(session.locator.path)
-    assert os.path.exists(session.acl.path)
-    assert os.path.exists(session.config.path)
-
-    session.close()
+        assert os.path.exists(session.locator.path)
+        assert os.path.exists(session.acl.path)
+        assert os.path.exists(session.config.path)
+    finally:
+        session.close()
 
 
 def test_session_files_clean_up_1():
@@ -340,16 +341,16 @@ def test_session_files_clean_up_1():
 
     try:
         session = otp.Session(clean_up=False)
+        try:
+            locator = session.locator
+            acl = session.acl
+            config = session.config
 
-        locator = session.locator
-        acl = session.acl
-        config = session.config
-
-        assert os.path.exists(locator.path)
-        assert os.path.exists(acl.path)
-        assert os.path.exists(config.path)
-
-        session.close()
+            assert os.path.exists(locator.path)
+            assert os.path.exists(acl.path)
+            assert os.path.exists(config.path)
+        finally:
+            session.close()
 
         assert os.path.exists(locator.path)
         assert os.path.exists(acl.path)
@@ -375,19 +376,19 @@ def test_session_files_clean_up_2():
 
         # ----------->
         session = otp.Session(config.path, clean_up=False)
+        try:
+            t_locator = session.locator
+            t_acl = session.acl
+            t_config = session.config
 
-        t_locator = session.locator
-        t_acl = session.acl
-        t_config = session.config
+            assert os.path.exists(t_locator.path)
+            assert os.path.exists(t_acl.path)
+            assert os.path.exists(t_config.path)
 
-        assert os.path.exists(t_locator.path)
-        assert os.path.exists(t_acl.path)
-        assert os.path.exists(t_config.path)
-
-        assert locator.path != session.locator.path
-        assert config.path != session.acl.path
-
-        session.close()
+            assert locator.path != session.locator.path
+            assert config.path != session.acl.path
+        finally:
+            session.close()
         # <----------
 
         assert os.path.exists(locator.path)
@@ -414,19 +415,19 @@ def test_session_files_copy_1():
 
     # ------------>
     session = otp.Session(config.path, copy=False)
+    try:
+        t_locator_path = session.locator.path
+        t_acl_path = session.acl.path
+        t_config_path = session.config.path
 
-    t_locator_path = session.locator.path
-    t_acl_path = session.acl.path
-    t_config_path = session.config.path
+        assert t_locator_path == locator.path
+        assert t_config_path == config.path
 
-    assert t_locator_path == locator.path
-    assert t_config_path == config.path
-
-    assert os.path.exists(t_locator_path)
-    assert os.path.exists(t_acl_path)
-    assert os.path.exists(t_config_path)
-
-    session.close()
+        assert os.path.exists(t_locator_path)
+        assert os.path.exists(t_acl_path)
+        assert os.path.exists(t_config_path)
+    finally:
+        session.close()
     # <------------
 
     assert os.path.exists(t_locator_path)
@@ -445,20 +446,20 @@ def test_session_files_copy_2():
 
     # ------------>
     session = otp.Session(config.path, copy=False)
+    try:
+        t_locator_path = session.locator.path
+        t_acl_path = session.acl.path
+        t_config_path = session.config.path
 
-    t_locator_path = session.locator.path
-    t_acl_path = session.acl.path
-    t_config_path = session.config.path
+        assert t_locator_path == locator.path
+        assert t_config_path == config.path
+        assert t_acl_path == acl.path
 
-    assert t_locator_path == locator.path
-    assert t_config_path == config.path
-    assert t_acl_path == acl.path
-
-    assert os.path.exists(t_locator_path)
-    assert os.path.exists(t_acl_path)
-    assert os.path.exists(t_config_path)
-
-    session.close()
+        assert os.path.exists(t_locator_path)
+        assert os.path.exists(t_acl_path)
+        assert os.path.exists(t_config_path)
+    finally:
+        session.close()
     # <------------
 
     assert os.path.exists(t_locator_path)
@@ -475,16 +476,17 @@ def test_session_files_clean_up_copy():
 
         # ---------->
         session = otp.Session(config.path, copy=False, clean_up=False)
-        acl = session.acl
+        try:
+            acl = session.acl
 
-        t_locator_path = session.locator.path
-        t_acl_path = session.acl.path
-        t_config_path = session.config.path
+            t_locator_path = session.locator.path
+            t_acl_path = session.acl.path
+            t_config_path = session.config.path
 
-        assert t_locator_path == locator.path
-        assert t_config_path == config.path
-
-        session.close()
+            assert t_locator_path == locator.path
+            assert t_config_path == config.path
+        finally:
+            session.close()
         # <-----------
 
         assert os.path.exists(locator.path)
@@ -540,14 +542,13 @@ def test_with_existing_config_1():
     try:
         session = otp.Session(os.path.join(DIR, "cfg", "onetick.cfg"))
 
-        # existing config does not have COMMON database
-        assert "COMMON" not in otp.databases()
-
-        session.use_stub("COMMON")
-
-        assert "COMMON" in otp.databases()
-
-        session.close()
+        try:
+            # existing config does not have COMMON database
+            assert "COMMON" not in otp.databases()
+            session.use_stub("COMMON")
+            assert "COMMON" in otp.databases()
+        finally:
+            session.close()
     finally:
         if old_locator_var:
             os.environ["DEFAULT_LOCATOR"] = old_locator_var
@@ -579,16 +580,18 @@ def test_with_existing_config_2():
             del os.environ["DEFAULT_LOCATOR"]
 
 
+@pytest.mark.skipif(os.environ.get('OTP_WEBAPI', False),
+                    reason="WebAPI cannot use remote otqs that doesn't exist on the server")
 def test_config_obj_1():
     session = otp.Session()
+    try:
+        ticks = otp.Ticks({"x": [1, 2, 3]})
 
-    ticks = otp.Ticks({"x": [1, 2, 3]})
-
-    with pytest.raises(Exception):
-        # this is query is not in the otq_path
-        ticks.apply(otp.query("update2.otq::update"))
-
-    session.close()
+        with pytest.raises(Exception):
+            # this is query is not in the otq_path
+            ticks.apply(otp.query("update2.otq::update"))
+    finally:
+        session.close()
 
 
 @pytest.mark.skipif(os.environ.get('OTP_WEBAPI', False),
@@ -597,55 +600,53 @@ def test_config_obj_2():
     dir_name = os.path.dirname(os.path.abspath(__file__))
 
     session = otp.Session(otp.Config(otq_path=[os.path.join(dir_name, "otqs")]))
+    try:
+        ticks = otp.Ticks({"x": [1, 2, 3]})
+        assert otp.run(ticks)[["x"]].equals(pd.DataFrame({"x": [1, 2, 3]}))
 
-    ticks = otp.Ticks({"x": [1, 2, 3]})
-
-    assert otp.run(ticks)[["x"]].equals(pd.DataFrame({"x": [1, 2, 3]}))
-
-    ticks = ticks.apply(otp.query("update2.otq::update"))
-
-    assert otp.run(ticks)[["x"]].equals(pd.DataFrame({"x": [2, 4, 6]}))
-
-    session.close()
+        ticks = ticks.apply(otp.query("update2.otq::update"))
+        assert otp.run(ticks)[["x"]].equals(pd.DataFrame({"x": [2, 4, 6]}))
+    finally:
+        session.close()
 
 
 def test_session_direct_access():
     session = otp.Session()
+    try:
+        assert os.path.exists(session.config.path)
+        assert os.path.exists(session.config.acl.path)
+        assert session.config.acl is session.acl
 
-    assert os.path.exists(session.config.path)
-
-    assert os.path.exists(session.config.acl.path)
-    assert session.config.acl is session.acl
-
-    assert os.path.exists(session.config.locator.path)
-    assert session.config.locator is session.locator
-
-    session.close()
+        assert os.path.exists(session.config.locator.path)
+        assert session.config.locator is session.locator
+    finally:
+        session.close()
 
 
 def test_session_clean_up():
     session = otp.Session()
 
-    session.use(otp.DB('TAQ_NBBO'))
-
-    with pytest.warns(Warning):
-        # it complains, because there would be two records for the same database
+    try:
         session.use(otp.DB('TAQ_NBBO'))
 
-    # --------------
+        with pytest.warns(Warning):
+            # it complains, because there would be two records for the same database
+            session.use(otp.DB('TAQ_NBBO'))
 
-    for _ in range(3):
-        session.acl.cleanup()
-        session.locator.cleanup()
+        # --------------
 
-        session.use(otp.DB('TAQ_NBBO'))
+        for _ in range(3):
+            session.acl.cleanup()
+            session.locator.cleanup()
 
-    for _ in range(3):
-        session.config.cleanup()
+            session.use(otp.DB('TAQ_NBBO'))
 
-        session.use(otp.DB('TAQ_NBBO'))
+        for _ in range(3):
+            session.config.cleanup()
 
-    session.close()
+            session.use(otp.DB('TAQ_NBBO'))
+    finally:
+        session.close()
 
 
 def test_external_db():
@@ -693,9 +694,11 @@ def test_session_with_wrapped_lib():
 
 def test_session_instance_1():
     session = otp.Session()
-    session_get = otp.Session._instance
-    assert session_get is session
-    session.close()
+    try:
+        session_get = otp.Session._instance
+        assert session_get is session
+    finally:
+        session.close()
 
 
 def test_get_session_instance_2():
@@ -1238,11 +1241,11 @@ class TestOneTickConfigEnv:
         assert "ONE_TICK_CONFIG" not in os.environ
 
         s = otp.Session()
-
-        assert "ONE_TICK_CONFIG" in os.environ
-        assert os.environ["ONE_TICK_CONFIG"] == s.config.path
-
-        s.close()
+        try:
+            assert "ONE_TICK_CONFIG" in os.environ
+            assert os.environ["ONE_TICK_CONFIG"] == s.config.path
+        finally:
+            s.close()
 
         assert "ONE_TICK_CONFIG" not in os.environ
 
@@ -1556,22 +1559,22 @@ def test_reload_locator_with_derived_database():
              if they make use databases derived from the dbs in that locator
     """
     session = otp.Session()
+    try:
+        db_1 = otp.DB('DB')
+        session.use(db_1)
 
-    db_1 = otp.DB('DB')
-    session.use(db_1)
+        db_derived1 = otp.DB('DB//X')
+        src = otp.Ticks({"X": [1]})
 
-    db_derived1 = otp.DB('DB//X')
-    src = otp.Ticks({"X": [1]})
+        # comment this to make it work OR move it after .use(SOME_DB) to make it work
+        db_derived1.add(src, date=otp.config.default_start_time, tick_type="A", symbol="B")
 
-    # comment this to make it work OR move it after .use(SOME_DB) to make it work
-    db_derived1.add(src, date=otp.config.default_start_time, tick_type="A", symbol="B")
-
-    market_db = otp.db.DB("SOME_DB")
-    # or comment this to make it work
-    session.use(market_db)
-
-    # segfault is here (comment this to make it work)
-    session.close()
+        market_db = otp.db.DB("SOME_DB")
+        # or comment this to make it work
+        session.use(market_db)
+    finally:
+        # segfault is here (comment this to make it work)
+        session.close()
 
 
 @pytest.mark.skipif(not os.getenv('OTP_WEBAPI_TEST_MODE', False),

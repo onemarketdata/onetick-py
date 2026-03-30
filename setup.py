@@ -12,14 +12,4 @@ with open('src/onetick/py/_version.py') as f:
     if not version:
         raise RuntimeError("Can't find version in src/onetick/py/_version.py")
 
-setup(name='onetick-py',
-      version=version,
-      entry_points={
-          'console_scripts': [
-              'onetick = onetick.py.cli:otp_cli',
-              'jupyter-onetick_snippets = onetick.doc_utilities.snippets:main',
-          ],
-          'onetick.py.cli.plugins': [
-              'render = onetick.py.cli.render'
-          ]
-      })
+setup(name='onetick-py', version=version)

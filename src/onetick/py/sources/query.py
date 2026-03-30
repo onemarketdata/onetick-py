@@ -291,25 +291,27 @@ class query:
 
         # prepare path and query name
 
-        path = str(path)
+        full_path = str(path)
 
-        remote = path.startswith('remote://')
+        remote = full_path.startswith('remote://')
         if remote:
-            self.path = path
-            _, path = path.split('::', maxsplit=1)
+            _, query_path = path.split('::', maxsplit=1)
         else:
-            if otp.__webapi__:
-                # remote:// used only for remote queries, not for locals, like we do without webapi
-                self.path = path
-            else:
-                self.path = f"remote://{configuration.config.get('default_db', 'LOCAL')}::" + path
+            query_path = full_path
 
-        self.query_path, self.query_name = utils.query_to_path_and_name(path)
+        if otp.__webapi__ or remote:
+            self.path = full_path
+        else:
+            self.path = f"remote://{configuration.config.get('default_db', 'LOCAL')}::" + query_path
 
-        # if query_path does not exist, then we try
-        # to resolve it with OTQ_FILE_PATH assuming that
-        # a relative path is passed
+        self.query_path, self.query_name = utils.query_to_path_and_name(query_path)
+
         if not os.path.exists(self.query_path):
+            # if query_path doesn't exist in webapi mode, then it is probably located on the server
+            if otp.__webapi__:
+                self.graph_info = None
+                return
+            # otherwise we try to find it locally with OTQ_FILE_PATH onetick config variable
             otq_path = utils.get_config_param(os.environ["ONE_TICK_CONFIG"], "OTQ_FILE_PATH", "")
             try:
                 self.query_path = utils.abspath_to_query_by_otq_path(otq_path, self.query_path)

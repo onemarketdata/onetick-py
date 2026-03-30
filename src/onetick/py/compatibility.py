@@ -622,7 +622,7 @@ def is_zero_concurrency_supported():
 def is_get_query_property_flag_supported():
     # 20231205: Implemented 0031857:
     # create flag for GET_QUERY_PROPERTY and GET_QUERY_PROPERTIES to return also special query properties
-    return _is_min_build_or_version(None, None,
+    return _is_min_build_or_version(1.25, 20241229055942,
                                     20240205120000)
 
 

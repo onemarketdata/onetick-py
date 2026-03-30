@@ -13,7 +13,6 @@ authors = [
 ]
 dynamic = [
     "version",
-    "scripts",
 ]
 license = "MIT"
 license-files = ["LICENSE"]
@@ -41,6 +40,13 @@ dependencies = [
     "tzdata>=2022.5",
     "tzlocal>=4.2",
 ]
+
+[project.entry-points."console_scripts"]
+onetick = "onetick.py.cli:otp_cli"
+jupyter-onetick_snippets = "onetick.doc_utilities.snippets:main"
+
+[project.entry-points."onetick.py.cli.plugins"]
+render = "onetick.py.cli.render"
 
 [project.urls]
 Documentation = "https://docs.pip.distribution.sol.onetick.com"

@@ -23,6 +23,8 @@ def data_dir():
     return os.path.join(os.path.dirname(__file__), "data")
 
 
+@pytest.mark.skipif(os.environ.get('OTP_WEBAPI', False),
+                    reason="WebAPI cannot use remote otqs that doesn't exist on the server")
 def test_csv_file_path_relative(data_dir):
     cfg = otp.Config(csv_path=[TmpDir().path])
 
@@ -35,6 +37,8 @@ def test_csv_file_path_relative(data_dir):
         assert len(df) == 1
 
 
+@pytest.mark.skipif(os.environ.get('OTP_WEBAPI', False),
+                    reason="WebAPI cannot use remote otqs that doesn't exist on the server")
 def test_csv_file_path_relative_with_empty_csv_file_path(data_dir):
     cfg = otp.Config(csv_path=None)
 

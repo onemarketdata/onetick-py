@@ -10,6 +10,22 @@
 
 ### Removed
 
+## [1.191.0] - 2026-03-30
+
+### Added
+
+- Added support of setting query properties in `otp.Source.to_otq` and `otp.functions.save_sources_to_single_file`
+
+### Changed
+
+- Move `entry-points` from `setup.py` to `pyproject.toml`
+
+### Fixed
+
+- Fixed using `otp.query` in WebAPI mode
+
+### Removed
+
 ## [1.190.0] - 2026-03-24
 
 ### Added

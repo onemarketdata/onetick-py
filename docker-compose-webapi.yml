@@ -64,7 +64,6 @@ services:
       context: .
       dockerfile: webapi/webapi.Dockerfile
       args:
-        - STRICT_DEPENDENCIES=1
         - LOCAL_PIP_URL=pip.sol.onetick.com
         - ONETICK_QUERY_WEBAPI_VERSION=${ONETICK_QUERY_WEBAPI_VERSION:-20250727.0.0}
         - ONETICK_QUERY_WEBAPI_PYTHON_VERSION=${ONETICK_QUERY_WEBAPI_PYTHON_VERSION:-3.12}
@@ -93,7 +92,6 @@ services:
       - |
         cd /onetick-py/
         export
-        sudo pip uninstall -y onetick-py
         sudo mkdir -m 777 -p /onetick-py/.pytest_cache
         sudo mkdir -m 777 -p /onetick-py/reports
         tail -f /dev/null

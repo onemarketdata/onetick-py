@@ -432,7 +432,8 @@ class Source:
                end_time_expression=None,
                symbol_date=None,
                concurrency=None,
-               batch_size=None):
+               batch_size=None,
+               query_properties=None):
         """
         Save :class:`otp.Source <onetick.py.Source>` object to .otq file and return path to the saved file.
 
@@ -479,6 +480,8 @@ class Source:
         batch_size: int
             Batch size set for the query.
             Will be applied only to the main query.
+        query_properties: :py:class:`pyomd.QueryProperties` or dict, optional
+            Query properties, such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc
 
         Returns
         -------
@@ -532,11 +535,13 @@ class Source:
                                          start_time_expression=start_time_expression,
                                          end_time_expression=end_time_expression,
                                          symbol_date=symbol_date,
-                                         concurrency=concurrency, batch_size=batch_size)
+                                         concurrency=concurrency,
+                                         batch_size=batch_size,
+                                         query_properties=query_properties)
 
     def _store_in_tmp_otq(self, tmp_otq, operation_suffix="tmp_query", symbols=None, start=None, end=None,
                           raw=None, add_passthrough=True, name=None, timezone=None, symbol_date=None,
-                          concurrency=None, batch_size=None):
+                          concurrency=None, batch_size=None, query_properties=None):
         """
         Adds this source to the tmp_otq storage
 
@@ -590,6 +595,8 @@ class Source:
             params['concurrency'] = concurrency
         if batch_size is not None:
             params['batch_size'] = batch_size
+        if query_properties is not None:
+            params['query_properties'] = query_properties
         suffix = self._name_suffix(suffix=operation_suffix, separator='__', remove_invalid_symbols=True)
         return tmp_otq.add_query(graph, suffix=suffix, name=name, params=params)
 

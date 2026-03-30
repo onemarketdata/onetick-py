@@ -4,10 +4,6 @@ FROM 977320806745.dkr.ecr.us-east-1.amazonaws.com/service/python:$ONETICK_QUERY_
 ARG LOCAL_PIP_URL
 ARG ONETICK_QUERY_WEBAPI_VERSION
 
-# can be used to install fixed pandas+numpy version,
-# as onetick-py has flexible requirements
-ARG STRICT_DEPENDENCIES
-
 # Libraries for correct OneTick functioning
 ENV BUILD_PACKAGES "libgomp1 gcc libncurses5-dev sudo sssd vim less libodbc2 jq"
 
@@ -41,18 +37,17 @@ RUN sudo apt-get install --no-install-recommends enchant-2 -y
 RUN sudo apt-get install --no-install-recommends zip -y
 RUN sudo apt-get install --no-install-recommends unixodbc libsqliteodbc -y
 
-# COPY . /onetick-py/
-COPY pyproject.toml /onetick-py/pyproject.toml
-
 # upgrade pip
 RUN sudo -E pip --no-cache-dir install --upgrade pip --ignore-installed
 # install uv
 RUN sudo -E pip --no-cache-dir install uv
 
-# install onetick-py development dependencies
-RUN sudo -E uv pip --no-cache-dir install --system --group "/onetick-py/pyproject.toml:dev" \
+# install onetick-py from current directory with development dependencies
+RUN --mount=type=bind,source=.,target=/onetick-py,rw \
+    sudo -E uv pip --no-cache-dir install --system \
                                           --extra-index-url "https://${LOCAL_PIP_URL}" \
-                                          --prerelease=allow
+                                          --group "/onetick-py/pyproject.toml:dev" \
+                                          -e "/onetick-py"
 
 # install onetick.query_webapi
 RUN sudo -E uv pip install --system onetick.query_webapi==${ONETICK_QUERY_WEBAPI_VERSION} \

@@ -98,3 +98,35 @@ def test_eval(session):
         df = otp.run(otp.query(f'{file_path}::{name}'))
         df2 = otp.run(source)
         assert df.equals(df2)
+
+
+@pytest.mark.skipif(
+    not otp.compatibility.is_get_query_property_flag_supported(),
+    reason="Not supports additional flag in GET_QUERY_PROPERTY",
+)
+def test_save_query_properties(session):
+    src = otp.Tick(A=1)
+    src['PROP'] = otp.raw('GET_QUERY_PROPERTY("MAX_CONCURRENCY", true)', otp.varstring)
+
+    sources = {
+        'a': {
+            'source': src.copy(),
+            'symbols': otp.Tick(SYMBOL_NAME=otp.config['default_db_symbol']),
+            'query_properties': {'MAX_CONCURRENCY': '5'}
+        },
+        'b': {
+            'source': src.copy(),
+            'symbols': otp.Tick(SYMBOL_NAME=otp.config['default_db_symbol']),
+        }
+    }
+
+    file_path = otp.functions.save_sources_to_single_file(sources)
+    queries_names = otp.core.query_inspector.get_queries(file_path)
+    assert len(queries_names) == 4
+    for name in sources:
+        df = otp.run(otp.query(f'{file_path}::{name}'), concurrency=None)
+        concurrency = int(list(df['PROP'])[0])
+        if name == 'a':
+            assert concurrency == 5
+        else:
+            assert concurrency != 5
