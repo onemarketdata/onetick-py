@@ -1981,7 +1981,7 @@ class _FormatType(Enum):
     KEY_WORD = 3
 
 
-def format(format_line: str, *args, **kwargs) -> Operation:
+def format(format_line: str, *args, **kwargs) -> Union[Operation, ott.varstring]:
     """
     Perform a string formatting operation.
     Currently, there are only 2 types of formatting available:

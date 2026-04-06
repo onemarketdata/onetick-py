@@ -44,6 +44,11 @@ class CleanUpFinalizer:
         self._clean_up_ref = [clean_up]
         self._finalizer = weakref.finalize(self, self._cleanup, self._clean_up_ref, *args)
 
+    def cleanup(self):
+        # call finalizer manually
+        if hasattr(self, '_finalizer'):
+            self._finalizer()
+
     @classmethod
     def _cleanup(cls, clean_up_ref, *args):
         raise NotImplementedError()
@@ -103,7 +108,7 @@ def mktemp(fun, dir, prefix='', suffix='', **kwargs):
                 continue
             else:
                 raise
-    raise FileExistsError(errno.EEXIST, 'No usable temporary file name found')
+    raise FileExistsError(errno.EEXIST, f"No usable temporary file name found in directory '{dir}'")
 
 
 def mkstemp(dir, prefix='', suffix=''):

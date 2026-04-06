@@ -767,6 +767,8 @@ def test_exception_message(session):
 
 @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason='test mode fails this test, not necessary to run')
 def test_main_query_generated_filename(session, monkeypatch):
+    monkeypatch.setattr(otp.config, 'clean_up_tmp_files', False)
+
     t = otp.Tick(A=1)
 
     # get temporary dir location

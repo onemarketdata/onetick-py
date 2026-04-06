@@ -202,8 +202,9 @@ def create_cache(
             query = query()
 
         if isinstance(query, Source):
-            # will create sub-query after source is initialized below
-            otq_file_path = 'THIS::create_cache_query'
+            # here we create a separate temporary file that will last until the end of python process
+            # this query will be called by otp.ReadCache, so we must guarantee it's not deleted
+            otq_file_path = query.to_otq(query_name='create_cache_query')
         elif isinstance(query, str):
             otq_file_path = query
         else:

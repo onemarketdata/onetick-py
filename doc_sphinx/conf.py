@@ -219,7 +219,7 @@ if is_markdown:
 else:
     nb_execution_mode = 'cache'
 nb_execution_raise_on_error = True
-nb_execution_timeout = 60
+nb_execution_timeout = 180
 use_jupyterbook_latex = True
 
 language = 'en'

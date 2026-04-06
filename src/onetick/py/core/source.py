@@ -680,7 +680,7 @@ class Source:
                         f'In this case the first symbol_date ({symbol_date_to_run}) will be used automatically.'
                     )
 
-        return query_to_run, require_dict, node_name, symbol_date_to_run
+        return query_to_run, require_dict, node_name, symbol_date_to_run, tmp_file
 
     def __call__(self, *args, **kwargs):
         """

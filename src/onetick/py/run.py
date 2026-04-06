@@ -658,6 +658,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         symbol_date = utils.symbol_date_to_str(symbol_date)
 
     params_saved_to_otq = {}
+    tmp_file = None
     if isinstance(query, (otp.Source, otp.MultiOutputSource)):
         start = None if start is utils.adaptive else start
         end = None if end is utils.adaptive else end
@@ -676,7 +677,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
                                                  running_query_flag=running,
                                                  node_name=node_name, has_output=None,
                                                  symbol_date=symbol_date)
-        query, require_dict, node_name, symbol_date_to_run = param_upd
+        query, require_dict, node_name, symbol_date_to_run, tmp_file = param_upd
         # symbols and start/end times should be already stored in the query and should not be passed again
         symbols = None
         start = None
@@ -757,6 +758,10 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         e = _add_stack_info_to_exception(e)
         e = _add_version_info_to_exception(e)
         raise e
+    else:
+        # PY-1516: remove temporary file right away after calling the query (only if query didn't raise an exception)
+        if tmp_file is not None and otp.config.clean_up_tmp_files:
+            tmp_file.cleanup()
 
     if output_mode == otq.QueryOutputMode.callback:
         if manual_dataframe_callback:

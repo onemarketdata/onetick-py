@@ -10,6 +10,18 @@
 
 ### Removed
 
+## [1.192.0] - 2026-04-06
+
+### Added
+
+### Changed
+
+- Delete temporary `.otq` file after running the query
+
+### Fixed
+
+### Removed
+
 ## [1.191.0] - 2026-03-30
 
 ### Added

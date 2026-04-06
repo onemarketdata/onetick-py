@@ -29,12 +29,13 @@ def list_otqs():
     return files
 
 
-def test_creating_named_source(session):
+def test_creating_named_source(session, monkeypatch):
     """
     Named source should always be stored as an .otq file on running, regardless on whether it needs to store
     temporary queries or not.
     We check that it's stored in a file that has file name suffix matching the source name.
     """
+    monkeypatch.setattr(otp.config, 'clean_up_tmp_files', False)
     source = otp.Tick(A=1)
     source.set_name('test_source')
     otp.run(source)
@@ -46,7 +47,8 @@ def test_creating_named_source(session):
     assert queries[0] == 'test_source'
 
 
-def test_named_source_for_join_with_query(session):
+def test_named_source_for_join_with_query(session, monkeypatch):
+    monkeypatch.setattr(otp.config, 'clean_up_tmp_files', False)
     source1 = otp.Tick(A=1)
     source1.set_name('source_1')
     source2 = otp.Tick(B=1)
@@ -66,7 +68,8 @@ def test_named_source_for_join_with_query(session):
     assert queries[1].endswith('__source_1__join_with_query')
 
 
-def test_named_source_for_process_by_group(session):
+def test_named_source_for_process_by_group(session, monkeypatch):
+    monkeypatch.setattr(otp.config, 'clean_up_tmp_files', False)
     source2 = otp.Tick(FIELD='A')
     source2.set_name('source_2')
 
@@ -89,7 +92,8 @@ def test_named_source_for_process_by_group(session):
     assert queries[1].endswith('__source_1__group_by')
 
 
-def test_named_source_for_eval_same_file(session):
+def test_named_source_for_eval_same_file(session, monkeypatch):
+    monkeypatch.setattr(otp.config, 'clean_up_tmp_files', False)
     source1 = otp.Tick(SYMBOL_NAME='AAPL')
     source1.set_name('source_1')
     source2 = otp.Tick(B=1)
