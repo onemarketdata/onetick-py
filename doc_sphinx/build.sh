@@ -20,10 +20,12 @@ export PYTHONPATH=${FILE_DIR}/../src:${PYTHONPATH:-""}
 export RESOURCES_DIR=${FILE_DIR}/notebooks_resources
 export ONE_TICK_CONFIG=${FILE_DIR}/notebooks_resources/config/main
 
-export OTP_DEFAULT_DB="DEMO_L1"
+# we assume that cloud server has this database
+# we need to set it to process the queries on cloud server, not proxy
+export OTP_DEFAULT_DB="US_COMP_SAMPLE"
 export OTP_DEFAULT_SYMBOL="AAPL"
-export OTP_DEFAULT_START_TIME="2003/12/01 00:00:00"
-export OTP_DEFAULT_END_TIME="2003/12/04 00:00:00"
+export OTP_DEFAULT_START_TIME="2024/02/01 00:00:00"
+export OTP_DEFAULT_END_TIME="2024/02/02 00:00:00"
 export OTP_DEFAULT_TZ="EST5EDT"
 export OTP_DEFAULT_LICENSE_DIR="${OTP_DEFAULT_LICENSE_DIR:-/license/}"
 export OTP_DEFAULT_LICENSE_FILE="${OTP_DEFAULT_LICENSE_FILE:-/license/license.dat}"

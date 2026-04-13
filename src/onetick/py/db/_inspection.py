@@ -151,23 +151,7 @@ class DB:
             >> otq.WhereClause(where=f'DB_NAME = "{name}"')
         )
         graph = otq.GraphQuery(node)
-
-        self._set_intervals()
-        # start and end times don't matter, but need to fit in the configured time ranges
-        start, end = self._locator_date_ranges[-1]
-
-        df = otp.run(graph,
-                     symbols=f'{self.name}::',
-                     start=start,
-                     end=end,
-                     # and timezone is GMT, because timestamp parameters in ACL are in GMT
-                     timezone='GMT',
-                     # ACCESS_INFO can return ACL violation error if we use database name as symbol
-                     query_properties={'IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE': 'TRUE'},
-                     username=username,
-                     context=self.context,
-                     # don't print symbol error from onetick about start/end time adjusted due to entitlement checks
-                     print_symbol_errors=False)
+        df = otp.run(graph, username=username, **_get_safe_params_for_running(self))
         if not df.empty:
             df = df.drop(columns='Time')
         if deep_scan:
@@ -220,14 +204,7 @@ class DB:
         """
         node = otq.DbShowConfig(db_name=self.name, config_type=config_type.upper())
         graph = otq.GraphQuery(node)
-        df = otp.run(graph,
-                     symbols='LOCAL::',
-                     # start and end times don't matter
-                     start=db_constants.DEFAULT_START_DATE,
-                     end=db_constants.DEFAULT_END_DATE,
-                     # and timezone is GMT, because timestamp parameters in ACL are in GMT
-                     timezone='GMT',
-                     context=self.context)
+        df = otp.run(graph, **_get_safe_params_for_running(self))
         if df.empty:
             raise ValueError(f"Can't get config for database '{self.name}'")
         df = df.drop(columns='Time')
@@ -309,10 +286,9 @@ class DB:
                                >> otq.Table(fields='long START_DATE, long END_DATE'))
         result = otp.run(graph,
                          symbols=f'{self.name}::',
-                         # start and end times don't matter for this query, use some constants
+                         # start and end time and timezone don't matter for this query, use some constants
                          start=db_constants.DEFAULT_START_DATE,
                          end=db_constants.DEFAULT_END_DATE,
-                         # GMT, because start/end timestamp in locator are in GMT
                          timezone='GMT',
                          context=self.context)
         return result
@@ -615,6 +591,10 @@ class DB:
         self._set_intervals()
         min_date = min(obj[0] for obj in self._locator_date_ranges)
         return _datetime2date(min_date)
+
+    def _get_first_locator_interval(self) -> tuple:
+        self._set_intervals()
+        return self._locator_date_ranges[0]
 
     @_method_cache
     def _get_schema(self, start, end, timezone, use_cache, show_schema):
@@ -975,6 +955,60 @@ class DB:
         return df
 
 
+def _get_safe_params_for_running(db=None, context=utils.default):
+    """
+    This function returns parameters to use when running queries which do not require setting symbols or time range,
+    so we can run this query successfully and return the result in all cases.
+
+    We need this because OneTick raises exception if specified time range is not configured in locator,
+    or if time range violates ACL rules.
+
+    This query may run *one* additional query to get the time range from the database configuration.
+
+    If parameter ``db`` is not set, we are running against otp.config.default_db.
+    If it's not set, we are running against LOCAL.
+    """
+    start = end = timezone = None
+    if db is None:
+        # if default database is not set, then we are running against LOCAL available everywhere
+        db = otp.config.get('default_db', 'LOCAL')
+        # if default database is set, then we are using default start and end times when running query
+        start, end, timezone = (
+            otp.config.get('default_start_time'), otp.config.get('default_end_time'), otp.config.get('tz')
+        )
+    if isinstance(db, str):
+        db = DB(db, context=context)
+
+    if db.name == 'LOCAL':
+        # if we are using LOCAL, time range can be anything, let's use some constants
+        return dict(
+            symbols=f'{db.name}::',
+            start=db_constants.DEFAULT_START_DATE,
+            end=db_constants.DEFAULT_END_DATE,
+            context=db.context,
+        )
+
+    if start is None or end is None:
+        # if time range is not set, we can't set it randomly,
+        # because onetick may return an error if locator is not configured for this time range,
+        # so we will have to call additional query to get locator time range
+        start, end = db._get_first_locator_interval()
+        # and timezone is GMT, because timestamps in locator are in GMT
+        timezone = 'GMT'
+
+    return dict(
+        symbols=f'{db.name}::',
+        start=start,
+        end=end,
+        timezone=timezone,
+        context=db.context,
+        # OneTick can return ACL violation error if we use database name as symbol
+        query_properties={'IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE': 'TRUE'},
+        # don't print symbol errors from onetick about start/end time adjusted due to entitlement checks
+        print_symbol_errors=False,
+    )
+
+
 def databases(
     context=utils.default, derived: bool = False, readable_only: bool = True,
     fetch_description: Optional[bool] = None,
@@ -1073,13 +1107,7 @@ def databases(
     node = node >> otq.UpdateFields(set=f'INTERVAL_START={max_dt}', where=f'INTERVAL_START > {max_dt}')
     node = node >> otq.UpdateFields(set=f'INTERVAL_END={max_dt}', where=f'INTERVAL_END > {max_dt}')
 
-    dbs = otp.run(node,
-                  symbols='LOCAL::',
-                  # start and end times don't matter for this query, use some constants
-                  start=db_constants.DEFAULT_START_DATE,
-                  end=db_constants.DEFAULT_END_DATE,
-                  context=context)
-
+    dbs = otp.run(node, **_get_safe_params_for_running(context=context))
     if as_table:
         return dbs
 
@@ -1140,7 +1168,9 @@ def derived_databases(
     db: str, optional
        Specifies database name if ``selection_criteria`` is set to
        *derived_from_current_db* or *direct_children_of_current_db*.
-       Must be set in this case, otherwise does nothing.
+       Must be set in this case.
+       Also specifies symbol name to use when running the query, otherwise
+       :py:attr:`otp.config.default_db <onetick.py.configuration.Config.default_db>` is used.
     db_discovery_scope: str
         When *query_host_and_all_reachable_hosts* is specified,
         an attempt will be performed to get derived databases from all reachable hosts.
@@ -1162,13 +1192,6 @@ def derived_databases(
     if start and end:
         time_range = otq.ShowDerivedDbList.TimeRange.QUERY_TIME_INTERVAL
     else:
-        if db is None:
-            # start and end times don't matter in this case, use some constants
-            start = db_constants.DEFAULT_START_DATE
-            end = db_constants.DEFAULT_END_DATE
-        else:
-            start = otp.config.default_start_time
-            end = otp.config.default_end_time
         time_range = otq.ShowDerivedDbList.TimeRange.CONFIGURED_TIME_INTERVAL
 
     selection_criteria = getattr(otq.ShowDerivedDbList.SelectionCriteria, selection_criteria.upper())
@@ -1183,8 +1206,11 @@ def derived_databases(
         db_discovery_scope=db_discovery_scope,
     )
     ep = ep.tick_type('ANY')
-    db = db or 'LOCAL'
-    dbs = otp.run(ep, symbols=f'{db}::', start=start, end=end, context=context)
+    if start and end:
+        db_name = db or otp.config.get('default_db', 'LOCAL')
+        dbs = otp.run(ep, symbols=f'{db_name}::', start=start, end=end, context=context)
+    else:
+        dbs = otp.run(ep, **_get_safe_params_for_running(db, context))
     if as_table:
         return dbs
     if len(dbs) == 0:

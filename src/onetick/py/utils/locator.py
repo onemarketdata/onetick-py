@@ -22,7 +22,7 @@ def tmp_locator(clean_up=default, empty=False):
 
     STUBS = {'COMMON'}
     default_db = otp.config.get('default_db')
-    if default_db:
+    if default_db and default_db != 'LOCAL':
         STUBS.add(default_db)
 
     data = []

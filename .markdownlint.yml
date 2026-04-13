@@ -4,3 +4,6 @@ MD013:
 # do not raise error when there are headers with the same name
 MD024:
   siblings_only: true
+
+# MD059/descriptive-link-text : Link text should be descriptive : https://github.com/DavidAnson/markdownlint/blob/v0.40.0/doc/md059.md
+MD059: "warning"

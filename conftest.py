@@ -1,6 +1,8 @@
 import os
-import pytest
 from datetime import datetime
+
+import pytest
+import pandas as pd
 
 # do not remove it, it allows to load OneTick dynamic libraries correctly,
 # because it seems that OneTick resolves loading path using the order of the sys.modules
@@ -19,7 +21,6 @@ otp.config['default_symbol'] = 'AAPL'
 otp.config['default_start_time'] = datetime(2003, 12, 1, 0, 0, 0)
 otp.config['default_end_time'] = datetime(2003, 12, 4, 0, 0, 0)
 
-collect_ignore = ['setup.py']
 pytest_plugins = ['onetick.test']
 
 
@@ -28,6 +29,12 @@ if 'ONE_TICK_CONFIG' in os.environ:
 
 
 otq.API_CONFIG['SHOW_STACK_WARNING'] = 0
+
+
+# set pandas default pandas options to show all columns
+pd.set_option('display.max_columns', None)
+pd.set_option('display.expand_frame_repr', False)
+pd.set_option('max_colwidth', None)
 
 
 @pytest.fixture(scope='module')

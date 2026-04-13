@@ -576,14 +576,14 @@ def test_timestamp_increment(m_session, data_dir, auto_increase_timestamps):
 def test_path_in_symbol_name(m_session, data_dir):
     path = os.path.join(data_dir, 'test_path_in_symbol_name.csv')
     csv = otp.CSV()
-    df = otp.run(csv, symbols=f"LOCAL::{path}")
+    df = otp.run(csv, symbols=path)
     assert all(df['te'] == ['1688964028797322'])
 
 
 def test_path_in_symbol_name_without_header(m_session, data_dir):
     path = os.path.join(data_dir, 'test_path_in_symbol_name_without_header.csv')
     csv = otp.CSV(names=['te'], first_line_is_title=False)
-    df = otp.run(csv, symbols=f"LOCAL::{path}")
+    df = otp.run(csv, symbols=path)
     assert all(df['te'] == ['1688964028797322'])
 
 
@@ -691,3 +691,10 @@ def test_bool_column_in_csv(m_session, data_dir):
     assert not true_only.empty
     assert df.dtypes['BOOL_COLUMN'] == np.dtype('float64')
     assert list(df['BOOL_COLUMN']) == [0.0, 0.0, 1.0]
+
+
+def test_csv_tab_delimiter(m_session, data_dir):
+    data = otp.CSV(file_contents='\n'.join(['#A\tB', '1\t2', '3\t4']), first_line_is_title=True, field_delimiter='\t')
+    df = otp.run(data)
+    assert all(df['A'] == [1, 3])
+    assert all(df['B'] == [2, 4])

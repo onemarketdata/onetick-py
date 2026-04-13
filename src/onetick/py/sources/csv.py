@@ -2,6 +2,7 @@ import datetime as dt
 import os
 import io
 import string
+import warnings
 
 from functools import partial
 from typing import Optional, Union, Dict
@@ -32,12 +33,13 @@ def CSV(  # NOSONAR
     drop_index=True,
     change_date_to=None,
     auto_increase_timestamps=True,
-    db='LOCAL',
+    db=utils.adaptive_to_default,
     field_delimiter=',',
     handle_escaped_chars=False,
     quote_char='"',
     timestamp_format: Optional[Union[str, Dict[str, str]]] = None,
     file_contents: Optional[str] = None,
+    use_field_delimiters_for_title: Optional[bool] = None,
     **kwargs,
 ):
     """
@@ -46,7 +48,7 @@ def CSV(  # NOSONAR
     There are several steps determining column types.
 
     1. Initially, all column treated as ``str``.
-    2. If column name in CSV title have format ``type COLUMNNAME``,
+    2. If column name in CSV title have format ``type COLUMN_NAME``,
        it will change type from ``str`` to specified type.
     3. All column type are determined automatically from its data.
     4. You could override determined types in ``dtype`` argument explicitly.
@@ -54,7 +56,7 @@ def CSV(  # NOSONAR
 
     NOTE: Double quotes are not supported in CSV files for escaping quotes in strings,
     you should use escape character ``\\`` before the quote instead,
-    for example: ``"I'm a string with a \\"quotes\\" inside"``. And then set `handle_escaped_chars=True`.
+    for example: ``"I'm a string with a \\"quotes\\" inside"``. And then set ``handle_escaped_chars=True``.
 
     Parameters
     ----------
@@ -105,10 +107,11 @@ def CSV(  # NOSONAR
         If ``False``, timestamps of all loaded ticks would be equal to ``start_time``
     db: str, optional
         Name of a database to define a destination where the csv file will be transported for processing.
-        ``LOCAL`` is default value that means OneTick will process it on the site where a query runs.
+        By default :py:attr:`otp.config.default_db<onetick.py.configuration.Config.default_db>` is used.
+        ``LOCAL`` value means that OneTick will process it on the site where a query runs.
     field_delimiter: str, optional
         A character that is used to tokenize each line of the CSV file.
-        For a tab character \t (back-slash followed by t) should be specified.
+        For a tab character ``\\t`` (back-slash followed by t) should be specified.
     handle_escaped_chars: bool, optional
         If set, the backslash char ``\\`` gets a special meaning and everywhere in the input text
         the combinations ``\\'``, ``\\"`` and ``\\\\`` are changed correspondingly by ``'``, ``"`` and ``\\``,
@@ -121,7 +124,8 @@ def CSV(  # NOSONAR
         Character used to denote the start and end of a quoted item. Quoted items can include the delimiter,
         and it will be ignored. The same character cannot be marked both as the quote character and as the
         field delimiter. Besides, space characters cannot be used as quote.
-        Default: " (double quotes)
+        To disable quoting, set this parameter to an empty string.
+        Default: ``"`` (double quotes)
     timestamp_format: str or dict
         Expected format for ``timestamp_name`` and all other datetime columns.
         If dictionary is passed, then different format can be specified for each column.
@@ -131,6 +135,9 @@ def CSV(  # NOSONAR
     file_contents: str
         Specify the contents of the csv file as string.
         Can be used instead of ``filepath_or_buffer`` parameter.
+    use_field_delimiters_for_title: bool
+        Use values from ``field_delimiter`` parameter in the title too.
+        Default is False, in this case only comma ``,`` and space `` `` characters are used as delimiters in the title.
 
     See also
     --------
@@ -159,10 +166,10 @@ def CSV(  # NOSONAR
     0 2022-07-01 05:28:26.281508365  682.88  Buy
     1 2022-07-01 11:56:26.953602371   30.89  Buy
 
-    Path to csv can be passed via symbol with `LOCAL::` prefix:
+    Path to csv can be passed via symbol when running the query:
 
     >>> data = otp.CSV()
-    >>> otp.run(data, symbols=f"LOCAL::{os.path.join(csv_path, 'data.csv')}")
+    >>> otp.run(data, symbols=os.path.join(csv_path, 'data.csv'))
                          Time          time_number      px side
     0 2003-12-01 00:00:00.000  1656690986953602371   30.89  Buy
     1 2003-12-01 00:00:00.001  1656667706281508365  682.88  Buy
@@ -198,6 +205,25 @@ def CSV(  # NOSONAR
                          Time  A  B    C
     0 2003-12-01 00:00:00.000  1  f  3.3
     1 2003-12-01 00:00:00.001  2  g  4.4
+
+    Use parameter ``use_field_delimiters_for_title`` to use ``field_delimiter`` in title too:
+
+    >>> file_contents = os.linesep.join([
+    ...     'A\tB',
+    ...     '1\t3',
+    ...     '2\t4',
+    ... ])
+    >>> print(file_contents)
+    A  B
+    1  3
+    2  4
+    >>> data = otp.CSV(file_contents=file_contents,
+    ...                field_delimiter='\t',
+    ...                use_field_delimiters_for_title=True)  # doctest: +SKIP
+    >>> otp.run(data)  # doctest: +SKIP
+                         Time  A  B
+    0 2003-12-01 00:00:00.000  1  3
+    1 2003-12-01 00:00:00.001  2  4
     """
     csv_source = _CSV(
         filepath_or_buffer=filepath_or_buffer,
@@ -216,6 +242,7 @@ def CSV(  # NOSONAR
         quote_char=quote_char,
         timestamp_format=timestamp_format,
         file_contents=file_contents,
+        use_field_delimiters_for_title=use_field_delimiters_for_title,
         **kwargs,
     )
     csv_source = csv_source.sort(csv_source['Time'])
@@ -250,6 +277,7 @@ class _CSV(Source):
         "_quote_char",
         "_timestamp_format",
         "_file_contents",
+        "_use_field_delimiters_for_title",
     ]
 
     def __init__(self,
@@ -263,28 +291,29 @@ class _CSV(Source):
                  drop_index=True,
                  change_date_to=None,
                  auto_increase_timestamps=True,
-                 db='LOCAL',
+                 db=utils.adaptive_to_default,
                  field_delimiter=',',
                  handle_escaped_chars=False,
                  quote_char='"',
                  timestamp_format: Optional[Union[str, Dict[str, str]]] = None,
                  file_contents: Optional[str] = None,
+                 use_field_delimiters_for_title: Optional[bool] = None,
                  **kwargs):
 
         self._dtype = dtype or {}
         self._names = names
         self._converters = converters or {}
-        if (len(field_delimiter) != 1 and field_delimiter != '\t') or field_delimiter == '"' or field_delimiter == "'":
+        if (len(field_delimiter) != 1 and field_delimiter != r'\t') or field_delimiter in ('"', "'"):
             raise ValueError(f'`field_delimiter` can be single character (except quotes) '
-                             f'or "\t" but "{field_delimiter}" was passed')
+                             f'or "\\t" but "{field_delimiter}" was passed')
         self._field_delimiter = field_delimiter
         if len(quote_char) > 1:
             raise ValueError(f'quote_char should be single char but `{quote_char}` was passed')
         if self._field_delimiter == quote_char:
             raise ValueError(f'`{self._field_delimiter}` is both field_delimiter and quote_char')
-        if quote_char in string.whitespace:
+        if quote_char and quote_char in string.whitespace:
             raise ValueError('Whitespace can not be a quote_char')
-        self._quote_char = quote_char
+        self._quote_char = quote_char or ''
         self._order_ticks = order_ticks
         self._auto_increase_timestamps = auto_increase_timestamps
         self._db = db
@@ -296,6 +325,7 @@ class _CSV(Source):
         self._handle_escaped_chars = handle_escaped_chars
         self._timestamp_format = timestamp_format
         self._file_contents = file_contents
+        self._use_field_delimiters_for_title = use_field_delimiters_for_title
 
         if self._try_default_constructor(**kwargs):
             return
@@ -464,25 +494,34 @@ class _CSV(Source):
         if self._file_contents is not None:
             file_contents = self._file_contents
 
+        ep_kwargs = {}
+        if self._use_field_delimiters_for_title is not None:
+            if 'use_field_delimiters_for_title' not in otq.CsvFileListing.Parameters.list_parameters():
+                warnings.warn("Parameter 'use_field_delimiters_for_title' is not supported by this OneTick version.")
+            else:
+                ep_kwargs['use_field_delimiters_for_title'] = self._use_field_delimiters_for_title
+
         csv = Source(
             otq.CsvFileListing(
                 field_delimiters=f"'{self._field_delimiter}'",
                 time_assignment="_START_TIME",
-                # we use EP's first_line_is_title only when file path is passed through symbol
-                # otherwise we don't use EP's first_line_is_title, because EP raise error on empty column name,
-                # and we explicitly define name for such columns in FIELDS arg.
-                # but if first line started with # (forced_title=True), then this param ignored :(
-                first_line_is_title=(self._filepath_or_buffer is None and
-                                     self._file_contents is None and
-                                     self._first_line_is_title),
+                # We are setting self._forced_title to True only in these cases:
+                # * we were able to parse local file, and checked it has a title starting with # character
+                # * or we couldn't parse it (because it is located on remote server or the name passed with symbol)
+                #   and self._first_line_is_title is True
+                first_line_is_title=self._forced_title,
                 fields=self._ep_fields,
                 file_contents=file_contents,
                 handle_escaped_chars=self._handle_escaped_chars,
                 quote_chars=f"'{self._quote_char}'",
+                **ep_kwargs,
             ),
             schema=self._columns_with_bool_replaced,
         )
 
+        # if self._forced_title is False, then we were able to parse the file
+        # and checked the title doesn't start with # character
+        # in this case OneTick will ignore this first line and we need to filter it out manually
         if self._first_line_is_title and not self._forced_title:
             # remove first line with titles for columns.
             csv.sink(otq.DeclareStateVariables(variables="long __TICK_INDEX=0"))

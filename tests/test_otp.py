@@ -1,9 +1,6 @@
-import os
-import sys
 from datetime import datetime
 
 import onetick.py as otp
-import pandas as pd
 
 otp.config.default_start_time = datetime(2003, 12, 1)
 otp.config.default_end_time = datetime(2003, 12, 4)

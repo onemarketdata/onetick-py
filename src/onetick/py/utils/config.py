@@ -19,6 +19,7 @@ def reload_config(db=None, config_type='LOCATOR'):
 
     return otp.run(
         otq.ReloadConfig(config_type=config_type).tick_type('ANY'),
+        # we are using LOCAL, because we can only reload config locally
         symbols='LOCAL::',
         # start and end times don't matter for this query, use some constants
         start=db_constants.DEFAULT_START_DATE,

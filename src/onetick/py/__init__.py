@@ -270,14 +270,6 @@ funcs = functions  # type: ignore
 agg = aggregations  # type: ignore
 
 
-# set pandas default pandas options to show all columns
-import pandas as _pd
-
-_pd.set_option("display.max_columns", None)
-_pd.set_option("display.expand_frame_repr", False)
-_pd.set_option("max_colwidth", None)
-
-
 from onetick.py.otq import otq as _otq
 try:
     __build__ = str(_otq.OneTickLib.get_build_number())
@@ -289,6 +281,5 @@ from .log import get_logger
 
 del (_version,
      _otq,
-     _pd,
      _modify_stack_info_in_onetick_query,
      otli)

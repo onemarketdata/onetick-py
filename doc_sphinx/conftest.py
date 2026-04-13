@@ -1,7 +1,6 @@
 from datetime import datetime
 from pprint import pprint
 from functools import partial
-from collections import defaultdict
 
 import os
 import pytest

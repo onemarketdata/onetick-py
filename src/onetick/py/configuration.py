@@ -439,7 +439,13 @@ class Config:
 
     default_db = OtpProperty(
         description='Default database name used for running queries, '
-                    'e.g. with :py:func:`otp.run<onetick.py.run>`.',
+                    'e.g. with :py:func:`otp.run<onetick.py.run>`. '
+                    'Default value is not set. '
+                    'In this case it should be set in symbol name for each running query. '
+                    'Also special value LOCAL can be used.'
+                    'This means the query will be processed on the client machine, if it has OneTick installed, '
+                    'otherwise it will be processed on the first available OneTick server, '
+                    'depending on client or server configuration.',
         base_default=nothing,
         allowed_types=str,
         env_var_name='OTP_DEFAULT_DB',
@@ -557,10 +563,26 @@ class Config:
     )
 
     default_fault_tolerance = OtpProperty(
-        description='Default value for USE_FT query property.',
+        description='Default value for USE_FT query property. Default is FALSE. '
+                    'If set to TRUE, the query will be rerun on a different tick server in case of connection errors '
+                    'or if server times out. The query is restarted even if some data has already been received.',
+        # TODO: we are using string values instead of boolean for backward compatibility
         base_default='FALSE',
         env_var_name='OTP_DEFAULT_FAULT_TOLERANCE',
         allowed_types=str,
+    )
+
+    min_same_host_retry_interval_sec = OtpProperty(
+        description='Default value for min_same_host_retry_interval_sec query FT property. '
+                    'It is an integer value that specifies the minimum number of seconds that need to have passed '
+                    'from the last failure in order to retry a host, if all hosts have failed. '
+                    'If the value is negative, hosts are not retried. '
+                    'Default value is not set, which means it will be set internally by OneTick to 5 minutes. '
+                    'This property is used only if :py:attr:`default_fault_tolerance` is set to True.',
+        base_default=None,
+        env_var_name='OTP_MIN_SAME_HOST_RETRY_INTERVAL_SEC',
+        allowed_types=int,
+        env_var_func=int,
     )
 
     default_username = OtpProperty(

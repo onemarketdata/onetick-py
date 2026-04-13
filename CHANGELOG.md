@@ -10,6 +10,28 @@
 
 ### Removed
 
+## [1.193.0] - 2026-04-13
+
+### Added
+
+- Add parameter `use_field_delimiters_for_title` to `otp.CSV`
+- Add `otp.config.min_same_host_retry_interval_sec`
+
+### Changed
+
+- Use `uv build` and `uv publish` instead of `twine`
+- Removed `setup.py`, set version in `pyproject.toml`
+- Do not set display options for `pandas`
+- Use `otp.config.default_db` by default in all places where `LOCAL` was used
+- Use `US_COMP_SAMPLE` as default database in cloud tests
+
+### Fixed
+
+- In `otp.CSV` parameter `quote_char` can be set to empty string
+- In `otp.CSV` fixed passing parameter `first_line_is_title` for remote files
+
+### Removed
+
 ## [1.192.0] - 2026-04-06
 
 ### Added
@@ -1365,7 +1387,8 @@
 ### Fixed
 
 - Fixed some SonarQube issues
-- `otp.run()` arguments `start` or `end` now respects the timezone both for timezone-aware `otp.dt` and `datetime.datetime`.
+- `otp.run()` arguments `start` or `end` now respects the timezone both
+  for timezone-aware `otp.dt` and `datetime.datetime`.
 - Fixed managing temporary directories and logging files removal when using pytest
 - Fixed compatibility check with unstable test with cache
 - Fixed version switcher in documentation
@@ -1405,7 +1428,8 @@
 ### Added
 
 - Separate installation page for remote Cloud Server usage through WebAPI.
-- Added `webapi` extra to setup.py for installing `onetick.query_webapi` module with simple command `pip install onetick-py[webapi]`
+- Added `webapi` extra to setup.py for installing `onetick.query_webapi` module
+  with simple command `pip install onetick-py[webapi]`
 
 ### Changed
 
@@ -1977,7 +2001,8 @@
 ### Changed
 
 - do not skip fault tolerance test
-- warning message regarding subtraction of timestamps marked as deprecated now and ask user to explicitly specify time unit
+- warning message regarding subtraction of timestamps marked as deprecated now
+  and ask user to explicitly specify time unit
 
 ## [1.87.0] - 2023-12-25
 
@@ -2026,7 +2051,8 @@
 
 ### Changed
 
-- updated `Source.agg()` documentation to indicate that `end_condition_per_group=True` applies to all bucketing conditions
+- updated `Source.agg()` documentation to indicate
+  that `end_condition_per_group=True` applies to all bucketing conditions
 
 ## [1.84.0] - 2023-12-04
 
@@ -2252,7 +2278,8 @@
 
 ### Added
 
-- `otp.agg.generic`: added `params` parameter to `.apply()` method, which allows to pass parameters to the aggregation function
+- `otp.agg.generic`: added `params` parameter to `.apply()` method,
+  which allows to pass parameters to the aggregation function
 
 ## [1.71.9]
 
@@ -3730,7 +3757,8 @@ with datetime arguments
 
 ### Fixed
 
-- `keep_everything_generated` property for the classes `TmpFile`, `TmpDir` and `GeneratedDir` to control tmp file cleanup
+- `keep_everything_generated` property for the classes `TmpFile`, `TmpDir` and `GeneratedDir`
+  to control tmp file cleanup
 
 ## [1.14.12]
 
@@ -3974,7 +4002,8 @@ with datetime arguments
 
 ### Fixed
 
-- Fixed passing milliseconds with proper conversion into the constructor of `otp.nsectime` to support backward compatibility
+- Fixed passing milliseconds with proper conversion into the constructor of `otp.nsectime`
+  to support backward compatibility
 
 ## [1.5.19]
 
@@ -4124,7 +4153,7 @@ with datetime arguments
 - Introduced the `otp.DEFAUT_TZ`, `otp.DEFAULT_START_TIME`, `otp.DEFAULT_END_TIME`, `otp.DEFAULT_DB`
 - They can be configured using the corresponding env variables:
   `OTP_DEFAULT_TZ`, `OTP_DEFAULT_START_TIME`, `OTP_DEFAULT_END_TIME`, `OTP_DEFAULT_TZ`
-- The `otp.DEFAULT_TZ` is set to EST5EDT by default, and `OTP_DEFAULT_TZ`  controls every place that works with timezones
+- The `otp.DEFAULT_TZ` is set to EST5EDT by default, and `OTP_DEFAULT_TZ` controls every place that works with timezones
 - Exposed the `otp.databases()` function that returns all available databases,
   where each database has corresponding methods for getting available tick types, symbols, dates with data and schema
 - Reworked mechanic of schema deducing, currently it is based on the `otp.databases()`:
@@ -4599,13 +4628,15 @@ with datetime arguments
 
 ### Added
 
-- `Ticks` and `Tick` can handle special `utils.adaptive` value in `tick_type` argument to use a tick type from the sync node.
+- `Ticks` and `Tick` can handle special `utils.adaptive` value in `tick_type` argument
+  to use a tick type from the sync node.
 
 ## [1.3.73]
 
 ### Added
 
-- `apply_query` and `otp.sources.query` now handle both queries with unbound and bound symbols (used to work only with bound)
+- `apply_query` and `otp.sources.query` now handle both queries with unbound and bound symbols
+  (used to work only with bound)
 
 ## [1.3.72]
 

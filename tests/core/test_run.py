@@ -528,6 +528,24 @@ def test_fault_tolerance(
     assert all(res['USE_FT'] == [use_ft_output])
 
 
+@pytest.mark.parametrize('enable_it', (True, False))
+def test_min_same_host_retry_interval_sec(session, monkeypatch, enable_it):
+    if enable_it:
+        monkeypatch.setattr(otp.config, 'default_fault_tolerance', 'TRUE')
+        monkeypatch.setattr(otp.config, 'min_same_host_retry_interval_sec', 60)
+    tick = otp.Tick(
+        A=otp.raw('GET_QUERY_PROPERTY("FT_PROPERTIES")', otp.string[64]),
+        B=otp.raw('GET_QUERY_PROPERTY("USE_FT")', otp.string[64]),
+    )
+    df = otp.run(tick)
+    if enable_it:
+        assert df['A'][0] == 'min_same_host_retry_interval_sec=60'
+        assert df['B'][0] == 'TRUE'
+    else:
+        assert df['A'][0] == ''
+        assert df['B'][0] == 'FALSE'
+
+
 class TestCallback:
     @pytest.fixture
     def callback_base(self, request):

@@ -5,17 +5,14 @@ In order to add your custom command create module in your package which implemen
 - `run(args: argparse.Namespace)` - code to run on command call
 - `parser_impl(parser: argparse.ArgumentParser)` - adding arguments to passed `ArgumentParser` object
 
-And add your command to `onetick.py.cli.plugins` in `entry_points` section in `setup.py`:
+And add your command to `project.entry-points."onetick.py.cli.plugins"` section in `pyproject.toml`:
 ```
-    entry_points={
-        'onetick.py.cli.plugins': [
-            'your_command = module.with.command.code'
-        ]
-    }
+[project.entry-points."onetick.py.cli.plugins"]
+your_command = "module.with.command.code"
 ```
 
 You can see example of code implementation in `onetick.py.cli.render` and
-definition of command in `entry_points` in `setup.py`.
+definition of command in `entry_points` in `pyproject.toml`.
 """
 
 import sys

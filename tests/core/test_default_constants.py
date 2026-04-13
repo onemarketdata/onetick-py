@@ -20,7 +20,8 @@ class TestDefaultDB:
             monkeypatch.setattr(otp.config, 'default_db', otp.config.default)
             monkeypatch.setenv('OTP_DEFAULT_DB', db)
         db = 'DEMO_L1' if db is None else db
-        assert db not in empty_session.databases
+        with pytest.raises(Exception, match=f'data locations were not configured for database {db}'):
+            _ = empty_session.databases
 
     @pytest.mark.parametrize("db", ['MY_DB', None, 'SOME_DB'])
     def test_application(self, cur_dir, monkeypatch, db):

@@ -525,6 +525,12 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
     if 'USE_FT' not in qp_dict:
         query_properties.set_property_value('USE_FT', otp.config.default_fault_tolerance)  # type: ignore[union-attr]
 
+    if 'FT_PROPERTIES' not in qp_dict:
+        if otp.config.min_same_host_retry_interval_sec is not None:
+            query_properties.set_property_value(
+                'FT_PROPERTIES', f'min_same_host_retry_interval_sec={otp.config.min_same_host_retry_interval_sec}'
+            )
+
     if 'IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE' not in qp_dict:
         if otp.config.ignore_ticks_in_unentitled_time_range is not None:
             query_properties.set_property_value('IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE',  # type: ignore[union-attr]

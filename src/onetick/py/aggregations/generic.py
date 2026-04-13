@@ -63,7 +63,8 @@ class Generic(_Aggregation, _MultiColumnAggregation):
 
     def _make_query_object(self, schema):
         query_params = self._query_params if self._query_params else {}
-        query = otp.DataSource(symbols='LOCAL::', tick_type='ANY', schema_policy='manual', schema=schema)
+        db_name = otp.config.get('default_db', 'LOCAL')
+        query = otp.DataSource(symbols=f'{db_name}::', tick_type='ANY', schema_policy='manual', schema=schema)
         query = self._query_fun(query, **query_params)
         return query
 
