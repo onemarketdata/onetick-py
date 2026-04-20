@@ -43,7 +43,7 @@ class RemoteTS:
 
         >>> session.use(otp.RemoteTS('server.onetick.com:50015'))  # doctest: +SKIP
 
-        Additionally specify websocket protocol and resource of the remote server:
+        Additionally specify web-socket protocol and resource of the remote server:
 
         >>> session.use(otp.RemoteTS('wss://data.onetick.com:443/omdwebapi/websocket'))  # doctest: +SKIP
 

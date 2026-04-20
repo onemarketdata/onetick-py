@@ -77,10 +77,12 @@ class MetaFields:
         self.start = self.start_time
         self.end_time = _Column('_END_TIME', dtype=ott.nsectime)
         self.end = self.end_time
-        self.timezone = _Column('_TIMEZONE', dtype=str)
-        self.db_name = _Column('_DBNAME', dtype=str)
-        self.symbol_name = _Column('_SYMBOL_NAME', dtype=str)
-        self.tick_type = _Column('_TICK_TYPE', dtype=str)
+        self.timezone = _Column('_TIMEZONE', dtype=ott.string[255])
+        # At least on Windows we are limited to 255 characters in a name of DB directory
+        self.db_name = _Column('_DBNAME', dtype=ott.string[255])
+        self.symbol_name = _Column('_SYMBOL_NAME', dtype=ott.string[255])
+        # The sum of lengths of symbol and tick type cannot exceed 255
+        self.tick_type = _Column('_TICK_TYPE', dtype=ott.string[255])
         self.symbol_time = _Column('_SYMBOL_TIME', dtype=otp.nsectime)
         self.__fields = set(map(str, self.__dict__.values())) | {'Time'}
 

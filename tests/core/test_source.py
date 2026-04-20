@@ -1,6 +1,8 @@
 import pytest
 
 import onetick.py as otp
+import onetick.py.types as ott
+from onetick.py.docs.utils import is_windows
 
 
 class TestSetSchema:
@@ -123,3 +125,26 @@ class TestMetaFields:
     def test_meta_fields_not_rewritten(self, session):
         t = otp.Ticks({'META_FIELDS': [1]})
         t.columns(skip_meta_fields=True)
+
+    def test_long_symbol_name(self, session):
+        symbol_name = 'A' * 255
+        src = otp.Tick(X=1)
+        src['TEST'] = src["_SYMBOL_NAME"]
+        df = otp.run(src, symbols=symbol_name)
+        assert df['TEST'][0] == symbol_name
+
+    def test_long_db_name(self, session):
+        max_limit = 255
+        if is_windows():
+            # some problems with long file paths
+            # just want to test that we can use string longer than default length
+            max_limit = min(otp.types.string.DEFAULT_LENGTH + 1, 100)
+
+        db = otp.DB('TEST_LONG_DB_NAME_' + 'A' * (max_limit - 18))
+        db.add(src=otp.Ticks(X=[1]), symbol='A', tick_type='TEST', date=ott.datetime(2022, 2, 2))
+        session.use(db)
+
+        src = otp.DataSource(db=db.name, tick_type='TEST', symbols='A', date=ott.datetime(2022, 2, 2))
+        src['TEST'] = src['_DBNAME']
+        df = otp.run(src)
+        assert df['TEST'][0] == db.name

@@ -10,6 +10,22 @@
 
 ### Removed
 
+## [1.194.0] - 2026-04-20
+
+### Added
+
+### Changed
+
+- Refactor development dependencies
+
+### Fixed
+
+- Updated dependencies versions to fix security alerts
+- Fixed max length of meta-fields `_SYMBOL_NAME`, `_DBNAME`, `_TICK_TYPE` and `_TIMEZONE` to 255
+- Fixed token for Jira release job
+
+### Removed
+
 ## [1.193.0] - 2026-04-13
 
 ### Added
