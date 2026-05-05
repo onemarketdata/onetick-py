@@ -70,7 +70,6 @@ def file_symbol_name_history():
 
 @pytest.mark.parametrize('data', [
     str_symbol_name_history(),  # input as a section (string)
-    file_symbol_name_history(),  # input as a xml file (saved on disk)
 ])
 def test_put_source_types(f_session, tz, data):
     ref_db_name = 'REF_DATA_DB'
@@ -84,14 +83,35 @@ def test_put_source_types(f_session, tz, data):
     )
     f_session.use(ref_db)
 
-    if isinstance(data, str) and os.path.exists(data):
-        # input as a xml file (saved on disk)
-        ref_db.put(data)
-    else:
-        # input as a section (otp.Source or string)
-        ref_db.put([
-            otp.RefDB.SymbolNameHistory(data, symbology),
-        ])
+    # input as a section (otp.Source or string)
+    ref_db.put([
+        otp.RefDB.SymbolNameHistory(data, symbology),
+    ])
+
+    data = otp.DataSource(db=ref_db_name, symbol='SYMBOLOGY_CACHE', tick_type='SYMBOLOGY')
+    data = otp.run(data, start=otp.dt(2010, 1, 1, tz=tz), end=otp.dt(2010, 1, 5, tz=tz), timezone=tz)
+    assert len(data) == 1 and data.iloc[0]['SYMBOLOGY_NAME'] == symbology
+
+    data = otp.DataSource(db=ref_db_name, symbols=otp.Symbols(db=ref_db_name, for_tick_type='SYM'), tick_type='SYM')
+    data = otp.run(data, start=otp.dt(2010, 1, 1, tz=tz), end=otp.dt(2010, 1, 5, tz=tz), timezone=tz)
+    assert len(data) == 4 and len(data['SYMBOL_NAME'].unique()) == 2
+
+
+def test_put_source_types_file(f_session, tz):
+    data = file_symbol_name_history()  # input as a xml file (saved on disk)
+    ref_db_name = 'REF_DATA_DB'
+    symbology = 'CORE'
+
+    ref_db = otp.RefDB(
+        ref_db_name,
+        db_properties={
+            'symbology': symbology,
+        },
+    )
+    f_session.use(ref_db)
+
+    # input as a xml file (saved on disk)
+    ref_db.put(data)
 
     data = otp.DataSource(db=ref_db_name, symbol='SYMBOLOGY_CACHE', tick_type='SYMBOLOGY')
     data = otp.run(data, start=otp.dt(2010, 1, 1, tz=tz), end=otp.dt(2010, 1, 5, tz=tz), timezone=tz)

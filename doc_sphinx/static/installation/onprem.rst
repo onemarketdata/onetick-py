@@ -15,7 +15,7 @@ Prerequisites
 :::::::::::::
 
 - You installed OneTick and have an active license or you are using hosted OneTick.
-- You installed `python>=3.9 <https://www.python.org/downloads/>`_ (with dynamic libraries such as `libpython3.9.so.1.0`).
+- You installed `python>=3.10 <https://www.python.org/downloads/>`_ (with dynamic libraries such as `libpython3.10.so.1.0`).
 - You installed `pip <https://pip.pypa.io/en/stable/installing//>`_.
 
 Installation with pip
@@ -84,10 +84,10 @@ or if you have older OneTick build version, please modify the **PYTHONPATH** var
 
 Note that on older OneTick versions you may also need to add ``numpy`` directory too.
 On newer versions this directory doesn't exist and is not needed.
-The directory must be for the same python version as will be used by ``onetick.py`` (in the example for python 3.9).
+The directory must be for the same python version as will be used by ``onetick.py`` (in the example for python 3.10).
 
-    | ``/opt/one_market_data/one_tick/bin/numpy/python39``   (Linux)
-    | ``C:\omd\one_market_data\one_tick\bin\numpy\python39`` (Windows)
+    | ``/opt/one_market_data/one_tick/bin/numpy/python310``   (Linux)
+    | ``C:\omd\one_market_data\one_tick\bin\numpy\python310`` (Windows)
 
 
 Requirements

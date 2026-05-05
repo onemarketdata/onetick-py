@@ -578,14 +578,14 @@ class TestRepeat:
         with self._repeat_test_init_and_check(self.new_column_name, by_const=False) as (data, n):
             data[self.new_column_name] = data[self.old_column_name].str.repeat(data[self.int_column_name])
 
-    @pytest.mark.parametrize("argument", [random_string(), random.random()])
-    def test_raise_error_on_invalid_type(self, argument, m_session):
-        with pytest.raises(TypeError):
-            with self._repeat_test_init_and_check(self.new_column_name) as (data, n):
-                data[self.new_column_name] = data[self.old_column_name] * argument
-        with pytest.raises(TypeError):
-            with self._repeat_test_init_and_check(self.new_column_name) as (data, n):
-                data[self.new_column_name] = argument * data[self.old_column_name]
+    def test_raise_error_on_invalid_type(self, m_session):
+        for argument in [random_string(), random.random()]:
+            with pytest.raises(TypeError):
+                with self._repeat_test_init_and_check(self.new_column_name) as (data, n):
+                    data[self.new_column_name] = data[self.old_column_name] * argument
+            with pytest.raises(TypeError):
+                with self._repeat_test_init_and_check(self.new_column_name) as (data, n):
+                    data[self.new_column_name] = argument * data[self.old_column_name]
 
 
 class TestExtract:

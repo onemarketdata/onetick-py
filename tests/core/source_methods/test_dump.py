@@ -214,3 +214,15 @@ def test_agg(session):
         data.high("X", bucket_interval=4)
     )
     assert df_1.equals(df_2)
+
+
+@pytest.mark.platform("linux")
+def test_run_timezone(session, monkeypatch, capfd):
+    # PY-1530
+    monkeypatch.setattr(otp.config, 'tz', 'America/New_York')
+    t = otp.Tick(A=123)
+    t.dump()
+    _ = otp.run(t, start=otp.dt(2022, 1, 2, 3, 4, 5, 6, 7), end=otp.dt(2022, 1, 3), timezone='Europe/London')
+    captured = capfd.readouterr()
+    assert captured.out == '#TIMESTAMP,A\n' \
+                           '02-01-2022 03:04:05.000006007,123\n'

@@ -10,6 +10,25 @@
 
 ### Removed
 
+## [1.195.0] - 2026-05-04
+
+### Added
+
+- Added support of setting locators for different contexts in otp.Config
+
+### Changed
+
+- Use `pytest-xdist` for parallel testing instead of `pytest-split`
+- Drop support of python 3.9
+- Use python 3.12 and OneTick 1.26 when testing on Windows
+
+### Fixed
+
+- Use query timezone in `otp.Source.dump()`
+- Optimize reading big dataframes with `otp.Ticks`
+
+### Removed
+
 ## [1.194.0] - 2026-04-20
 
 ### Added

@@ -238,7 +238,7 @@ def omd_dist_path():
         raise FileNotFoundError('Path to OneTick distribution is not found')
 
     base_prefix = 'one_market_data'
-    omd_prefix_pos = res_path.find(base_prefix)
+    omd_prefix_pos = res_path.find(str(omd_prefix))
     res_path = res_path[: omd_prefix_pos + len(base_prefix)]
 
     return res_path

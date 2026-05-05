@@ -471,7 +471,7 @@ class TestCSVTimestamp:
         assert df['Time'][0] == otp.dt(2022, 7, 1, 4, 11, 12, 634071, 31)
 
     def test_read_csv_timezone_changed(self, data_dir, monkeypatch, m_session):
-        monkeypatch.setattr(otp.config, 'tz', 'EST4EDT')
+        monkeypatch.setattr(otp.config, 'tz', 'Etc/GMT+3')
 
         data = otp.CSV(
             os.path.join(data_dir, "example_events.csv"),

@@ -50,5 +50,5 @@ file_version = 1.0
 RunningQuery = 0
 start = 20180607120000000
 SYMBOL_DATE = 
-TZ = EDT5EST
+TZ = EST5EDT
 USER_NAME = artem

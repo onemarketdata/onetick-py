@@ -38,7 +38,7 @@ class TestToStr:
 class TestCmpAndEq:
     def test_cmp(self, m_session):
         data = otp.Ticks(X=[2.4, 1.3, -3.4, 0.1])
-        data["X"] = data["X"].float.cmp(0.0, 1)
+        data["X"] = data["X"].float.cmp(0.0, 0.09)
         df = otp.run(data)
         assert all(df["X"] == [1.0, 1.0, -1.0, 1.0])
 

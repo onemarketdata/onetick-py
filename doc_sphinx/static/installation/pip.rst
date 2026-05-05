@@ -6,7 +6,7 @@ Other installation options
 Prerequisites
 :::::::::::::
 
-- You installed `python 3.9 or newer <https://www.python.org/downloads/>`_.
+- You installed `python 3.10 or newer <https://www.python.org/downloads/>`_.
 - You installed `pip <https://pip.pypa.io/en/stable/installing/>`_.
 - Optional, but it is **highly recommended** to use virtual environment for Python packages.
 
@@ -39,7 +39,7 @@ which is the most tested combination, then you can use the following command to 
     pip install -U --index-url https://USERNAME:PASSWORD@pip.distribution.sol.onetick.com/simple/ "onetick-py[strict,webapi]"
 
 **Note**: if you have a local OneTick installation and ``PYTHONPATH`` pointing to it (e.g., to
-``“C:\omd\one_market_data\one_tick\bin;C:\omd\one_market_data\one_tick\bin\python;C:\omd\one_market_data\one_tick\bin\numpy\python39;”``),
+``"C:\omd\one_market_data\one_tick\bin;C:\omd\one_market_data\one_tick\bin\python;C:\omd\one_market_data\one_tick\bin\numpy\python310;"``),
 you need to **unset PYTHONPATH** in order to avoid conflicts:
 
 - on Windows in PowerShell (``echo $env:PYTHONPATH`` - too see it; ``$env:PYTHONPATH=''`` - to unset it)

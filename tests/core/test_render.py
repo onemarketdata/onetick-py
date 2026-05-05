@@ -290,7 +290,7 @@ class TestReadOTQ:
 
         assert graph.config["START"] == "20180607120000000"
         assert graph.config["END"] == "20180607121500000"
-        assert graph.config["TZ"] == "EDT5EST"
+        assert graph.config["TZ"] == "EST5EDT"
 
         assert list(graph.queries.keys()) == ["merge"]
         query = graph.queries["merge"]

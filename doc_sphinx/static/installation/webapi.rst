@@ -17,7 +17,7 @@ In this case, the package does not require OneTick binaries to be installed on t
 Prerequisites
 :::::::::::::
 
-- You installed `python 3.9 or newer <https://www.python.org/downloads/>`_.
+- You installed `python 3.10 or newer <https://www.python.org/downloads/>`_.
 - You installed `pip <https://pip.pypa.io/en/stable/installing/>`_.
 - Optional, but it is **highly recommended** to use virtual environment for Python packages.
 

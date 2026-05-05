@@ -705,8 +705,13 @@ class Config(_FileHandler):
         ----------
         config: path or Config
             Allows to specify a custom config. None is to use temporary generated config. Default is None.
-        locator: Locator
-            Allows to specify a custom locator file. None is to use temporary generated locator. Default is None.
+        locator: Locator or Dict[str, Locator]
+            Allows to specify a custom locator file. None is to use temporary generated locator.
+
+            If **dict** passed, adds locators passed as values to corresponding contexts from keys.
+            For default context pass locator by **DEFAULT** dictionary key.
+
+            Default is None.
         acl: ACL
             Allows to specify a custom acl file. None is to use temporary generated acl. Default is None.
         otq_path: list of paths to lookup queries
@@ -733,9 +738,16 @@ class Config(_FileHandler):
         if config and (locator or acl):
             raise ValueError("It is not allowed to use 'config' parameter along with 'locator' or 'acl'")
 
+        if not isinstance(locator, dict):
+            locator = {'DEFAULT': locator}
+
+        locator_builders = {
+            _ctx: LocatorBuilder(src=_loc, clean_up=clean_up, copy=copy, session_ref=session_ref)
+            for _ctx, _loc in locator.items()
+        }
+
         # builders that construct locator and acl based on parameters
         acl_builder = ACLBuilder(src=acl, clean_up=clean_up, copy=copy, session_ref=session_ref)
-        locator_builder = LocatorBuilder(src=locator, clean_up=clean_up, copy=copy, session_ref=session_ref)
         config_copied = True
 
         if config:
@@ -753,7 +765,7 @@ class Config(_FileHandler):
                 acl_builder.src = utils.get_config_param(self._file.path, "ACCESS_CONTROL_FILE")
 
             if utils.is_param_in_config(self._file.path, "DB_LOCATOR.DEFAULT"):
-                locator_builder.src = utils.get_config_param(self._file.path, "DB_LOCATOR.DEFAULT")
+                locator_builders['DEFAULT'].src = utils.get_config_param(self._file.path, "DB_LOCATOR.DEFAULT")
 
         else:
             self._file = utils.tmp_config(clean_up=clean_up)
@@ -761,7 +773,11 @@ class Config(_FileHandler):
         self._acl = acl_builder.build()
         # it is used in onetick-py-test
         os.environ["ONE_TICK_SESSION_ACL_PATH"] = self._acl.path
-        self._locator = locator_builder.build()
+
+        built_locators = {_ctx: _locator_builder.build() for _ctx, _locator_builder in locator_builders.items()}
+        self._locator = built_locators.pop('DEFAULT')
+        self._context_locators = built_locators
+
         # it is used in onetick-py-test
         os.environ["ONE_TICK_SESSION_LOCATOR_PATH"] = self._locator.path
 
@@ -779,7 +795,19 @@ class Config(_FileHandler):
         if csv_path:
             csv_path = map(str, csv_path)
             utils.modify_config_param(self.path, "CSV_FILE_PATH", ",".join(csv_path), throw_on_missing=False)
+
         variables = variables or {}
+
+        for _ctx, _ctx_locator in self._context_locators.items():
+            if not _ctx_locator.path:
+                continue
+
+            var_name = f'DB_LOCATOR.{_ctx}'
+            if var_name in variables:
+                raise ValueError(f'Can\'t configure locator for context `{_ctx}`: variable `{var_name}` already set')
+
+            variables[var_name] = _ctx_locator.path
+
         for parameter_name, parameter_value in variables.items():
             if parameter_name in self._CONFIG_VARIABLES_PASSED_VIA_THEIR_OWN_PARAMETER:
                 raise ValueError(f'Variable {parameter_name} should be set via '
@@ -853,6 +881,8 @@ class Config(_FileHandler):
 
         self._acl.cleanup()
         self._locator.cleanup()
+        for _ctx_locator in self._context_locators.values():
+            _ctx_locator.cleanup()
 
     @property
     def otq_path(self):

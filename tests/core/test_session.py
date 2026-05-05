@@ -1743,3 +1743,24 @@ class TestPerformanceMetrics:
 
         with pytest.raises(ValueError, match=r'metric disk_write from `str` to `int`: "12.34"'):
             parser.parse(tmp_log.path)
+
+
+@pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason="Not supported in WebAPI mode")
+def test_session_multiple_locators():
+    default_loc = otp.Locator()
+    default_loc.add(otp.DB("DEFAULT_DB"))
+
+
+    alt_loc = otp.Locator()
+    alt_loc.add(otp.DB("ALT_DB"))
+
+    config = otp.Config(locator={'DEFAULT': default_loc, 'ALT': alt_loc}, copy=False)
+
+    assert default_loc.path == config.locator.path
+
+    with otp.Session(config, copy=False):
+
+        assert os.path.exists(config.locator.path)
+
+        assert 'DEFAULT_DB' in otp.databases()
+        assert 'ALT_DB' in otp.databases(context='ALT')

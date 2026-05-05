@@ -43,24 +43,6 @@ def session(session):
     yield session
 
 
-class MonkeyError(Exception):
-    def __init__(self, message, *args, **kwargs):
-        super().__init__(message)
-        self.args = args
-        self.kwargs = kwargs
-
-
-@pytest.fixture(scope="function")
-def dummy_run(f_session, monkeypatch):
-    def run(*args, **kwargs):
-        raise MonkeyError('', *args, **kwargs)
-        # due to structure of onetick.py.run and onetick.py.__init__ we cah't use monkeypatch and have to use this hack
-
-    # need it to initialize compatibility module (it executes otq.run once)
-    otp.run(otp.Tick(A=1))
-    monkeypatch.setattr(otq, 'run', run)
-
-
 class TestSource:
     def test_source(self, f_session):
         data = otp.Ticks(X=["A", "B"])
@@ -83,41 +65,45 @@ class TestSource:
         assert len(capsys.readouterr().out.strip('\n').split('\n')) == 2
 
     @pytest.mark.parametrize('arg,value', [('timezone', 'Europe/London'),
-                                           ('context', 1),
-                                           ('username', 1),
-                                           ('alternative_username', 1),
+                                           ('context', 'DEFAULT'),
+                                           ('username', 'ok'),
+                                           ('alternative_username', 'ok'),
                                            ('batch_size', 1),
                                            ('query_properties', pyomd.QueryProperties()),
                                            ('concurrency', 1),
-                                           ('apply_times_daily', 1),
-                                           ('query_params', 1),
-                                           ('time_as_nsec', 1),
-                                           ('treat_byte_arrays_as_strings', 1),
-                                           ('output_matrix_per_field', 1),
-                                           ('return_utc_times', 1),
-                                           ('connection', 1),
-                                           ('callback', 1),
-                                           ('svg_path', 1),
-                                           ('use_connection_pool', 1)])
-    def test_pass_args(self, dummy_run, arg, value):
+                                           ('apply_times_daily', True),
+                                           ('query_params', {'A': 1}),
+                                           ('time_as_nsec', True),
+                                           ('treat_byte_arrays_as_strings', True),
+                                           ('output_matrix_per_field', False),
+                                           ('return_utc_times', True),
+                                           ('connection', None),
+                                           ('callback', None),
+                                           ('svg_path', '.'),
+                                           ('use_connection_pool', True)])
+    def test_pass_args(self, f_session, mocker, arg, value):
         if (
             os.getenv('OTP_WEBAPI_TEST_MODE', False) and
             arg == 'concurrency' and not is_max_concurrency_with_webapi_supported()
         ):
             return
 
+        spy = mocker.spy(otq, 'run')
         params = {arg: value}
-
         data = otp.Ticks(X=["A", "B"])
-        try:
-            otp.run(data,
-                    **params)
-        except MonkeyError as e:
-            if arg == 'concurrency':
-                arg = 'max_concurrency'
-            elif arg == 'time_as_nsec':
-                value = True    # this argument always set to True for otp.Source
-            assert e.kwargs[arg] is value
+
+        if (
+            os.getenv('OTP_WEBAPI_TEST_MODE') and
+            arg in ('batch_size', 'return_utc_times', 'svg_path', 'use_connection_pool')
+        ):
+            with pytest.warns(UserWarning, match='is not supported in WebAPI mode'):
+                _ = otp.run(data, **params)
+        else:
+            _ = otp.run(data, **params)
+        if arg == 'concurrency':
+            arg = 'max_concurrency'
+        assert spy.call_count == 1
+        assert spy.call_args.kwargs[arg] is value
 
     def test_encoding(self, f_session):
         data = ['AA測試AA']

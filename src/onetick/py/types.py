@@ -1981,7 +1981,15 @@ def datetime2expr(
     timezone_naive: str or Operation
         This timezone will be used if ``dt_obj`` is timezone-naive.
     """
-    dt_str = _format_datetime(dt_obj, '%Y-%m-%d %H:%M:%S.%f', add_nano_suffix=True)
+    if isinstance(dt_obj, pd.Timestamp):
+        # strftime is kinda slow in pandas
+        dt_str = (
+            f'{dt_obj.year:04}-{dt_obj.month:02}-{dt_obj.day:02}'
+            f' {dt_obj.hour:02}:{dt_obj.minute:02}:{dt_obj.second:02}'
+            f'.{dt_obj.microsecond:06}{dt_obj.nanosecond:03}'
+        )
+    else:
+        dt_str = _format_datetime(dt_obj, '%Y-%m-%d %H:%M:%S.%f', add_nano_suffix=True)
     if timezone is None:
         timezone = get_timezone_from_datetime(dt_obj)
     if timezone is None:

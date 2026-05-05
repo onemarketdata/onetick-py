@@ -720,7 +720,8 @@ class _DataCSV(Source):
                 else:
                     return t
 
-            types = [get_type_of_value(v) for v in data[key]]
+            # let's use only first 10_000 values to get the type, just in case the data set is very big
+            types = [get_type_of_value(v) for v in data[key][:10_000]]
             res, _ = utils.get_type_that_includes(types)
             return res
 
@@ -736,7 +737,7 @@ class _DataCSV(Source):
                 header_columns[key] = get_type_of_column(key)
                 expression_columns.append(key)
 
-        transposed_data = [[csv_rep(value[i]) for key, value in data.items()] for i in range(length)]
+        transposed_data = ([csv_rep(value[i]) for key, value in data.items()] for i in range(length))
 
         text_header = ",".join(f"{ott.type2str(v)} {k}" for k, v in header_columns.items())
         text_data = "\n".join([",".join(data_row) for data_row in transposed_data])

@@ -4,7 +4,7 @@ Troubleshooting
 Installation issues
 -------------------
 
-1. If you run Python script with  you facing the error `ImportError: We can't import onetick.query, because we can't find it and related libraries in the PYTHONPATH. Please, make sure that '<path-to-OneTick-dist>/bin','<path-to-OneTick-dist>/bin/python' and '<path-to-OneTick-dist>/bin/numpy/python39' directories from OneTick distribution are in PYTHONPATH.`
+1. If you run Python script with  you facing the error `ImportError: We can't import onetick.query, because we can't find it and related libraries in the PYTHONPATH. Please, make sure that '<path-to-OneTick-dist>/bin','<path-to-OneTick-dist>/bin/python' and '<path-to-OneTick-dist>/bin/numpy/python310' directories from OneTick distribution are in PYTHONPATH.`
 That means you haven't set environment variable `OTP_SKIP_OTQ_VALIDATION=1`. Run this Python code to be sure this variable is set inside the python process (IDE, terminal, Jupyter, etc.):
 ::
 

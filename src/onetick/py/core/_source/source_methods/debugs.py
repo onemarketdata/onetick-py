@@ -238,13 +238,15 @@ def dump(
     if label:
         self_c['_OUT_LABEL_'] = label
 
+    self_c.sink(otq.AddField(field='TIMESTAMP', value='nsectime_format("%d-%m-%Y %H:%M:%S.%J", TIMESTAMP, _TIMEZONE)'))
+    self_c.sink(otq.Table(fields='TIMESTAMP', keep_input_fields=True))
     self_c.write_text(
-        formats_of_fields={'TIMESTAMP': f'%|{configuration.config.tz}|%d-%m-%Y %H:%M:%S.%J'},
-        prepend_timestamp=True,
+        prepend_timestamp=False,
         prepend_symbol_name=False,
         propagate_ticks=True,
         inplace=True,
     )
+    self_c.sink(otq.Passthrough(fields='TIMESTAMP', drop_fields=True))
 
     # print <no data> in case there are 0 ticks
     if hasattr(otq, 'InsertAtEnd'):

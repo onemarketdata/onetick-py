@@ -8,7 +8,7 @@ Prerequisites
 
 - You installed OneTick and have an active license. The OneTick server is already configured and running.
 - OneTick server version no older than Release 1.24 (patch 20240708171408) or weekly build ``20240821``.
-- Users have installed `python 3.9 or newer <https://www.python.org/downloads/>`_ and `pip <https://pip.pypa.io/en/stable/installing/>`_
+- Users have installed `python 3.10 or newer <https://www.python.org/downloads/>`_ and `pip <https://pip.pypa.io/en/stable/installing/>`_
 
 OneTick server-side configuration
 :::::::::::::::::::::::::::::::::

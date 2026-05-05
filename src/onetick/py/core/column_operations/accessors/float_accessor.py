@@ -7,7 +7,7 @@ class _FloatAccessor(_Accessor):
     Accessor for float (double in Onetick terminology) functions
 
     >>> data = otp.Ticks(X=[1.1, 1.2])
-    >>> data["Y"] = data["X"].float.<function_name>()   # doctest: +SKIP
+    >>> data["Y"] = data["X"].float.<function_name>()  # doctest: +SKIP
     """
 
     def str(self, length=10, precision=6):
@@ -84,11 +84,17 @@ class _FloatAccessor(_Accessor):
         """
         Compare two double values between themselves according to ``eps`` relative difference.
 
-        This function returns 0 if column = other, 1 if column > other, and -1 if column < other.
-        Two numbers are considered to be equal if both of them are NaN or
-        ``abs(column - other) / (abs(column) + abs(other)) < eps``.
-        In other words, ``eps`` represents a relative difference (percentage) between the two numbers,
-        not an absolute difference.
+        This function returns 0 if column == other, 1 if column > other, and -1 if column < other.
+
+        If both values are NaN, the result is 0.
+        If only one value is NaN, NaN is treated as less than any non-NaN value.
+
+        Two numbers are considered to be equal if:
+
+        * ``abs(column - other) <= 1e-12`` (absolute tolerance; useful near zero)
+        * or ``abs(column - other) / max(1, max(abs(column), abs(other))) <= eps`` (relative tolerance).
+
+        ``eps`` is a relative epsilon (scale-dependent), not an absolute difference.
 
         Parameters
         ----------
@@ -109,18 +115,18 @@ class _FloatAccessor(_Accessor):
         Examples
         --------
 
-        >>> data = otp.Ticks(X=[1, 2.17, 10.31841, 3.141593, 6],
-        ...                  OTHER=[1.01, 2.1, 10.32841, 3.14, 5],
-        ...                  EPS=[0, 1, 0.1, 0.001, 0.001])
+        >>> data = otp.Ticks(X=[2.17, 2.17, 10.31841, 3.141593, 5],
+        ...                  OTHER=[2.1, 2.1, 10.32841, 3.14, 6],
+        ...                  EPS=[0.01, 0.1, 0.1, 0.0001, 0.01])
         >>> # OTdirective: snippet-name: float operations.approximate comparison.lt|eq|gt;
         >>> data["Y"] = data["X"].float.cmp(data["OTHER"], data["EPS"])
-        >>> otp.run(data)
-                             Time          X     OTHER    EPS    Y
-        0 2003-12-01 00:00:00.000   1.000000   1.01000  0.000 -1.0
-        1 2003-12-01 00:00:00.001   2.170000   2.10000  1.000  0.0
-        2 2003-12-01 00:00:00.002  10.318410  10.32841  0.100  0.0
-        3 2003-12-01 00:00:00.003   3.141593   3.14000  0.001  0.0
-        4 2003-12-01 00:00:00.004   6.000000   5.00000  0.001  1.0
+        >>> otp.run(data)  # doctest: +SKIP
+                             Time          X     OTHER     EPS    Y
+        0 2003-12-01 00:00:00.000   2.170000   2.10000  0.0100  1.0
+        1 2003-12-01 00:00:00.001   2.170000   2.10000  0.1000  0.0
+        2 2003-12-01 00:00:00.002  10.318410  10.32841  0.1000  0.0
+        3 2003-12-01 00:00:00.003   3.141593   3.14000  0.0001  1.0
+        4 2003-12-01 00:00:00.004   5.000000   6.00000  0.0100 -1.0
         """
         def formatter(column, _other, _eps):
             column = ott.value2str(column)

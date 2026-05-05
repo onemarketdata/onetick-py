@@ -43,7 +43,7 @@ uv run pytest tests/core
 `uv` commands can be run with different python versions:
 
 ```bash
-uv run --python 3.9 pytest tests/core/test_math.py
+uv run --python 3.14 pytest tests/core/test_math.py
 ```
 
 `uv add` command can be used to update project dependencies and the lockfile:

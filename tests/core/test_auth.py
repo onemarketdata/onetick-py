@@ -36,7 +36,7 @@ def tick_server():
             s.use(db)
 
             ot_path = os.path.join(otp.utils.omd_dist_path(), 'one_tick', 'bin', 'tick_server.exe')
-            with subprocess.Popen([ot_path, '-port', '47001'],
+            with subprocess.Popen([ot_path, '-port', '47002'],
                                   env=dict(ONE_TICK_CONFIG=os.environ['ONE_TICK_CONFIG'])) as p:
                 q.put(p.pid)
                 q.put(os.environ['ONE_TICK_CONFIG'])
@@ -56,7 +56,7 @@ def tick_server():
 @pytest.mark.skipif(os.name == 'nt', reason='We do not have OneTick server on the windows')
 @pytest.mark.skipif(not is_supported_otq_run_password(), reason='password not supported on older OneTick versions')
 def test_password(tick_server):
-    with otp.Session(otp.Config(locator=otp.RemoteTS('localhost:47001'))):
+    with otp.Session(otp.Config(locator=otp.RemoteTS('localhost:47002'))):
         t = otp.Tick(A=1)
         t['USERNAME'] = otp.raw('GETUSER()', otp.string[64])
         t['AUTHENTICATED_USERNAME'] = otp.raw('GET_AUTHENTICATED_USERNAME()', otp.string[64])
@@ -72,10 +72,10 @@ def test_password(tick_server):
 @pytest.mark.skipif(os.name == 'nt', reason='We do not have OneTick server on the windows')
 @pytest.mark.skipif(not is_supported_otq_run_password(), reason='password not supported on older OneTick versions')
 def test_data_source_and_config(tick_server):
-    with otp.Session(otp.Config(locator=otp.RemoteTS('localhost:47001'))):
+    with otp.Session(otp.Config(locator=otp.RemoteTS('localhost:47002'))):
         with pytest.warns(UserWarning, match='OT authentication failed'):
             otp.DataSource('TEST_DB', tick_type='TT', symbols='S')
-    with otp.Session(otp.Config(locator=otp.RemoteTS('localhost:47001'))):
+    with otp.Session(otp.Config(locator=otp.RemoteTS('localhost:47002'))):
         otp.config.default_auth_username = 'user'
         otp.config.default_password = 'password'
         otp.DataSource('TEST_DB', tick_type='TT', symbols='S')
@@ -86,10 +86,10 @@ def test_data_source_and_config(tick_server):
 @pytest.mark.skipif(os.name == 'nt', reason='We do not have OneTick server on the windows')
 @pytest.mark.skipif(not is_supported_otq_run_password(), reason='password not supported on older OneTick versions')
 def test_data_source_and_env_config(tick_server):
-    with otp.Session(otp.Config(locator=otp.RemoteTS('localhost:47001'))):
+    with otp.Session(otp.Config(locator=otp.RemoteTS('localhost:47002'))):
         with pytest.warns(UserWarning, match='OT authentication failed'):
             otp.DataSource('TEST_DB', tick_type='TT', symbols='S')
-    with otp.Session(otp.Config(locator=otp.RemoteTS('localhost:47001'))):
+    with otp.Session(otp.Config(locator=otp.RemoteTS('localhost:47002'))):
         os.environ['OTP_DEFAULT_AUTH_USERNAME'] = 'user'
         os.environ['OTP_DEFAULT_PASSWORD'] = 'password'
         otp.DataSource('TEST_DB', tick_type='TT', symbols='S')
