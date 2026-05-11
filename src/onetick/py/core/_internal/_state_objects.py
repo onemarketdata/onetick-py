@@ -398,7 +398,7 @@ class _TickSequence(_StateBase):
         if not self._schema:
             if self.default_value is not None:
                 from onetick.py.core.source import Source
-                if isinstance(self.default_value, _QueryEvalWrapper):
+                if isinstance(self.default_value, _QueryEvalWrapper) and hasattr(self.default_value.query, 'schema'):
                     # If tick sequence is initialized from eval,
                     # then we get schema from the Source in eval.
                     self._schema = self.default_value.query.schema.copy()
@@ -718,6 +718,11 @@ class TickList(_TickSequence):
             sorting_script_template = Template(script_file.read())
 
         if field_type is None:
+            if field_name not in self.schema:
+                raise ValueError(
+                    f'Missing schema definition for field `{field_name}`. '
+                    f'Please, specify it\'s type through `field_type` parameter.'
+                )
             field_type = self.schema[field_name]
         if field_type is int:
             field_access_function = 'GET_LONG_VALUE'
@@ -812,7 +817,7 @@ class TickSet(_TickSequence):
     @property
     def key_fields(self):
         """Get key fields for this tick set"""
-        if not set(self._key_fields).issubset(self.schema):
+        if self.schema and not set(self._key_fields).issubset(self.schema):
             x = set(self._key_fields).difference(self.schema)
             raise ValueError(f"Key fields {x} not in tick set schema")
         return self._key_fields
@@ -958,7 +963,7 @@ class TickSet(_TickSequence):
                                  f"need {len(self.key_fields)} values")
             for key_value, key in zip(key_values, self.key_fields):
                 key_value_type = get_object_type(key_value)
-                if not check_value_dtype(key_value, self.schema[key]):
+                if self.schema and not check_value_dtype(key_value, self.schema[key]):
                     raise ValueError(f"Key value '{key_value}' is type {key_value_type}, "
                                      f"but the type of key '{key}' is {self.schema[key]}")
             return key_values
@@ -970,7 +975,7 @@ class TickSet(_TickSequence):
                 if key not in self.key_fields:
                     raise ValueError(f"'{key}' not in tick set's key fields")
                 key_value_type = get_object_type(key_value)
-                if not check_value_dtype(key_value, self.schema[key]):
+                if self.schema and not check_value_dtype(key_value, self.schema[key]):
                     raise ValueError(f"Key value {key_value} is type {key_value_type}, "
                                      f"but the type of key '{key}' is {self.schema[key]}")
             return list(itertools.chain.from_iterable(named_keys.items()))
@@ -1103,6 +1108,12 @@ class TickSet(_TickSequence):
                 Time  A  B  C  D
         0 2003-12-01  1  2  5  8
         """
+        if not self.schema:
+            raise ValueError(
+                'You should specify `schema` either for your `default_value` query in `tick_set` object, '
+                'or for `tick_set` object itself'
+            )
+
         if isinstance(field_name, TickSequenceTick):
             return self._find_tick_sequence_tick(
                 field_name,

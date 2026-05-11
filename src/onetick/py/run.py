@@ -61,7 +61,8 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         log_symbol: Union[bool, Type[utils.default]] = utils.default,
         encoding: Optional[str] = None,
         manual_dataframe_callback: bool = False,
-        print_symbol_errors: Union[bool, Type[utils.default]] = utils.default):
+        print_symbol_errors: Union[bool, Type[utils.default]] = utils.default,
+        preserve_decimal_flag: Optional[bool] = None):
     """
     Executes a query and returns its result.
 
@@ -231,6 +232,11 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         Applicable only when ``output_structure`` is ``'df'``.
         By default, :py:attr:`otp.config.print_symbol_errors <onetick.py.configuration.Config.print_symbol_errors>`
         is used, which is True by default.
+    preserve_decimal_flag: bool
+        The flag controls how decimal type columns are returned from this function.
+        If set to False (default), they are returned as float values, with possible precision loss.
+        If set to True, they are returned as :py:class:`decimal.Decimal` objects without precision loss.
+        This parameter may not be supported on older OneTick versions.
 
     Returns
     -------
@@ -737,6 +743,9 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
     if encoding is not None and has_query_encoding_parameter(throw_warning=True):
         kwargs['encoding'] = encoding
 
+    if preserve_decimal_flag is not None:
+        kwargs['preserve_decimal_flag'] = preserve_decimal_flag
+
     run_params = dict(
         query=query,
         symbols=symbols, start=start, end=end, context=context, username=username,
@@ -767,7 +776,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
     else:
         # PY-1516: remove temporary file right away after calling the query (only if query didn't raise an exception)
         if tmp_file is not None and otp.config.clean_up_tmp_files:
-            tmp_file.cleanup()
+            tmp_file.do_cleanup()
 
     if output_mode == otq.QueryOutputMode.callback:
         if manual_dataframe_callback:

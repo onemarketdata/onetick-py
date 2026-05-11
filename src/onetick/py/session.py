@@ -73,7 +73,7 @@ class _FileHandler(ABC):
         # flag to understand whether we work with externally passed files;
         # it is set and affects logic, when copy=False
         self._copied = copied
-        self._session_ref = session_ref
+        self._session_ref: Session = session_ref
 
     @property
     def path(self):
@@ -103,7 +103,7 @@ class _CommonBuilder(ABC):
         self.src = src
         self.clean_up = clean_up
         self.copy = copy
-        self.session_ref = session_ref
+        self.session_ref: Session = session_ref
 
     @abstractmethod
     def build(self):
@@ -158,18 +158,16 @@ class ACL(_FileHandler):
 
         # if path is set, then copy file, we should not work directly
         # with externally passed files
-        if copy:
-            if path:
-                file_h = utils.TmpFile(suffix=".acl", clean_up=clean_up)
+        base_dir = session_ref._session_dir if session_ref else None
+        if path:
+            if copy:
+                file_h = utils.TmpFile(suffix=".acl", clean_up=clean_up, base_dir=base_dir)
                 shutil.copyfile(path, file_h.path)
             else:
-                file_h = utils.tmp_acl(clean_up=clean_up)
-        else:
-            if path:
                 file_h = utils.PermanentFile(path)
                 copied = False
-            else:
-                file_h = utils.tmp_acl(clean_up=clean_up)
+        else:
+            file_h = utils.tmp_acl(clean_up=clean_up, base_dir=base_dir)
 
         assert file_h is not None
 
@@ -178,6 +176,7 @@ class ACL(_FileHandler):
         self._added_dbs = []
 
     def cleanup(self):
+        # removes databases from the acl file, reloads config (doesn't delete file itself)
         self._remove_db(self._added_dbs)
         self._added_dbs = []
         self.reload()
@@ -319,8 +318,7 @@ class ACL(_FileHandler):
 
     def reload(self, db=None):
         if self._session_ref is not None:
-            return utils.reload_config(db, config_type='ACCESS_LIST')
-        return None
+            utils.reload_config(db, config_type='ACCESS_LIST')
 
     def _read_dbs(self):
         get_db = GetAll()
@@ -392,22 +390,18 @@ class Locator(_FileHandler):
             otp.config.default_db and COMMON databases. Default is `False`.
         """
         copied = True
+        base_dir = session_ref._session_dir if session_ref else None
 
-        # if path is set, then copy file, we should not work directly
-        # with externally passed files
-        if copy:
-            if path:
-                file_h = utils.TmpFile(".locator", clean_up=clean_up)
+        # if path is set, then copy file, we should not work directly with externally passed files
+        if path:
+            if copy:
+                file_h = utils.TmpFile(".locator", clean_up=clean_up, base_dir=base_dir)
                 shutil.copyfile(path, file_h)
             else:
-                file_h = utils.tmp_locator(clean_up=clean_up, empty=empty)
-
-        else:
-            if path:
                 file_h = utils.PermanentFile(path)
                 copied = False
-            else:
-                file_h = utils.tmp_locator(clean_up=clean_up, empty=empty)
+        else:
+            file_h = utils.tmp_locator(clean_up=clean_up, empty=empty, base_dir=base_dir)
 
         assert file_h is not None
 
@@ -417,6 +411,7 @@ class Locator(_FileHandler):
         self._added_ts = []
 
     def cleanup(self):
+        # removes databases from the locator file, reloads config (doesn't delete file itself)
         self._remove_db(self._added_dbs)
         self._remove_ts(str(server) for server in self._added_ts)
         self._added_dbs = []
@@ -433,8 +428,7 @@ class Locator(_FileHandler):
 
     def reload(self, db_=None):
         if self._session_ref is not None:
-            return utils.reload_config(db_, config_type='LOCATOR')
-        return None
+            utils.reload_config(db_, config_type='LOCATOR')
 
     def _apply_actions(self, actions, print_writer=False):
         writer = PrintWriter() if print_writer else FileWriter(self.path)
@@ -749,11 +743,12 @@ class Config(_FileHandler):
         # builders that construct locator and acl based on parameters
         acl_builder = ACLBuilder(src=acl, clean_up=clean_up, copy=copy, session_ref=session_ref)
         config_copied = True
+        base_dir = session_ref._session_dir if session_ref else None
 
         if config:
             # copy passed file, we should not work with externally passed files
             if copy and not os.getenv('OTP_WEBAPI_TEST_MODE'):
-                self._file = utils.TmpFile(".cfg", clean_up=clean_up)
+                self._file = utils.TmpFile(".cfg", clean_up=clean_up, base_dir=base_dir)
                 config_path = config.path if isinstance(config, Config) else config
 
                 shutil.copyfile(config_path, self._file.path)
@@ -768,7 +763,7 @@ class Config(_FileHandler):
                 locator_builders['DEFAULT'].src = utils.get_config_param(self._file.path, "DB_LOCATOR.DEFAULT")
 
         else:
-            self._file = utils.tmp_config(clean_up=clean_up)
+            self._file = utils.tmp_config(clean_up=clean_up, base_dir=base_dir)
 
         self._acl = acl_builder.build()
         # it is used in onetick-py-test
@@ -876,9 +871,12 @@ class Config(_FileHandler):
 
         raise ValueError(f'It is not allowed to build Config from the object of type "{type(obj)}"')
 
-    def cleanup(self):
-        # no logic to clean up content
+    def reload(self, db=None):
+        if self._session_ref is not None:
+            utils.reload_config(db, config_type='MAIN_CONFIG')
 
+    def cleanup(self):
+        # cleans acl and locator files, reloads config, doesn't delete files
         self._acl.cleanup()
         self._locator.cleanup()
         for _ctx_locator in self._context_locators.values():
@@ -1102,6 +1100,8 @@ class Session:
         self._lib = None
         self._env_rollback = onetick_cfg_rollback(os.environ.get("ONE_TICK_CONFIG", None))
         self._override_env = override_env
+        self._clean_up = clean_up
+        self._session_dir = utils.TmpDir(suffix='.session', clean_up=self._clean_up, base_dir=None)
 
         self._config = Config.build(config, clean_up=clean_up, copy=copy, session_ref=self)
         # it is used in onetick-py-test
@@ -1136,7 +1136,8 @@ class Session:
 
             self._log_file = log_file = None
             if redirect_logs:
-                self._log_file = utils.TmpFile(suffix=".onetick.log", clean_up=clean_up)
+                self._log_file = utils.TmpFile(suffix=".onetick.log", clean_up=self._clean_up,
+                                               base_dir=self._session_dir)
                 log_file = self._log_file.path
 
             self._lib = otli.OneTickLib(self._config.path, log_file=log_file)

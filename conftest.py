@@ -4,15 +4,14 @@ from datetime import datetime
 import pytest
 import pandas as pd
 
+# this can only be set before onetick-py import
+os.environ['OTP_SHOW_STACK_INFO'] = 'TRUE'
+
 # do not remove it, it allows to load OneTick dynamic libraries correctly,
 # because it seems that OneTick resolves loading path using the order of the sys.modules
 import onetick.py as otp
 from onetick.py.otq import otq
 from onetick.py.utils.temp import WEBAPI_TEST_MODE_SHARED_CONFIG
-
-
-# TODO: set to True after https://onemarketdata.atlassian.net/browse/BDS-345 is fixed
-otp.config.show_stack_info = False
 
 # PY-394: set defaults to previous values to be backward-compatible with old tests
 otp.config['tz'] = 'EST5EDT'

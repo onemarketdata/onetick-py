@@ -12,13 +12,15 @@ from . import types
 
 
 def reload_config(db=None, config_type='LOCATOR'):
-    import onetick.py as otp
 
     if db is not None:
         warnings.warn("Parameter 'db' is deprecated and has no meaning")
 
-    return otp.run(
-        otq.ReloadConfig(config_type=config_type).tick_type('ANY'),
+    # we are using otq.run, because otp.run can run additional queries for version checks and use otp.config.default_db,
+    # but when calling this function some of the locators, databases or ACL files may already be deleted
+    # (also, return value of this function is not important, otq.run will raise an exception if something goes wrong)
+    otq.run(
+        otq.GraphQuery(otq.ReloadConfig(config_type=config_type).tick_type('ANY')),
         # we are using LOCAL, because we can only reload config locally
         symbols='LOCAL::',
         # start and end times don't matter for this query, use some constants
@@ -118,6 +120,7 @@ def tmp_config(
     license_path=None,
     license_dir=None,
     license_servers=None,
+    base_dir=types.default,
 ):
     data = []
 
@@ -179,7 +182,7 @@ def tmp_config(
     if os.getenv('OTP_WEBAPI_TEST_MODE'):
         tmp_file = TmpFile(name="onetick.cfg", clean_up=clean_up, force=True)
     else:
-        tmp_file = TmpFile(suffix=".cfg", clean_up=clean_up)
+        tmp_file = TmpFile(suffix=".cfg", clean_up=clean_up, base_dir=base_dir)
 
     with open(tmp_file, "w") as fout:
         fout.write("\n".join(data))

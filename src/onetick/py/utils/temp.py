@@ -7,7 +7,9 @@ import shutil
 import tempfile
 import weakref
 from collections import defaultdict
+from contextlib import suppress
 from typing import Dict, List
+
 from .types import default
 
 import coolname
@@ -19,10 +21,23 @@ if os.getenv('OTP_WEBAPI_TEST_MODE') and not WEBAPI_TEST_MODE_SHARED_CONFIG:
 
 
 def default_clean_up(clean_up):
+    from ..session import Session
+    if clean_up is default and Session._instance is not None:
+        clean_up = Session._instance._clean_up
     from ..configuration import config
     if clean_up is default:
         return config.clean_up_tmp_files
     return clean_up
+
+
+def default_base_dir(base_dir):
+    from ..session import Session
+    if base_dir is default:
+        if Session._instance is not None:
+            return Session._instance._session_dir
+        else:
+            return None
+    return base_dir
 
 
 def get_logger(*args):
@@ -44,10 +59,9 @@ class CleanUpFinalizer:
         self._clean_up_ref = [clean_up]
         self._finalizer = weakref.finalize(self, self._cleanup, self._clean_up_ref, *args)
 
-    def cleanup(self):
+    def do_cleanup(self):
         # call finalizer manually
-        if hasattr(self, '_finalizer'):
-            self._finalizer()
+        self._finalizer()
 
     @classmethod
     def _cleanup(cls, clean_up_ref, *args):
@@ -132,10 +146,10 @@ class TmpFile(File, os.PathLike, CleanUpFinalizer):
     ALL: Dict[str, List['TmpFile']] = defaultdict(list)
     keep_everything_generated = False
 
-    def __init__(self, suffix="", name="", clean_up=default, force=False, base_dir=None):
+    def __init__(self, suffix="", name="", clean_up=default, force=False, base_dir=default):
         """
         Class to create a temporary file.
-        By default, this file will be deleted automatically after all references to it are gone.
+        By default, this file will be deleted automatically after python process exits.
         Base path where temporary files are created could be set using the ``ONE_TICK_TMP_DIR``.
         By default they are created under the ``tempfile.gettempdir()`` folder.
 
@@ -148,15 +162,16 @@ class TmpFile(File, os.PathLike, CleanUpFinalizer):
         suffix: str
             suffix of the name of the temporary file.
         clean_up: bool
-            Controls whether this temporary file will be deleted automatically
-            after all references to it are gone.
+            Controls whether this temporary file will be deleted automatically after python process exits.
 
-            By default,
+            By default, the value of current :class:`otp.Session <onetick.py.Session>` is used.
+            If it's not set, then
             :py:attr:`otp.config.clean_up_tmp_files<onetick.py.configuration.Config.clean_up_tmp_files>` is used.
         force: bool
             Rewrite temporary file if it exists and parameter ``name`` is set.
         base_dir: str
             Absolute path of the directory where temporary file will be created.
+            By default, the directory of current :class:`otp.Session <onetick.py.Session>` is used.
 
         See also
         --------
@@ -165,6 +180,7 @@ class TmpFile(File, os.PathLike, CleanUpFinalizer):
         :ref:`onetick py test features`
         """
         clean_up = default_clean_up(clean_up)
+        base_dir = default_base_dir(base_dir)
         clean_up = clean_up and not TmpFile.keep_everything_generated
         fd, self._path = self._create(clean_up, suffix=suffix, name=name, force=force, base_dir=base_dir)
         # we only needed to create file, so closing opened file descriptor
@@ -242,10 +258,10 @@ class TmpDir(os.PathLike, CleanUpFinalizer):
     ALL: Dict[str, List['TmpDir']] = defaultdict(list)
     keep_everything_generated = False
 
-    def __init__(self, rel_path="", *, suffix="", clean_up=default, base_dir=""):
+    def __init__(self, rel_path="", *, suffix="", clean_up=default, base_dir=default):
         """
         Class to create a temporary directory.
-        By default, this directory will be deleted automatically after all references to it are gone.
+        By default, this directory will be deleted automatically after python process exits.
         All files and directories under this one will be deleted too.
 
         Base path where directories are created could be set using the ``ONE_TICK_TMP_DIR``.
@@ -260,11 +276,13 @@ class TmpDir(os.PathLike, CleanUpFinalizer):
             suffix of the name of the temporary directory.
         base_dir: str
             relative path of the directory where temporary directory will be created.
+            By default, the directory of current :class:`otp.Session <onetick.py.Session>` is used.
         clean_up: bool
             Controls whether this temporary directory will be deleted automatically
-            after all references to it are gone.
+            after python process exits.
 
-            By default,
+            By default, the value of current :class:`otp.Session <onetick.py.Session>` is used.
+            If it's not set, then
             :py:attr:`otp.config.clean_up_tmp_files<onetick.py.configuration.Config.clean_up_tmp_files>` is used.
 
         See also
@@ -274,6 +292,7 @@ class TmpDir(os.PathLike, CleanUpFinalizer):
         :ref:`onetick py test features`
         """
         clean_up = default_clean_up(clean_up)
+        base_dir = default_base_dir(base_dir) or ''
         clean_up = clean_up and not TmpDir.keep_everything_generated
         self._parent_dir = None
 
@@ -306,15 +325,8 @@ class TmpDir(os.PathLike, CleanUpFinalizer):
             path = os.path.normpath(os.path.join(dir_path, rel_path)) + suffix
             # dir_path should be the parent directory of path
             dir_path = os.path.dirname(path)
-            for tmp_dir in TmpDir.ALL[dir_path]:
-                # check if path already exists
-                if tmp_dir.path == path:
-                    self.path = tmp_dir.path
-                    if not clean_up:
-                        tmp_dir.need_to_cleanup = clean_up
-                    return
-
-            os.mkdir(path, mode=0o700)
+            with suppress(FileExistsError):
+                os.mkdir(path, mode=0o700)
             self.path = path
         else:
             self.path = mkdtemp(dir=dir_path, suffix=suffix, prefix="")

@@ -8,6 +8,7 @@ import getpass
 import pytest
 import pandas as pd
 from functools import reduce
+from pathlib import Path
 
 from locator_parser.io import FileReader, PrintWriter
 from locator_parser.actions import GetAll
@@ -18,18 +19,13 @@ from onetick.py.utils.temp import WEBAPI_TEST_MODE_SHARED_CONFIG
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 
-os.environ["USER"] = getpass.getuser()
-
-if os.name == "nt":
-    os.environ["LICENSE_DIR"] = os.path.join("C:\\", "OMD", "client_data", "config", "license_repository")
-    os.environ["LICENSE_FILE"] = os.path.join("C:\\", "OMD", "client_data", "config", "license.dat")
-else:
-    os.environ["LICENSE_DIR"] = "/license"
-    os.environ["LICENSE_FILE"] = os.path.join(os.environ["LICENSE_DIR"], "license.dat")
-
-
 import onetick.py as otp
 from onetick.py.otq import otq, otli
+
+# these variables are used in some tests in onetick text configs
+os.environ["USER"] = getpass.getuser()
+os.environ["LICENSE_DIR"] = otp.config.default_license_dir
+os.environ["LICENSE_FILE"] = otp.config.default_license_file
 
 
 # ------------------------------------- Config tests -------------------------------------
@@ -120,6 +116,7 @@ def test_session_config_4():
         )
         assert otp.utils.get_config_param(session.config.path, "CSV_FILE_PATH") == ",".join(["/surv/csv"])
 
+    # config files are not deleted after session closes
     assert os.path.exists(t_cfg.path)
     assert os.path.exists(t_acl.path)
     assert os.path.exists(t_locator.path)
@@ -431,7 +428,7 @@ def test_session_files_copy_1():
     # <------------
 
     assert os.path.exists(t_locator_path)
-    assert os.path.exists(t_acl_path)  # since it is generated
+    assert os.path.exists(t_acl_path)
     assert os.path.exists(t_config_path)
 
 
@@ -1416,6 +1413,7 @@ def another_session(some_session):
     yield some_session
 
 
+@pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason='webapi uses similar files for all tests')
 def test_change_session_as_fixture(another_session):
     pass
 
@@ -1764,3 +1762,170 @@ def test_session_multiple_locators():
 
         assert 'DEFAULT_DB' in otp.databases()
         assert 'ALT_DB' in otp.databases(context='ALT')
+
+
+@pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason='webapi test mode uses same files for all tests')
+def test_two_sessions_with_the_same_database():
+    # PY-1186
+    with otp.TestSession() as s:
+        db = otp.DB('SOME_DB')
+        db.add(otp.Tick(X=1), symbol='A')
+        s.use(db)
+        derived_db = otp.DB('SOME_DB//X')
+        derived_db.add(otp.Tick(X=1), symbol='DERIVED_A')
+        s.use(derived_db)
+
+        symbols = otp.Symbols(db='SOME_DB')
+        df = otp.run(symbols)
+        assert list(df['SYMBOL_NAME']) == ['A']
+        derived_symbols = otp.Symbols(db='SOME_DB//X')
+        df = otp.run(derived_symbols)
+        assert list(df['SYMBOL_NAME']) == ['DERIVED_A']
+
+        config_path = s.config.path
+        acl_path = s.acl.path
+        locator_path = s.locator.path
+        db_path = db._path
+
+    # config files are not deleted after session closes
+    for path in (config_path, acl_path, locator_path, db_path):
+        assert os.path.exists(path)
+
+    with otp.TestSession() as another_session:
+        db = otp.DB('SOME_DB')
+        db.add(otp.Tick(X=1), symbol='B')
+        another_session.use(db)
+        derived_db = otp.DB('SOME_DB//X')
+        derived_db.add(otp.Tick(X=1), symbol='DERIVED_B')
+        another_session.use(derived_db)
+
+        symbols = otp.Symbols(db='SOME_DB')
+        df = otp.run(symbols)
+        assert list(df['SYMBOL_NAME']) == ['B']
+        derived_symbols = otp.Symbols(db='SOME_DB//X')
+        df = otp.run(derived_symbols)
+        assert list(df['SYMBOL_NAME']) == ['DERIVED_B']
+
+        config_path = another_session.config.path
+        acl_path = another_session.acl.path
+        locator_path = another_session.locator.path
+        db_path = db._path
+
+    # config files are not deleted after session closes
+    for path in (config_path, acl_path, locator_path, db_path):
+        assert os.path.exists(path)
+
+
+@pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason='webapi test mode uses same files for all tests')
+def test_two_sessions_with_the_same_database_no_cleanup():
+    # PY-1507
+    with otp.TestSession(clean_up=False) as s:
+        db = otp.DB('SOME_DB')
+        db.add(otp.Tick(X=1), symbol='A', tick_type='TT', date=otp.dt(2003, 12, 1))
+        db.add(otp.Tick(X=2), symbol='A', tick_type='TT', date=otp.dt(2003, 12, 2))
+        s.use(db)
+
+        data = otp.DataSource('SOME_DB', tick_type='TT', symbols='A', schema_policy='manual')
+        df = otp.run(data, start=otp.dt(2003, 12, 1), end=otp.dt(2003, 12, 3))
+        assert list(df['X']) == [1, 2]
+
+        config_path_1 = s.config.path
+        acl_path_1 = s.acl.path
+        locator_path_1 = s.locator.path
+        db_path_1 = db._path
+
+    # config files are not deleted after session closes
+    for path in (config_path_1, acl_path_1, locator_path_1, db_path_1):
+        assert os.path.exists(path)
+
+    with otp.TestSession(clean_up=True) as s:
+        # create database with the same name
+        # it should not overwrite the database from the previous session
+        db = otp.DB('SOME_DB')
+        db.add(otp.Tick(X=3), symbol='A', tick_type='TT', date=otp.dt(2003, 12, 1))
+        s.use(db)
+
+        data = otp.DataSource('SOME_DB', tick_type='TT', symbols='A', schema_policy='manual')
+        df = otp.run(data, start=otp.dt(2003, 12, 1), end=otp.dt(2003, 12, 3))
+        assert list(df['X']) == [3]
+
+        config_path_2 = s.config.path
+        acl_path_2 = s.acl.path
+        locator_path_2 = s.locator.path
+        db_path_2 = db._path
+
+    for path in (config_path_1, acl_path_1, locator_path_1, db_path_1):
+        assert os.path.exists(path)
+
+    # config files are not deleted after session closes
+    for path in (config_path_2, acl_path_2, locator_path_2, db_path_2):
+        assert os.path.exists(path)
+
+
+@pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason='webapi test mode uses same files for all tests')
+def test_temporary_files_creation(monkeypatch):
+    monkeypatch.setattr(otp.config, 'clean_up_tmp_files', False)
+
+    # ONE_TICK_TMP_DIR can be set by onetick-py-test
+    temp_base_dir = Path(otp.utils.ONE_TICK_TMP_DIR() or otp.utils.TMP_CONFIGS_DIR())
+
+    # test that files and directories without session are created in base directory
+    f1 = otp.utils.TmpFile()
+    d1 = otp.utils.TmpDir()
+    db1 = otp.DB('A')
+    assert Path(f1).parent == temp_base_dir
+    assert Path(d1).parent == temp_base_dir
+    assert Path(db1._path).parent == temp_base_dir
+
+    # test that files and directories in session are created in a separate session directory
+    with otp.TestSession(clean_up=True) as session:
+        session_dir = Path(session._session_dir)
+
+        assert session_dir.parent == temp_base_dir
+        assert session_dir.suffix == '.session'
+
+        assert Path(session.acl.path).parent == session_dir
+        assert Path(session.locator.path).parent == session_dir
+        assert Path(session.config.path).parent == session_dir
+
+        f2 = otp.utils.TmpFile()
+        d2 = otp.utils.TmpDir()
+        db2 = otp.DB('A')
+        assert Path(f2).parent == session_dir
+        assert Path(d2).parent == session_dir
+        assert Path(db2._path).parent == session_dir
+
+        _ = otp.run(otp.Tick(A=1))
+        assert len([p for p in session_dir.iterdir() if str(p).endswith('.otq')]) == 1
+
+    # session directory is not deleted after session closes
+    assert session_dir.exists()
+
+    # test that files and directories are not cleaned up
+    with otp.TestSession(clean_up=False) as session:
+        session_dir = Path(session._session_dir)
+
+        assert session_dir.parent == temp_base_dir
+        assert session_dir.suffix == '.session'
+
+        acl_file = Path(session.acl.path)
+        locator_file = Path(session.locator.path)
+        config_file = Path(session.config.path)
+        log_file = Path(session._log_file.path)
+
+        f3 = otp.utils.TmpFile()
+        d3 = otp.utils.TmpDir()
+        db3 = otp.DB('A')
+
+        _ = otp.run(otp.Tick(A=1))
+        assert len([p for p in session_dir.iterdir() if str(p).endswith('.otq')]) == 1
+
+    assert session_dir.exists()
+    assert acl_file.exists()
+    assert locator_file.exists()
+    assert config_file.exists()
+    assert log_file.exists()
+    assert Path(f3).exists()
+    assert Path(d3).exists()
+    assert Path(db3._path).exists()
+    assert len([p for p in session_dir.iterdir() if str(p).endswith('.otq')]) == 1

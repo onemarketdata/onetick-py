@@ -71,10 +71,12 @@ class _EmulateInputObject:
         self.__class__.INPUT_SCHEMA = self._get_schema()
 
     def _get_schema(self):
+        import onetick.py as otp
+
         return {
             name: value.dtype
             for name, value in self.__dict__.items()
-            if isinstance(value, _Column)
+            if isinstance(value, _Column) and name not in otp.meta_fields
         }
 
     @property

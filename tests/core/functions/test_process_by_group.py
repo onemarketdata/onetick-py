@@ -239,3 +239,28 @@ class TestBase:
         df_copy = otp.run(res_copy)
         assert df_copy["x"][0] == 1 and df_copy["y"][0] == "a" and df_copy["z"][0] == 3
         assert df_copy["x"][1] == 2 and df_copy["y"][1] == "b" and df_copy["z"][1] == 3
+
+    def test_symbol_name_field(self):
+        data = self.small_tick_source()
+        data['SF_FIELD'] = 'DEMO_L1:TEST'
+
+        def process_func(source):
+            source['T'] = otp.meta_fields.symbol_name
+            return source
+
+        data.process_by_group(process_func, symbol_name_field='SF_FIELD', inplace=True)
+
+        df = otp.run(data)
+        assert df['T'].to_list() == ['DEMO_L1:TEST'] * 3
+
+    def test_query_parameters(self):
+        data = self.small_tick_source()
+
+        def process_func(source):
+            source['T'] = otp.raw('"$TEST_PARAM"', dtype=otp.string[64])
+            return source
+
+        data.process_by_group(process_func, query_parameters={'TEST_PARAM': 'TEST_VALUE'}, inplace=True)
+
+        df = otp.run(data)
+        assert df['T'].to_list() == ['TEST_VALUE'] * 3

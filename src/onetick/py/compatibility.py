@@ -938,3 +938,10 @@ def is_all_fields_for_running_supported():
     # Fixed 0031925: OPTION_PRICE behaves as if some of its parameters were not set when ALL_FIELDS_FOR_RUNNING=true
     return _is_min_build_or_version(1.24, 20240116201311,
                                     20240205120000)
+
+
+def is_preserve_decimal_flag_supported():
+    # OTDEV-37872: Add PRESERVE_DECIMAL_FLAG to onetick.query_webapi run method to return decimal when needed
+    # OTDEV-37783: Add PRESERVE_DECIMAL_FLAG to onetick.query run method to return decimal when needed
+    return _is_min_build_or_version(1.26, 20260402162034,
+                                    20260420120000)

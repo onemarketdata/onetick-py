@@ -106,6 +106,9 @@ elif otp.__webapi__:
         kwargs.setdefault('http_username', config.http_username)
         kwargs.setdefault('http_password', config.http_password)
 
+        # PY-1486 (slash at the end makes the query run slow if the REST API endpoint is not specified)
+        kwargs['http_address'] = kwargs['http_address'].rstrip('/')
+
         if 'access_token' not in kwargs:
             if config.access_token:
                 kwargs['access_token'] = config.access_token

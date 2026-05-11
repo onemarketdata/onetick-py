@@ -141,7 +141,7 @@ def apply(self: 'Source', obj) -> Union['otp.Column', 'Source']:
 
         return obj(**{in_pin: self})[out_pin]
     elif isinstance(obj, otq.GraphQuery):
-        base_dir = None
+        base_dir = otp.utils.default
         if os.getenv('OTP_WEBAPI_TEST_MODE'):
             from onetick.py.otq import _tmp_otq_path
 

@@ -5,7 +5,15 @@ import pytest
 import onetick.py as otp
 
 
-def test_write_read(f_session, keep_generated_dir):
+@pytest.fixture(scope='function')
+def temp_base_dir(f_session, keep_generated_dir):
+    if os.getenv('OTP_WEBAPI_TEST_MODE'):
+        return keep_generated_dir
+    else:
+        return f_session._session_dir
+
+
+def test_write_read(f_session, temp_base_dir):
     db = otp.DB("DB_A")
     f_session.use(db)
 
@@ -19,15 +27,15 @@ def test_write_read(f_session, keep_generated_dir):
     assert len(data.schema) == 2
     data = otp.run(data)
 
-    path = os.path.join(keep_generated_dir, "DB_A", "DERIVED", "DB_D")
-    assert os.listdir(os.path.join(keep_generated_dir, "DB_A")) == ["DERIVED"]
-    assert os.listdir(os.path.join(keep_generated_dir, "DB_A", "DERIVED")) == ["DB_D"]
+    path = os.path.join(temp_base_dir, "DB_A", "DERIVED", "DB_D")
+    assert os.listdir(os.path.join(temp_base_dir, "DB_A")) == ["DERIVED"]
+    assert os.listdir(os.path.join(temp_base_dir, "DB_A", "DERIVED")) == ["DB_D"]
     assert os.listdir(path)
     assert all(data["A"] == [1, 2, 3])
     assert all(data["B"] == ["a", "b", "c"])
 
 
-def test_merge_2_derived_and_parent(f_session, keep_generated_dir):
+def test_merge_2_derived_and_parent(f_session, temp_base_dir):
     db = otp.DB("DB_A")
     db.add(otp.Ticks(dict(A=[1, 2, 3])))
     f_session.use(db)
@@ -43,7 +51,7 @@ def test_merge_2_derived_and_parent(f_session, keep_generated_dir):
     data = otp.DataSource(db=[db, derived_db1, derived_db2], tick_type='TRD')
     assert 'B' in data.schema
     data = otp.run(data)
-    path = os.path.join(keep_generated_dir, "DB_A", "DERIVED")
+    path = os.path.join(temp_base_dir, "DB_A", "DERIVED")
     assert os.listdir(os.path.join(path, "DB_C"))
     assert os.listdir(os.path.join(path, "DB_D"))
     assert all(data["A"] == [1, 0, 0, 2, 0, 0, 3, 0, 0])
@@ -65,7 +73,7 @@ def test_merge_simple(f_session):
     assert all(data["A"] == [1, 0, 2, 0, 3, 0])
 
 
-def test_derived_definition_only(f_session, keep_generated_dir):
+def test_derived_definition_only(f_session, temp_base_dir):
     data = otp.Ticks(dict(A=[1, 2, 3]))
     derived_db1 = otp.DB("DB_A//DB_D")
     f_session.use(derived_db1)
@@ -77,7 +85,7 @@ def test_derived_definition_only(f_session, keep_generated_dir):
 
     data = otp.DataSource(db=[derived_db1, derived_db2], tick_type='TRD')
     df = otp.run(data)
-    path = os.path.join(keep_generated_dir, "DB_A", "DERIVED", "DB_D")
+    path = os.path.join(temp_base_dir, "DB_A", "DERIVED", "DB_D")
     assert os.listdir(path)
     assert os.listdir(os.path.join(path, "DERIVED", "DB_C"))
     assert all(df["A"] == [1, 1, 2, 2, 3, 3])
@@ -121,7 +129,7 @@ def test_add_data_before_use():
         assert list(df['A']) == [3, 2, 1]
 
 
-def test_3_level_merge_with_upper(f_session, keep_generated_dir):
+def test_3_level_merge_with_upper(f_session, temp_base_dir):
     data = otp.Ticks(dict(A=[1, 2, 3]))
     db = otp.DB("DB_A")
     db.add(data)
@@ -137,7 +145,7 @@ def test_3_level_merge_with_upper(f_session, keep_generated_dir):
 
     data = otp.DataSource(db=[derived_db1, derived_db2], tick_type='TRD')
     df = otp.run(data)
-    path = os.path.join(keep_generated_dir, "DB_A", "DERIVED", "DB_D")
+    path = os.path.join(temp_base_dir, "DB_A", "DERIVED", "DB_D")
     assert os.listdir(path)
     assert os.listdir(os.path.join(path, "DERIVED", "DB_C"))
     assert all(df["A"] == [1, 1, 2, 2, 3, 3])

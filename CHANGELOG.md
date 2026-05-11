@@ -10,6 +10,31 @@
 
 ### Removed
 
+## [1.196.0] - 2026-05-11
+
+### Added
+
+- Added `otp.Source.value_present`
+- Added support of parameters `symbol_name_field`, `out_of_order_output_tick_policy` and `query_parameters`
+  in `otp.Source.process_by_group`
+- Add parameter `preserve_decimal_flag` to `otp.run`
+- Added `otp.Source.print_otq()` function
+
+### Changed
+
+- Use `pytest-xdist` and `uv` for Windows testing
+- Now `onetick.query` EP class methods are not overridden unless `OTP_SHOW_STACK_INFO` is not set
+
+### Fixed
+
+- Fix setting wrong `http_address` in WebAPI mode
+- Fixed support of creating tick state objects with `otp.query` without schema as `default_value`
+- Fixed case when the databases from different sessions share the same directory
+- Create a separate directory for each session
+- By default all temporary files and directories are created in a session directory
+
+### Removed
+
 ## [1.195.0] - 2026-05-04
 
 ### Added

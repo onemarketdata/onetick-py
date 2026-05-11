@@ -493,6 +493,43 @@ class TestTickList:
         df = otp.run(data)
         assert list(df['B']) == [4, 5, 6]
 
+    @pytest.mark.parametrize('propagate_input_ticks', [True, False])
+    def test_otp_query(self, session, propagate_input_ticks):
+        data = otp.Tick(A=1)
+        query = otp.Tick(X=2).to_otq()
+        data.state_vars['TEST'] = otp.state.tick_list(otp.eval(otp.query(query)))
+        data = data.state_vars['TEST'].dump(propagate_input_ticks=propagate_input_ticks)
+
+        expected = [2]
+        if propagate_input_ticks:
+            expected += [0]
+
+        assert otp.run(data)['X'].to_list() == expected
+
+    def test_otp_query_push_back(self, session):
+        def fun(tick):
+            tick.state_vars['TEST'].push_back(tick)
+
+        data = otp.Tick(A=1)
+        query = otp.Tick(X=2).to_otq()
+        data.state_vars['TEST'] = otp.state.tick_list(otp.eval(otp.query(query)))
+        data = data.script(fun)
+
+        data = data.state_vars['TEST'].dump()
+        res = otp.run(data).to_dict(orient='list')
+        del res['Time']
+        assert res == {
+            'X': [2, 0],
+            'A': [0, 1],
+        }
+
+    def test_otp_query_sort(self, session):
+        data = otp.Tick(A=1)
+        query = otp.Ticks(X=[2, 3, 1]).to_otq()
+        data.state_vars['TEST'] = otp.state.tick_list(otp.eval(otp.query(query)))
+
+        with pytest.raises(ValueError, match='Missing schema definition for field'):
+            data.state_vars['TEST'].sort('X')
 
 class TestTickSet:
 
@@ -1158,6 +1195,26 @@ class TestTickSet:
                 key_fields='K',
                 schema=['K', 'L'])
             src.state_vars['tick_set_9'].schema
+
+    @pytest.mark.parametrize('propagate_input_ticks', [True, False])
+    def test_otp_query(self, session, propagate_input_ticks):
+        data = otp.Tick(A=1)
+        query = otp.Tick(X=2).to_otq()
+        data.state_vars['TEST'] = otp.state.tick_set("latest", "X", otp.eval(otp.query(query)))
+        data = data.state_vars['TEST'].dump(propagate_input_ticks=propagate_input_ticks)
+
+        expected = [2]
+        if propagate_input_ticks:
+            expected += [0]
+
+        assert otp.run(data)['X'].to_list() == expected
+
+    def test_otp_query_find(self, session):
+        data = otp.Tick(C=777, B=2)
+        query = otp.Tick(A=1, B=4).to_otq()
+        data.state_vars['SET'] = otp.state.tick_set('oldest', 'A', otp.eval(otp.query(query)))
+        with pytest.raises(ValueError, match='You should specify `schema`'):
+            data['B'] = data.state_vars['SET'].find('B', 999, A=1)
 
 
 class TestTickSetUnordered:

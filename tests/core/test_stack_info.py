@@ -11,9 +11,12 @@ pytestmark = pytest.mark.skipif(not is_supported_stack_info(),
 
 
 class TestStackInfo:
-    def test_stack_info(self, session, monkeypatch):
-        monkeypatch.setitem(otq.API_CONFIG, 'SHOW_STACK_INFO', 1)
 
+    def test_session(self, session):
+        # this was set globally in conftest.py before initialization of onetick-py
+        assert 'modify_init' in str(otq.Passthrough.__init__)
+
+    def test_stack_info(self, session):
         node = otq.TickGenerator(bucket_interval=0, fields='string A ==== "a"')
         src = otp.Source(node)
         with pytest.raises(Exception) as e:
@@ -23,9 +26,7 @@ class TestStackInfo:
         if otp.config.show_stack_info:
             assert """node = otq.TickGenerator(bucket_interval=0, fields='string A ==== "a"')""" in str(e.value)
 
-    def test_sink(self, session, monkeypatch):
-        monkeypatch.setitem(otq.API_CONFIG, 'SHOW_STACK_INFO', 1)
-
+    def test_sink(self, session):
         src = otp.Tick(A=1)
         src.sink(otq.UpdateField('B', '1'))
         with pytest.raises(Exception) as e:
@@ -35,9 +36,7 @@ class TestStackInfo:
         if otp.config.show_stack_info:
             assert "src.sink(otq.UpdateField('B', '1'))" in str(e.value)
 
-    def test_otp_config(self, session, monkeypatch):
-        monkeypatch.setattr(otp.config, 'show_stack_info', True)
-
+    def test_otp_config(self, session):
         src = otp.Tick(A=1)
         src.sink(otq.UpdateField('B', '1'))
         with pytest.raises(Exception) as e:
@@ -57,8 +56,7 @@ class TestStackInfo:
         assert 'stack_info=' not in str(e.value)
         assert "src.sink(otq.UpdateField('B', '1'))" not in str(e.value)
 
-    def test_symbol_name(self, session, monkeypatch):
-        monkeypatch.setattr(otp.config, 'show_stack_info', True)
+    def test_symbol_name(self, session):
         t = otp.Tick(A=1)
         t.sink(otq.UpdateField('B', '1'))
         with pytest.raises(Exception) as e:
@@ -66,8 +64,7 @@ class TestStackInfo:
         assert ',symbol_name=' in str(e.value)
         assert "t.sink(otq.UpdateField('B', '1'))" in str(e.value)
 
-    def test_symbol_param(self, session, monkeypatch):
-        monkeypatch.setattr(otp.config, 'show_stack_info', True)
+    def test_symbol_param(self, session):
         t = otp.Tick(A=1)
         t['B'] = t.Symbol['X', str]
         with pytest.raises(Exception) as e:
@@ -76,8 +73,7 @@ class TestStackInfo:
 
     @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False),
                         reason='PY-963: fix this test for webapi, stack_info= somehow is absent here')
-    def test_builtin_fun(self, session, monkeypatch):
-        monkeypatch.setattr(otp.config, 'show_stack_info', True)
+    def test_builtin_fun(self, session):
         t = otp.Tick(A=1)
         t['B'] = otp.raw("round('wrong')", int)
         with pytest.raises(Exception) as e:

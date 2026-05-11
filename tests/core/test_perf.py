@@ -31,9 +31,8 @@ def test_measure_perf(session):
 
 
 @pytest.mark.skipif(not is_supported_stack_info(), reason='stack_info does not work on some OneTick versions')
-def test_measure_perf_with_stack_info(session):
-    previous = otp.config.show_stack_info
-    otp.config.show_stack_info = True
+def test_measure_perf_with_stack_info(session, monkeypatch):
+    monkeypatch.setattr(otp.config, 'show_stack_info', True)
 
     t = otp.Tick(A=1)
     result = otp.perf.MeasurePerformance(t)
@@ -41,17 +40,14 @@ def test_measure_perf_with_stack_info(session):
         assert e['stack_info']
         assert e['traceback']
 
-    otp.config.show_stack_info = previous
-
 
 @pytest.mark.parametrize('stack_info', (False, True))
-def test_presort(session, stack_info):
+def test_presort(session, stack_info, monkeypatch):
 
     if stack_info and not is_supported_stack_info():
         return
 
-    previous = otp.config.show_stack_info
-    otp.config.show_stack_info = stack_info
+    monkeypatch.setattr(otp.config, 'show_stack_info', stack_info)
 
     t = otp.Tick(A=1)
     t.sink(otq.Presort())
@@ -69,5 +65,3 @@ def test_presort(session, stack_info):
     else:
         assert not entry['stack_info']
         assert not entry['traceback']
-
-    otp.config.show_stack_info = previous

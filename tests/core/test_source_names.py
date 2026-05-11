@@ -2,7 +2,6 @@ import onetick.py as otp
 import os
 import pytest
 
-from onetick.py.utils import TMP_CONFIGS_DIR, ONE_TICK_TMP_DIR
 from onetick.py.core.query_inspector import get_queries
 
 
@@ -12,13 +11,12 @@ def reverse_str(s):
     return str(s)
 
 
-def list_otqs():
-    dir_path = TMP_CONFIGS_DIR()
-    if ONE_TICK_TMP_DIR():
-        dir_path = ONE_TICK_TMP_DIR()
+def list_otqs(session):
     if os.getenv('OTP_WEBAPI_TEST_MODE'):
         from onetick.py.otq import _tmp_otq_path
         dir_path = _tmp_otq_path()
+    else:
+        dir_path = session._session_dir
     files = []
     for f in os.listdir(dir_path):
         f = os.path.join(dir_path, f)
@@ -29,7 +27,7 @@ def list_otqs():
     return files
 
 
-def test_creating_named_source(session, monkeypatch):
+def test_creating_named_source(f_session, monkeypatch):
     """
     Named source should always be stored as an .otq file on running, regardless on whether it needs to store
     temporary queries or not.
@@ -39,7 +37,7 @@ def test_creating_named_source(session, monkeypatch):
     source = otp.Tick(A=1)
     source.set_name('test_source')
     otp.run(source)
-    files = list_otqs()
+    files = list_otqs(f_session)
     assert len(files) == 1
     assert files[0].endswith('.test_source.run.otq')
     queries = get_queries(files[0])
@@ -47,7 +45,7 @@ def test_creating_named_source(session, monkeypatch):
     assert queries[0] == 'test_source'
 
 
-def test_named_source_for_join_with_query(session, monkeypatch):
+def test_named_source_for_join_with_query(f_session, monkeypatch):
     monkeypatch.setattr(otp.config, 'clean_up_tmp_files', False)
     source1 = otp.Tick(A=1)
     source1.set_name('source_1')
@@ -58,7 +56,8 @@ def test_named_source_for_join_with_query(session, monkeypatch):
     assert len(res) == 1
     assert res['A'][0] == 1
     assert res['B'][0] == 1
-    files = list_otqs()
+    files = list_otqs(f_session)
+    print(files)
     assert len(files) == 1
     assert files[0].endswith('.source_2.run.otq')
     queries = get_queries(files[0])
@@ -68,7 +67,7 @@ def test_named_source_for_join_with_query(session, monkeypatch):
     assert queries[1].endswith('__source_1__join_with_query')
 
 
-def test_named_source_for_process_by_group(session, monkeypatch):
+def test_named_source_for_process_by_group(f_session, monkeypatch):
     monkeypatch.setattr(otp.config, 'clean_up_tmp_files', False)
     source2 = otp.Tick(FIELD='A')
     source2.set_name('source_2')
@@ -82,7 +81,7 @@ def test_named_source_for_process_by_group(session, monkeypatch):
     res = otp.run(source2)
     assert len(res) == 1
     assert res['FIELD'][0] == 'AB'
-    files = list_otqs()
+    files = list_otqs(f_session)
     assert len(files) == 1
     assert files[0].endswith('.source_2.run.otq')
     queries = get_queries(files[0])
@@ -92,7 +91,7 @@ def test_named_source_for_process_by_group(session, monkeypatch):
     assert queries[1].endswith('__source_1__group_by')
 
 
-def test_named_source_for_eval_same_file(session, monkeypatch):
+def test_named_source_for_eval_same_file(f_session, monkeypatch):
     monkeypatch.setattr(otp.config, 'clean_up_tmp_files', False)
     source1 = otp.Tick(SYMBOL_NAME='AAPL')
     source1.set_name('source_1')
@@ -103,7 +102,7 @@ def test_named_source_for_eval_same_file(session, monkeypatch):
     res = res['AAPL']
     assert len(res) == 1
     assert res['B'][0] == 1
-    files = list_otqs()
+    files = list_otqs(f_session)
     assert len(files) == 1
     assert files[0].endswith('.source_2.run.otq')
     queries = get_queries(files[0])
@@ -113,7 +112,7 @@ def test_named_source_for_eval_same_file(session, monkeypatch):
     assert queries[1].endswith('__source_1__symbol')
 
 
-def test_named_source_for_eval_different_files(session):
+def test_named_source_for_eval_different_files(f_session):
     source1 = otp.Tick(SYMBOL_NAME='AAPL')
     source1.set_name('source_1')
     source2 = otp.Tick(B=1)
@@ -123,7 +122,7 @@ def test_named_source_for_eval_different_files(session):
     res = res['AAPL']
     assert len(res) == 1
     assert res['B'][0] == 1
-    files = list_otqs()
+    files = list_otqs(f_session)
     files.sort(key=reverse_str)
     assert len(files) == 2
     assert files[0].endswith('.source_1.symbol.otq')
@@ -137,7 +136,7 @@ def test_named_source_for_eval_different_files(session):
     assert queries[0] == 'source_2'
 
 
-def test_source_names_on_join_and_merge(session):
+def test_source_names_on_join_and_merge(f_session):
     source1 = otp.Tick(A=1)
     source2 = otp.Tick(B=1)
     source3 = otp.Tick(C=1)
@@ -166,7 +165,7 @@ def test_source_names_on_join_and_merge(session):
     assert s.get_name() == 'source_2'
 
 
-def test_invalid_source_names(session):
+def test_invalid_source_names(f_session):
     """
     Some common symbols cannot be used in query names, e.g. "." or "-".
     Such symbols may be present in source names but should not lead to errors on query creation.
@@ -191,7 +190,7 @@ def test_invalid_source_names(session):
     assert res['C'][0] == 3
 
 
-def test_empty_or_nonstring_source_name(session):
+def test_empty_or_nonstring_source_name(f_session):
     source = otp.Tick(A=1)
     source.set_name('_')
     source.set_name('.')

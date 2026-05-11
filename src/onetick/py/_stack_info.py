@@ -43,13 +43,15 @@ def _modify_stack_info_in_onetick_query():
     Change stack_info parameter in all OneTick's event processors.
     Save full traceback instead of filename + line number.
     """
+    if not config.show_stack_info:
+        return
 
     def modify_init(cls):
         old_init = cls.__init__
 
         def new_init(self, *args, **kwargs):
             old_init(self, *args, **kwargs)
-            if config.show_stack_info and hasattr(self, 'stack_info'):
+            if hasattr(self, 'stack_info'):
                 self.stack_info = _get_id_with_traceback(traceback.format_stack()[:-1])
 
         cls.__init__ = new_init
@@ -73,16 +75,22 @@ def _add_stack_info_to_exception(exc):
 
     _, _, location_details = str(exc).partition('Problem location details:')
     stack_info_uuid = None
-    for block in location_details.strip().split(','):
-        name, _, value = block.partition('=')
-        if name == 'stack_info':
-            stack_info_uuid = value
-            break
+    for space_block in location_details.strip().split():
+        for block in space_block.split(','):
+            name, _, value = block.partition('=')
+            if name == 'stack_info':
+                stack_info_uuid = value
+                break
 
     if not stack_info_uuid:
         return exc
 
-    stack_info = _get_traceback_with_id(stack_info_uuid)
+    try:
+        stack_info = _get_traceback_with_id(stack_info_uuid)
+    except KeyError:
+        # it may happen when stack_info was set on onetick.query level
+        # but __init__ methods were not overriden by onetick-py
+        return exc
 
     if exc.args:
         exc.args = (exc.args[0] + os.linesep + stack_info, *exc.args[1:])

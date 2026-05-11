@@ -2,6 +2,7 @@ import warnings
 from typing import TYPE_CHECKING, Tuple, Union
 
 from onetick import py as otp
+import onetick.py.types as ott
 from onetick.py import aggregations
 from onetick.py.aggregations._docs import (
     _all_fields_with_policy_doc,
@@ -629,7 +630,8 @@ def partition_evenly_into_groups(self: 'Source', *args, **kwargs):
 
 @inplace_operation
 def process_by_group(
-    self: 'Source', process_source_func, group_by=None, source_name=None, num_threads=None, inplace=False
+    self: 'Source', process_source_func, group_by=None, source_name=None, num_threads=None, query_parameters=None,
+    symbol_name_field=None, out_of_order_output_tick_policy=None, added_field_name_suffix=None, inplace=False,
 ) -> Union['Source', Tuple['Source', ...], None]:
     """
     Groups data by ``group_by`` and run ``process_source_func`` for each group and merge outputs for every group.
@@ -657,6 +659,21 @@ def process_by_group(
         If specified and not zero, turns on asynchronous processing mode
         and specifies number of threads to be used for processing input ticks.
         If this parameter is not specified or zero, then input ticks are processed synchronously.
+    query_parameters: dict, optional
+        Dict of parameters names and values of the query to be executed returned by ``process_source_func``.
+    symbol_name_field: str, optional
+        If the parameter value is not empty, the unbound symbol name of the called query is overwritten
+        by the value from the field specified in this parameter. If the field does not contain a database name,
+        it is taken from the tick type (if possible) or the **LOCAL::** database name is used.
+        If this parameter is not set, **_SYMBOL_NAME** is used, in case if the latter is empty,
+        the **_EMPTY** symbol is used.
+    added_field_name_suffix: str, optional
+        The suffix for the names of appended key field names.
+    out_of_order_output_tick_policy: str, optional
+        Specifies policy for out of order ticks, produced by created groups.
+        Possible values are: **throw_exception** and **discard_tick**.
+
+        Default: **throw_exception**
     inplace: bool
         If True - nothing will be returned and changes will be applied to current query
         otherwise changes query will be returned.
@@ -735,6 +752,12 @@ def process_by_group(
         if field not in input_schema:
             raise ValueError(f"Group by field name {field} not present in input source schema")
 
+    if out_of_order_output_tick_policy and out_of_order_output_tick_policy not in ['throw_exception', 'discard_tick']:
+        raise ValueError(
+            'Incorrect value of `out_of_order_output_tick_policy` passed: '
+            f'expected `throw_exception` or `discard_tick`, got `{out_of_order_output_tick_policy}`'
+        )
+
     process_source_root = otp.DataSource(tick_type="ANY", schema_policy="manual", schema=input_schema)
     if source_name:
         process_source_root.set_name(source_name)
@@ -792,6 +815,18 @@ def process_by_group(
         if num_threads < 0:
             raise ValueError("Parameter 'num_threads' can't be negative.")
         kwargs['num_threads'] = num_threads
+
+    if query_parameters:
+        kwargs['otq_parameters'] = ','.join(f'{k}={ott.value2str(v)}' for k, v in query_parameters.items())
+
+    if symbol_name_field is not None:
+        kwargs['symbol_name_field'] = symbol_name_field
+
+    if out_of_order_output_tick_policy:
+        kwargs['out_of_order_output_tick_policy'] = out_of_order_output_tick_policy.upper()
+
+    if added_field_name_suffix:
+        kwargs['added_field_name_suffix'] = added_field_name_suffix
 
     main_source.sink(otq.GroupBy(key_fields=",".join(group_by), query_name=process_path, outputs=outputs, **kwargs))
 

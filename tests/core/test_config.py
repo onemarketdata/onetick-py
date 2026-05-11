@@ -115,8 +115,8 @@ def test_default_config(config_preserving_session, monkeypatch):
     assert otp.config.default_end_time == datetime(2022, 1, 1, 0, 0, 0, 123456)
 
 
-@pytest.mark.skipif(is_supported_stack_info(), reason='stack_info does not work on old versions')
-def test_show_stack_info(config_preserving_session, monkeypatch):
+@pytest.mark.skipif(not is_supported_stack_info(), reason='stack_info does not work on old versions')
+def test_show_stack_info(config_preserving_session):
     assert 'show_stack_info' in otp.config.get_changeable_config_options()
 
     def _check_stack_info():
@@ -126,11 +126,8 @@ def test_show_stack_info(config_preserving_session, monkeypatch):
             _ = otp.run(t)
         return 'stack_info=' in str(e.value)
 
-    otp.config.show_stack_info = otp.config.default
-    assert _check_stack_info() is False
-
-    monkeypatch.setenv('OTP_SHOW_STACK_INFO', 'YES')
-    assert otp.config.show_stack_info is True
+    otp.config.show_stack_info = True
+    assert _check_stack_info() is True
 
     otp.config.show_stack_info = False
     assert _check_stack_info() is False

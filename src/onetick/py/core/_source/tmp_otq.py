@@ -186,7 +186,7 @@ class TmpOtq:
 
         """
         if file_path is None:
-            base_dir = None
+            base_dir = utils.default
             if os.getenv('OTP_WEBAPI_TEST_MODE'):
                 base_dir = _tmp_otq_path()
             kwargs = {}

@@ -2,7 +2,7 @@ import re
 import warnings
 from contextlib import suppress
 from datetime import time
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union, Literal
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union, Literal, Sequence
 
 from onetick import py as otp
 from onetick.py import types as ott
@@ -909,8 +909,8 @@ def character_present(
     inplace: bool = False,
 ):
     """
-    Propagates ticks based on whether the value of the field specified by `field` contains a character
-    in the set of characters specified by `characters`.
+    Propagates ticks based on whether the value of the field specified by ``field`` contains a character
+    in the set of characters specified by ``characters``.
     Uses **CHARACTER_PRESENT** EP.
 
     Parameters
@@ -918,10 +918,10 @@ def character_present(
     field: str, :py:class:`~onetick.py.Column`
         Name of the field (must be present in the input tick descriptor).
     characters: str, List[str]
-        A set of characters that are searched for in the value of the `field`.
+        A set of characters that are searched for in the value of the ``field``.
         If set as string, works as list of characters.
     characters_field: str, :py:class:`~onetick.py.Column`
-        If specified, will take a current value of that field and append it to `characters`, if any.
+        If specified, will take a current value of that field and append it to ``characters``, if any.
     discard_on_match: bool
         When set to ``True`` only ticks that did not match the filter are propagated,
         otherwise ticks that satisfy the filter condition are propagated.
@@ -941,7 +941,7 @@ def character_present(
     Examples
     --------
 
-    Select ticks that have the N or T in EXCHANGE field
+    Select ticks that have the N or T in EXCHANGE field:
 
     >>> data = otp.DataSource('TEST_DATABASE', tick_type='TRD', symbols='A')  # doctest: +SKIP
     >>> data = data[['PRICE', 'SIZE', 'EXCHANGE']]  # doctest: +SKIP
@@ -954,7 +954,7 @@ def character_present(
     3 2003-12-01 00:00:00.003  28.45    100        T
     4 2003-12-01 00:00:00.004  28.44    500        T
 
-    Select ticks that have the N or T in EXCHANGE field and character set in OLD_EXCHANGE field
+    Select ticks that have the N or T in EXCHANGE field and character set in OLD_EXCHANGE field:
 
     >>> data = otp.DataSource('TEST_DATABASE', tick_type='TRD', symbols='A')  # doctest: +SKIP
     >>> data = data.character_present(  # doctest: +SKIP
@@ -995,6 +995,94 @@ def character_present(
         field=field,
         characters=characters,
         characters_field=characters_field,
+        discard_on_match=discard_on_match,
+    ))
+
+    return self
+
+
+@inplace_operation
+def value_present(
+    self: 'Source',
+    field: Union[str, _Column],
+    values: List[Any],
+    discard_on_match: bool = False,
+    inplace: bool = False,
+):
+    """
+    Propagates ticks based on whether the value of the ``field`` contains one of the list of ``values``.
+
+    Parameters
+    ----------
+    field: str, :py:class:`~onetick.py.Column`
+        Name of the field (must be present in the input tick descriptor).
+    values: str, List[str]
+        A set of values that are searched for in the value of the ``field``.
+    discard_on_match: bool
+        When set to ``True`` only ticks that did not match the filter are propagated,
+        otherwise ticks that satisfy the filter condition are propagated.
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    **VALUE_PRESENT** OneTick event processor
+    :meth:`onetick.py.Operation.isin`
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Select ticks that have specified values in field A:
+
+    >>> data = otp.Ticks(A=[1, 2, 3, 4, 5])
+    >>> data = data.value_present(field='A', values=[2, 3])
+    >>> otp.run(data)
+                         Time  A
+    0 2003-12-01 00:00:00.001  2
+    1 2003-12-01 00:00:00.002  3
+
+    Use parameter ``discard_on_match`` to filter values *out*:
+
+    >>> data = otp.Ticks(A=[1, 2, 3, 4, 5])
+    >>> data = data.value_present(field='A', values=[2, 3], discard_on_match=True)
+    >>> otp.run(data)
+                         Time  A
+    0 2003-12-01 00:00:00.000  1
+    1 2003-12-01 00:00:00.003  4
+    2 2003-12-01 00:00:00.004  5
+    """
+    if isinstance(field, _Column):
+        field = field.name
+
+    if field not in self.schema:
+        raise ValueError(f"Field '{field}' is not in schema")
+
+    if not isinstance(values, Sequence) or isinstance(values, str):
+        raise ValueError(f"Parameter 'values' must be a list or other sequence, got {type(values)}")
+
+    if not values:
+        raise ValueError("Parameter 'values' is empty")
+
+    try:
+        values_type = ott.get_base_type(ott.get_type_by_objects(values))
+    except TypeError as e:
+        raise ValueError("All values must be of the same type in 'values' parameter") from e
+
+    field_type = ott.get_base_type(self.schema[field])
+    if values_type != field_type:
+        raise ValueError(f"Field '{field}' and parameter 'values' have different types: {field_type} and {values_type}")
+
+    values_str = ','.join(ott.value2str(v) for v in values)
+
+    self.sink(otq.ValuePresent(
+        field=field,
+        values=values_str,
         discard_on_match=discard_on_match,
     ))
 

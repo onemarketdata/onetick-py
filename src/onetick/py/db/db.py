@@ -1,4 +1,3 @@
-import logging
 import os
 import datetime as dt
 import subprocess
@@ -14,6 +13,8 @@ from onetick import py as otp
 from onetick.py.core import db_constants as constants
 from onetick.py.compatibility import is_native_plus_zstd_supported
 from onetick.py import utils, sources, session, configuration
+
+from ..log import get_logger
 
 import pandas
 
@@ -390,8 +391,7 @@ class _DB:
         _remove_from_acl = False
         if _session is None:
             close_session = True
-            _session = session.Session()
-
+            _session = session.Session(clean_up=True)
         try:
             if self._LOCAL:
                 if self.id not in _session.locator.databases:
@@ -561,9 +561,10 @@ class DB(_DB):
         minimum_start_date=None,
         maximum_end_date=None,
     ):
+        self._logger = get_logger(__name__, self.__class__.__name__)
         if name is not None and not isinstance(name, str):
             message = f"Database name expected to be string got {type(name)}"
-            logging.error(message)
+            self._logger.error(message)
             raise TypeError(message)
 
         self._clean_up = clean_up
@@ -628,11 +629,13 @@ class DB(_DB):
         return self._format_params(properties)
 
     def _create_db(self):
-        logging.debug(f'Creating temporary directory for db "{self._db_suffix}"')
+        self._logger.debug(f'Creating temporary directory for db "{self._db_suffix}"')
 
+        # SOME_DB --------> SOME_DB
+        # SOME_DB//B//C --> SOME_DB/DERIVED/B/DERIVED/C
         dirs_list = self._db_suffix.replace("//", " DERIVED ").split()
         dir_name = ''
-        base_dir = ""
+        base_dir = utils.default
         if os.getenv('OTP_WEBAPI_TEST_MODE'):
             # copied from onetick.test.fixtures _keep_generated_dir()
             base_dir = os.path.join(otp.utils.TMP_CONFIGS_DIR(), os.environ.get("ONE_TICK_TMP_DIR", "dbs"))

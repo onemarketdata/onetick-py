@@ -40,7 +40,7 @@ def if_user_in_acl(acl, user):
     return apply_actions(parse_acl, FileReader(acl), PrintWriter(), [get_user], flush=True)
 
 
-def tmp_acl(clean_up=default):
+def tmp_acl(clean_up=default, base_dir=default):
     data = []
     data.append("<roles>")
     data.append('<role name="Admin">')
@@ -85,7 +85,7 @@ def tmp_acl(clean_up=default):
     if os.getenv('OTP_WEBAPI_TEST_MODE'):
         tmp_file = TmpFile(name="acl.xml", clean_up=clean_up, force=True)
     else:
-        tmp_file = TmpFile(suffix=".acl", clean_up=clean_up)
+        tmp_file = TmpFile(suffix=".acl", clean_up=clean_up, base_dir=base_dir)
 
     with open(tmp_file, "w") as fout:
         fout.write("\n".join(data))

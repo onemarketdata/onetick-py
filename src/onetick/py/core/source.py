@@ -4,13 +4,12 @@ import uuid
 import warnings
 from collections import defaultdict
 from datetime import datetime, date
-import pandas as pd
 from typing import Optional, Tuple, Union
+from pathlib import Path
+
+import pandas as pd
 
 from onetick.py.otq import otq
-
-import onetick.py.functions
-import onetick.py.sources
 from onetick import py as otp
 from onetick.py import types as ott
 from onetick.py import utils, configuration
@@ -541,6 +540,50 @@ class Source:
                                          batch_size=batch_size,
                                          query_properties=query_properties)
 
+    def print_otq(self, **kwargs):
+        """
+        Generate temporary .otq file with :meth:`onetick.py.Source.to_otq` method,
+        print it to the standard output, then remove the file.
+
+        Parameters
+        ----------
+        kwargs:
+            Key-value arguments that are passed directly to :meth:`onetick.py.Source.to_otq`.
+
+        Examples
+        --------
+
+        >>> data = otp.Tick(A=1)
+        >>> data.print_otq()  # doctest: +SKIP
+        [query]
+        COMMENT =
+        CPU_NUMBER = 1
+        DB_HINT_FOR_PROCESSING_HOST =
+        NESTED_OTQS_USE_ONLY_SINKS_FOR_OUTPUT = TRUE
+        NO_COORDS = 1
+        NODE_1 = PASSTHROUGH
+        NODE_1_EP_PARAMETERS_FLAG = -2
+        NODE_1_SOURCE =  NODE_2
+        NODE_2 = TICK_GENERATOR(BUCKET_INTERVAL=0,BUCKET_TIME=BUCKET_START,FIELDS="long A=1")
+        NODE_2_EP_PARAMETERS_FLAG = -2
+        NODE_2_TICK_TYPE = DEMO_L1::ANY
+        one_to_many_symbol_mapping = 0
+        ROOT = PASSTHROUGH
+        ROOT_EP_PARAMETERS_FLAG = -2
+        ROOT_SOURCE =  NODE_1
+        SECURITY = AAPL 0
+        SHOW_TEMPLATE =
+        TYPE = GRAPH
+        ...
+        """
+        tmp_file = utils.TmpFile(clean_up=True)
+        try:
+            self.to_otq(file_name=tmp_file.path, file_suffix=None, query_name='query', **kwargs)
+            text = Path(tmp_file.path).read_text()
+            print(text)
+        finally:
+            tmp_file.do_cleanup()
+
     def _store_in_tmp_otq(self, tmp_otq, operation_suffix="tmp_query", symbols=None, start=None, end=None,
                           raw=None, add_passthrough=True, name=None, timezone=None, symbol_date=None,
                           concurrency=None, batch_size=None, query_properties=None):
@@ -646,7 +689,7 @@ class Source:
         clean_up = default
         if otp.config.otq_debug_mode:
             clean_up = False
-        base_dir = None
+        base_dir = default
         if os.getenv('OTP_WEBAPI_TEST_MODE'):
             from onetick.py.otq import _tmp_otq_path
             base_dir = _tmp_otq_path()
@@ -983,6 +1026,7 @@ class Source:
 
         .. graphviz:: ../../static/render_example.dot
         """
+        warnings.warn("Function otp.Source.render() is deprecated. Use otp.Source.render_otq() instead.", FutureWarning)
         kwargs.setdefault('verbose', True)
         self.to_graph().render(**kwargs)
 
@@ -1159,7 +1203,7 @@ class Source:
 
         return result
 
-    def deepcopy(self, ep=None, columns=None) -> 'onetick.py.Source':
+    def deepcopy(self, ep=None, columns=None) -> 'otp.Source':
         """
         Copy all graph and change ids for every node.
         More details could be found in :meth:`Source.copy`
@@ -1717,6 +1761,7 @@ class Source:
         time_filter,
         skip_bad_tick,
         character_present,
+        value_present,
         primary_exch,
         show_hidden_ticks,
     )

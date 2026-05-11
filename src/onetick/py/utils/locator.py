@@ -17,7 +17,7 @@ def get_dbs_locations_from_locator(locator):
     return map(lambda x: x.location, action.result)
 
 
-def tmp_locator(clean_up=default, empty=False):
+def tmp_locator(clean_up=default, empty=False, base_dir=default):
     import onetick.py as otp
 
     STUBS = {'COMMON'}
@@ -60,7 +60,7 @@ def tmp_locator(clean_up=default, empty=False):
     data.append("<INCLUDES>")
     data.append("</INCLUDES>")
 
-    tmp_file = new_tmp_locator(clean_up)
+    tmp_file = new_tmp_locator(clean_up, base_dir=base_dir)
 
     with open(tmp_file, "w") as fout:
         fout.write("\n".join(data))
@@ -68,11 +68,11 @@ def tmp_locator(clean_up=default, empty=False):
     return tmp_file
 
 
-def new_tmp_locator(clean_up):
+def new_tmp_locator(clean_up, base_dir=default):
     if os.getenv('OTP_WEBAPI_TEST_MODE'):
         tmp_file = TmpFile(name="locator.default", clean_up=clean_up, force=True)
     else:
-        tmp_file = TmpFile(suffix=".locator", clean_up=clean_up)
+        tmp_file = TmpFile(suffix=".locator", clean_up=clean_up, base_dir=base_dir)
     return tmp_file
 
 
