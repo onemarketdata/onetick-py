@@ -23,25 +23,6 @@ if otp.__webapi__:
                 " or unset OTP_WEBAPI to use onetick.query module instead."
             ) from e2
 
-    # copied from one_market_data/one_tick/bin/python/onetick/query/_internal_utils.py
-    def quoted(str_object):
-        if len(str_object) <= 1:
-            return str_object
-        if str_object[0] == "'" and str_object[-1] == "'" or str_object[0] == '"' and str_object[-1] == '"':
-            return str_object
-        return f"'{str_object}'"
-
-    class OT_time_nsec_mock:  # NOSONAR
-        def __init__(self, number):
-            self.number = number
-
-        def __int__(self):
-            return int(self.number / 1e9)
-
     class pyomd:
         timeval_t = datetime.datetime  # type: ignore
         QueryProperties = QueryProperties  # type: ignore # NOSONAR
-
-        @staticmethod
-        def OT_time_nsec(number):  # NOSONAR
-            return int(number / 1e9)

@@ -3,6 +3,7 @@ from typing import Optional, Literal
 from onetick.py.otq import otq
 
 from onetick.py.core.source import Source
+from onetick.py.core._source.query_parameters import QueryParameters
 
 from .. import utils
 from ..compatibility import (
@@ -46,6 +47,7 @@ class DataFile(Source):
         tick_type=utils.adaptive,
         symbols=utils.adaptive_to_default,
         schema=None,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         """
@@ -123,6 +125,9 @@ class DataFile(Source):
 
             Schema can't be automatically derived from the file, so it should be set manually
             for Python-level type checking to work.
+        query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+            Additional query properties to be set in the resulting .otq file.
+            They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
         kwargs:
             Deprecated. Use ``schema`` instead.
             Set the schema of the python :py:class:`~onetick.py.Source` object of this class.
@@ -272,7 +277,7 @@ class DataFile(Source):
 
         super().__init__(
             _symbols=symbols, _start=start, _end=end, _base_ep_func=lambda: self.base_ep(schema=schema, **kwargs),
-            schema=schema, **kwargs,
+            schema=schema, query_parameters=query_parameters, **kwargs,
         )
 
     def base_ep(self, schema=None, **kwargs):

@@ -1112,6 +1112,7 @@ def book_diff(self: 'Source', include_initial_book: bool = False, inplace=False)
 def limit(self: 'Source',
           tick_limit: int,
           tick_offset: Optional[int] = None,
+          apply_across_symbols: Optional[bool] = None,
           inplace=False) -> Optional['Source']:
     """
     Propagates ticks until the count limit is reached.
@@ -1128,6 +1129,15 @@ def limit(self: 'Source',
         The number of regular ticks to skip before starting to propagate.
         Must be a non-negative integer.
         By default no ticks are skipped.
+    apply_across_symbols: bool
+        If set to **True**, the tick limit and offset are counted across all symbols combined,
+        rather than separately for each individual symbol.
+        This parameter applies within symbols of a single database.
+
+        For unbound symbols, ticks are limited for a first symbol,
+        then for a next and so on until limit is reached.
+
+        Default: **False**
     inplace: bool
         The flag controls whether operation should be applied inplace or not.
         If ``inplace=True``, then it returns nothing. Otherwise method returns a new modified
@@ -1217,6 +1227,16 @@ def limit(self: 'Source',
                             Time  X
        0 2003-12-01 00:00:00.002  3
        1 2003-12-01 00:00:00.003  4
+
+    Using `apply_across_symbols` to limit ticks through all symbols in one database.
+
+    Assume that we have database with symbols `S1` and `S2`. And there are 5 ticks for each of them in the database.
+
+    >>> data = otp.DataSource(db='SOME_DB', tick_type='TT')  # doctest: +SKIP
+    >>> data = data.limit(7, apply_across_symbols=True)  # doctest: +SKIP
+    >>> result = otp.run(data, symbols=['S1', 'S2'])  # doctest: +SKIP
+    >>> print(', '.join(f'{len(df)} ticks for symbol {symbol}' for symbol, df in result.items()))  # doctest: +SKIP
+    5 ticks for symbol S1, 2 ticks for symbol S2
     """
     if not otp.compatibility.is_limit_ep_supported():
         raise RuntimeError('LIMIT EP isn\'t supported by the current OneTick version.')
@@ -1233,6 +1253,12 @@ def limit(self: 'Source',
             warnings.warn("Parameter 'tick_offset' is set, but is not supported on this OneTick version")
         else:
             ep_kwargs = {'tick_offset': tick_offset}
+
+    if apply_across_symbols is not None:
+        if 'apply_across_symbols' not in otq.Limit.Parameters.list_parameters():
+            raise RuntimeError('Current version of OneTick doesn\'t support parameter `apply_across_symbols`')
+
+        ep_kwargs['apply_across_symbols'] = apply_across_symbols
 
     self.sink(otq.Limit(tick_limit=tick_limit, **ep_kwargs))
     return self

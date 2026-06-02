@@ -98,6 +98,9 @@ chapters:
         - file: api/sources/order_book/root
           sections:
             - glob: api/sources/order_book/*
+        - file: api/sources/snapshot/root
+          sections:
+            - glob: api/sources/snapshot/*
     - file: api/source/root
       sections:
         - glob: api/source/*

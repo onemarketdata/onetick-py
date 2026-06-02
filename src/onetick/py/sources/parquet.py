@@ -2,6 +2,7 @@ import onetick.py as otp
 from onetick.py.otq import otq
 
 from onetick.py.core.source import Source
+from onetick.py.core._source.query_parameters import QueryParameters
 
 from .. import utils
 
@@ -23,6 +24,7 @@ class ReadParquet(Source):
         start=utils.adaptive,
         end=utils.adaptive,
         schema=None,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         """
@@ -62,6 +64,9 @@ class ReadParquet(Source):
             Dictionary of columns names with their types.
             You should set schema manually, if you want to use fields in `onetick-py` query description
             before its execution.
+        query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+            Additional query properties to be set in the resulting .otq file.
+            They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
         kwargs:
             Deprecated. Use ``schema`` instead.
             Dictionary of columns names with their types.
@@ -128,6 +133,7 @@ class ReadParquet(Source):
                 symbol_name_field=symbol_name_field,
             ),
             schema=schema,
+            query_parameters=query_parameters,
             **kwargs,
         )
 

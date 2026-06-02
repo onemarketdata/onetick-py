@@ -14,6 +14,7 @@ from onetick.py import utils, configuration
 from onetick.py.core.column_operations.base import _Operation
 from onetick.py.types import datetime2timeval, datetime2expr
 from onetick.py.core.source import _is_dict_required
+from onetick.py.core.eval_query import _QueryEvalWrapper
 from onetick.py.compatibility import (
     has_max_expected_ticks_per_symbol,
     has_password_param,
@@ -29,8 +30,8 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
                      otq.ChainQuery, otq.Chainlet, otq.SqlQuery, otp.SqlQuery],
         *,
         symbols: Union[List[Union[str, otq.Symbol]], otp.Source, str, None] = None,
-        start: Union[datetime.datetime, otp.datetime, pyomd.timeval_t, None] = utils.adaptive,  # type: ignore
-        end: Union[datetime.datetime, otp.datetime, pyomd.timeval_t, None] = utils.adaptive,  # type: ignore
+        start: Union[datetime.datetime, otp.datetime, type[utils.adaptive], None] = utils.adaptive,
+        end: Union[datetime.datetime, otp.datetime, type[utils.adaptive], None] = utils.adaptive,
         date: Union[datetime.date, otp.date, None] = None,
         start_time_expression: Optional[str] = None,
         end_time_expression: Optional[str] = None,
@@ -41,7 +42,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         password: Optional[str] = None,
         batch_size: Union[int, Type[utils.default], None] = utils.default,
         running: Optional[bool] = False,
-        query_properties: Optional[pyomd.QueryProperties] = None,  # type: ignore
+        query_properties: Optional[dict] = None,
         concurrency: Union[int, Type[utils.default], None] = utils.default,
         apply_times_daily: Optional[int] = None,
         symbol_date: Union[datetime.datetime, int, str, None] = None,
@@ -78,20 +79,19 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         ``query`` can also be a function that has a symbol object as the first parameter.
         This object can be used to get symbol name and symbol parameters.
         Function must return a :py:class:`Source <onetick.py.Source>`.
-    symbols: str, list of str, list of otq.Symbol, :py:class:`onetick.py.Source`, :pandas:`pandas.DataFrame`, optional
+    symbols: str, list of str, list of otq.Symbol, :py:class:`onetick.py.Source`, :pandas:`pandas.DataFrame`,\
+             :func:`otp.eval <onetick.py.eval>`, optional
         Symbol(s) to run the query for passed as a string, a list of strings,
         a :pandas:`pandas.DataFrame` with the ``SYMBOL_NAME`` column,
         or as a "symbols" query which results include the ``SYMBOL_NAME`` column.
         The start/end times for the symbols query will taken from the params below.
         See :ref:`symbols <static/concepts/symbols:Symbols: bound and unbound>` for more details.
-    start: :py:class:`datetime.datetime`, :py:class:`otp.datetime <onetick.py.datetime>`,\
-            :py:class:`pyomd.timeval_t`, optional
+    start: :py:class:`datetime.datetime`, :py:class:`otp.datetime <onetick.py.datetime>`, optional
         The start time of the query. Can be timezone-naive or timezone-aware. See also ``timezone`` argument.
         onetick.py uses :py:attr:`otp.config.default_start_time<onetick.py.configuration.Config.default_start_time>`
         as default value, if you don't want to specify start time, e.g. to use saved time of the query,
         then you should specify None value.
-    end: :py:class:`datetime.datetime`, :py:class:`otp.datetime <onetick.py.datetime>`,\
-          :py:class:`pyomd.timeval_t`, optional
+    end: :py:class:`datetime.datetime`, :py:class:`otp.datetime <onetick.py.datetime>`, optional
         The end time of the query (note that it's non-inclusive).
         Can be timezone-naive or timezone-aware. See also ``timezone`` argument.
         onetick.py uses :py:attr:`otp.config.default_end_time<onetick.py.configuration.Config.default_end_time>`
@@ -115,7 +115,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         Allows specification of different contexts from OneTick configuration to connect to.
         If not set then default :py:attr:`otp.config.context<onetick.py.configuration.Config.context>` is used.
         See :ref:`guide about switching contexts <switching contexts>` for examples.
-    username
+    username:
         The username to make the connection.
         By default the user which executed the process is used or the value specified in
         :py:attr:`otp.config.default_username<onetick.py.configuration.Config.default_username>`.
@@ -140,8 +140,8 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
     running: bool, optional
         Set to True for CEP (Complex Event Processing) real-time streaming queries.
         Default is False.
-    query_properties: :py:class:`pyomd.QueryProperties` or dict, optional
-       Query properties, such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc
+    query_properties: dict, optional
+       Query properties, such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
     concurrency: int, optional
         The maximum number of CPU cores to use to process the query.
         By default, the value from
@@ -519,9 +519,9 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
 
     if batch_size is utils.default:
         batch_size = configuration.config.default_batch_size
+
     if query_properties is None:
         query_properties = pyomd.QueryProperties()
-
     if isinstance(query_properties, dict):
         qp_dict = query_properties
         query_properties = utils.query_properties_from_dict(qp_dict)
@@ -533,7 +533,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
 
     if 'FT_PROPERTIES' not in qp_dict:
         if otp.config.min_same_host_retry_interval_sec is not None:
-            query_properties.set_property_value(
+            query_properties.set_property_value(  # type: ignore[union-attr]
                 'FT_PROPERTIES', f'min_same_host_retry_interval_sec={otp.config.min_same_host_retry_interval_sec}'
             )
 
@@ -642,19 +642,19 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
     require_dict = require_dict or _is_dict_required(symbols)
 
     # converting symbols properly
-    if isinstance(symbols, otp.Source):
-        # check if SYMBOL_NAME is in schema, or if schema contains only one field
-        if ('SYMBOL_NAME' not in symbols.columns(skip_meta_fields=True).keys()) and \
-                len(symbols.columns(skip_meta_fields=True)) != 1:
-            warnings.warn('Using as a symbol list a source without "SYMBOL_NAME" field '
-                          'and with more than one field! This won\'t work unless the schema is incomplete')
+    if isinstance(symbols, (otp.Source, _QueryEvalWrapper)):
+        if isinstance(symbols, otp.Source):
+            # check if SYMBOL_NAME is in schema, or if schema contains only one field
+            if ('SYMBOL_NAME' not in symbols.schema) and len(symbols.schema) != 1:
+                warnings.warn('Using as a symbol list a source without "SYMBOL_NAME" field '
+                              'and with more than one field! This won\'t work unless the schema is incomplete')
 
         symbols = otp.Source._convert_symbol_to_string(
             symbol=symbols,
             tmp_otq=query._tmp_otq if isinstance(query, otp.Source) else None,
             start=start,
             end=end,
-            timezone=timezone
+            timezone=timezone,
         )
     if isinstance(symbols, str):
         symbols = [symbols]

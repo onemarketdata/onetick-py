@@ -6,9 +6,9 @@ from .configuration import config
 
 
 # dictionary to save traceback lines
-_TRACE_LINES = {}
+_TRACE_LINES: dict[str, str] = {}
 # dictionary to save traceback tuples
-_TRACE_TUPLES = {}
+_TRACE_TUPLES: dict[str, tuple] = {}
 
 
 def _get_id_with_traceback(tb_list: List[str]) -> str:

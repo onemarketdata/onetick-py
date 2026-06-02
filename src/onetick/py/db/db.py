@@ -48,13 +48,13 @@ def _tick_type_detector(tick_type, obj):
 
 def write_to_db(src: 'otp.Source',
                 dest: Union[str, 'otp.DB'],
-                date: dt.date,
+                date: otp.date,
                 symbol: Union[str, 'otp.Column'],
                 tick_type: Union[str, 'otp.Column'],
                 timezone: Optional[str] = None,
                 execute: bool = True,
-                start: Optional[dt.date] = None,
-                end: Optional[dt.date] = None,
+                start: Optional[otp.date] = None,
+                end: Optional[otp.date] = None,
                 propagate: bool = False,
                 append: bool = True,
                 **kwargs):
@@ -69,14 +69,14 @@ def write_to_db(src: 'otp.Source',
         source that will be written to the database.
     dest: str or :py:class:`otp.DB <onetick.py.DB>`
         database name or object.
-    date: datetime or None
+    date: :py:class:`otp.datetime <onetick.py.datetime>` or None
         date where to save data.
         Cannot be used together with `start` and `end` parameters.
-    start: datetime or None
+    start: :py:class:`otp.datetime <onetick.py.datetime>` or None
         start date of period where to save data.
         Cannot be used together with `date` parameters.
         Default is None.
-    end: datetime or None
+    end: :py:class:`otp.datetime <onetick.py.datetime>` or None
         end date of period where to save data.
         Cannot be used together with `date` parameters.
         Default is None.

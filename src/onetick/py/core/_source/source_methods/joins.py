@@ -7,6 +7,7 @@ from onetick import py as otp
 from onetick.py import types as ott
 from onetick.py.core._internal._state_objects import _TickSequence
 from onetick.py.core._source._symbol_param import _SymbolParamSource
+from onetick.py.core._source.query_parameters import QueryParameters
 from onetick.py.core.column_operations._methods.op_types import are_strings
 from onetick.py.core.column_operations.base import _Operation
 from onetick.py.core.eval_query import prepare_params
@@ -911,23 +912,19 @@ def join_with_query(
     columns.update(self._get_columns_with_prefix(sub_source, prefix))
     columns.update(self.columns(skip_meta_fields=True))
 
-    otq_properties = {}
     if concurrency is not None:
         if not isinstance(concurrency, int) or concurrency <= 0:
             raise ValueError(f"Parameter 'concurrency' should be a positive integer, got {concurrency}")
-        otq_properties['concurrency'] = concurrency
 
     if batch_size is not None:
         if not isinstance(batch_size, int) or batch_size < 0:
             raise ValueError(f"Parameter 'batch_size' should be a non-negative integer, got {batch_size}")
-        otq_properties['batch_size'] = batch_size
 
     res = self.copy(columns=columns)
 
-    res._merge_tmp_otq(sub_source)
     query_name = sub_source._store_in_tmp_otq(
         res._tmp_otq, symbols='_NON_EXISTING_SYMBOL_', operation_suffix="join_with_query",
-        **otq_properties,
+        query_parameters=QueryParameters(concurrency=concurrency, batch_size=batch_size),
     )  # TODO: combine with _convert_symbol_to_string
     # ------------------------------------ #
 
@@ -1144,7 +1141,7 @@ def point_in_time(
             operation_suffix='point_in_time',
             # set default symbol, even if it's not set by user, symbol's value doesn't matter in this case
             symbols=otp.config.get('default_symbol', 'ANY'),
-            symbol_date=symbol_date,
+            query_parameters=QueryParameters(symbol_date=symbol_date),
         )
         otq_query = f'THIS::{query_name}'
 

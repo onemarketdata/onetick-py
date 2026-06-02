@@ -10,6 +10,34 @@
 
 ### Removed
 
+## [1.197.0] - 2026-06-02
+
+### Added
+
+- Add support of FSQ for CEP queries
+- Added parameter `apply_across_symbols` to `otp.Source.limit`
+- Added `otp.ReadFromKdb`
+- Add `otp.QueryParameters`
+- Add parameter `query_parameters` for all `otp.Source` classes
+- Add `otp.get_query_property`
+- Add parameter `continuous` to `otp.eval`
+- Support `otp.eval` in parameter `symbols` in `otp.run`
+
+### Changed
+
+- Changed `onetick-py` installation documentation
+- Update `mypy>=2.0.0`
+- Update WebAPI testing version to 20260216-2
+
+### Fixed
+
+- Fixed `otp.Source.sink` documentation
+- Removed unnecessary presort and merge in otp.DataSource for some cases
+
+### Removed
+
+- Remove parameter `raw` from `otp.Source.to_otq` function
+
 ## [1.196.0] - 2026-05-11
 
 ### Added
@@ -19,6 +47,7 @@
   in `otp.Source.process_by_group`
 - Add parameter `preserve_decimal_flag` to `otp.run`
 - Added `otp.Source.print_otq()` function
+- Added parameter `apply_across_symbols` to `otp.Source.limit`
 
 ### Changed
 

@@ -7,6 +7,7 @@ from datetime import datetime, date
 from onetick.py import utils
 from onetick.py.configuration import config
 from onetick.py.log import get_debug_logger
+from .query_parameters import _ExtendedQueryParameters
 
 
 def is_datetime_type(dt):
@@ -61,19 +62,9 @@ class TmpOtq:
     name_generator = __iter_str()
 
     def __init__(self):
-        self.queries = {}
+        self.queries: dict[str, tuple] = {}
 
-    def __check_params(self, params):
-        supported_query_parameters = (
-            'running_query_flag', 'symbol_date', 'concurrency', 'batch_size', 'query_properties',
-        )
-        for param in params:
-            if param not in supported_query_parameters:
-                raise ValueError(
-                    f"Query parameter '{param}' is not one of the supported parameters: {supported_query_parameters}"
-                )
-
-    def add_query(self, query, suffix="", name=None, params=None):
+    def add_query(self, query, suffix="", name=None, query_parameters: _ExtendedQueryParameters = None):
         """
         Adds query with a unique generated name to the storage.
 
@@ -86,12 +77,8 @@ class TmpOtq:
         name: str, optional
             If specified, this ``name`` will be used to save query
             and ``suffix`` parameter will be ignored.
-        params: dict, optional
+        query_parameters: _ExtendedQueryParameters
             Can specify additional parameters with which this query will be saved to file.
-            Currently, only "running_query_flag" and "symbol_date" are supported
-
-            You can also specify query properties, such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.,
-            through `query_properties` parameter with `dict` or :py:class:`pyomd.QueryProperties` value.
 
         Returns
         -------
@@ -100,14 +87,11 @@ class TmpOtq:
         name = name or self.name_generator.get_str() + suffix
         if name in self.queries:
             raise ValueError(f"There is already a query with name '{name}' in {self.__class__.__name__} storage")
-        if params is None:
-            params = {}
-        self.__check_params(params)
-
-        self.queries[name] = (query, params)
+        query_parameters = query_parameters or _ExtendedQueryParameters()
+        self.queries[name] = (query, query_parameters)
         return name
 
-    def merge(self, tmp_otq):
+    def merge(self, tmp_otq: 'TmpOtq'):
         """
         Adds queries from the tmp_otq storage to the current storage.
         As query names are guaranteed to be unique session-wide, no check for collision is necessary.
@@ -126,18 +110,15 @@ class TmpOtq:
     def _get_symbol_dates(self) -> list[str]:
         # check if any of the saved queries have symbol date set and return them (as strings in %Y%m%d format)
         return [
-            utils.symbol_date_to_str(query_params['symbol_date'])
+            utils.symbol_date_to_str(query_params.symbol_date)
             for _, query_params in self.queries.values()
-            if 'symbol_date' in query_params
         ]
 
-    def save_to_file(self, query=None, query_name="main_query", file_path=None, file_suffix="",
-                     start=None, end=None, start_time_expression=None, end_time_expression=None, timezone=None,
-                     running_query_flag=None,
-                     symbol_date=None,
-                     concurrency=None,
-                     batch_size=None,
-                     query_properties=None):
+    def save_to_file(
+        self, query=None, query_name="main_query", file_path=None, file_suffix="",
+        query_parameters: _ExtendedQueryParameters = None,
+        default_query_parameters: _ExtendedQueryParameters = None,
+    ):
         """
         Saves all queries from the query dict and one more query (if passed);
         returns absolute path to passed query in file (if passed) or path of resulted file
@@ -154,30 +135,10 @@ class TmpOtq:
             Path to the file where all queries will be saved. If None, a TmpFile will be created
         file_suffix: str
             Only used if file_path is None. A suffix that is added to the name of a generated file.
-        start: :py:class:`otp.datetime <onetick.py.datetime>`
-            start time for the resulting .otq file
-        end: :py:class:`otp.datetime <onetick.py.datetime>`
-            end time for the resulting .otq file
-        start_time_expression: str or None
-            start time expression for the resulting .otq file
-        end_time_expression: str or None
-            end time expression for the resulting .otq file
-        timezone: str
-            timezone for the resulting .otq file
-        running_query_flag:
+        query_parameters: _ExtendedQueryParameters
             Will be applied only to the query specified in the ``query`` parameter.
-        symbol_date: :py:class:`otp.datetime <onetick.py.datetime>` or :py:class:`datetime.datetime` or int
-            Symbol date for the query or integer in the YYYYMMDD format.
-            Will be applied only to the query specified in the ``query`` parameter.
-        concurrency: int
-            Concurrency set for the query.
-            Will be applied only to the query specified in the ``query`` parameter.
-        batch_size: int
-            Batch size set for the query.
-            Will be applied only to the query specified in the ``query`` parameter.
-        query_properties: :py:class:`pyomd.QueryProperties` or dict, optional
-            Query properties, such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
-            Query properties will be saved only for main query. If other queries
+        default_query_parameters: _ExtendedQueryParameters
+            Will be applied to all queries in the storage, but the values from ``query_parameters`` take precedence.
 
         Returns
         -------
@@ -202,70 +163,64 @@ class TmpOtq:
         if query is not None:
             if query_name in self.queries.keys():
                 query_name = self.name_generator.get_str() + "_" + query_name
-            query_params = {}
-            if running_query_flag:
-                query_params['running_query_flag'] = running_query_flag
-            if symbol_date is not None:
-                query_params['symbol_date'] = symbol_date
-            if concurrency is not None:
-                query_params['concurrency'] = concurrency
-            if batch_size is not None:
-                query_params['batch_size'] = batch_size
-            queries_dict[query_name] = (query, query_params)
 
-        # defining file-wise start/end times and time expressions
+            query_parameters = query_parameters or _ExtendedQueryParameters()
+            queries_dict[query_name] = (query, query_parameters)
 
-        # timezone definitions
-        # in onetick and in dateutil can differ (e.g. "GMT-10" is +10:00 offset in onetick and -10:00 offset
-        # in dateutil), therefore we always use time expressions to force onetick to make time conversions by itself
-        # TODO: create a BDS ticket for the onetick team to fix it somehow
-        if is_datetime_type(start):
-            if not start_time_expression:
-                start_time_expression = datetime2expr(start)
-            start = None
-        if is_datetime_type(end):
-            if not end_time_expression:
-                end_time_expression = datetime2expr(end)
-            end = None
+        default_query_parameters = default_query_parameters or _ExtendedQueryParameters()
 
-        if query_properties and isinstance(query_properties, dict):
-            query_properties = utils.query_properties_from_dict(query_properties)
+        def time_interval_fix(qp: _ExtendedQueryParameters):
+            # timezone definitions
+            # in onetick and in dateutil can differ (e.g. "GMT-10" is +10:00 offset in onetick and -10:00 offset
+            # in dateutil), therefore we always use time expressions to force onetick to make time conversions by itself
+            # TODO: create a BDS ticket for the onetick team to fix it somehow
+            if is_datetime_type(qp.start):
+                if not qp.start_time_expression:
+                    qp.start_time_expression = datetime2expr(qp.start)
+                qp.start = None
+            if is_datetime_type(qp.end):
+                if not qp.end_time_expression:
+                    qp.end_time_expression = datetime2expr(qp.end)
+                qp.end = None
+
 
         # constructing a list of otq.Query objects, which will hold graphs, names, start/end times etc.
         query_list = []
         for stored_query_name, stored_query_tuple in queries_dict.items():
             stored_query = otq.Query(stored_query_tuple[0])
-            stored_query_params = stored_query_tuple[1]
-            if timezone:
-                stored_query.set_timezone(timezone)
-            stored_query.set_symbols(stored_query_tuple[0].symbols())
+            stored_query_params: _ExtendedQueryParameters = stored_query_tuple[1]
+            # default_query_parameters are overriden with specific values for each query
+            stored_query_params = default_query_parameters.merge(stored_query_params)
+
+            time_interval_fix(stored_query_params)
+
+            if stored_query_params.timezone is not None:
+                stored_query.set_timezone(stored_query_params.timezone)
+            if stored_query_params.symbols is not None:
+                stored_query.set_symbols(stored_query_params.symbols)
             stored_query.set_query_name(stored_query_name)
-            stored_query.set_start_time(start)
-            stored_query.set_end_time(end)
-            if 'running_query_flag' in stored_query_params.keys():
-                stored_query.set_running_query_flag(stored_query_params['running_query_flag'])
-            if start_time_expression:
-                stored_query.set_start_time_expression(start_time_expression)
-            if end_time_expression:
-                stored_query.set_end_time_expression(end_time_expression)
-            if 'symbol_date' in stored_query_params.keys():
-                stored_symbol_date = stored_query_params['symbol_date']
-                if stored_symbol_date is not None:
-                    stored_symbol_date = int(utils.symbol_date_to_str(stored_symbol_date))
-                    stored_query.set_symbol_date(stored_symbol_date)
-            if stored_query_params.get('concurrency') is not None:
-                stored_query.set_max_concurrency(stored_query_params['concurrency'])
-            if stored_query_params.get('batch_size') is not None:
-                stored_query.set_batch_size(stored_query_params['batch_size'])
+            if stored_query_params.start is not None:
+                stored_query.set_start_time(stored_query_params.start)
+            if stored_query_params.end is not None:
+                stored_query.set_end_time(stored_query_params.end)
+            if stored_query_params.start_time_expression:
+                stored_query.set_start_time_expression(stored_query_params.start_time_expression)
+            if stored_query_params.end_time_expression:
+                stored_query.set_end_time_expression(stored_query_params.end_time_expression)
 
-            if stored_query_name == query_name and query_properties:
-                stored_query.set_query_properties(query_properties)
-            elif stored_query_params.get('query_properties'):
-                current_query_properties = stored_query_params['query_properties']
-                if isinstance(current_query_properties, dict):
-                    current_query_properties = utils.query_properties_from_dict(current_query_properties)
-
-                stored_query.set_query_properties(current_query_properties)
+            if stored_query_params.running is not None:
+                stored_query.set_running_query_flag(stored_query_params.running)
+            if stored_query_params.symbol_date is not None:
+                stored_symbol_date = int(utils.symbol_date_to_str(stored_query_params.symbol_date))
+                stored_query.set_symbol_date(stored_symbol_date)
+            if stored_query_params.concurrency is not None:
+                stored_query.set_max_concurrency(stored_query_params.concurrency)
+            if stored_query_params.batch_size is not None:
+                stored_query.set_batch_size(stored_query_params.batch_size)
+            if stored_query_params.query_properties is not None:
+                stored_query.set_query_properties(
+                    utils.query_properties_from_dict(stored_query_params.query_properties)
+                )
 
             query_list.append(stored_query)
 

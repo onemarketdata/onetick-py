@@ -1,6 +1,6 @@
 from onetick.py.compatibility import is_sha2_hashing_supported
 from onetick.py.core.column_operations.base import _Operation
-from onetick.py.types import value2str, string
+from onetick.py.types import value2str, string, varstring
 
 
 def bit_and(value1, value2):
@@ -467,4 +467,46 @@ def get_username():
     """
     return _Operation(
         op_func=lambda: ('FORMATMESSAGE("%1% (%2%)", GETUSER(), GET_AUTHENTICATED_USERNAME())', str),
+    )
+
+
+def get_query_property(name: str, show_values_set_via_dedicated_setters: bool = None, dtype=varstring):
+    """
+    Returns the value for the specified OneTick query property.
+
+    Parameters
+    ----------
+    show_values_set_via_dedicated_setters: bool
+
+        If set to True,
+        the values of query properties with dedicated setters, e.g. *batch_size* and *concurrency*,
+        will be shown regardless of how the values of those properies were set,
+        even if they were not set at all (in this case, their default values will be shown).
+
+        If set to False (default), if a value of a query property was not set, an empty string will be returned.
+    dtype:
+        The OneTick type of the returned expression.
+
+    Returns
+    -------
+    :py:class:`~onetick.py.Operation`
+
+    Examples
+    --------
+    >>> t = otp.Tick(ALLOW_GRAPH_REUSE=otp.get_query_property('ALLOW_GRAPH_REUSE'))
+    >>> otp.run(t, query_properties={'ALLOW_GRAPH_REUSE': 'TRUE'})
+            Time  ALLOW_GRAPH_REUSE
+    0 2003-12-01               TRUE
+    """
+    def op_func(name, show_values_set_via_dedicated_setters):
+        params = [value2str(name)]
+        if show_values_set_via_dedicated_setters is not None:
+            params.append(value2str(show_values_set_via_dedicated_setters))
+        params_str = ','.join(params)
+        return f'GET_QUERY_PROPERTY({params_str})', dtype
+
+    return _Operation(
+        op_func=op_func,
+        op_params=[name, show_values_set_via_dedicated_setters],
+        dtype=dtype,
     )

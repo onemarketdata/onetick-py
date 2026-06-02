@@ -2,7 +2,7 @@ import datetime as dt
 import inspect
 import warnings
 
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, Optional, Sequence
 
 import onetick.py as otp
 from onetick.py.otq import otq
@@ -10,6 +10,7 @@ from onetick.py.otq import otq
 from onetick.py.db import _inspection
 from onetick.py.core._source._symbol_param import _SymbolParamColumn
 from onetick.py.core._source.tmp_otq import TmpOtq
+from onetick.py.core._source.query_parameters import QueryParameters
 from onetick.py.core.eval_query import _QueryEvalWrapper
 from onetick.py.core.source import Source
 from onetick.py.core.column_operations.base import Raw, OnetickParameter
@@ -343,6 +344,15 @@ _symbol_date_doc = param_doc(
     str_annotation=':py:class:`otp.datetime <onetick.py.datetime>` or :py:class:`datetime.datetime` or int',
     default=None,
 )
+_query_parameters_doc = param_doc(
+    name='query_parameters',
+    desc="""
+    Additional query properties to be set in the resulting .otq file.
+    They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
+    """,
+    str_annotation=':py:class:`otp.QueryParameters <onetick.py.QueryParameters>`',
+    default=None,
+)
 
 DATA_SOURCE_DOC_PARAMS = [
     _db_doc, _symbol_doc, _tick_type_doc,
@@ -356,6 +366,7 @@ DATA_SOURCE_DOC_PARAMS = [
     _presort_doc, _batch_size_doc, _concurrency_doc,
     _schema_doc,
     _symbol_date_doc,
+    _query_parameters_doc,
     _desired_schema_doc,
 ]
 
@@ -639,6 +650,7 @@ class DataSource(Source):
         batch_size=None,
         concurrency=utils.default,
         symbol_date=None,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         """
@@ -1124,6 +1136,7 @@ class DataSource(Source):
                     symbol_date=symbol_date,
                 ),
                 schema=schema,
+                query_parameters=query_parameters,
             )
         else:
             super().__init__(
@@ -1140,6 +1153,7 @@ class DataSource(Source):
                     where_clause_for_back_ticks=where_clause_for_back_ticks,
                 ),
                 schema=schema,
+                query_parameters=query_parameters,
             )
 
     @property
@@ -1248,9 +1262,16 @@ class DataSource(Source):
         src = self._create_source(otq.Passthrough(**kwargs),
                                   back_to_first_tick=back_to_first_tick,
                                   keep_first_tick_timestamp=keep_first_tick_timestamp)
-        if presort is utils.adaptive:
+
+        # any type of value, which lead to this branch, except arrays with less than 2 elements
+        is_multi_symbol_source = not (isinstance(symbol, Sequence) and not isinstance(symbol, str) and len(symbol) <= 1)
+
+        # if batch_size or concurrency are set or possible multiple symbols passed
+        if presort is utils.adaptive and (
+            batch_size is not None or concurrency is not utils.default or is_multi_symbol_source
+        ):
             presort = True
-        if presort:
+        if presort is True:
             if batch_size is None:
                 batch_size = otp.config.default_batch_size
             if concurrency is utils.default:
@@ -1263,9 +1284,13 @@ class DataSource(Source):
                 otq.Presort(batch_size=batch_size, max_concurrency=concurrency).symbols(symbol).tick_type(tick_type)
             )
             src.sink(otq.Merge(identify_input_ts=identify_input_ts))
-        else:
+        elif identify_input_ts:
             src.sink(
                 otq.Merge(identify_input_ts=identify_input_ts).symbols(symbol).tick_type(tick_type)
+            )
+        else:
+            src.sink(
+                otq.Passthrough().symbols(symbol).tick_type(tick_type)
             )
 
         src._tmp_otq.merge(tmp_otq)

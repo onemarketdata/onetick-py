@@ -2,6 +2,7 @@ from typing import List, Union, Literal
 
 import onetick.py as otp
 from onetick.py.core.source import Source
+from onetick.py.core._source.query_parameters import QueryParameters
 from onetick.py.otq import otq
 
 from .. import types as ott
@@ -20,6 +21,7 @@ def PointInTime(  # NOSONAR
     symbol=utils.adaptive_to_default,
     start=utils.adaptive,
     end=utils.adaptive,
+    query_parameters: QueryParameters = None,
 ) -> 'Source':
     """
     This function propagates ticks from ``source`` that are offset by
@@ -69,6 +71,9 @@ def PointInTime(  # NOSONAR
     end:
         Can be used to specify custom start time for this source.
         By default end time of the query will be inherited when running the query.
+    query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+        Additional query properties to be set in the resulting .otq file.
+        They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
 
     See also
     --------
@@ -151,7 +156,7 @@ def PointInTime(  # NOSONAR
     if not is_supported_point_in_time():
         raise RuntimeError('PointInTime event processor is not supported on this OneTick version')
 
-    res = otp.Source(_symbols=symbol, _start=start, _end=end)
+    res = otp.Source(_symbols=symbol, _start=start, _end=end, query_parameters=query_parameters)
 
     times = [
         t if isinstance(t, str) else ott._format_datetime(t, '%Y%m%d%H%M%S.%f', add_nano_suffix=True)

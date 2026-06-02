@@ -3,6 +3,7 @@ from onetick.py.otq import otq
 
 import onetick.py.db._inspection
 from onetick.py.core.source import Source
+from onetick.py.core._source.query_parameters import QueryParameters
 
 from .. import utils, configuration
 
@@ -26,6 +27,9 @@ class Empty(Source):
         Time interval from which the data should be taken.
     schema: dict
         Schema to use in case db and/or tick_type are not set.
+    query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+        Additional query properties to be set in the resulting .otq file.
+        They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
     kwargs:
         Deprecated. Use ``schema`` instead.
         Schema to use in case db and/or tick_type are not set.
@@ -57,6 +61,7 @@ class Empty(Source):
         start=utils.adaptive,
         end=utils.adaptive,
         schema=None,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         if self._try_default_constructor(schema=schema, **kwargs):
@@ -82,6 +87,7 @@ class Empty(Source):
 
         super().__init__(
             _symbols=symbol, _start=start, _end=end, _base_ep_func=lambda: self.base_ep(db), schema=columns,
+            query_parameters=query_parameters,
         )
 
     def base_ep(self, db):

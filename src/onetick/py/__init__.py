@@ -193,7 +193,7 @@ from onetick.py.sources import (Tick, TTicks, Ticks, Orders, Trades, NBBO, Quote
                                 ObSnapshot, ObSnapshotWide, ObSnapshotFlat, ObSummary, ObSize, ObVwap, ObNumLevels,
                                 by_symbol, ODBC, SplitQueryOutputBySymbol, DataFile, PointInTime, RefData,
                                 ReadSnapshot, ShowSnapshotList, FindSnapshotSymbols,
-                                ReadFromDataFrame, LoadTicksFromDataFrame)
+                                ReadFromDataFrame, LoadTicksFromDataFrame, ReadFromKdb)
 from onetick.py.utils import adaptive, range, perf
 from onetick.py.session import Session, TestSession, Config, Locator, HTTPSession
 from onetick.py.servers import RemoteTS, LoadBalancing, FaultTolerance
@@ -223,10 +223,12 @@ from onetick.py.misc import (
     get_symbology_mapping,
     get_onetick_version,
     get_username,
+    get_query_property,
 )
 from onetick.py.core.column import Column
 from onetick.py.core.column_operations.base import Operation, Expr as expr, Raw as raw, OnetickParameter as param
 from onetick.py.core.per_tick_script import remote, Once, once, logf, throw_exception
+from onetick.py.core._source.query_parameters import QueryParameters
 from onetick.py.configuration import config
 from onetick.py import oqd
 from onetick.py.otq import otli

@@ -4,6 +4,7 @@ import onetick.py as otp
 from onetick.py.otq import otq
 
 from onetick.py.core.source import Source
+from onetick.py.core._source.query_parameters import QueryParameters
 from onetick.py.core.column_operations.base import OnetickParameter
 
 from .. import types as ott
@@ -23,6 +24,7 @@ class SymbologyMapping(Source):
         end=utils.adaptive,
         symbols=utils.adaptive,
         schema=None,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         """
@@ -54,6 +56,9 @@ class SymbologyMapping(Source):
         symbols:
             Symbol(s) from which data should be taken.
             If set, will override the value specified in :py:func:`otp.run <onetick.py.run>`.
+        query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+            Additional query properties to be set in the resulting .otq file.
+            They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
 
         Examples
         --------
@@ -107,6 +112,7 @@ class SymbologyMapping(Source):
             _end=end,
             _base_ep_func=lambda: self.base_ep(dest_symbology, tick_type),
             schema=schema,
+            query_parameters=query_parameters,
             **kwargs,
         )
 

@@ -2,6 +2,7 @@ from onetick.py.otq import otq
 
 from onetick.py import types as ott
 from onetick.py.core.source import Source
+from onetick.py.core._source.query_parameters import QueryParameters
 
 from .. import utils
 
@@ -16,6 +17,7 @@ class RefData(Source):
         db=utils.adaptive_to_default,
         start=utils.adaptive,
         end=utils.adaptive,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         """
@@ -52,6 +54,9 @@ class RefData(Source):
             Start time for tick generation. By default the start time of the query will be used.
         end: :py:class:`otp.datetime <onetick.py.datetime>`
             End time for tick generation. By default the end time of the query will be used.
+        query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+            Additional query properties to be set in the resulting .otq file.
+            They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
 
         See also
         --------
@@ -60,23 +65,35 @@ class RefData(Source):
         Examples
         --------
 
-        Show calendars for a database TRAIN_A_PRL_TRD in the given range:
+        Show calendars for a database US_COMP_SAMPLE:
 
-        >>> src = otp.RefData(
-        ...     'all_calendars',
-        ...     db='TRAIN_A_PRL_TRD',
-        ...     start=otp.dt(2018, 2, 1),
-        ...     end=otp.dt(2018, 2, 9),
-        ... )  # doctest: +SKIP
-        >>> otp.run(src, symbol_date=otp.dt(2018, 2, 1))  # doctest: +SKIP
-                         Time        END_DATETIME CALENDAR_NAME SESSION_NAME SESSION_FLAGS DAY_PATTERN  START_HHMMSS\
-          END_HHMMSS TIMEZONE  PRIORITY DESCRIPTION
-        0 2018-02-01 00:00:00 2018-02-06 23:59:59          FRED      Regular             R   0.0.12345         93000\
-              160000  EST5EDT         0
-        1 2018-02-06 23:59:59 2018-02-07 23:59:59          FRED      Holiday             H   0.0.12345         93000\
-              160000  EST5EDT         1
-        2 2018-02-07 23:59:59 2050-12-31 23:59:59          FRED      Regular             F   0.0.12345         93000\
-              160000  EST5EDT         0
+        >>> src = otp.RefData('all_calendars')  # doctest: +SKIP
+        >>> otp.run(src, symbols='US_COMP_SAMPLE::AAPL',
+        ...         date=otp.dt(2024, 2, 1), symbol_date=otp.dt(2024, 2, 1), timezone='EST5EDT')  # doctest: +SKIP
+                 Time END_DATETIME       CALENDAR_NAME SESSION_NAME SESSION_FLAGS DAY_PATTERN \
+                    START_HHMMSS  END_HHMMSS          TIMEZONE  PRIORITY                    DESCRIPTION
+        0  2024-02-01   2024-03-29  BBG_EQUITY_EXCH_US     DAY_TYPE             R   0.0.12345 \
+                               0      240000  America/New_York         0                    @US_DEFAULT
+        1  2024-02-01   2024-03-29  BBG_EQUITY_EXCH_US   PRE_MARKET             b   0.0.12345 \
+                           40000       93000  America/New_York         0                    @US_DEFAULT
+        2  2024-02-01   2024-03-29  BBG_EQUITY_EXCH_US       MARKET             r   0.0.12345 \
+                           93000      160000  America/New_York         0                    @US_DEFAULT
+        3  2024-02-01   2024-03-29  BBG_EQUITY_EXCH_US  POST_MARKET             a   0.0.12345 \
+                          160000      200000  America/New_York         0                    @US_DEFAULT
+        4  2024-02-01   2024-03-29  BBG_EQUITY_EXCH_US      HOLIDAY             H       1.3.1 \
+                               0      240000  America/New_York         1  MARTIN_LUTHER_KING@US_DEFAULT
+        ..        ...          ...                 ...          ...           ...         ... \
+                             ...         ...               ...       ...                            ...
+        85 2024-02-01   2024-03-29     CLOUD_DB_US_OTC      HOLIDAY             H       1.3.1 \
+                               0      240000  America/New_York         1  MARTIN_LUTHER_KING@US_DEFAULT
+        86 2024-02-01   2024-03-29     CLOUD_DB_US_OTC      HOLIDAY             H       2.3.1 \
+                               0      240000  America/New_York         1      PRESIDENTS_DAY@US_DEFAULT
+        87 2024-02-01   2024-03-29     CLOUD_DB_US_OTC      HOLIDAY             H       5.6.1 \
+                               0      240000  America/New_York         1        MEMORIAL_DAY@US_DEFAULT
+        88 2024-02-01   2024-03-29     CLOUD_DB_US_OTC      HOLIDAY             H       9.1.1 \
+                               0      240000  America/New_York         1           LABOR_DAY@US_DEFAULT
+        89 2024-02-01   2024-03-29     CLOUD_DB_US_OTC      HOLIDAY             H      11.4.4 \
+                               0      240000  America/New_York         1    THANKSGIVING_DAY@US_DEFAULT
         """
         if self._try_default_constructor(**kwargs):
             return
@@ -103,6 +120,7 @@ class RefData(Source):
                 db=db,
             ),
             schema=schema,
+            query_parameters=query_parameters,
         )
 
     @staticmethod

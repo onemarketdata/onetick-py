@@ -5,6 +5,7 @@ import onetick.py as otp
 from onetick.py.otq import otq
 
 from onetick.py.core.source import Source
+from onetick.py.core._source.query_parameters import QueryParameters
 
 from .. import types as ott
 from .. import utils, configuration
@@ -25,6 +26,7 @@ class Query(Source):
         end=utils.adaptive,
         params=None,
         schema=None,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         """
@@ -43,6 +45,9 @@ class Query(Source):
         params: dict
             params to pass to query.
             Only applicable to string ``query_object``
+        query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+            Additional query properties to be set in the resulting .otq file.
+            They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
         """
         if self._try_default_constructor(schema=schema, **kwargs):
             return
@@ -67,7 +72,7 @@ class Query(Source):
 
         super().__init__(
             _symbols=symbol, _start=start, _end=end, _base_ep_func=lambda: self.base_ep(query_object, out_pin),
-            schema=schema, **kwargs,
+            schema=schema, query_parameters=query_parameters, **kwargs,
         )
 
     def base_ep(self, query_object, out_pin):

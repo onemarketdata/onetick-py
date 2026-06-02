@@ -7,6 +7,7 @@ from onetick.py.core.source import Source
 from onetick.py.core.column_operations.base import OnetickParameter
 from onetick.py.core.eval_query import _QueryEvalWrapper
 from onetick.py.core._source.tmp_otq import TmpOtq
+from onetick.py.core._source.query_parameters import QueryParameters
 from onetick.py.compatibility import is_symbols_prepend_db_name_supported
 
 from .. import types as ott
@@ -116,7 +117,9 @@ class Symbols(Source):
         By default the start time used by :py:func:`otp.run <onetick.py.run>` will be inherited.
     date: :py:class:`datetime.date`
         Alternative way of setting instead of ``start``/``end`` times.
-
+    query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+        Additional query properties to be set in the resulting .otq file.
+        They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
 
     Note
     ----
@@ -333,6 +336,7 @@ class Symbols(Source):
         end=utils.adaptive,
         date=None,
         schema=None,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         if self._try_default_constructor(schema=schema, **kwargs):
@@ -362,7 +366,7 @@ class Symbols(Source):
             start = date.start
             end = date.end
 
-        _symbol = utils.adaptive
+        _symbol: type[utils.adaptive] | list[str] | str = utils.adaptive
         _tmp_otq = None
         if db:
             if isinstance(db, list):
@@ -420,6 +424,7 @@ class Symbols(Source):
             _end=end,
             _base_ep_func=lambda: self.base_ep(ep_tick_type=ep_tick_type,
                                                keep_db=keep_db, **_find_params),
+            query_parameters=query_parameters,
         )
 
         self.schema['SYMBOL_NAME'] = str

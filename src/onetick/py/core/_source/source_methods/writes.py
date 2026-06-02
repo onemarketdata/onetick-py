@@ -1,5 +1,4 @@
 import warnings
-import datetime
 from typing import TYPE_CHECKING, Optional, Set, Type, Union, Literal
 
 from onetick import py as otp
@@ -21,9 +20,9 @@ def write(
     db: Union[str, 'otp.DB'],
     symbol: Union[str, 'otp.Column', None] = None,
     tick_type: Union[str, 'otp.Column', None] = None,
-    date: Union[datetime.date, Type[adaptive], None] = adaptive,
-    start_date: Optional[datetime.date] = None,
-    end_date: Optional[datetime.date] = None,
+    date: Union[otp.datetime, Type[adaptive], None] = adaptive,
+    start_date: Optional[otp.datetime] = None,
+    end_date: Optional[otp.datetime] = None,
     append: bool = False,
     keep_symbol_and_tick_type: Union[bool, Type[adaptive]] = adaptive,
     propagate: bool = True,

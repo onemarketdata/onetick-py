@@ -100,7 +100,7 @@ would be ``AA`` and ``BB``:
    unbound_branch = otp.DataSource(db='LOCAL', tick_type='TICK_TYPE')
    bound_branch = otp.DataSource(db='LOCAL', tick_type='TICK_TYPE')
    bound_symbols = otp.Ticks(SYMBOL_NAME=['AA', 'BB'])
-   bound_branch = otp.funcs.merge([bound_branch], symbols=bound_symbols)
+   bound_branch = otp.merge([bound_branch], symbols=bound_symbols)
    query = unbound_branch + bound_branch
    first_stage_query = otp.Ticks(SYMBOL_NAME=['A', 'B'])
    otp.run(query, symbols=first_stage_query)
@@ -124,10 +124,10 @@ by setting :attr:`concurrency` and :attr:`batch_size` parameters of the :func:`o
    src = otp.Tick(A=1)  # this part of the query will run
                         # with concurrency=48
                         # and batch_size=10
-   src = otp.funcs.merge([src],
-                         symbols=bound_symbol_list_src,
-                         concurrency=48,
-                         batch_size=10)
+   src = otp.merge([src],
+                   symbols=bound_symbol_list_src,
+                   concurrency=48,
+                   batch_size=10)
    src['NEW_FIELD'] = '2'  # this part of the query will run
                            # with concurrency=24
                            # and batch_size=5
@@ -194,8 +194,8 @@ that bound symbols should depend on unbound symbols.
    src = otp.Tick(A=1)
    src['BOUND_SYMBOL'] = src['_SYMBOL_NAME']
 
-   src = otp.funcs.merge([src], symbols=otp.eval(ssq_src,
-                                                 symbol=first_stage_query_src.to_symbol_param()))
+   src = otp.merge([src], symbols=otp.eval(ssq_src,
+                                           symbol=first_stage_query_src.to_symbol_param()))
    src['UNBOUND_SYMBOL'] = src['_SYMBOL_NAME']
 
    res = otp.run(src, symbols=first_stage_query_src)
@@ -225,8 +225,8 @@ to calculate bound symbols as long as you pass anything. For convenience, the fo
 
 .. testcode::
 
-   src = otp.funcs.merge([src], symbols=otp.eval(ssq_src,
-                                                 symbol=otp.Empty().to_symbol_param()))
+   src = otp.merge([src], symbols=otp.eval(ssq_src,
+                                           symbol=otp.Empty().to_symbol_param()))
 
 
 Other ways of parallelizing Onetick query

@@ -1,4 +1,4 @@
-otp.TmpDir
-==========
+otp.utils.TmpDir
+================
 
 .. autoclass:: onetick.py.utils.temp.TmpDir

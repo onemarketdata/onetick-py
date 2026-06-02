@@ -39,7 +39,7 @@ class TestReadFromDataFrame:
             schema = {}
 
         native_result = None
-        if hasattr(otq, 'ReadFromDataFrame'):
+        if otp.compatibility.is_read_from_dataframe_supported():
             src = otp.ReadFromDataFrame(dataframe.copy(), **kwargs)
             assert src.schema == schema
             native_result = otp.run(src, date=otp.date(2024, 1, 1))
@@ -215,7 +215,7 @@ class TestReadFromDataFrame:
     @pytest.mark.parametrize('source_type', ['ReadFromDataFrame', 'LoadTicksFromDataFrame'])
     def test_exceptions(self, session, source_type):
         if source_type == 'ReadFromDataFrame':
-            if not hasattr(otq, 'ReadFromDataFrame'):
+            if not otp.compatibility.is_read_from_dataframe_supported():
                 pytest.mark.skip('Not supported on this OneTick version')
                 return
             source = otp.ReadFromDataFrame
@@ -258,7 +258,8 @@ class TestReadFromDataFrame:
             source(df, timestamp_column='MISSING', symbol='AAPL')
 
     @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason="Doesn't work in WebAPI test environment")
-    @pytest.mark.skipif(not hasattr(otq, 'ReadFromDataFrame'), reason='Not supported on this OneTick version')
+    @pytest.mark.skipif(not otp.compatibility.is_read_from_dataframe_supported(),
+                        reason='Not supported on this OneTick version')
     def test_run(self, session):
         input_df = self.get_test_data()
         src = otp.ReadFromDataFrame(input_df)
@@ -275,7 +276,8 @@ class TestReadFromDataFrame:
         assert list(df['SYMBOL_NAME']) == ['AAPL', 'AAPL', 'AAPL', 'AAPL', 'AAPL']
 
     @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason="Doesn't work in WebAPI test environment")
-    @pytest.mark.skipif(not hasattr(otq, 'ReadFromDataFrame'), reason='Not supported on this OneTick version')
+    @pytest.mark.skipif(not otp.compatibility.is_read_from_dataframe_supported(),
+                        reason='Not supported on this OneTick version')
     def test_copy(self, session):
         # PY-1484  (reproduces only with pyarrow installed)
         input_df = self.get_test_data()
@@ -294,7 +296,8 @@ class TestReadFromDataFrame:
         assert list(df['SYMBOL_NAME']) == ['AAPL', 'AAPL', 'AAPL', 'AAPL', 'AAPL']
 
     @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason="Doesn't work in WebAPI test environment")
-    @pytest.mark.skipif(not hasattr(otq, 'ReadFromDataFrame'), reason='Not supported on this OneTick version')
+    @pytest.mark.skipif(not otp.compatibility.is_read_from_dataframe_supported(),
+                        reason='Not supported on this OneTick version')
     def test_update(self, session):
         # PY-1484 (reproduces only with pyarrow installed)
         csv_input = dedent(

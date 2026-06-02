@@ -15,6 +15,7 @@ from onetick.py.configuration import config, default_presort_concurrency
 from onetick.py.core.eval_query import _QueryEvalWrapper
 from onetick.py.core._source._symbol_param import _SymbolParamSource
 from onetick.py.core._source.tmp_otq import TmpOtq
+from onetick.py.core._source.query_parameters import _ExtendedQueryParameters
 from onetick.py.utils import get_type_that_includes, adaptive, default
 import onetick.py.types as ott
 from onetick.py.core.column import Column
@@ -405,6 +406,9 @@ def __copy_sources_on_merge_or_join(result,
 
     for source in sources:
         result._merge_tmp_otq(source)
+        # all input branches of the merge or join will end up in the same query,
+        # so we merge all query_parameters set in each source
+        result._query_parameters = result._query_parameters.merge(source._query_parameters)
         if source.get_name():
             if not result.get_name():
                 result.set_name(source.get_name())
@@ -1910,7 +1914,7 @@ def save_sources_to_single_file(sources,
     ...             'source': src1,
     ...             'start': otp.datetime(2024, 1, 1),
     ...             'end': otp.datetime(2024, 1, 2),
-    ...         }
+    ...         },
     ...         'query_2': {
     ...             'source': src2,
     ...             'symbols': otp.Tick(SYMBOL_NAME='AAPL'),
@@ -1928,7 +1932,7 @@ def save_sources_to_single_file(sources,
     ...             'query_properties': {
     ...                 'MAX_CONCURRENCY': '4',
     ...             },
-    ...         }
+    ...         },
     ...         'query_2': src2,
     ...     },
     ...     file_path='/home/test/queries.otq',
@@ -1951,24 +1955,31 @@ def save_sources_to_single_file(sources,
             query_symbol_date = source.get('symbol_date')
             query_properties = source.get('query_properties')
             source = source['source']
+
+        query_parameters = _ExtendedQueryParameters(
+            symbol_date=query_symbol_date,
+            query_properties=query_properties,
+        )
         query_name = source._store_in_tmp_otq(tmp_otq,
                                               name=name,
                                               start=query_start,
                                               end=query_end,
                                               symbols=query_symbols,
-                                              symbol_date=query_symbol_date,
-                                              query_properties=query_properties)
+                                              query_parameters=query_parameters)
         if query_names is not None:
             query_names.append(query_name)
+
     file_path = tmp_otq.save_to_file(
         file_path=file_path,
         file_suffix=file_suffix,
-        start=start,
-        end=end,
-        start_time_expression=start_time_expression,
-        end_time_expression=end_time_expression,
-        timezone=timezone,
-        running_query_flag=running_query_flag,
+        default_query_parameters=_ExtendedQueryParameters(
+            start=start,
+            end=end,
+            start_time_expression=start_time_expression,
+            end_time_expression=end_time_expression,
+            timezone=timezone,
+            running=running_query_flag,
+        ),
     )
     if query_names is not None:
         return [f'{file_path}::{query_name}' for query_name in query_names]

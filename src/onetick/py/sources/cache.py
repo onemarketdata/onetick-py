@@ -4,6 +4,7 @@ import onetick.py as otp
 from onetick.py.otq import otq
 
 from onetick.py.core.source import Source
+from onetick.py.core._source.query_parameters import QueryParameters
 
 from .. import types as ott
 from .. import utils
@@ -32,6 +33,7 @@ class ReadCache(Source):
         otq_params=None,
         create_cache_query="",
         schema=None,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         """
@@ -71,6 +73,9 @@ class ReadCache(Source):
             which should contain CREATE_CACHE EP to create the corresponding cache.
         schema: Optional, dict
             Dictionary of columns names with their types.
+        query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+            Additional query properties to be set in the resulting .otq file.
+            They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
         kwargs:
             Deprecated. Use ``schema`` instead.
             Dictionary of columns names with their types.
@@ -139,6 +144,7 @@ class ReadCache(Source):
                 create_cache_query=create_cache_query,
             ),
             schema=schema,
+            query_parameters=query_parameters,
             **kwargs,
         )
 

@@ -248,3 +248,9 @@ def test_wrong_kwarg_passed(session):
         )
     ):
         _ = otp.DataSource('DB_2', date=otp.datetime('20220102'), wrong=str, schema={'CORRECT': int})
+
+
+@pytest.mark.parametrize('symbol', [['AAPL'], 'AAPL'])
+def test_single_symbol_without_presort(session, symbol):
+    data = otp.DataSource('DB_1', symbol=symbol, tick_type='TRD')
+    assert 'PRESORT' not in Path(data.to_otq().split('::')[0]).read_text()

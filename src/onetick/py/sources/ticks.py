@@ -18,6 +18,7 @@ from .. import types as ott
 from .. import utils, configuration
 from ..core.column_operations._methods.methods import is_arithmetical
 from ..core.column_operations.base import _Operation
+from ..core._source.query_parameters import QueryParameters
 from ..compatibility import is_supported_bucket_units_for_tick_generator
 from onetick.py.aggregations._base import get_bucket_interval_from_datepart
 
@@ -52,6 +53,7 @@ class Tick(Source):
         bucket_interval: int = 0,
         bucket_units: Union[str, Type[utils.adaptive]] = utils.adaptive,
         num_ticks_per_timestamp: int = 1,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         """
@@ -110,6 +112,9 @@ class Tick(Source):
         num_ticks_per_timestamp: int
             The number of ticks to generate for every value of timestamp.
             Default is 1.
+        query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+            Additional query properties to be set in the resulting .otq file.
+            They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
         kwargs:
             Dictionary of column names with their values.
             If specified, then parameter ``data`` can't be used.
@@ -274,6 +279,7 @@ class Tick(Source):
                                                num_ticks_per_timestamp=num_ticks_per_timestamp,
                                                **kwargs),
             schema=columns,
+            query_parameters=query_parameters,
         )
 
     def base_ep(self,
@@ -358,6 +364,7 @@ def Ticks(data=None,  # NOSONAR
           tick_type: Optional[AdaptiveTickType] = utils.adaptive,
           timezone_for_time=None,
           offset=utils.adaptive,
+          query_parameters: QueryParameters = None,
           **inplace_data):
     """
     Data source that generates ticks.
@@ -404,6 +411,9 @@ def Ticks(data=None,  # NOSONAR
         Special value None will disable changing timestamps for each tick,
         so all timestamps will be set to the query start time.
         Can't be used at the same time with the column `offset`.
+    query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+            Additional query properties to be set in the resulting .otq file.
+            They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
     **inplace_data: list
         <field_name>: list(<field_values>)
 
@@ -596,7 +606,7 @@ def Ticks(data=None,  # NOSONAR
         tick_parameters = {}
         tick_columns = {}
         for key, value in columns.items():
-            if key in {'offset', 'offset_part', 'time'}:
+            if key in {'offset', 'offset_part', 'time', 'query_parameters'}:
                 tick_parameters[key] = value
             else:
                 tick_columns[key] = value
@@ -648,7 +658,7 @@ def Ticks(data=None,  # NOSONAR
             # Data is homogenous; CSV backing can be used
             return _DataCSV(data, value_len, db=db, symbol=symbol, tick_type=tick_type, start=start, end=end,
                             timezone_for_time=timezone_for_time, use_absolute_time=use_absolute_time,
-                            disable_offsets=disable_offsets)
+                            disable_offsets=disable_offsets, query_parameters=query_parameters)
         else:
             # Fallback is a merge of individual ticks
             ticks = []
@@ -675,6 +685,7 @@ class _DataCSV(Source):
         use_absolute_time=False,
         timezone_for_time=None,
         disable_offsets=False,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         if self._try_default_constructor(**kwargs):
@@ -761,6 +772,7 @@ class _DataCSV(Source):
                                                expression_columns=expression_columns,
                                                disable_offsets=disable_offsets),
             schema=columns,
+            query_parameters=query_parameters,
         )
 
     def base_ep(self, columns, db, tick_type, use_absolute_time, text_header, text_data, expression_columns=None,

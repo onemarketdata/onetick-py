@@ -54,7 +54,7 @@ def test_run_with_dataframe_symbols(session):
     t['SYMBOL_PARAMS'] = otp.raw('GET_SYMBOL_PARAMETERS()', otp.varstring)
     df = pd.DataFrame({'SYMBOL_NAME': ['A', 'B'],
                        'SYMBOL_PARAM': ['PARAM_A', 'PARAM_B'],
-                       'TIME': [pd.Timestamp(2022, 1, 1), pd.Timestamp(2022, 1, 2)]})
+                       'TIME': [str(pd.Timestamp(2022, 1, 1)), str(pd.Timestamp(2022, 1, 2))]})
     result = otp.run(t, symbols=df)
     assert list(result['A']['X']) == [1]
     assert list(result['A']['SYMBOL_PARAMS']) == ["SYMBOL_PARAM='PARAM_A',TIME='2022-01-01 00:00:00'"]

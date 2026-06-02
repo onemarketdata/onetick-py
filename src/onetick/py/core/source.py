@@ -23,7 +23,9 @@ from onetick.py.core._source.tmp_otq import TmpOtq
 from onetick.py.core.column import _Column
 from onetick.py.core.column_operations.base import _Operation, OnetickParameter
 from onetick.py.core.query_inspector import get_query_parameter_list
+from onetick.py.core.eval_query import _QueryEvalWrapper
 from onetick.py.utils import adaptive, adaptive_to_default, default, render_otq
+from ._source.query_parameters import QueryParameters, _ExtendedQueryParameters
 
 
 def _is_dict_required(symbols):
@@ -171,9 +173,9 @@ class Source:
         "__sources_symbols",
         "__source_has_output",
         "__name",
-        "_tmp_otq"
+        "_tmp_otq",
+        "_query_parameters",
     ]
-    _OT_META_FIELDS = ["_START_TIME", "_END_TIME", "_SYMBOL_NAME", "_DBNAME", "_TICK_TYPE", '_TIMEZONE']
     meta_fields = MetaFields()
     Symbol = Symbol  # NOSONAR
 
@@ -186,10 +188,12 @@ class Source:
         _end=adaptive,
         _base_ep_func=None,
         _has_output=True,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
 
         self._tmp_otq = TmpOtq()
+        self._query_parameters = _ExtendedQueryParameters(**(query_parameters.asdict() if query_parameters else {}))
         self.__name = None
 
         if isinstance(_symbols, OnetickParameter):
@@ -236,9 +240,9 @@ class Source:
         self.__source_has_output = _has_output
 
         if isinstance(node, _ProxyNode):
-            self.__node = _ProxyNode(*node.copy_graph(), refresh_func=self.__refresh_hash)
+            self.__node = _ProxyNode(*node.copy_graph(), refresh_func=self.__refresh_hash)  # type: ignore
         else:
-            self.__node = _ProxyNode(*self.__from_ep_to_proxy(node), refresh_func=self.__refresh_hash)
+            self.__node = _ProxyNode(*self.__from_ep_to_proxy(node), refresh_func=self.__refresh_hash)  # type: ignore
             self.__sources_keys_dates[self.__node.key()] = (_start, _end)
             self.__sources_modify_query_times[self.__node.key()] = False
             self.__sources_base_ep_func[self.__node.key()] = _base_ep_func
@@ -323,7 +327,7 @@ class Source:
                    self.__sources_symbols)
         for dictionary in sources:
             for key in list(dictionary):
-                dictionary[keys[key]] = dictionary.pop(key)
+                dictionary[keys[key]] = dictionary.pop(key)  # type: ignore[assignment]
 
     def _get_source_has_output(self):
         return self.__source_has_output
@@ -427,8 +431,8 @@ class Source:
         return obj, start, end, _symbols
 
     def to_otq(self, file_name=None, file_suffix=None, query_name=None, symbols=None, start=None, end=None,
-               timezone=None, raw=None, add_passthrough=True,
-               running=False,
+               timezone=None, add_passthrough=True,
+               running=None,
                start_time_expression=None,
                end_time_expression=None,
                symbol_date=None,
@@ -460,10 +464,6 @@ class Source:
             end time to save query with
         timezone: str
             timezone to save query with
-        raw
-
-            .. deprecated:: 1.4.17
-
         add_passthrough: bool
             will add :py:class:`onetick.query.Passthrough` event processor at the end of resulting graph
         running: bool
@@ -498,9 +498,6 @@ class Source:
         >>> t.to_otq()  # doctest: +SKIP
         '/tmp/test_user/run_20251202_181018_11054/impetuous-bullfrog.to_otq.otq::query'
         """
-        if raw is not None:
-            warnings.warn('The "raw" flag is deprecated and makes no effect', FutureWarning)
-
         if timezone is None:
             timezone = configuration.config.tz
 
@@ -528,17 +525,29 @@ class Source:
         obj, start, end, symbols = self.__prepare_graph(symbols, start, end)
 
         graph = obj._to_graph(add_passthrough=add_passthrough)
-        graph.set_symbols(symbols)
+
+        query_parameters = _ExtendedQueryParameters(
+            symbol_date=symbol_date,
+            concurrency=concurrency,
+            batch_size=batch_size,
+            query_properties=query_properties,
+            running=running,
+            symbols=symbols,
+        )
+        # TODO: move these to usual query parameters
+        default_query_parameters = _ExtendedQueryParameters(
+            start=start,
+            end=end,
+            start_time_expression=start_time_expression,
+            end_time_expression=end_time_expression,
+            timezone=timezone,
+        )
+        query_parameters = self._query_parameters.merge(query_parameters)
 
         return obj._tmp_otq.save_to_file(query=graph, query_name=query_name, file_path=file_path,
-                                         file_suffix=file_suffix, start=start, end=end, timezone=timezone,
-                                         running_query_flag=running,
-                                         start_time_expression=start_time_expression,
-                                         end_time_expression=end_time_expression,
-                                         symbol_date=symbol_date,
-                                         concurrency=concurrency,
-                                         batch_size=batch_size,
-                                         query_properties=query_properties)
+                                         file_suffix=file_suffix,
+                                         query_parameters=query_parameters,
+                                         default_query_parameters=default_query_parameters)
 
     def print_otq(self, **kwargs):
         """
@@ -585,10 +594,10 @@ class Source:
             tmp_file.do_cleanup()
 
     def _store_in_tmp_otq(self, tmp_otq, operation_suffix="tmp_query", symbols=None, start=None, end=None,
-                          raw=None, add_passthrough=True, name=None, timezone=None, symbol_date=None,
-                          concurrency=None, batch_size=None, query_properties=None):
+                          add_passthrough=True, name=None, timezone=None,
+                          query_parameters: QueryParameters = None):
         """
-        Adds this source to the tmp_otq storage
+        Adds this source to the ``tmp_otq`` storage.
 
         Parameters
         ----------
@@ -599,51 +608,30 @@ class Source:
         name: str, optional
             If specified, this ``name`` will be used to save query
             and ``suffix`` parameter will be ignored.
+        query_parameters: QueryParameters
+            Additional query properties to be set in the resulting .otq file.
+            They will override the ones defined when creating otp.Source object.
 
         Returns
         -------
         result: str
             String with the name of the saved graph (starting with THIS::)
         """
-        if raw is not None:
-            warnings.warn('The "raw" flag is deprecated and makes no effect', FutureWarning)
-
         obj, start, end, symbols = self.__prepare_graph(symbols, start, end)
         tmp_otq.merge(obj._tmp_otq)
 
-        if isinstance(start, ott.dt):  # OT save_to_file checks for the datetime time
-            start = datetime.fromtimestamp(start.timestamp())
-        elif isinstance(start, date):
-            start = datetime(start.year, start.month, start.day)
-        if isinstance(end, ott.dt):
-            end = datetime.fromtimestamp(end.timestamp())
-        elif isinstance(end, date):
-            end = datetime(end.year, end.month, end.day)
-
-        if timezone is None:
-            timezone = configuration.config.tz
+        query_parameters = _ExtendedQueryParameters(**(query_parameters.asdict() if query_parameters else {}))
+        # TODO: some tests fail when setting it
+        # query_parameters.start = start
+        # query_parameters.end = end
+        # query_parameters.timezone = timezone
+        query_parameters.symbols = symbols
 
         graph = obj._to_graph(add_passthrough=add_passthrough)
-        graph.set_start_time(start)
-        graph.set_end_time(end)
-        graph.set_symbols(symbols)
-        if timezone is not None:
-            if otq.webapi:
-                graph.set_timezone(timezone)
-            else:
-                graph.time_interval_properties().set_timezone(timezone)
 
-        params = {}
-        if symbol_date is not None:
-            params['symbol_date'] = symbol_date
-        if concurrency is not None:
-            params['concurrency'] = concurrency
-        if batch_size is not None:
-            params['batch_size'] = batch_size
-        if query_properties is not None:
-            params['query_properties'] = query_properties
         suffix = self._name_suffix(suffix=operation_suffix, separator='__', remove_invalid_symbols=True)
-        return tmp_otq.add_query(graph, suffix=suffix, name=name, params=params)
+        query_parameters = obj._query_parameters.merge(query_parameters)
+        return tmp_otq.add_query(graph, suffix=suffix, name=name, query_parameters=query_parameters)
 
     def __refresh_hash(self):
         """
@@ -671,8 +659,6 @@ class Source:
 
         graph = obj._to_graph(add_passthrough=False)
 
-        graph.set_symbols(symbols)
-
         # create name and suffix for generated .otq file
         if otp.config.main_query_generated_filename:
             name = otp.config.main_query_generated_filename
@@ -699,16 +685,30 @@ class Source:
                                  base_dir=base_dir,
                                  clean_up=clean_up)
 
+        query_parameters = obj._query_parameters.merge(
+            _ExtendedQueryParameters(
+                symbol_date=symbol_date,
+                symbols=symbols,
+                running=running_query_flag,
+            )
+        )
+        # TODO: this was the logic before, some tests fail without it
+        default_query_parameters = _ExtendedQueryParameters(
+            start=start, end=end,
+            timezone=timezone,
+            start_time_expression=start_time_expression,
+            end_time_expression=end_time_expression,
+            # This method called only from otp.run and MultiOutputSource,
+            # so running_query_flag means this is a CEP query
+            # So we should force all queries to have this flag
+            # running=running_query_flag,
+        )
         query_to_run = obj._tmp_otq.save_to_file(query=graph,
                                                  query_name=self.get_name(remove_invalid_symbols=True)
                                                  if self.get_name(remove_invalid_symbols=True) else "main_query",
                                                  file_path=tmp_file.path,
-                                                 start=start, end=end,
-                                                 running_query_flag=running_query_flag,
-                                                 start_time_expression=start_time_expression,
-                                                 end_time_expression=end_time_expression,
-                                                 timezone=timezone,
-                                                 symbol_date=symbol_date)
+                                                 query_parameters=query_parameters,
+                                                 default_query_parameters=default_query_parameters)
 
         # PY-1423: we should set symbol_date in otp.run always
         symbol_date_to_run = None
@@ -935,7 +935,7 @@ class Source:
 
         return start, end, common_symbol
 
-    def _to_graph(self, add_passthrough=True):
+    def _to_graph(self, add_passthrough=True) -> otq.GraphQuery:
         """
         Construct the graph. Only for internal usage.
 
@@ -952,15 +952,12 @@ class Source:
 
         return otq.GraphQuery(constructed_obj.node().get())
 
-    def to_graph(self, raw=None, symbols=None, start=None, end=None, *, add_passthrough=True):
+    def to_graph(self, symbols=None, start=None, end=None, *, add_passthrough=True):
         """
         Construct an :py:class:`onetick.query.GraphQuery` object.
 
         Parameters
         ----------
-        raw:
-            .. deprecated:: 1.4.17 has no effect
-
         symbols:
             symbols query to add to otq.GraphQuery
         start: :py:class:`otp.datetime <onetick.py.datetime>`
@@ -978,10 +975,6 @@ class Source:
         --------
         :meth:`render`
         """
-
-        if raw is not None:
-            warnings.warn('The "raw" flag is deprecated and makes not effect', FutureWarning)
-
         _obj, _start, _end, _symbols = self.__prepare_graph(symbols, start, end)
 
         if _obj._tmp_otq.queries:
@@ -991,11 +984,10 @@ class Source:
                           FutureWarning)
             _obj.sink(otq.Passthrough().output_pin_name('OUT_FOR_TO_GRAPH'))
             _graph = _obj._to_graph(add_passthrough=False)
-            _graph.set_start_time(_start)
-            _graph.set_end_time(_end)
-            _graph.set_symbols(_symbols)
 
-            query = _obj._tmp_otq.save_to_file(query=_graph, file_suffix='_to_graph.otq')
+            query = _obj._tmp_otq.save_to_file(query=_graph, file_suffix='_to_graph.otq',
+                                               query_parameters=_ExtendedQueryParameters(start=_start, end=_end,
+                                                                                         symbols=_symbols))
             query_path, query_name = query.split('::')
             query_params = get_query_parameter_list(query_path, query_name)
 
@@ -1196,6 +1188,7 @@ class Source:
         result._copy_state_vars_from(self)
 
         result._tmp_otq = self._tmp_otq.copy()
+        result._query_parameters = self._query_parameters.copy()
         # pylint: disable-next=unused-private-member
         result.__name = self.__name
 
@@ -1334,7 +1327,7 @@ class Source:
             onetick.query EP object to append to source.
         out_pin: Optional[str], default=None
             name of the out pin to connect to ``ep``
-        inplace: bool, default=False
+        inplace: bool, default=True
             if `True` method will modify current object,
             otherwise it will return modified copy of the object.
 
@@ -1479,20 +1472,30 @@ class Source:
         if end is adaptive:
             end = None
 
-        if isinstance(symbol, Source):
-            symbol = otp.eval(symbol).to_eval_string(tmp_otq=tmp_otq,
-                                                     start=start, end=end, timezone=timezone,
-                                                     operation_suffix='symbol',
-                                                     query_name=None,
-                                                     file_suffix=symbol._name_suffix('symbol.otq'),
-                                                     symbol_date=symbol_date)
+        if isinstance(symbol, (Source, _QueryEvalWrapper)):
+            kwargs = {}
+            if isinstance(symbol, Source):
+                kwargs['file_suffix'] = symbol._name_suffix('symbol.otq')
+                if symbol._query_parameters.running:
+                    # Required for real-time symbol list changes in CEP in multistage query
+                    eval_symbol = otp.eval(symbol, continuous=True)
+                else:
+                    eval_symbol = otp.eval(symbol)
+            else:
+                eval_symbol = symbol
+            symbol = eval_symbol.to_eval_string(tmp_otq=tmp_otq,
+                                                start=start, end=end, timezone=timezone,
+                                                operation_suffix='symbol',
+                                                query_name=None,
+                                                symbol_date=symbol_date,
+                                                **kwargs)
 
         if isinstance(symbol, otp.query):
             return symbol.to_eval_string()
 
         if isinstance(symbol, otq.GraphQuery):
-            params = {'symbol_date': symbol_date} if symbol_date is not None else {}
-            query_name = tmp_otq.add_query(symbol, suffix='__symbol', params=params)
+            query_name = tmp_otq.add_query(symbol, suffix='__symbol',
+                                           query_parameters=QueryParameters(symbol_date=symbol_date))
             return f'eval(THIS::{query_name})'
 
         return symbol

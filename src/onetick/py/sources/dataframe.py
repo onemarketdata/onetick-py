@@ -1,10 +1,11 @@
-from typing import Optional, Tuple, Type, Union
+from typing import Optional, Tuple, Type, Union, Any
 
 import onetick.py as otp
 from onetick.py.otq import otq
 import pandas as pd
 
 from onetick.py.core.source import Source
+from onetick.py.core._source.query_parameters import QueryParameters
 
 from .. import types as ott
 from .. import utils
@@ -25,6 +26,7 @@ class _ReadFromDataFrameSource(Source):
         start=utils.adaptive,
         end=utils.adaptive,
         schema=None,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         if self._try_default_constructor(schema=schema, **kwargs):
@@ -47,6 +49,7 @@ class _ReadFromDataFrameSource(Source):
                 columns=schema,
             ),
             schema=schema,
+            query_parameters=query_parameters,
         )
 
     def base_ep(
@@ -201,6 +204,7 @@ def ReadFromDataFrame(
     tick_type=utils.adaptive,
     start=utils.adaptive,
     end=utils.adaptive,
+    query_parameters: QueryParameters = None,
     **kwargs,
 ):
     """
@@ -233,6 +237,9 @@ def ReadFromDataFrame(
         Custom start time of the query.
     end: :py:class:`otp.datetime <onetick.py.datetime>`
         Custom end time of the query.
+    query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+        Additional query properties to be set in the resulting .otq file.
+        They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
 
     See also
     --------
@@ -325,6 +332,7 @@ def ReadFromDataFrame(
         start=start,
         end=end,
         schema=columns,
+        query_parameters=query_parameters,
         **kwargs,
     )
 
@@ -336,6 +344,7 @@ def LoadTicksFromDataFrame(
     symbol=utils.adaptive,
     db=utils.adaptive_to_default,
     tick_type=utils.adaptive,
+    query_parameters: QueryParameters = None,
 ):
     """
     Load :pandas:`pandas.DataFrame` as data source
@@ -369,6 +378,9 @@ def LoadTicksFromDataFrame(
     tick_type: str
         Tick type.
         Default: ANY.
+    query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+        Additional query properties to be set in the resulting .otq file.
+        They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
 
     See also
     --------
@@ -414,7 +426,7 @@ def LoadTicksFromDataFrame(
 
     data = dataframe.to_dict(orient='list')
 
-    ticks_kwargs = {}
+    ticks_kwargs: dict[str, Any] = {}
     if timestamp_column:
         if rows_num > 0:
             base_ts, offsets = _get_offsets(dataframe, timestamp_column)
@@ -438,7 +450,7 @@ def LoadTicksFromDataFrame(
             data[_mapping[0]] = data[_mapping[1]]
             del data[_mapping[1]]
 
-    src = otp.Ticks(data=data, db=db, tick_type=tick_type, **ticks_kwargs)
+    src = otp.Ticks(data=data, db=db, tick_type=tick_type, query_parameters=query_parameters, **ticks_kwargs)
 
     if symbol_name_field:
         src.drop(['SYMBOL_NAME'], inplace=True)

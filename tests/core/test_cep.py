@@ -4,6 +4,7 @@ import threading
 import subprocess
 import time
 import os
+import re
 import psutil
 from datetime import datetime, timezone, timedelta
 from dateutil import tz
@@ -262,15 +263,47 @@ class TestSubqueries:
         main_query['SN'] = main_query['_SYMBOL_NAME']
         tzinfo = tz.gettz(self.TIMEZONE)
         current_time = datetime.now(tz=tzinfo)
-        start_time = current_time + timedelta(seconds=5)
-        end_time = start_time + timedelta(seconds=10)
+        start_time = current_time + timedelta(seconds=2)
+        end_time = start_time + timedelta(seconds=4)
         res = otp.run(main_query,
                       symbols=fsq,
                       running=True,
                       start=start_time,
                       end=end_time,
                       timezone=self.TIMEZONE)['AAPL']
-        assert len(res) == 10
+        assert len(res) == 4
+
+    def test_fsq_continuous(self, session):
+        fsq = otp.Tick(SYMBOL_NAME='AAPL', query_parameters=otp.QueryParameters(running=True))
+        main_query = otp.Tick(DUMMY=1, bucket_interval=1)
+        main_query['SN'] = main_query['_SYMBOL_NAME']
+        tzinfo = tz.gettz(self.TIMEZONE)
+        current_time = datetime.now(tz=tzinfo)
+        start_time = current_time + timedelta(seconds=2)
+        end_time = start_time + timedelta(seconds=4)
+        res = otp.run(main_query,
+                      symbols=fsq,
+                      running=True,
+                      start=start_time,
+                      end=end_time,
+                      timezone=self.TIMEZONE)['DEMO_L1::AAPL']
+        assert len(res) == 4
+
+    def test_fsq_continuous_eval(self, session):
+        fsq = otp.Tick(SYMBOL_NAME='AAPL')
+        main_query = otp.Tick(DUMMY=1, bucket_interval=1)
+        main_query['SN'] = main_query['_SYMBOL_NAME']
+        tzinfo = tz.gettz(self.TIMEZONE)
+        current_time = datetime.now(tz=tzinfo)
+        start_time = current_time + timedelta(seconds=2)
+        end_time = start_time + timedelta(seconds=4)
+        res = otp.run(main_query,
+                      symbols=otp.eval(fsq, continuous=True),
+                      running=True,
+                      start=start_time,
+                      end=end_time,
+                      timezone=self.TIMEZONE)['DEMO_L1::AAPL']
+        assert len(res) == 4
 
     def test_jwq(self, session):
         main_query = otp.Tick(DUMMY=1, bucket_interval=1)
@@ -287,9 +320,49 @@ class TestSubqueries:
 
         tzinfo = tz.gettz(self.TIMEZONE)
         current_time = datetime.now(tz=tzinfo)
-        start_time = current_time + timedelta(seconds=5)
-        end_time = start_time + timedelta(seconds=10)
+        start_time = current_time + timedelta(seconds=2)
+        end_time = start_time + timedelta(seconds=4)
         res = otp.run(main_query, symbols='AAPL', running=True, start=start_time, end=end_time, timezone=self.TIMEZONE)
-        assert len(res) == 10
-        for i in range(0, 10):
+        assert len(res) == 4
+        for i in range(0, 4):
             assert res['JWQ_ST'][i] == (start_time - otp.timedelta(hours=1)).replace(tzinfo=None)
+
+    def test_symbol(self, session):
+        tzinfo = tz.gettz(self.TIMEZONE)
+        current_time = datetime.now(tz=tzinfo)
+        start_time = current_time + timedelta(seconds=2)
+        end_time = start_time + timedelta(seconds=4)
+
+        s = otp.Tick(SYMBOL_NAME="DEMO_L1::AAPL")
+        s = otp.eval(s, continuous=True)
+        q = otp.Tick(DUMMY=1)
+
+        res = otp.run(
+            q, symbols=s,
+            running=True,
+            start = start_time,
+            end = end_time,
+            timezone = self.TIMEZONE,
+        )
+
+        assert 'DEMO_L1::AAPL' in res
+        res_dict = res['DEMO_L1::AAPL'].to_dict(orient='list')
+        del res_dict['Time']
+        assert res_dict == {'DUMMY': [1]}
+
+        query_path = q.to_otq(symbols=s, running=True)
+        path = query_path.split('::')[0]
+        with open(path) as f:
+            text = f.read()
+        assert re.findall(r'^SECURITY.+?eval\(.+?_CONTINUOUS=True.+?\).*$', text, re.MULTILINE)
+
+        res = otp.run(
+            otp.query(query_path),
+            running=True,
+            start = start_time,
+            end = end_time,
+            timezone = self.TIMEZONE,
+        )
+        res_dict = res.to_dict(orient='list')
+        del res_dict['Time']
+        assert res_dict == {'DUMMY': [1]}

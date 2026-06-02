@@ -12,6 +12,7 @@ from onetick.py.otq import otq
 import pandas as pd
 
 from onetick.py.core._source._symbol_param import _SymbolParamSource
+from onetick.py.core._source.query_parameters import QueryParameters
 from onetick.py.core.source import Source
 
 from .. import types as ott
@@ -40,6 +41,7 @@ def CSV(  # NOSONAR
     timestamp_format: Optional[Union[str, Dict[str, str]]] = None,
     file_contents: Optional[str] = None,
     use_field_delimiters_for_title: Optional[bool] = None,
+    query_parameters: QueryParameters = None,
     **kwargs,
 ):
     """
@@ -138,6 +140,9 @@ def CSV(  # NOSONAR
     use_field_delimiters_for_title: bool
         Use values from ``field_delimiter`` parameter in the title too.
         Default is False, in this case only comma ``,`` and space `` `` characters are used as delimiters in the title.
+    query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+        Additional query properties to be set in the resulting .otq file.
+        They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
 
     See also
     --------
@@ -243,6 +248,7 @@ def CSV(  # NOSONAR
         timestamp_format=timestamp_format,
         file_contents=file_contents,
         use_field_delimiters_for_title=use_field_delimiters_for_title,
+        query_parameters=query_parameters,
         **kwargs,
     )
     csv_source = csv_source.sort(csv_source['Time'])
@@ -298,6 +304,7 @@ class _CSV(Source):
                  timestamp_format: Optional[Union[str, Dict[str, str]]] = None,
                  file_contents: Optional[str] = None,
                  use_field_delimiters_for_title: Optional[bool] = None,
+                 query_parameters: QueryParameters = None,
                  **kwargs):
 
         self._dtype = dtype or {}
@@ -371,6 +378,7 @@ class _CSV(Source):
             _end=self._end,
             _base_ep_func=self.base_ep,
             schema=self._columns_with_bool_replaced,
+            query_parameters=query_parameters,
         )
 
         # fake run converters to set proper schema

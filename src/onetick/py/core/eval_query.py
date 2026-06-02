@@ -4,6 +4,7 @@ import types
 from onetick import py as otp
 from onetick.py.core._source._symbol_param import _SymbolParamColumn, _SymbolParamSource
 from onetick.py.core.column_operations.base import OnetickParameter
+from onetick.py.core._source.query_parameters import QueryParameters
 
 
 class _QueryEvalWrapper:
@@ -44,7 +45,8 @@ class _QueryEvalWrapper:
                        start=None, end=None, timezone=None,
                        file_suffix='_eval_query.otq',
                        query_name='main_eval_query',
-                       symbol_date=None) -> str:
+                       symbol_date=None,
+                       running=None) -> str:
         """
         If self._inner_source is not None, then temporary query needs to be saved
         or added to tmp_otq storage
@@ -56,18 +58,21 @@ class _QueryEvalWrapper:
             if self.request_substitute_symbol:
                 symbols = 'SYMBOL_TO_SUBSTITUTE'
             if not self.generate_separate_file_only and tmp_otq is not None:
-                tmp_otq.merge(self._inner_source._tmp_otq)
-                query_name = self._inner_source._store_in_tmp_otq(tmp_otq, symbols=symbols,
-                                                                  start=start, end=end, timezone=timezone,
-                                                                  operation_suffix=operation_suffix,
-                                                                  symbol_date=symbol_date)
+                query_name = self._inner_source._store_in_tmp_otq(
+                    tmp_otq,
+                    symbols=symbols,
+                    start=start, end=end, timezone=timezone,
+                    operation_suffix=operation_suffix,
+                    query_parameters=QueryParameters(symbol_date=symbol_date, running=running),
+                )
                 self.path = f'THIS::{query_name}'
             else:
                 self.path = self._inner_source.to_otq(file_suffix=file_suffix,
                                                       symbols=symbols,
                                                       query_name=query_name,
                                                       start=start, end=end, timezone=timezone,
-                                                      symbol_date=symbol_date)
+                                                      symbol_date=symbol_date,
+                                                      running=running)
         return self._get_eval_string()
 
     def to_symbol_param(self):
@@ -93,7 +98,9 @@ class _QueryEvalWrapper:
 
 
 def eval(query, symbol=None, start=None, end=None,
-         generate_separate_file_only=False, **kwargs):
+         generate_separate_file_only=False,
+         continuous=None,
+         **kwargs):
     """
     Creates an object with ``query`` with saved parameters that can be used later.
 
@@ -132,6 +139,8 @@ def eval(query, symbol=None, start=None, end=None,
         If set, sub-query will be generated in separate file.
         It's needed in some cases, e.g. when generating query for *otq_query_loader_daily.exe*,
         which executes all queries from a file.
+    continuous: bool
+        Must be set to True to be able to run the evaluated query in CEP mode.
     kwargs: str, int, meta fields (:py:class:`~onetick.py.core.source.MetaFields`) \
             or symbol params (:py:class:`~onetick.py.core._source._symbol_param._SymbolParamColumn`)
             or :py:meth:`~onetick.py.core.source.Source.join_with_query` parameters
@@ -226,6 +235,8 @@ def eval(query, symbol=None, start=None, end=None,
         params["_START_TIME"] = start
     if end is not None:
         params["_END_TIME"] = end
+    if continuous is not None:
+        params['_CONTINUOUS'] = continuous
     params.update(kwargs)
 
     return _QueryEvalWrapper(query, params, request_substitute_symbol=request_substitute_symbol,

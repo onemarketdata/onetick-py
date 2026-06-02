@@ -677,8 +677,7 @@ def is_supported_pnl_realized_buy_sell_flag_bin():
 
 def is_data_file_query_supported():
     # 20240311: Implemented 0032631: Implement ARROW_FILE_QUERY EP
-    return _is_min_build_or_version(None, None,
-                                    20240330120000)
+    return hasattr(otq, 'DataFileQuery')
 
 
 def is_data_file_query_symbology_supported(throw_warning=False, feature_name=None):
@@ -945,3 +944,7 @@ def is_preserve_decimal_flag_supported():
     # OTDEV-37783: Add PRESERVE_DECIMAL_FLAG to onetick.query run method to return decimal when needed
     return _is_min_build_or_version(1.26, 20260402162034,
                                     20260420120000)
+
+
+def is_read_from_dataframe_supported():
+    return hasattr(otq, 'ReadFromDataFrame')

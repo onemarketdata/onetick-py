@@ -4,6 +4,7 @@ import onetick.py as otp
 from onetick.py.otq import otq
 
 from onetick.py.core.source import Source
+from onetick.py.core._source.query_parameters import QueryParameters
 
 from .. import utils, configuration
 from ..core.column_operations.base import _Operation
@@ -35,6 +36,7 @@ class ODBC(Source):
         '_presort',
     ]
 
+    # pylint: disable-next=too-many-positional-arguments
     def __init__(
         self,
         dsn: Optional[str] = None,
@@ -58,6 +60,7 @@ class ODBC(Source):
         symbols=utils.adaptive_to_default,
         presort=False,
         schema=None,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         """
@@ -198,6 +201,9 @@ class ODBC(Source):
 
             Schema can't be taken automatically from the database, so it should be set manually
             for python-level type checking to work.
+        query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+            Additional query properties to be set in the resulting .otq file.
+            They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
         kwargs:
             Deprecated. Use ``schema`` instead.
             Set the schema of the python :py:class:`~onetick.py.Source` object of this class.
@@ -296,7 +302,7 @@ class ODBC(Source):
 
         super().__init__(
             _symbols=symbols, _start=start, _end=end, _base_ep_func=lambda: self.base_ep(schema=schema, **kwargs),
-            schema=schema, **kwargs,
+            schema=schema, query_parameters=query_parameters, **kwargs,
         )
 
     def base_ep(self, schema=None, **kwargs):

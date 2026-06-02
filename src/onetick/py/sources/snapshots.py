@@ -2,6 +2,7 @@ import onetick.py as otp
 from onetick.py.otq import otq
 
 from onetick.py.core.source import Source
+from onetick.py.core._source.query_parameters import QueryParameters
 
 from .. import utils
 
@@ -20,6 +21,7 @@ class ReadSnapshot(Source):
         start=utils.adaptive,
         end=utils.adaptive,
         schema=None,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         """
@@ -68,6 +70,9 @@ class ReadSnapshot(Source):
             .. warning::
                 You should set schema manually, if you want to use fields in `onetick-py` query description
                 before its execution.
+        query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+            Additional query properties to be set in the resulting .otq file.
+            They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
 
         See also
         --------
@@ -131,6 +136,7 @@ class ReadSnapshot(Source):
                 allow_snapshot_absence=allow_snapshot_absence,
             ),
             schema=schema,
+            query_parameters=query_parameters,
             **kwargs,
         )
 
@@ -253,6 +259,7 @@ class FindSnapshotSymbols(Source):
         discard_on_match=False,
         db=None,
         tick_type=None,
+        query_parameters: QueryParameters = None,
         **kwargs,
     ):
         """
@@ -322,6 +329,9 @@ class FindSnapshotSymbols(Source):
             or have bound symbols on any node of your query
         tick_type: str, optional
             Tick type.
+        query_parameters: :py:class:`otp.QueryParameters <onetick.py.QueryParameters>`
+            Additional query properties to be set in the resulting .otq file.
+            They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
 
         See also
         --------
@@ -388,6 +398,7 @@ class FindSnapshotSymbols(Source):
                 db=db,
                 tick_type=tick_type,
             ),
+            query_parameters=query_parameters,
             **kwargs,
         )
 
