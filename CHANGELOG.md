@@ -10,6 +10,20 @@
 
 ### Removed
 
+## [1.198.0] - 2026-06-08
+
+### Added
+
+- Add `llms.txt` file to the documentation
+
+### Changed
+
+- Set `readable_only` to `False` by default in `otp.databases`
+
+### Fixed
+
+### Removed
+
 ## [1.197.0] - 2026-06-02
 
 ### Added
@@ -47,7 +61,6 @@
   in `otp.Source.process_by_group`
 - Add parameter `preserve_decimal_flag` to `otp.run`
 - Added `otp.Source.print_otq()` function
-- Added parameter `apply_across_symbols` to `otp.Source.limit`
 
 ### Changed
 

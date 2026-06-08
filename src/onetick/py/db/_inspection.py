@@ -98,6 +98,12 @@ class DB:
             (basically the same fields as specified in the locator) and the dictionary is returned.
             If True then access fields are returned for each available remote host and time interval
             and the :pandas:`pandas.DataFrame` object is returned.
+
+            .. warning::
+
+                Setting this flag may introduce significant delay for query execution
+                in some OneTick configurations and environments,
+                because it has to check all accessible remote servers.
         username:
             Can be used to specify the user for which the query will be executed.
             By default the query is executed for the current user.
@@ -985,6 +991,7 @@ def _get_safe_params_for_running(db=None, context=utils.default):
             symbols=f'{db.name}::',
             start=db_constants.DEFAULT_START_DATE,
             end=db_constants.DEFAULT_END_DATE,
+            timezone='GMT',
             context=db.context,
         )
 
@@ -1010,7 +1017,8 @@ def _get_safe_params_for_running(db=None, context=utils.default):
 
 
 def databases(
-    context=utils.default, derived: bool = False, readable_only: bool = True,
+    context=utils.default, derived: bool = False,
+    readable_only: bool = False,
     fetch_description: Optional[bool] = None,
     as_table: bool = False,
 ) -> Union[dict[str, DB], pd.DataFrame]:
@@ -1029,8 +1037,15 @@ def databases(
         If set to dict then its items used as parameters to :py:func:`~onetick.py.derived_databases`.
         If set to True then default parameters for :py:func:`~onetick.py.derived_databases` are used.
     readable_only: bool
-        If set to True (default), then return only the databases with read-access for the current user.
-        Otherwise return all databases visible from the current process.
+        If set to True, then return only the databases with read-access for the current user.
+        If set to False (default), return all databases visible from the current process.
+
+        .. warning::
+
+            Setting this flag may introduce significant delay for query execution
+            in some OneTick configurations and environments,
+            because it has to check all accessible remote servers.
+
     fetch_description: bool
         If set to True, retrieves descriptions for databases and puts them into ``description`` property of
         :py:class:`~onetick.py.DB` objects in a returned dict.
@@ -1080,8 +1095,12 @@ def databases(
     ):
         show_db_list_kwargs['show_description'] = fetch_description
 
-    node = otq.AccessInfo(info_type='DATABASES', show_for_all_users=False, deep_scan=True).tick_type('ANY')
-    # for some reason ACCESS_INFO sometimes return several ticks
+    # PY-1540: using deep_scan=True leads to significant delay in query execution,
+    # so setting it only if we want to get only readable databases
+    # (without deep_scan=True parameter we may get wrong READ_ACCESS values)
+    deep_scan = readable_only
+    node = otq.AccessInfo(info_type='DATABASES', show_for_all_users=False, deep_scan=deep_scan).tick_type('ANY')
+    # if deep_scan=True, ACCESS_INFO may return several ticks
     # for the same database with different SERVER_ADDRESS values
     # so we get only the first tick
     node = (
@@ -1104,8 +1123,13 @@ def databases(
 
     # times bigger than datetime.max are not representable in python
     max_dt = ott.value2str(datetime.max)
-    node = node >> otq.UpdateFields(set=f'INTERVAL_START={max_dt}', where=f'INTERVAL_START > {max_dt}')
-    node = node >> otq.UpdateFields(set=f'INTERVAL_END={max_dt}', where=f'INTERVAL_END > {max_dt}')
+    node = node >> otq.UpdateFields(set=f'INTERVAL_START={max_dt}',
+                                    where=f'not UNDEFINED("INTERVAL_START") and INTERVAL_START > {max_dt}')
+    node = node >> otq.UpdateFields(set=f'INTERVAL_END={max_dt}',
+                                    where=f'not UNDEFINED("INTERVAL_END") and INTERVAL_END > {max_dt}')
+
+    # sort alphabetically
+    node = node >> otq.OrderBy(order_by='DB_NAME ASC')
 
     dbs = otp.run(node, **_get_safe_params_for_running(context=context))
     if as_table:

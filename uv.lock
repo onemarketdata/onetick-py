@@ -2062,6 +2062,7 @@ dev = [
     { name = "ruff" },
     { name = "sphinx" },
     { name = "sphinx-copybutton" },
+    { name = "sphinx-llms-txt" },
     { name = "sphinx-markdown-builder" },
     { name = "sphinx-reredirects", version = "0.1.6", source = { registry = "https://pip.sol.onetick.com/" }, marker = "python_full_version < '3.11'" },
     { name = "sphinx-reredirects", version = "1.1.0", source = { registry = "https://pip.sol.onetick.com/" }, marker = "python_full_version >= '3.11'" },
@@ -2126,6 +2127,7 @@ dev = [
     { name = "ruff", specifier = ">=0.15.5" },
     { name = "sphinx", specifier = ">=7.4.7" },
     { name = "sphinx-copybutton", specifier = ">=0.5.2" },
+    { name = "sphinx-llms-txt", specifier = ">=0.7.1" },
     { name = "sphinx-markdown-builder", specifier = ">=0.6.10" },
     { name = "sphinx-reredirects", specifier = ">=0.1.3" },
     { name = "sphinx-togglebutton", specifier = ">=0.4.4" },
@@ -3403,6 +3405,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/80/29/18a1fc30e9315e72f068637079169525069a7c0b2fbe51cf689af0576214/sphinx_jupyterbook_latex-1.0.0.tar.gz", hash = "sha256:f54c6674c13f1616f9a93443e98b9b5353f9fdda8e39b6ec552ccf0b3e5ffb62", size = 11945, upload-time = "2023-12-11T15:37:25.034Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/70/1f/1d4ecaf58b17fe61497644655f40b04d84a88348e41a6f0c6392394d95e4/sphinx_jupyterbook_latex-1.0.0-py3-none-any.whl", hash = "sha256:e0cd3e9e1c5af69136434e21a533343fdf013475c410a414d5b7b4922b4f3891", size = 13319, upload-time = "2023-12-11T15:37:23.25Z" },
+]
+
+[[package]]
+name = "sphinx-llms-txt"
+version = "0.7.1"
+source = { registry = "https://pip.sol.onetick.com/" }
+dependencies = [
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d3/dd/6d7fa7d6f51ee20959f1734cdbd62e99880dcd87576ce554d4bb8aaabdd7/sphinx_llms_txt-0.7.1.tar.gz", hash = "sha256:b5cefec19d3fd56670aa4a28917d17d32b22c61a9feadbab8564ad11e932f5c0", size = 32464, upload-time = "2025-12-16T22:31:26.379Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c2/17/a751012a0910e3c3afa41a5d40bdf00132466d072d25891ae7ec1f70dafd/sphinx_llms_txt-0.7.1-py3-none-any.whl", hash = "sha256:8f1cfcfe5897f5be118792f33f73eeb04cbbf66fc60c4c15982ec59252522263", size = 22545, upload-time = "2025-12-16T22:31:25.075Z" },
 ]
 
 [[package]]

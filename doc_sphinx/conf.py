@@ -70,8 +70,14 @@ extensions = [
     'sphinxcontrib.spelling',
     'sphinx_reredirects',
     'sphinx_markdown_builder',
+    'sphinx_llms_txt',
 ]
 
+# sphinx_llms_txt
+# Disable llms-full.txt, we create it manually in build.sh
+llms_txt_full_file = False
+# links to markdown files instead
+llms_txt_uri_template = "https://docs.pip.distribution.sol.onetick.com/{docname}.html.md"
 
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
