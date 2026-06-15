@@ -3,7 +3,6 @@ import re
 import warnings
 import shutil
 from datetime import datetime
-from typing import List
 
 from locator_parser.io import FileReader, FileWriter, PrintWriter
 from locator_parser.actions import Add, GetAll, Delete
@@ -91,7 +90,7 @@ class _FileHandler(ABC):
         pass
 
     @staticmethod
-    def _db_in_dbs_case_insensitive(db_id: str, databases: List[str]):
+    def _db_in_dbs_case_insensitive(db_id: str, databases: list[str]):
         for db_name in databases:
             if db_id.upper() == db_name.upper():
                 return True
@@ -699,7 +698,7 @@ class Config(_FileHandler):
         ----------
         config: path or Config
             Allows to specify a custom config. None is to use temporary generated config. Default is None.
-        locator: Locator or Dict[str, Locator]
+        locator: Locator or dict[str, Locator]
             Allows to specify a custom locator file. None is to use temporary generated locator.
 
             If **dict** passed, adds locators passed as values to corresponding contexts from keys.

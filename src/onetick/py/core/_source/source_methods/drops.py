@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from onetick.py.otq import otq
 
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 @inplace_operation
-def drop(self: 'Source', columns: List[Any], inplace=False) -> Optional['Source']:
+def drop(self: 'Source', columns: list[Any], inplace=False) -> Optional['Source']:
     r"""
     Remove a list of columns specified by names or regular expressions from the Source.
 

@@ -179,6 +179,11 @@ def tmp_config(
     # new behaviour can be achieved by setting STRIP_QUOTES_WHEN_ASSIGNING_SYMBOL_AND_OTQ_PARAMS param in JWQ EP
     data.append("COMPATIBILITY.JOIN_WITH_QUERY.STRIP_QUOTES_AROUND_SYMBOL_AND_OTQ_PARAMS=FALSE")
 
+    # PY-1544 <- OTDEV-37985 <- PY-1498
+    # seems like Arrow/Parquet libraries do not support reinitialization in the same process
+    # so we should skip its finalization with this parameter
+    data.append('REQUIRE_ARROW_S3_MODULE_UNINITIALIZATION=false')
+
     if os.getenv('OTP_WEBAPI_TEST_MODE'):
         tmp_file = TmpFile(name="onetick.cfg", clean_up=clean_up, force=True)
     else:

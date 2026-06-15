@@ -190,6 +190,9 @@ all cases where ticks should be propagated or not.
            Time  A
    0 2003-12-01  1
 
+You can also return ``long`` values or expressions in a return statement. However,
+in OneTick only value ``1`` is interpreted as ``True``. Other returned integer values will be equal to ``False``.
+
 
 Propagating ticks
 -----------------
@@ -446,4 +449,3 @@ Error handling
 --------------
 
 .. autofunction:: onetick.py.core.per_tick_script.throw_exception
-

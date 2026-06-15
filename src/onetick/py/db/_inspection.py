@@ -1,7 +1,7 @@
 import itertools
 import warnings
 from collections import defaultdict
-from typing import Union, Iterable, Tuple, Optional, Literal
+from typing import Union, Iterable, Optional, Literal
 from datetime import date as dt_date, datetime, timedelta
 from functools import wraps
 
@@ -85,7 +85,7 @@ class DB:
         return self.name
 
     @_method_cache
-    def access_info(self, deep_scan=False, username=None) -> Union[pd.DataFrame, dict]:
+    def access_info(self, deep_scan=False, username=None, query_properties=None) -> Union[pd.DataFrame, dict]:
         """
         Get access info for this database and ``username``.
 
@@ -107,6 +107,9 @@ class DB:
         username:
             Can be used to specify the user for which the query will be executed.
             By default the query is executed for the current user.
+        query_properties: dict, optional
+            Query properties passed to :py:func:`otp.run <onetick.py.run>`,
+            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
 
         See also
         --------
@@ -157,14 +160,18 @@ class DB:
             >> otq.WhereClause(where=f'DB_NAME = "{name}"')
         )
         graph = otq.GraphQuery(node)
-        df = otp.run(graph, username=username, **_get_safe_params_for_running(self))
+        safe_params = _get_safe_params_for_running(self)
+        if query_properties:
+            safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
+        df = otp.run(graph, username=username, **safe_params)
         if not df.empty:
             df = df.drop(columns='Time')
         if deep_scan:
             return df
         return dict(df.iloc[0] if not df.empty else {})
 
-    def show_config(self, config_type: Literal['locator_entry', 'db_time_intervals'] = 'locator_entry') -> dict:
+    def show_config(self, config_type: Literal['locator_entry', 'db_time_intervals'] = 'locator_entry',
+                    query_properties: Optional[dict] = None) -> dict:
         """
         Shows the specified configuration for a database.
 
@@ -178,6 +185,9 @@ class DB:
             then time intervals configured in the locator file will be propagated
             including additional information, such as
             LOCATION, ARCHIVE_DURATION, DAY_BOUNDARY_TZ, DAY_BOUNDARY_OFFSET, ALTERNATIVE_LOCATIONS, etc.
+        query_properties: dict, optional
+            Query properties passed to :py:func:`otp.run <onetick.py.run>`,
+            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
 
         See also
         --------
@@ -210,7 +220,10 @@ class DB:
         """
         node = otq.DbShowConfig(db_name=self.name, config_type=config_type.upper())
         graph = otq.GraphQuery(node)
-        df = otp.run(graph, **_get_safe_params_for_running(self))
+        safe_params = _get_safe_params_for_running(self)
+        if query_properties:
+            safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
+        df = otp.run(graph, **safe_params)
         if df.empty:
             raise ValueError(f"Can't get config for database '{self.name}'")
         df = df.drop(columns='Time')
@@ -242,7 +255,7 @@ class DB:
             return None
         return _datetime2date(access_info['MAX_END_DATE_MSEC'])
 
-    def _fit_time_interval_in_acl(self, start, end, timezone='GMT') -> Tuple[datetime, datetime]:
+    def _fit_time_interval_in_acl(self, start, end, timezone='GMT') -> tuple[datetime, datetime]:
         """
         Returns the part of time interval between ``start`` and ``end`` that fits ACL start/end time rules.
         ``start`` and ``end`` objects are considered to be timezone-naive and will be localized in ``timezone``.
@@ -274,7 +287,7 @@ class DB:
         end = utils.convert_timezone(end, 'GMT', timezone)
         return start, end
 
-    def _fit_date_in_acl(self, date, timezone='GMT') -> Tuple[datetime, datetime]:
+    def _fit_date_in_acl(self, date, timezone='GMT') -> tuple[datetime, datetime]:
         """
         Returns the part of ``date`` time interval that fits ACL start/end time rules.
         ``date`` object is considered to be timezone-naive and will be localized in ``timezone``.
@@ -548,7 +561,7 @@ class DB:
             return last_date
         return date
 
-    def tick_types(self, date=None, timezone=None) -> list[str]:
+    def tick_types(self, date=None, timezone=None, query_properties: Optional[dict] = None) -> list[str]:
         """
         Returns list of tick types for the ``date``.
 
@@ -558,6 +571,9 @@ class DB:
             Date for the tick types look up. ``None`` means the :attr:`last_date`
         timezone: str, optional
             Timezone for the look up. ``None`` means the default timezone.
+        query_properties: dict, optional
+            Query properties passed to :py:func:`otp.run <onetick.py.run>`,
+            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
 
         Returns
         -------
@@ -587,7 +603,8 @@ class DB:
             show_schema = True
 
         # PY-458: don't use cache, it can return different result in some cases
-        result = self._get_schema(use_cache=False, start=start, end=end, timezone=timezone, show_schema=show_schema)
+        result = self._get_schema(use_cache=False, start=start, end=end, timezone=timezone, show_schema=show_schema,
+                                  query_properties=query_properties)
         if len(result) == 0:
             return []
 
@@ -603,7 +620,7 @@ class DB:
         return self._locator_date_ranges[0]
 
     @_method_cache
-    def _get_schema(self, start, end, timezone, use_cache, show_schema):
+    def _get_schema(self, start, end, timezone, use_cache, show_schema, query_properties=None):
         ep = otq.DbShowTickTypes(use_cache=use_cache,
                                  show_schema=show_schema,
                                  include_memdb=True)
@@ -612,9 +629,11 @@ class DB:
                        start=start,
                        end=end,
                        timezone=timezone,
-                       context=self.context)
+                       context=self.context,
+                       query_properties=query_properties)
 
-    def schema(self, date=None, tick_type=None, timezone=None, check_index_file=utils.adaptive) -> dict[str, type]:
+    def schema(self, date=None, tick_type=None, timezone=None, check_index_file=utils.adaptive,
+               query_properties: Optional[dict] = None) -> dict[str, type]:
         """
         Gets the schema of the database.
 
@@ -637,6 +656,9 @@ class DB:
             but where there is actually no data.
             By default this option is set to False if it is supported by API and the server,
             otherwise it is set to True.
+        query_properties: dict, optional
+            Query properties passed to :py:func:`otp.run <onetick.py.run>`,
+            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
 
         Returns
         -------
@@ -676,7 +698,7 @@ class DB:
         start, end = self._fit_date_in_acl(date, timezone=timezone)
 
         kwargs = dict(
-            start=start, end=end, timezone=timezone, show_schema=True,
+            start=start, end=end, timezone=timezone, show_schema=True, query_properties=query_properties,
         )
         # PY-458, BEXRTS-1220, PY-1421
         # the results of the query may vary depending on using use_cache parameter, so we are trying both
@@ -750,7 +772,8 @@ class DB:
 
         return schema
 
-    def symbols(self, date=None, timezone=None, tick_type=None, pattern='.*') -> list[str]:
+    def symbols(self, date=None, timezone=None, tick_type=None, pattern='.*',
+                query_properties: Optional[dict] = None) -> list[str]:
         """
         Finds a list of available symbols in the database
 
@@ -764,6 +787,9 @@ class DB:
             Timezone for the lookup. ``None`` means the default timezone.
         pattern: str
             Regular expression to select symbols.
+        query_properties: dict, optional
+            Query properties passed to :py:func:`otp.run <onetick.py.run>`,
+            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
 
         Examples
         --------
@@ -788,7 +814,8 @@ class DB:
                          start=date,
                          end=date + timedelta(days=1),
                          timezone=timezone,
-                         context=self.context)
+                         context=self.context,
+                         query_properties=query_properties)
 
         if len(result) == 0:
             return []
@@ -801,6 +828,7 @@ class DB:
         end=utils.adaptive,
         date=None,
         timezone='GMT',
+        query_properties: Optional[dict] = None,
     ) -> pd.DataFrame:
         """
         This method shows various stats about the queried symbol,
@@ -830,6 +858,20 @@ class DB:
             * TOTAL_SYMBOLS - the number of symbols for the queried interval
             * TOTAL_SIZE - archive size in bytes for the queried interval
               (including the garbage potentially accumulated during appends).
+
+        Parameters
+        ----------
+        start: :class:`otp.dt <onetick.py.datetime>`, optional
+            Start of the query time range.
+        end: :class:`otp.dt <onetick.py.datetime>`, optional
+            End of the query time range.
+        date: :class:`otp.dt <onetick.py.datetime>`, optional
+            Date to query. Can be set instead of ``start`` and ``end``.
+        timezone: str
+            Timezone for the query. Default is GMT.
+        query_properties: dict, optional
+            Query properties passed to :py:func:`otp.run <onetick.py.run>`,
+            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
 
         Note
         ----
@@ -866,7 +908,8 @@ class DB:
                      end=end,
                      date=date,
                      timezone=timezone,
-                     context=self.context)
+                     context=self.context,
+                     query_properties=query_properties)
         return df
 
     def ref_data(
@@ -878,6 +921,7 @@ class DB:
         date=None,
         timezone='GMT',
         symbol: str = '',
+        query_properties: Optional[dict] = None,
     ) -> pd.DataFrame:
         """
         Shows reference data for the specified security and reference data type.
@@ -908,6 +952,9 @@ class DB:
             This parameter must be specified for some reference data types to be queried.
         symbol:
             Symbol name for the query (may be useful for some ``ref_data_type``).
+        query_properties: dict, optional
+            Query properties passed to :py:func:`otp.run <onetick.py.run>`,
+            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
 
         See also
         --------
@@ -957,7 +1004,8 @@ class DB:
                      end=end,
                      date=date,
                      timezone=timezone,
-                     context=self.context)
+                     context=self.context,
+                     query_properties=query_properties)
         return df
 
 
@@ -1021,6 +1069,7 @@ def databases(
     readable_only: bool = False,
     fetch_description: Optional[bool] = None,
     as_table: bool = False,
+    query_properties: Optional[dict] = None,
 ) -> Union[dict[str, DB], pd.DataFrame]:
     """
     Gets all available databases in the ``context``.
@@ -1052,6 +1101,9 @@ def databases(
     as_table: bool
         If False (default), this function returns a dictionary of database names and database objects.
         If True, returns a :pandas:`pandas.DataFrame` table where each row contains the info for each database.
+    query_properties: dict, optional
+        Query properties passed to :py:func:`otp.run <onetick.py.run>`,
+        such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
 
     See also
     --------
@@ -1131,7 +1183,10 @@ def databases(
     # sort alphabetically
     node = node >> otq.OrderBy(order_by='DB_NAME ASC')
 
-    dbs = otp.run(node, **_get_safe_params_for_running(context=context))
+    safe_params = _get_safe_params_for_running(context=context)
+    if query_properties:
+        safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
+    dbs = otp.run(node, **safe_params)
     if as_table:
         return dbs
 
@@ -1164,6 +1219,7 @@ def derived_databases(
     db=None,
     db_discovery_scope='query_host_only',
     as_table: bool = False,
+    query_properties: Optional[dict] = None,
 ) -> dict[str, DB]:
     """
     Gets available derived databases.
@@ -1203,6 +1259,9 @@ def derived_databases(
     as_table: bool
         If False (default), this function returns a dictionary of database names and database objects.
         If True, returns a :pandas:`pandas.DataFrame` table where each row contains the info for each database.
+    query_properties: dict, optional
+        Query properties passed to :py:func:`otp.run <onetick.py.run>`,
+        such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
 
     See also
     --------
@@ -1232,9 +1291,13 @@ def derived_databases(
     ep = ep.tick_type('ANY')
     if start and end:
         db_name = db or otp.config.get('default_db', 'LOCAL')
-        dbs = otp.run(ep, symbols=f'{db_name}::', start=start, end=end, context=context)
+        dbs = otp.run(ep, symbols=f'{db_name}::', start=start, end=end, context=context,
+                      query_properties=query_properties)
     else:
-        dbs = otp.run(ep, **_get_safe_params_for_running(db, context))
+        safe_params = _get_safe_params_for_running(db, context)
+        if query_properties:
+            safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
+        dbs = otp.run(ep, **safe_params)
     if as_table:
         return dbs
     if len(dbs) == 0:

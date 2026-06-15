@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Type, Union, Any
+from typing import Optional, Union, Any
 
 import onetick.py as otp
 from onetick.py.otq import otq
@@ -103,7 +103,7 @@ class _ReadFromDataFrameSource(Source):
         return src
 
 
-def _get_offsets(dataframe, timestamp_column) -> Tuple[otp.datetime, list]:
+def _get_offsets(dataframe, timestamp_column) -> tuple[otp.datetime, list]:
     offsets = [ott.timedelta(0)]
     base_ts = pd.Timestamp(dataframe[timestamp_column][0])
 
@@ -164,7 +164,7 @@ def _process_timestamp(dataframe: pd.DataFrame, timestamp_column: Optional[str])
 
 def _process_common_params(
     dataframe, timestamp_column, symbol_name_field, symbol,
-) -> Tuple[pd.DataFrame, dict, Optional[str], Optional[str], Union[str, Type[utils.adaptive], None], Optional[str]]:
+) -> tuple[pd.DataFrame, dict, Optional[str], Optional[str], Union[str, type[utils.adaptive], None], Optional[str]]:
     dataframe = _process_dataframe(dataframe)
     timestamp_column = _process_timestamp(dataframe, timestamp_column)
 

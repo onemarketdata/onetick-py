@@ -1,5 +1,5 @@
 import warnings
-from typing import TYPE_CHECKING, Tuple, Union
+from typing import TYPE_CHECKING, Union
 
 from onetick import py as otp
 import onetick.py.types as ott
@@ -632,7 +632,7 @@ def partition_evenly_into_groups(self: 'Source', *args, **kwargs):
 def process_by_group(
     self: 'Source', process_source_func, group_by=None, source_name=None, num_threads=None, query_parameters=None,
     symbol_name_field=None, out_of_order_output_tick_policy=None, added_field_name_suffix=None, inplace=False,
-) -> Union['Source', Tuple['Source', ...], None]:
+) -> Union['Source', tuple['Source', ...], None]:
     """
     Groups data by ``group_by`` and run ``process_source_func`` for each group and merge outputs for every group.
     Note ``process_source_func`` will be converted to Onetick object and passed to query,
@@ -682,7 +682,7 @@ def process_by_group(
 
     Returns
     -------
-    :class:`Source`, Tuple[:class:`Source`] or None:
+    :class:`Source`, tuple[:class:`Source`] or None:
 
     See also
     --------

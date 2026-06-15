@@ -1,6 +1,5 @@
 import os
 import traceback
-from typing import List
 
 from .configuration import config
 
@@ -11,7 +10,7 @@ _TRACE_LINES: dict[str, str] = {}
 _TRACE_TUPLES: dict[str, tuple] = {}
 
 
-def _get_id_with_traceback(tb_list: List[str]) -> str:
+def _get_id_with_traceback(tb_list: list[str]) -> str:
     """
     Save traceback in some memory-efficient way
     and return unique id of the traceback.

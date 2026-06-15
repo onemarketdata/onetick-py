@@ -1,5 +1,5 @@
 import argparse
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import onetick.py as otp
 
@@ -67,7 +67,7 @@ def render_otq(
 
         image_path = 'query.svg'
 
-    call_kwargs: Dict[str, Any] = {'path': path, 'image_path': image_path}
+    call_kwargs: dict[str, Any] = {'path': path, 'image_path': image_path}
     if x_limit is not None and y_limit is not None:
         call_kwargs['line_limit'] = (y_limit, x_limit)
     elif x_limit is not None or y_limit is not None:

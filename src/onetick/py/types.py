@@ -3,7 +3,7 @@ import functools
 import inspect
 import warnings
 import decimal as _decimal
-from typing import Optional, Type, Union
+from typing import Optional, Union
 from datetime import date as _date
 from datetime import datetime as _datetime
 from datetime import timedelta as _timedelta
@@ -915,7 +915,7 @@ def get_base_type(obj):
 def get_object_type(obj):
     if isinstance(obj, (_nan, _inf)):
         return float
-    if isinstance(obj, Type):
+    if isinstance(obj, type):
         return obj
     if hasattr(obj, 'dtype'):
         dtype = obj.dtype

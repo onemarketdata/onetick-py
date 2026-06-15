@@ -4,7 +4,7 @@ import sys
 import warnings
 import math
 
-from typing import Optional, Union, Type, Sequence
+from typing import Optional, Union, Sequence
 
 import onetick.py as otp
 from onetick.py.otq import otq
@@ -51,7 +51,7 @@ class Tick(Source):
         tick_type: Optional[AdaptiveTickType] = utils.adaptive,
         bucket_time: str = "start",
         bucket_interval: int = 0,
-        bucket_units: Union[str, Type[utils.adaptive]] = utils.adaptive,
+        bucket_units: Union[str, type[utils.adaptive]] = utils.adaptive,
         num_ticks_per_timestamp: int = 1,
         query_parameters: QueryParameters = None,
         **kwargs,

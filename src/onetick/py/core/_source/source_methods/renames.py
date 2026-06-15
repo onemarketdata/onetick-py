@@ -1,5 +1,5 @@
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from onetick.py.core.column import _Column
 from onetick.py.otq import otq
@@ -64,14 +64,14 @@ def _add_prefix_and_suffix(
     return self
 
 
-def _is_excluded(s: str, not_to_rename: List[str]) -> bool:
+def _is_excluded(s: str, not_to_rename: list[str]) -> bool:
     for excluded in not_to_rename:
         if re.match(excluded, s):
             return True
     return False
 
 
-def _get_columns_names_renaming(schema, rename_dict: Dict[str, str], not_to_rename: List[str]) -> Dict[str, str]:
+def _get_columns_names_renaming(schema, rename_dict: dict[str, str], not_to_rename: list[str]) -> dict[str, str]:
     """
     We can't be sure python Source has consistent columns cache, because sinking complex event processors
     can change columns unpredictable, so if user will specify regex as a param, we will pass regex
@@ -108,9 +108,9 @@ def add_prefix(self: 'Source', prefix, inplace=False, columns=None, ignore_colum
         The flag controls whether operation should be applied inplace or not.
         If ``inplace=True``, then it returns nothing. Otherwise method returns a new modified
         object.
-    columns: List[str], optional
+    columns: list[str], optional
         If set, only selected columns will be updated with prefix. Can't be used with ``ignore_columns`` parameter.
-    ignore_columns: List[str], optional
+    ignore_columns: list[str], optional
         If set, selected columns won't be updated with prefix. Can't be used with ``columns`` parameter.
 
     Returns
@@ -183,9 +183,9 @@ def add_suffix(self: 'Source', suffix, inplace=False, columns=None, ignore_colum
         The flag controls whether operation should be applied inplace or not.
         If ``inplace=True``, then it returns nothing. Otherwise method returns a new modified
         object.
-    columns: List[str], optional
+    columns: list[str], optional
         If set, only selected columns will be updated with suffix. Can't be used with ``ignore_columns`` parameter.
-    ignore_columns: List[str], optional
+    ignore_columns: list[str], optional
         If set, selected columns won't be updated with suffix. Can't be used with ``columns`` parameter.
 
     Returns
@@ -345,7 +345,7 @@ def rename(self: 'Source', columns=None, use_regex=False, fields_to_skip=None, i
         del self.__dict__[in_key]
 
     rename_rules = [key + "=" + value for key, value in items.items()]
-    kwargs: Dict[str, Any] = dict(rename_fields=",".join(rename_rules))
+    kwargs: dict[str, Any] = dict(rename_fields=",".join(rename_rules))
     if use_regex:
         kwargs['use_regex'] = True
     if fields_to_skip:

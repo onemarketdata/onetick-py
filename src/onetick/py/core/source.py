@@ -4,7 +4,7 @@ import uuid
 import warnings
 from collections import defaultdict
 from datetime import datetime, date
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 from pathlib import Path
 
 import pandas as pd
@@ -1028,7 +1028,7 @@ class Source:
         output_format: Optional[str] = None,
         load_external_otqs: bool = True,
         view: bool = False,
-        line_limit: Optional[Tuple[int, int]] = (10, 30),
+        line_limit: Optional[tuple[int, int]] = (10, 30),
         parse_eval_from_params: bool = False,
         render_debug_info: bool = False,
         debug: bool = False,
@@ -1053,7 +1053,7 @@ class Source:
             will be loaded automatically.
         view: bool
             Defines should generated image be shown after render.
-        line_limit: Tuple[int, int], None
+        line_limit: tuple[int, int], None
             Limit for maximum number of lines and length of some EP parameters strings.
             First param is limit of lines, second - limit of characters in each line.
             If set to None limit disabled.
@@ -1323,7 +1323,7 @@ class Source:
         ----------
         ep: otq.graph_components.EpBase,\
             otq.graph_components.EpBase.PinnedEp,\
-            Tuple[otq.graph_components.EpBase, uuid.uuid4, Optional[str], Optional[str]]
+            tuple[otq.graph_components.EpBase, uuid.uuid4, Optional[str], Optional[str]]
             onetick.query EP object to append to source.
         out_pin: Optional[str], default=None
             name of the out pin to connect to ``ep``
@@ -1525,7 +1525,7 @@ class Source:
 
         Returns
         -------
-        State Variables: Dict[str, state variable]
+        State Variables: dict[str, state variable]
             State variables, you can access one with its name.
 
         See Also
@@ -1702,7 +1702,7 @@ class Source:
                 raise ValueError(f"Can't set type in schema for class property {name}")
             self.__dict__[name] = _Column(name, dtype, self)
 
-    def has_start_end_time(self) -> Tuple[bool, bool]:
+    def has_start_end_time(self) -> tuple[bool, bool]:
         """
         Check if at least one of query sources has start and end time
         """

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional, Union, Literal
+from typing import TYPE_CHECKING, Optional, Union, Literal
 
 from abc import ABC
 
@@ -140,7 +140,7 @@ class _OrderBookAggregation(_Aggregation, ABC):
                  max_spread: Optional[float] = None,
                  max_initialization_days: int = 1,
                  book_uncross_method: Optional[Literal['REMOVE_OLDER_CROSSED_LEVELS']] = None,
-                 dq_events_that_clear_book: Optional[List[str]] = None,
+                 dq_events_that_clear_book: Optional[list[str]] = None,
                  **kwargs):
         self.side = side
         self.max_levels = max_levels

@@ -51,7 +51,7 @@ def get_query_info(otq_path, query_name="", inspected_graphs=None):
         Absolute path to an OTQ file.
     query_name: str
         Name of the query to analyze; if it's not specified, the .otq file should have only one query.
-    inspected_graphs: None or Dict[tuple of (str, str) : Graph]
+    inspected_graphs: None or dict[tuple of (str, str) : Graph]
         Usually should be kept as the default value (None).
 
     Returns
@@ -363,7 +363,7 @@ def add_pins(otq_path, query_name, specification):
         Absolute path to an OTQ file.
     query_name: str
         Name of the query to analyze
-    specification: List[tuple]
+    specification: list[tuple]
         List of 3-values tuples, where the first value node from the `get_query_info` function,
         the second one is marker, the third one is name.
         A marker values: 1 for input, and 0 for output.

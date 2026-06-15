@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional
 
 import onetick.py as otp
 from onetick.py.otq import otq
@@ -50,7 +50,7 @@ class ODBC(Source):
         tz=None,
         allow_unordered_ticks=False,
         numeric_scale=8,
-        preserve_unicode_fields: Optional[List[str]] = None,
+        preserve_unicode_fields: Optional[list[str]] = None,
         symbology='',
         apply_symbol_name_history=False,
         start=utils.adaptive,

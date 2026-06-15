@@ -5,7 +5,7 @@ import types
 import operator
 import tokenize
 import warnings
-from typing import Callable, Union, Any, Optional, Iterable, Type, Tuple, Dict, List, TypeVar
+from typing import Callable, Union, Any, Optional, Iterable, TypeVar
 from copy import deepcopy
 from functools import wraps, cached_property
 from collections import deque
@@ -773,7 +773,7 @@ class ExpressionParser:
         else:
             bool_op, compare_op = ast.And(), ast.NotEq()
 
-        values: List[ast.expr] = [
+        values: list[ast.expr] = [
             ast.Compare(left=left, ops=[compare_op], comparators=[r])
             for r in right_values
         ]
@@ -796,7 +796,7 @@ class ExpressionParser:
             ops.append(op)
             comparators.append(right)
 
-        bool_operands: List[ast.expr] = []
+        bool_operands: list[ast.expr] = []
         for i in range(len(comparators) - 1):
             left, op, right = comparators[i], ops[i], comparators[i + 1]
             bool_operands.append(
@@ -826,7 +826,7 @@ class ExpressionParser:
         value = py_op(left.value, right.value)
         return Expression(value)
 
-    def keyword(self, expr: ast.keyword) -> Tuple[str, Any]:
+    def keyword(self, expr: ast.keyword) -> tuple[str, Any]:
         """
         Keyword argument expression from function call: func(key=value).
         Not converted to per tick script in any way, needed only in self.call() function.
@@ -1127,8 +1127,8 @@ class CaseStatementParser:
 
     @staticmethod
     def _replace_nodes(node: T,
-                       replace_name: Optional[Dict[str, ast.expr]] = None,
-                       replace_break: Union[ast.stmt, Exception, Type[Exception], None] = None,
+                       replace_name: Optional[dict[str, ast.expr]] = None,
+                       replace_break: Union[ast.stmt, Exception, type[Exception], None] = None,
                        inplace: bool = False) -> T:
         """
         Function to replace expressions and statements inside ast.For node.
@@ -1173,8 +1173,8 @@ class CaseStatementParser:
 
     def _flatten_for_stmt(self,
                           stmt: ast.For,
-                          replace_break: Union[ast.stmt, Exception, Type[Exception], None] = None,
-                          stmt_after_for: Optional[ast.stmt] = None) -> List[ast.stmt]:
+                          replace_break: Union[ast.stmt, Exception, type[Exception], None] = None,
+                          stmt_after_for: Optional[ast.stmt] = None) -> list[ast.stmt]:
         """
         Convert for statement to list of copy-pasted statements from the body for each iteration.
         """
@@ -1209,7 +1209,7 @@ class CaseStatementParser:
             stmts.append(self._replace_nodes(stmt_after_for, replace_name=replace_name))  # type: ignore[arg-type]
         return stmts
 
-    def _flatten_for_stmts(self, stmts: List[ast.stmt]) -> List[Union[ast.If, ast.Return, ast.Pass]]:
+    def _flatten_for_stmts(self, stmts: list[ast.stmt]) -> list[Union[ast.If, ast.Return, ast.Pass]]:
         """
         Find ast.For statements in list of statements and flatten them.
         Return list of statements without ast.For.
@@ -1247,7 +1247,7 @@ class CaseStatementParser:
                 res_stmts.append(stmt)
         return res_stmts  # type: ignore[return-value]
 
-    def _compress_stmts_to_one_stmt(self, stmts: List[ast.stmt], filler=None) -> Union[ast.If, ast.Return]:
+    def _compress_stmts_to_one_stmt(self, stmts: list[ast.stmt], filler=None) -> Union[ast.If, ast.Return]:
         """
         List of if statements will be converted to one if statement.
         For example:
@@ -1302,7 +1302,7 @@ class CaseStatementParser:
             "only for, if, return and pass statements are allowed"
         )
 
-    def _replace_local_variables(self, stmts: List[ast.stmt]) -> List[ast.stmt]:
+    def _replace_local_variables(self, stmts: list[ast.stmt]) -> list[ast.stmt]:
         """
         We support local variables only by calculating their value and
         replacing all it's occurrences in the code after variable definition.
@@ -1378,7 +1378,7 @@ class CaseStatementParser:
         """
         return ast.Constant(None)
 
-    def compress(self, stmts: List[ast.stmt]) -> Union[ast.If, ast.Return]:
+    def compress(self, stmts: list[ast.stmt]) -> Union[ast.If, ast.Return]:
         """
         Compress list of statements to single statement.
         This is possible only if simple if and return statements are used.
@@ -1555,15 +1555,20 @@ class StatementParser(CaseStatementParser):
     def return_stmt(self, stmt: ast.Return) -> str:  # type: ignore[override]
         """
         Return statement.
-        For now we support returning only boolean values or nothing.
-        Will be converted to: return true;
+        For now we support returning only boolean values, int/long values or nothing.
+        Will be converted to:
+
+        * For bool: return true;
+        * For int/long expressions: return [expression];
+
+        In OneTick for int/long values ``1`` acts as ``true`` and other values as ``false``.
         """
         # if return is empty then it is not filter
         v = stmt.value if stmt.value is not None else ast.Constant(value=True)
         value = self.expression_parser.expression(v)
         dtype = ott.get_object_type(value.value)
         if not self.fun.inner_function:
-            if dtype is not bool:
+            if not issubclass(dtype, (bool, int)):
                 raise TypeError(f"Not supported return type {dtype}")
             if stmt.value is not None:
                 self.fun.returns = True
@@ -2121,7 +2126,7 @@ class FunctionParser:
         stmt = self.case_statement_parser.compress(node.body)
         return self.case_statement_parser.statement(stmt)
 
-    def case(self) -> Tuple[str, List[Any]]:
+    def case(self) -> tuple[str, list[Any]]:
         """
         Convert lambda or function to OneTick's CASE() function.
         """

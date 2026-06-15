@@ -3,7 +3,7 @@ import warnings
 from string import Template
 from os import path
 from abc import ABC, abstractmethod
-from typing import Iterable, Optional, Union, List, Dict
+from typing import Iterable, Optional, Union
 from functools import wraps
 
 from onetick.py.otq import otq
@@ -63,7 +63,7 @@ class _StateBase(ABC):
             If state ``var`` is a primitive (not tick sequence), then ``query`` must return only one tick,
             otherwise exception will be raised.
 
-        symbol: str, Operation, dict, Source, or Tuple[Union[str, Operation], Union[dict, Source]]
+        symbol: str, Operation, dict, Source, or tuple[Union[str, Operation], Union[dict, Source]]
             Symbol name to use in ``query``. In addition, symbol params can be passed along with symbol name.
 
             Symbol name can be passed as a string or as an :class:`Operation`.
@@ -1207,7 +1207,7 @@ class TickSet(_TickSequence):
         """
         return self.find(field_name, None, *key_values, throw=True)
 
-    def erase(self, *key_values: List[Union[str, 'TickSequenceTick']], **named_keys: Dict) -> Operation:
+    def erase(self, *key_values: list[Union[str, 'TickSequenceTick']], **named_keys: dict) -> Operation:
         """
         Erase tick(s) from tick set with keys or through
         :py:class:`TickSequenceTick <onetick.py.core._internal._state_objects.TickSequenceTick>`

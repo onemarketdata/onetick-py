@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import List
 from copy import deepcopy
 
 
 class _NodeRule(ABC):
-    key_params: List[str] = []
+    key_params: list[str] = []
 
     @abstractmethod
     def build(self, eps, print_out=False):
@@ -179,7 +178,7 @@ class _SourceByKey(_NodeRule):
 
 class _NodesHistory:
     def __init__(self):
-        self._rules: List[_NodeRule] = []
+        self._rules: list[_NodeRule] = []
 
     def assign(self, ep, key):
         self._rules.append(_Assign(ep, key))

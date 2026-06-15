@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 from types import FunctionType
 from datetime import datetime
 
@@ -30,7 +30,7 @@ def _convert_dt_to_str(dt: Union[str, datetime, otp_datetime]):
 
 
 def _convert_time_intervals(
-    time_intervals_to_cache: List[Tuple[Union[str, datetime, otp_datetime], Union[str, datetime, otp_datetime]]],
+    time_intervals_to_cache: list[tuple[Union[str, datetime, otp_datetime], Union[str, datetime, otp_datetime]]],
 ):
     return "\n".join(
         [
@@ -48,7 +48,7 @@ def create_cache(
     time_granularity: int = 0,
     time_granularity_units: Optional[str] = None,
     timezone: str = "",
-    time_intervals_to_cache: Optional[List[tuple]] = None,
+    time_intervals_to_cache: Optional[list[tuple]] = None,
     allow_delete_to_everyone: bool = False,
     allow_update_to_everyone: bool = False,
     allow_search_to_everyone: bool = True,
@@ -92,7 +92,7 @@ def create_cache(
         Units used in ``time_granularity`` parameter. Possible values: 'none', 'days', 'months', 'seconds' or None.
     timezone: str
         Timezone of the query to be cached.
-    time_intervals_to_cache: List[tuple]
+    time_intervals_to_cache: list[tuple]
         List of tuples with start and end times in ``[(<start_time_1>, <end_time_1>), ...]`` format,
         where ``<start_time>`` and ``<end_time>`` should be one of these:
 

@@ -1,7 +1,6 @@
 import re
 from collections import OrderedDict
 from abc import ABC, abstractmethod
-from typing import List, Type
 
 
 def get_properties(declaration):
@@ -251,7 +250,7 @@ class Entity(Generator, ABC):
     # it means that entity ends with '/>' instead of '</TAG>'
     SINGLE = False
     # children entities
-    CHILDREN: List[Type["Entity"]] = []
+    CHILDREN: list[type["Entity"]] = []
 
     def __init__(self, **kwargs):
         if self.__class__.SINGLE:

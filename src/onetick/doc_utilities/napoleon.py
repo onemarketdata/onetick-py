@@ -1,4 +1,3 @@
-from typing import List
 from sphinx.ext.napoleon.docstring import NumpyDocstring
 from sphinx.locale import get_translation
 from onetick.doc_utilities.snippets import parse_string
@@ -6,7 +5,7 @@ from onetick.doc_utilities.snippets import parse_string
 
 class OTNumpyDocstring(NumpyDocstring):
 
-    def _parse_examples_section(self, section: str) -> List[str]:
+    def _parse_examples_section(self, section: str) -> list[str]:
 
         """Applies OT directives for all lines"""
 

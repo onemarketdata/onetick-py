@@ -5,7 +5,7 @@ import string
 import warnings
 
 from functools import partial
-from typing import Optional, Union, Dict
+from typing import Optional, Union
 
 import onetick.py as otp
 from onetick.py.otq import otq
@@ -38,7 +38,7 @@ def CSV(  # NOSONAR
     field_delimiter=',',
     handle_escaped_chars=False,
     quote_char='"',
-    timestamp_format: Optional[Union[str, Dict[str, str]]] = None,
+    timestamp_format: Optional[Union[str, dict[str, str]]] = None,
     file_contents: Optional[str] = None,
     use_field_delimiters_for_title: Optional[bool] = None,
     query_parameters: QueryParameters = None,
@@ -301,7 +301,7 @@ class _CSV(Source):
                  field_delimiter=',',
                  handle_escaped_chars=False,
                  quote_char='"',
-                 timestamp_format: Optional[Union[str, Dict[str, str]]] = None,
+                 timestamp_format: Optional[Union[str, dict[str, str]]] = None,
                  file_contents: Optional[str] = None,
                  use_field_delimiters_for_title: Optional[bool] = None,
                  query_parameters: QueryParameters = None,

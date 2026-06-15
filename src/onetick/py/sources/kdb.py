@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 import onetick.py.types as ott
 from onetick.py.otq import otq
@@ -18,7 +18,7 @@ class ReadFromKdb(Source):
         query: Optional[str] = None,
         symbol_column: Optional[str] = None,
         timestamp_column: Optional[str] = None,
-        fields: Optional[str | Dict[str, Optional[Tuple]]] = None,
+        fields: Optional[str | dict[str, Optional[tuple]]] = None,
         username: Optional[str] = None,
         password: Optional[str] = None,
         symbol=utils.adaptive,

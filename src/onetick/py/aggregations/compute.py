@@ -1,4 +1,4 @@
-from typing import List, Dict, TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 from copy import deepcopy
 from collections import namedtuple
 from onetick.py.compatibility import is_supported_agg_option_price
@@ -128,7 +128,7 @@ class Compute(_Aggregation):
             aggr.validate_input_columns(src)
 
     @property
-    def ep_params(self) -> Dict:
+    def ep_params(self) -> dict:
         all_fields_orig = self.all_fields
         if self.has_multi_column_aggregations:
             self.all_fields = False
@@ -215,7 +215,7 @@ class Compute(_Aggregation):
         res = self._long_to_ts(res, what_to_wrap)
         return res
 
-    def _ts_to_long(self, src: 'Source') -> Tuple['Source', List]:
+    def _ts_to_long(self, src: 'Source') -> tuple['Source', list]:
         """Convert nsectime columns to long, so aggregation can work in a proper way"""
         res = src.copy()
         forward_result = namedtuple('forward_result', ('aggr', 'columns'))
@@ -229,7 +229,7 @@ class Compute(_Aggregation):
             self.aggrs[r.columns.tmp_out_column] = self.aggrs.pop(r.columns.out_column)
         return res, what_to_wrap
 
-    def _long_to_ts(self, src: 'Source', what_to_wrap: List) -> 'Source':
+    def _long_to_ts(self, src: 'Source', what_to_wrap: list) -> 'Source':
         """Convert long columns to nsectime if needed (used along with _ts_to_long)"""
         res = src.copy()
         for r in what_to_wrap:

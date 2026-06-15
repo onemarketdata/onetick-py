@@ -4,7 +4,7 @@ import doctest
 import pkgutil
 import json
 from collections import defaultdict
-from typing import List, Optional
+from typing import Optional
 from jupyter_core.paths import jupyter_data_dir, jupyter_config_dir
 import onetick.py as otp
 from onetick.doc_utilities.ot_doctest import OTDoctestParser
@@ -22,7 +22,7 @@ def parse_args():
     return args
 
 
-def collect_examples_from_obj(obj: doctest.DocTest) -> List:
+def collect_examples_from_obj(obj: doctest.DocTest) -> list:
     """groups examples for one object (docstring)"""
     snippets = []
     id_ = 1
@@ -40,7 +40,7 @@ def collect_examples_from_obj(obj: doctest.DocTest) -> List:
 def parse_string(string: str, caller: Optional[str] = None) -> str:
     parser = OTDoctestParser(caller=caller)
     lines = parser.parse(string)
-    res: List = []
+    res: list = []
     snippet = Snippet()
     for item in lines:
         if isinstance(item, doctest.Example):
@@ -142,7 +142,7 @@ class Snippet:
 
     def __init__(self,
                  name: Optional[str] = None,
-                 examples: Optional[List[doctest.Example]] = None,
+                 examples: Optional[list[doctest.Example]] = None,
                  obj_ref: Optional[str] = None):
         self._name = name
         self._examples = examples or []
@@ -160,7 +160,7 @@ class Snippet:
         self._name = value
 
     @property
-    def code(self) -> List[str]:
+    def code(self) -> list[str]:
         res = []
         for ex in self._examples:
             res.extend(ex.source.strip().split('\n'))
@@ -213,7 +213,7 @@ class Snippets:
                              f'Objects "{self._snippets[item.name]._obj_ref}", "{item._obj_ref}"')
         self._snippets[item.name] = item
 
-    def extend(self, items: List):
+    def extend(self, items: list):
         for item in items:
             self.append(item)
 
@@ -230,7 +230,7 @@ class Snippets:
         def tree():
             return defaultdict(tree)
 
-        def set(t, keys: List, value):
+        def set(t, keys: list, value):
             tmp = t
             for key in keys[:-1]:
                 tmp = tmp[key]

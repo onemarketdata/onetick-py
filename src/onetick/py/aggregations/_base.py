@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Union, TYPE_CHECKING, Tuple, Optional, Any
+from typing import Union, TYPE_CHECKING, Optional, Any
 from copy import deepcopy
 from functools import wraps
 from collections import namedtuple
@@ -26,7 +26,7 @@ def validate(method):
         for column in obj.group_by:
             if str(column) not in src.schema or not isinstance(src[str(column)], _Column):
                 raise KeyError(f"There is no '{column}' column to group by")
-        schema: Dict = method(obj, src=src, name=name)
+        schema: dict = method(obj, src=src, name=name)
         if not obj.overwrite_output_field:
             obj.validate_output_name(schema, name)
         return schema
@@ -223,11 +223,11 @@ class _Aggregation(ABC):
         "groups_to_display": "all",
     }
 
-    FIELDS_TO_SKIP: List = []   # attr listed here won't be used in self.__str__
+    FIELDS_TO_SKIP: list = []   # attr listed here won't be used in self.__str__
 
     output_field_type: Optional[type] = None  # None will force to use type of input column
-    require_type: Optional[Tuple[type, ...]] = None
-    _validations_to_skip: List = []
+    require_type: Optional[tuple[type, ...]] = None
+    _validations_to_skip: list = []
 
     def __init__(self,
                  column: Union[str, _Column, _Operation],
@@ -239,7 +239,7 @@ class _Aggregation(ABC):
                  bucket_end_condition: Optional[_Operation] = None,
                  end_condition_per_group: bool = False,
                  boundary_tick_bucket: str = "new",
-                 group_by: Optional[Union[List, str, _Operation]] = None,
+                 group_by: Optional[Union[list, str, _Operation]] = None,
                  groups_to_display: str = "all",
                  overwrite_output_field: bool = False):
         """
@@ -336,7 +336,7 @@ class _Aggregation(ABC):
         return str(value)
 
     @property
-    def ep_params(self) -> Dict:
+    def ep_params(self) -> dict:
         """prepare params for self.__str__ and otq.EpBase"""
         params = {}
 
@@ -363,7 +363,7 @@ class _Aggregation(ABC):
         return self.EP(**params)
 
     @validate
-    def _get_common_schema(self, src: 'Source', name: str) -> Dict:
+    def _get_common_schema(self, src: 'Source', name: str) -> dict:
         """return data schema without output fields (this fields should be added further)"""
         schema = {}
         for column in self.group_by:
@@ -379,7 +379,7 @@ class _Aggregation(ABC):
         """
         pass
 
-    def _get_output_schema(self, src: 'Source', name: Optional[str] = None) -> Dict:
+    def _get_output_schema(self, src: 'Source', name: Optional[str] = None) -> dict:
         if not name or name in src.__class__.meta_fields:
             return {}
         return {
@@ -438,7 +438,7 @@ class _Aggregation(ABC):
         raise TypeError(f"Aggregation `{self.NAME}` require {self.require_type} types, got {dtype}")
 
     @staticmethod
-    def validate_output_name(schema: Dict, name: Union[List, str]):
+    def validate_output_name(schema: dict, name: Union[list, str]):
         """checks that aggregation won't output columns with same names"""
         if not isinstance(name, list):
             name = [name]
@@ -562,7 +562,7 @@ class _KeepTs(_Aggregation):
         self.keep_timestamp = keep_timestamp
 
     @validate     # type: ignore
-    def _get_common_schema(self, src: 'Source', *args, **kwargs) -> Dict:
+    def _get_common_schema(self, src: 'Source', *args, **kwargs) -> dict:
         schema = src.schema.copy()
         schema['TICK_TIME'] = ott.nsectime
         return schema
@@ -610,7 +610,7 @@ class _ExpectLargeInts(_Aggregation):
             return res
         return self._long_to_ts(res, col)
 
-    def _ts_to_long(self, src: 'Source', name: str) -> Tuple['Source', Any, bool]:
+    def _ts_to_long(self, src: 'Source', name: str) -> tuple['Source', Any, bool]:
         agg_columns = namedtuple('agg_columns', ('in_column', 'tmp_in_column', 'tmp_out_column', 'out_column'))
         if src.schema[self.column_name] != ott.nsectime:
             return src, agg_columns(self.column_name, self.column_name, name, name), False

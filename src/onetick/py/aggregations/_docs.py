@@ -1,4 +1,4 @@
-from typing import List, Dict, Union, Optional, Callable, TYPE_CHECKING, Literal
+from typing import Union, Optional, Callable, TYPE_CHECKING, Literal
 
 from functools import wraps
 from inspect import Signature, Parameter
@@ -257,7 +257,7 @@ _group_by_doc = param_doc(
     If :py:class:`~onetick.py.Operation` is used then GROUP_{i} column is added. Where i is index in group_by list.
     For example, if Operation is the only element in ``group_by`` list then GROUP_0 field will be added.
     ''',
-    annotation=Optional[Union[List, str, Operation]],
+    annotation=Optional[Union[list, str, Operation]],
     default=None
 )
 _groups_to_display_doc = param_doc(
@@ -429,7 +429,7 @@ _dq_events_that_clear_book_doc = param_doc(
     desc="""
     A list of names of data quality events arrival of which should clear the order book.
     """,
-    annotation=List[str],
+    annotation=list[str],
     default=None,
 )
 _best_ask_price_field_doc = param_doc(
@@ -749,7 +749,7 @@ _portfolios_query_params_doc = param_doc(
     desc="""
     An optional parameter that specifies parameters of the query specified in `portfolios_query`.
     """,
-    annotation=Union[str, Dict[str, str]],
+    annotation=Union[str, dict[str, str]],
     default='',
 )
 _portfolio_value_field_name_doc = param_doc(
@@ -760,7 +760,7 @@ _portfolio_value_field_name_doc = param_doc(
 
     The number of the field names must match the number of the field names listed in the `columns` parameter.
     """,
-    annotation=Union[str, List[Union[str, Column]]],
+    annotation=Union[str, list[Union[str, Column]]],
     default='VALUE',
 )
 _columns_portfolio_doc = param_doc(
@@ -771,7 +771,7 @@ _columns_portfolio_doc = param_doc(
 
     Could be set as a comma-separated list of the names or ``list`` of name strings/``Columns`` objects.
     ''',
-    annotation=Union[str, List[Union[str, Column]]],
+    annotation=Union[str, list[Union[str, Column]]],
     default='PRICE',
 )
 _symbols_doc = param_doc(

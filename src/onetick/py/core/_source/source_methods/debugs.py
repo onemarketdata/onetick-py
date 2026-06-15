@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Optional, Union
 
 from onetick import py as otp
 from onetick.py import configuration
@@ -190,7 +190,7 @@ def dump(
     self: 'Source',
     label: Optional[str] = None,
     where: Optional['otp.Operation'] = None,
-    columns: Union[str, Tuple[str], List[str], None] = None,
+    columns: Union[str, tuple[str], list[str], None] = None,
     callback: Optional[Callable] = None,
 ):
     """

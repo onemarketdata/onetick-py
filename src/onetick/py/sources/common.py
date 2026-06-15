@@ -1,6 +1,6 @@
 import datetime as dt
 
-from typing import Optional, Union, Type, List
+from typing import Optional, Union
 
 from onetick.py.otq import otq
 import pandas as pd
@@ -12,8 +12,8 @@ from onetick.py.core.column_operations.base import OnetickParameter
 from .. import types as ott
 from .. import utils, configuration
 
-AdaptiveTickType = Union[str, OnetickParameter, _SymbolParamColumn, Type[utils.adaptive]]
-AdaptiveDBType = Union[str, OnetickParameter, _SymbolParamColumn, Type[utils.adaptive], List[str]]
+AdaptiveTickType = Union[str, OnetickParameter, _SymbolParamColumn, type[utils.adaptive]]
+AdaptiveDBType = Union[str, OnetickParameter, _SymbolParamColumn, type[utils.adaptive], list[str]]
 
 
 def get_start_end_by_date(date):

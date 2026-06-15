@@ -1,6 +1,6 @@
 import os
 import re
-from typing import Tuple, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from inspect import Parameter, formatannotation, Signature
 from functools import wraps
 
@@ -16,7 +16,7 @@ def param_doc(name,
               desc=None,
               annotation=Parameter.empty,
               default=Parameter.empty,
-              kind=Parameter.POSITIONAL_OR_KEYWORD) -> Tuple[str, Parameter]:
+              kind=Parameter.POSITIONAL_OR_KEYWORD) -> tuple[str, Parameter]:
     doc = f"""{name}"""
 
     if str_annotation is None and annotation is not Parameter.empty:

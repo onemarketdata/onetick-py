@@ -5,7 +5,7 @@ import warnings
 import dataclasses
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Optional, Union, Type, Tuple
+from typing import Optional, Union
 from functools import cache
 
 import pandas as pd
@@ -61,7 +61,7 @@ def _run_measure_perf(otq_file: str, summary_file: str, context: Optional[str] =
 
 def measure_perf(src_or_otq: Union['otp.Source', str],
                  summary_file: Union[str, 'otp.utils.TmpFile', None] = None,
-                 context: Union[str, Type[adaptive], None] = adaptive) -> Tuple[str, Union[str, 'otp.utils.TmpFile']]:
+                 context: Union[str, type[adaptive], None] = adaptive) -> tuple[str, Union[str, 'otp.utils.TmpFile']]:
     """
     Run **measure_perf.exe** tool on some .otq file or :py:class:`onetick.py.Source`.
     Result is saved in file ``summary_file``.
@@ -271,7 +271,7 @@ class CEPSummaryEntry(DebugSummaryEntry, _CEPSummaryEntry):
 
 
 class PerformanceSummary:
-    _entry_cls: Optional[Type[SummaryEntry]] = None
+    _entry_cls: Optional[type[SummaryEntry]] = None
     _entry_key: Optional[str] = None
     _ep_name_field: Optional[str] = None
 

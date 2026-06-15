@@ -1,5 +1,5 @@
 import warnings
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from onetick import py as otp
 from onetick.py.otq import otq
@@ -33,7 +33,7 @@ def append(self: 'Source', other) -> 'Source':
 
     Parameters
     ----------
-    other: List, Source
+    other: list, Source
         data source to merge
 
     Returns
@@ -47,13 +47,13 @@ def append(self: 'Source', other) -> 'Source':
 
 
 def diff(self: 'Source', other: 'Source',
-         fields: Optional[Union[str, List[str]]] = None,
+         fields: Optional[Union[str, list[str]]] = None,
          ignore: bool = False,
          output_ignored_fields: Optional[bool] = None,
          show_only_fields_that_differ: Optional[bool] = None,
          show_matching_ticks: Optional[bool] = None,
          show_all_ticks: bool = False,
-         non_decreasing_value_fields: Optional[Union[str, List[str]]] = None,
+         non_decreasing_value_fields: Optional[Union[str, list[str]]] = None,
          threshold: Optional[int] = None,
          left_prefix: str = 'L',
          right_prefix: str = 'R',

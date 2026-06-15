@@ -1,5 +1,5 @@
 import warnings
-from typing import TYPE_CHECKING, Optional, Set, Type, Union, Literal
+from typing import TYPE_CHECKING, Optional, Union, Literal
 
 from onetick import py as otp
 from onetick.py import configuration
@@ -20,11 +20,11 @@ def write(
     db: Union[str, 'otp.DB'],
     symbol: Union[str, 'otp.Column', None] = None,
     tick_type: Union[str, 'otp.Column', None] = None,
-    date: Union[otp.datetime, Type[adaptive], None] = adaptive,
+    date: Union[otp.datetime, type[adaptive], None] = adaptive,
     start_date: Optional[otp.datetime] = None,
     end_date: Optional[otp.datetime] = None,
     append: bool = False,
-    keep_symbol_and_tick_type: Union[bool, Type[adaptive]] = adaptive,
+    keep_symbol_and_tick_type: Union[bool, type[adaptive]] = adaptive,
     propagate: bool = True,
     out_of_range_tick_action: Literal['exception', 'ignore', 'load'] = 'exception',
     timestamp: Optional['otp.Column'] = None,
@@ -32,7 +32,7 @@ def write(
     correction_type: Optional['otp.Column'] = None,
     replace_existing_time_series: bool = False,
     allow_concurrent_write: bool = False,
-    context: Union[str, Type[adaptive]] = adaptive,
+    context: Union[str, type[adaptive]] = adaptive,
     use_context_of_query: bool = False,
     inplace: bool = False,
     **kwargs,
@@ -359,7 +359,7 @@ def write(
         if col in self.schema:
             self.drop(col, inplace=True)
 
-    to_drop: Set[str] = set()
+    to_drop: set[str] = set()
     if not keep_symbol_and_tick_type:
         if 'symbol_name_field' in kwargs:
             to_drop.add(kwargs['symbol_name_field'])

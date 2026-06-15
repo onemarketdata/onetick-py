@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Dict, Union, Optional, Tuple, TYPE_CHECKING
+from typing import Union, Optional, TYPE_CHECKING
 from copy import deepcopy
 
 if TYPE_CHECKING:
@@ -100,7 +100,7 @@ class Vwap(_Aggregation):
     FIELDS_DEFAULT['price_column'] = 'PRICE'
     FIELDS_DEFAULT['size_column'] = 'SIZE'
 
-    FIELDS_TO_SKIP: List = ['column_name']
+    FIELDS_TO_SKIP: list = ['column_name']
 
     output_field_type = float
     require_type = (int, float, ott.nsectime, ott.decimal)
@@ -135,7 +135,7 @@ class Correlation(_Aggregation):
     FIELDS_MAPPING['column_name_1'] = 'INPUT_FIELD1_NAME'
     FIELDS_MAPPING['column_name_2'] = 'INPUT_FIELD2_NAME'
 
-    FIELDS_TO_SKIP: List = ['column_name']
+    FIELDS_TO_SKIP: list = ['column_name']
 
     output_field_type = float
     require_type = (int, float)
@@ -227,7 +227,7 @@ class Distinct(_AggregationTSSelection):
     FIELDS_TO_SKIP = ['end_condition_per_group', 'group_by', 'output_field_name', 'all_fields']
 
     def __init__(self,
-                 keys: Union[str, List[str], _Column, List[_Column]],
+                 keys: Union[str, list[str], _Column, list[_Column]],
                  key_attrs_only: bool = True,
                  *args, **kwargs):
         keys = keys if isinstance(keys, list) else [keys]   # type: ignore
@@ -235,7 +235,7 @@ class Distinct(_AggregationTSSelection):
         self.key_attrs_only = key_attrs_only
 
     @validate
-    def _get_common_schema(self, src: 'Source', *args, **kwargs) -> Dict:
+    def _get_common_schema(self, src: 'Source', *args, **kwargs) -> dict:
         if self.key_attrs_only:
             return super()._get_common_schema(src=src, *args, **kwargs)
         return src.schema.copy()
@@ -339,7 +339,7 @@ class OptionPrice(_Aggregation):
     FIELDS_DEFAULT = deepcopy(_Aggregation.FIELDS_DEFAULT)
     FIELDS_DEFAULT['all_fields_for_running'] = False
 
-    FIELDS_TO_SKIP: List = ['column_name', 'all_fields', 'end_condition_per_group', 'group_by', 'output_field_name']
+    FIELDS_TO_SKIP: list = ['column_name', 'all_fields', 'end_condition_per_group', 'group_by', 'output_field_name']
 
     output_field_type = float
     require_type = (float,)
@@ -388,7 +388,7 @@ class OptionPrice(_Aggregation):
     def apply(self, src: 'Source', name: str = 'VALUE', *args, **kwargs) -> 'Source':
         return super().apply(src=src, name=name, *args, **kwargs)
 
-    def _get_output_schema(self, src: 'Source', name: Optional[str] = None) -> Dict:
+    def _get_output_schema(self, src: 'Source', name: Optional[str] = None) -> dict:
         output_schema = super()._get_output_schema(src, name=name)
         compute = {
             k.upper(): float for k in ['delta', 'gamma', 'theta', 'vega', 'rho'] if getattr(self, f'compute_{k}')
@@ -493,8 +493,8 @@ class Percentile(_Aggregation):
 
     def __init__(
         self,
-        input_field_names: List[Union[Union[str, _Column], Tuple[Union[str, _Column], str]]],
-        output_field_names: Optional[List[str]] = None,
+        input_field_names: list[Union[Union[str, _Column], tuple[Union[str, _Column], str]]],
+        output_field_names: Optional[list[str]] = None,
         number_of_quantiles: int = 2,
         *args, **kwargs,
     ):
@@ -953,7 +953,7 @@ class ImpliedVol(_Aggregation):
         super().__init__(_Column(price_field), *args, **kwargs)
 
     def validate_input_columns(self, src: 'Source'):
-        columns_to_check: Dict[str, Tuple[Union[str, _Column], Union[Tuple, type]]] = {
+        columns_to_check: dict[str, tuple[Union[str, _Column], Union[tuple, type]]] = {
             'price_field': (self.price_field_name, (int, float)),
             'option_price_field': (self.option_price_field_name, (int, float)),
             'interest_rate': (self.interest_rate_field_name, (int, float)),

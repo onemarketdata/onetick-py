@@ -1,6 +1,6 @@
 import copy
 import warnings
-from typing import Type, Sequence
+from typing import Sequence
 
 from onetick.py import types as ott
 from onetick.py.core.column_operations import _methods
@@ -305,7 +305,7 @@ class Operation:
         :py:meth:`onetick.py.Source.apply`
         :ref:`Python callables parsing guide <python callable parser>`
         """
-        if isinstance(lambda_f, Type) and ott.is_type_basic(lambda_f):
+        if isinstance(lambda_f, type) and ott.is_type_basic(lambda_f):
             return self._convert_to(lambda_f)
 
         from onetick.py.core.lambda_object import apply_lambda
@@ -975,7 +975,7 @@ class Operation:
 
         Returns
         -------
-        result: _Operation or Tuple[_Operation, List[Tuple[_Operation, _Operation]]]
+        result: _Operation or tuple[_Operation, list[tuple[_Operation, _Operation]]]
             Returns new operation object with parameters replaced by callback.
             Also may return the list of tuples with old and new parameters.
         """

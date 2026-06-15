@@ -2,7 +2,7 @@ import datetime as dt
 import inspect
 import warnings
 
-from typing import Dict, Iterable, Optional, Sequence
+from typing import Iterable, Optional, Sequence
 
 import onetick.py as otp
 from onetick.py.otq import otq
@@ -288,7 +288,7 @@ _schema_doc = param_doc(
     How the schema is used depends on ``schema_policy``. When ``schema`` is set and
     ``schema_policy`` is not explicitly provided, ``schema_policy`` defaults to ``'manual'``.
     """,
-    annotation=Optional[Dict[str, type]],
+    annotation=Optional[dict[str, type]],
     default=None,
 )
 _desired_schema_doc = param_doc(

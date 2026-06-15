@@ -2,7 +2,7 @@ import asyncio
 import inspect
 import datetime
 import warnings
-from typing import Union, List, Optional, Dict, Any, Callable, Type
+from typing import Union, Optional, Any, Callable
 from collections import defaultdict
 
 import numpy as np
@@ -25,11 +25,11 @@ from onetick.py._stack_info import _add_stack_info_to_exception
 from onetick.py.callback import LogCallback, ManualDataframeCallback
 
 
-def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSONAR
+def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSONAR
                      otp.query, str, otq.EpBase, otq.GraphQuery,
                      otq.ChainQuery, otq.Chainlet, otq.SqlQuery, otp.SqlQuery],
         *,
-        symbols: Union[List[Union[str, otq.Symbol]], otp.Source, str, None] = None,
+        symbols: Union[list[Union[str, otq.Symbol]], otp.Source, str, None] = None,
         start: Union[datetime.datetime, otp.datetime, type[utils.adaptive], None] = utils.adaptive,
         end: Union[datetime.datetime, otp.datetime, type[utils.adaptive], None] = utils.adaptive,
         date: Union[datetime.date, otp.date, None] = None,
@@ -40,13 +40,13 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         username: Optional[str] = None,
         alternative_username: Optional[str] = None,
         password: Optional[str] = None,
-        batch_size: Union[int, Type[utils.default], None] = utils.default,
+        batch_size: Union[int, type[utils.default], None] = utils.default,
         running: Optional[bool] = False,
         query_properties: Optional[dict] = None,
-        concurrency: Union[int, Type[utils.default], None] = utils.default,
+        concurrency: Union[int, type[utils.default], None] = utils.default,
         apply_times_daily: Optional[int] = None,
         symbol_date: Union[datetime.datetime, int, str, None] = None,
-        query_params: Optional[Dict[str, Any]] = None,
+        query_params: Optional[dict[str, Any]] = None,
         time_as_nsec: bool = True,
         treat_byte_arrays_as_strings: bool = True,
         output_matrix_per_field: bool = False,
@@ -56,13 +56,13 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         callback=None,
         svg_path=None,
         use_connection_pool: bool = False,
-        node_name: Union[str, List[str], None] = None,
+        node_name: Union[str, list[str], None] = None,
         require_dict: bool = False,
         max_expected_ticks_per_symbol: Optional[int] = None,
-        log_symbol: Union[bool, Type[utils.default]] = utils.default,
+        log_symbol: Union[bool, type[utils.default]] = utils.default,
         encoding: Optional[str] = None,
         manual_dataframe_callback: bool = False,
-        print_symbol_errors: Union[bool, Type[utils.default]] = utils.default,
+        print_symbol_errors: Union[bool, type[utils.default]] = utils.default,
         preserve_decimal_flag: Optional[bool] = None):
     """
     Executes a query and returns its result.
@@ -202,7 +202,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
     use_connection_pool: bool
         Default is False. If set to True, the connection pool is used.
         Not supported for WebAPI mode.
-    node_name: str, List[str], optional
+    node_name: str, list[str], optional
         Name of the output node to select result from. If query graph has several output nodes, you can specify the name
         of the node to choose result from. If node_name was specified, query should be presented by path on the disk
         and output_structure should be `df`
@@ -784,7 +784,7 @@ def run(query: Union[Callable, Dict, otp.Source, otp.MultiOutputSource,  # NOSON
         return result
 
     # node_names should be either a list of node names or None
-    node_names: Optional[List[str]]
+    node_names: Optional[list[str]]
     if isinstance(node_name, str):
         node_names = [node_name]
     else:

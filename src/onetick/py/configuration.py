@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Iterable, Type, Union, Optional
+from typing import Iterable, Union, Optional
 from contextlib import suppress, contextmanager
 from textwrap import dedent
 
@@ -106,7 +106,7 @@ class OtpProperty:
        {env_var_desc}
     """
     def __init__(self, description, base_default, env_var_name=None, env_var_func=None,
-                 env_var_desc=None, set_value=nothing, allowed_types: Union[Type, Iterable] = nothing,
+                 env_var_desc=None, set_value=nothing, allowed_types: Union[type, Iterable] = nothing,
                  validator_func=None):
         self._base_default = base_default
         self._env_var_name = env_var_name

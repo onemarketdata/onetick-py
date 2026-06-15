@@ -8,7 +8,6 @@ import tempfile
 import weakref
 from collections import defaultdict
 from contextlib import suppress
-from typing import Dict, List
 
 from .types import default
 
@@ -143,7 +142,7 @@ _TMP_CONFIGS_DIR_BASE = os.environ.get('OTP_BASE_FOLDER_FOR_GENERATED_RESOURCE',
 
 class TmpFile(File, os.PathLike, CleanUpFinalizer):
 
-    ALL: Dict[str, List['TmpFile']] = defaultdict(list)
+    ALL: dict[str, list['TmpFile']] = defaultdict(list)
     keep_everything_generated = False
 
     def __init__(self, suffix="", name="", clean_up=default, force=False, base_dir=default):
@@ -255,7 +254,7 @@ class TmpFile(File, os.PathLike, CleanUpFinalizer):
 
 class TmpDir(os.PathLike, CleanUpFinalizer):
 
-    ALL: Dict[str, List['TmpDir']] = defaultdict(list)
+    ALL: dict[str, list['TmpDir']] = defaultdict(list)
     keep_everything_generated = False
 
     def __init__(self, rel_path="", *, suffix="", clean_up=default, base_dir=default):
@@ -363,7 +362,7 @@ class TmpDir(os.PathLike, CleanUpFinalizer):
 
 class GeneratedDir(os.PathLike, CleanUpFinalizer):
 
-    ALL: Dict[str, 'GeneratedDir'] = {}  # store all created dir with goal to set cleanup=False if it requires
+    ALL: dict[str, 'GeneratedDir'] = {}  # store all created dir with goal to set cleanup=False if it requires
     keep_everything_generated = False
 
     def __init__(self, dir_path, clean_up=default):

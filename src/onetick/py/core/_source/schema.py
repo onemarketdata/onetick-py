@@ -53,7 +53,7 @@ class Schema(collections.abc.Mapping):
 
         Parameters
         ----------
-        new_schema: Dict[str, type]
+        new_schema: dict[str, type]
             schema in the column-name -> type format
 
         Returns

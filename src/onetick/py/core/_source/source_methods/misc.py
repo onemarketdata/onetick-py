@@ -1,7 +1,7 @@
 import functools
 import re
 import warnings
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, Literal
+from typing import TYPE_CHECKING, Any, Optional, Union, Literal
 
 import onetick.py as otp
 from onetick.py import types as ott
@@ -38,8 +38,8 @@ def inplace_operation(method):
 
 
 def _columns_names_regex(
-    self: 'Source', objs: Tuple[Union[_Column, str]], drop: bool = False
-) -> Tuple[List[str], bool]:
+    self: 'Source', objs: tuple[Union[_Column, str]], drop: bool = False
+) -> tuple[list[str], bool]:
     """
     We can't be sure python Source has consistent columns cache, because sinking complex event processors
     can change columns unpredictable, so if user will specify regex as a param, we will pass regex
@@ -438,7 +438,7 @@ def cache(
     time_granularity: int = 0,
     time_granularity_units: Optional[str] = None,
     timezone: str = "",
-    time_intervals_to_cache: Optional[List[tuple]] = None,
+    time_intervals_to_cache: Optional[list[tuple]] = None,
     allow_delete_to_everyone: bool = False,
     allow_update_to_everyone: bool = False,
     allow_search_to_everyone: bool = True,
@@ -480,7 +480,7 @@ def cache(
         Units used in ``time_granularity`` parameter. Possible values: 'none', 'days', 'months', 'seconds' or None.
     timezone: str
         Timezone of the query to be cached.
-    time_intervals_to_cache: List[tuple]
+    time_intervals_to_cache: list[tuple]
         List of tuples with start and end times in ``[(<start_time_1>, <end_time_1>), ...]`` format,
         where ``<start_time>`` and ``<end_time>`` should be one of these:
 
@@ -1265,7 +1265,7 @@ def limit(self: 'Source',
 
 
 def _merge_fields_by_regex(schema: dict, columns_regex: str, match_index: int):
-    new_columns: Dict[str, type] = {}
+    new_columns: dict[str, type] = {}
     for column, column_type in list(schema.items()):
         match = re.match(columns_regex, column)
         if match:
@@ -1294,7 +1294,7 @@ def _merge_fields_by_regex(schema: dict, columns_regex: str, match_index: int):
 @inplace_operation
 def virtual_ob(
     self: 'Source',
-    quote_source_fields: Optional[List[Union[str, _Column]]] = None,
+    quote_source_fields: Optional[list[Union[str, _Column]]] = None,
     quote_timeout: Optional[float] = None,
     show_full_detail: bool = False,
     output_book_format: Literal['ob', 'prl'] = 'ob',
@@ -1309,7 +1309,7 @@ def virtual_ob(
 
     Parameters
     ----------
-    quote_source_fields: Optional[List[Union[str, Column]]]
+    quote_source_fields: Optional[list[Union[str, Column]]]
         Specifies a list of string fields for grouping quotes.
         The virtual order book is then constructed for each subgroup separately and
         the ``SOURCE`` field is constructed to contain the description of the group.
@@ -1380,7 +1380,7 @@ def virtual_ob(
     2  2003-12-01 00:00:00.001   21.8 1969-12-31 19:00:00   500              1            0      P
     ...
     """
-    kwargs: Dict[str, Any] = {}
+    kwargs: dict[str, Any] = {}
 
     required_fields = {'BID_PRICE', 'BID_SIZE', 'ASK_PRICE', 'ASK_SIZE'}
     missing_fields = required_fields - set(self.schema.keys())

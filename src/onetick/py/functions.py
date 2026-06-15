@@ -6,7 +6,7 @@ import datetime as dt
 from collections import defaultdict, Counter
 from functools import singledispatch
 from itertools import chain, zip_longest, repeat
-from typing import List, Union, Type, Optional, Sequence, Literal
+from typing import Union, Optional, Sequence, Literal
 from enum import Enum
 
 from onetick.py.otq import otq
@@ -60,7 +60,7 @@ def apply_symbol_to_ep(base_ep, symbol, tmp_otq, symbol_date=None):
 def merge(sources, align_schema=True, symbols=None, identify_input_ts=False,
           presort=adaptive, concurrency=default, batch_size=default, output_type_index=None,
           add_symbol_index: bool = False, separate_db_name: bool = False,
-          added_field_name_suffix: str = '', stabilize_schema: Union[Type[adaptive], bool] = adaptive,
+          added_field_name_suffix: str = '', stabilize_schema: Union[type[adaptive], bool] = adaptive,
           enforce_order: bool = False, symbol_date=None):
     """
     Merges ticks from the ``sources`` into a single output ordered by the timestamp.
@@ -385,7 +385,7 @@ def __copy_sources_on_merge_or_join(result,
         - If None, False than do not add passthrough eps and do not change node names.
     drop_meta : bool, optional
         If True drop TIMESTAMP and OMDSEQ field
-    leading : List of str, Tuple of str, Optional
+    leading : list of str, tuple of str, Optional
         List of leading sources names
     output_type_index: int, optional
         Specifies index of source in `sources` from which properties of `result` will be taken.
@@ -1475,7 +1475,7 @@ def apply(query, *args, **kwargs):
     return apply_query(query.path, *args, **kwargs, **query.params)
 
 
-def cut(column: 'Column', bins: Union[int, List[float]], labels: Optional[List[str]] = None):
+def cut(column: 'Column', bins: Union[int, list[float]], labels: Optional[list[str]] = None):
     """
     Bin values into discrete intervals (mimics :pandas:`pandas.cut`).
 
@@ -1483,12 +1483,12 @@ def cut(column: 'Column', bins: Union[int, List[float]], labels: Optional[List[s
     ----------
     column: :py:class:`~onetick.py.Column`
         Column with numeric data used to build bins.
-    bins: int or List[float]
+    bins: int or list[float]
 
-        When List[float] - defines the bin edges.
+        When list[float] - defines the bin edges.
 
         When int - Defines the number of equal-width bins in the range of x.
-    labels: List[str]
+    labels: list[str]
         Labels used to name resulting bins.
         If not set, bins are numeric intervals like (5.0000000000, 7.5000000000].
 
@@ -1515,7 +1515,7 @@ def cut(column: 'Column', bins: Union[int, List[float]], labels: Optional[List[s
     return _CutBuilder(src, column, bins, labels=labels)
 
 
-def qcut(column: 'Column', q: Union[int, List[float]], labels: Optional[List[str]] = None):
+def qcut(column: 'Column', q: Union[int, list[float]], labels: Optional[list[str]] = None):
     """
     Quantile-based discretization function (mimics :pandas:`pandas.qcut`).
 
@@ -1523,12 +1523,12 @@ def qcut(column: 'Column', q: Union[int, List[float]], labels: Optional[List[str
     ----------
     column: :py:class:`~onetick.py.Column`
         Column with numeric data used to build bins.
-    q: int or List[float]
+    q: int or list[float]
 
-        When List[float] - array of quantiles, e.g. [0, .25, .5, .75, 1.] for quartiles.
+        When list[float] - array of quantiles, e.g. [0, .25, .5, .75, 1.] for quartiles.
 
         When int - Number of quantiles. 10 for deciles, 4 for quartiles, etc.
-    labels: List[str]
+    labels: list[str]
         Labels used to name resulting bins.
         If not set, bins are numeric intervals like (5.0000000000, 7.5000000000].
 
@@ -1550,7 +1550,7 @@ def qcut(column: 'Column', q: Union[int, List[float]], labels: Optional[List[str
     4   7   c
     5   1   a
     """
-    # TODO when q is a List[float] like [0, .25, .5, .75, 1.]
+    # TODO when q is a list[float] like [0, .25, .5, .75, 1.]
     src = column.obj_ref
     return _QCutBuilder(src, column, q, labels=labels)
 
@@ -1670,7 +1670,7 @@ def coalesce(sources, max_source_delay: float = 0.0, output_type_index: Optional
 
 def corp_actions(source,
                  adjustment_date: Union[ott.date, ott.datetime, dt.date, dt.datetime, int, str, None] = None,
-                 adjustment_date_tz: Union[str, Type[default]] = default,
+                 adjustment_date_tz: Union[str, type[default]] = default,
                  fields=None,
                  adjust_rule="PRICE",
                  apply_split: bool = True,
@@ -1866,7 +1866,7 @@ def save_sources_to_single_file(sources,
         * `start`: **otp.datetime**, optional - query start time
         * `end`: **otp.datetime**, optional - query end time
         * `symbols`: **otp.Source** or **otp.Symbols**, optional - query symbols
-        * `query_properties`: **Dict[str, str]**, optional - query properties
+        * `query_properties`: **dict[str, str]**, optional - query properties
 
     file_path: str, optional
         Path to the file where all sources will be saved.
@@ -2130,7 +2130,7 @@ def _validate_format_line(format_line: str):
         raise ValueError("Single '{' encountered in format string")
 
 
-def _get_format_type(format_array: List[str]) -> _FormatType:
+def _get_format_type(format_array: list[str]) -> _FormatType:
     if len(format_array) < 2:
         return _FormatType.OMITTED_POSITIONAL
     format_spec_array = format_array[1::2]

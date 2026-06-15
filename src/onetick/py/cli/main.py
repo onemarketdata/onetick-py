@@ -18,7 +18,7 @@ definition of command in `entry_points` in `pyproject.toml`.
 import sys
 import argparse
 import warnings
-from typing import Callable, Dict, Optional
+from typing import Callable, Optional
 from dataclasses import dataclass
 from importlib import metadata
 
@@ -54,7 +54,7 @@ def compatibility_check():
 
 
 def load_commands() -> dict:
-    commands: Dict[str, Command] = {}
+    commands: dict[str, Command] = {}
     available_commands = entry_points(group='onetick.py.cli.plugins')
     for command_loader in available_commands:
         command = command_loader.name
@@ -78,7 +78,7 @@ def load_commands() -> dict:
     return commands
 
 
-def load_arg_parsers(commands: Dict[str, Command], parser: argparse.ArgumentParser):
+def load_arg_parsers(commands: dict[str, Command], parser: argparse.ArgumentParser):
     subparsers = parser.add_subparsers()
 
     for command, command_obj in commands.items():

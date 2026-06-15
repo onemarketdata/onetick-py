@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 
@@ -89,7 +89,7 @@ def table(self: 'Source', inplace=False, strict: bool = True, **schema) -> Optio
 
         if isinstance(obj, ott._inner_string):
             res = f'{name} {ott.type2str(ott.get_object_type(obj))}'
-        if not isinstance(obj, Type) and not is_time_type_or_nsectime(obj):
+        if not isinstance(obj, type) and not is_time_type_or_nsectime(obj):
             res += f' ({ott.value2str(obj)})'
         return res
 

@@ -1,7 +1,7 @@
 import inspect
 import warnings
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional, Union, Literal
+from typing import TYPE_CHECKING, Optional, Union, Literal
 
 from onetick import py as otp
 from onetick.py import types as ott
@@ -569,7 +569,7 @@ def join_with_query(
     params: dict
         Mapping of the parameters' names and their values for the ``query``.
         :py:class:`Columns <onetick.py.Column>` can be used as a value.
-    symbol: str, Operation, dict, Source, or Tuple[Union[str, Operation], Union[dict, Source]]
+    symbol: str, Operation, dict, Source, or tuple[Union[str, Operation], Union[dict, Source]]
         Symbol name to use in ``query``. In addition, symbol params can be passed along with symbol name.
 
         Symbol name can be passed as a string or as an :class:`Operation`.
@@ -962,9 +962,9 @@ def join_with_query(
 def point_in_time(
     self: 'Source',
     source: Union['Source', str],
-    offsets: List[int],
+    offsets: list[int],
     offset_type: Literal['time_msec', 'num_ticks'] = 'time_msec',
-    input_ts_fields_to_propagate: Optional[List[str]] = None,
+    input_ts_fields_to_propagate: Optional[list[str]] = None,
     symbol_date=None,
 ) -> 'Source':
     """
@@ -1246,7 +1246,7 @@ def join_with_snapshot(
         The prefix for the names of joined tick fields.
 
         Default: `empty string`
-    snapshot_fields: List[str], None
+    snapshot_fields: list[str], None
         Specifies list of fields from the snapshot to join with input ticks. When empty, all fields are included.
 
     See also

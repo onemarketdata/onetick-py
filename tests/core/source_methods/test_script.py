@@ -2395,3 +2395,19 @@ class TestDecimal:
         assert df.dtypes['C'] == np.float64
         assert df['D'][0] == 100 + 0.000000001
         assert df.dtypes['D'] == np.float64
+
+
+def test_return(session):
+    def script(tick):
+        if tick['X'] == 1:
+            return 100
+        if 2 <= tick['X'] <= 3:
+            return tick['X'] - 1
+
+        return True
+
+    src = otp.Ticks(X=[1, 2, 3, 4])
+    src = src.script(script)
+
+    df = otp.run(src)
+    assert df['X'].to_list() == [2, 4]

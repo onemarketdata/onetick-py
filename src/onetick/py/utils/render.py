@@ -7,7 +7,7 @@ from collections import defaultdict, deque
 from datetime import datetime
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Deque, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Optional, Union
 
 from onetick.py.utils import TmpFile
 
@@ -148,8 +148,8 @@ class EP:
 
 @dataclass
 class IfElseEP(EP):
-    if_nodes: Set[str] = field(default_factory=set)
-    else_nodes: Set[str] = field(default_factory=set)
+    if_nodes: set[str] = field(default_factory=set)
+    else_nodes: set[str] = field(default_factory=set)
 
 
 @dataclass
@@ -158,10 +158,10 @@ class Node:
     id: str
     query: str
     tick_type: Optional[str] = field(default=None)
-    labels: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
     config: dict = field(default_factory=dict)
     params: dict = field(default_factory=dict)
-    sinks: List[str] = field(default_factory=list)
+    sinks: list[str] = field(default_factory=list)
     symbols: list = field(default_factory=list)
     name: Optional[str] = field(default=None)
 
@@ -170,13 +170,13 @@ class Node:
 class Query:
     name: str
     graph: str
-    nodes: Dict[str, Node] = field(default_factory=dict)
+    nodes: dict[str, Node] = field(default_factory=dict)
     roots: list = field(default_factory=list)
     leaves: list = field(default_factory=list)
     symbols: list = field(default_factory=list)
     config: dict = field(default_factory=dict)
     params: dict = field(default_factory=dict)
-    depends: Set[Tuple[Optional[str], Optional[str]]] = field(default_factory=set)
+    depends: set[tuple[Optional[str], Optional[str]]] = field(default_factory=set)
 
     def get_id(self, prefix: Optional[str] = "cluster"):
         if prefix:
@@ -193,7 +193,7 @@ class Query:
 class Graph:
     file_path: str
     config: dict = field(default_factory=dict)
-    queries: Dict[str, Query] = field(default_factory=dict)
+    queries: dict[str, Query] = field(default_factory=dict)
 
     def has_query(self, query):
         return query in self.queries
@@ -264,7 +264,7 @@ class GVTable:
         >>> table.row(["cell_2_1", "cell_2_2"])  # doctest: +SKIP
         >>> table_html = str(table)  # doctest: +SKIP
         """
-        self.rows: List[Tuple[List[Tuple[Union[List[str], str], dict]], dict]] = []
+        self.rows: list[tuple[list[tuple[Union[list[str], str], dict]], dict]] = []
         self.attrs = {
             "border": border,
             "cellborder": cellborder,
@@ -371,7 +371,7 @@ def _is_local_query(f_path: Optional[str]) -> bool:
     return f_path in ["THIS", "___ME___"]
 
 
-def _parse_function_params(func_params: str) -> Tuple[list, dict]:
+def _parse_function_params(func_params: str) -> tuple[list, dict]:
     def save_param(_key, _value, _args, _kwargs):
         if _key:
             _kwargs[_key.lower()] = (_key, _value)
@@ -427,7 +427,7 @@ def _parse_function_params(func_params: str) -> Tuple[list, dict]:
     return args, kwargs
 
 
-def _parse_function(expression: str, pattern: Optional[str] = None) -> Tuple[Optional[str], list, dict]:
+def _parse_function(expression: str, pattern: Optional[str] = None) -> tuple[Optional[str], list, dict]:
     # EP_NAME(PARAM_NAME=PARAM_VALUE,...)
     # [a-zA-Z_:] is EP_NAME, can contain letters, underscore and colon
     # [\s\S] is any symbol including newline (because . doesn't include newline by default)
@@ -445,7 +445,7 @@ def _parse_function(expression: str, pattern: Optional[str] = None) -> Tuple[Opt
     return ep, args, kwargs
 
 
-def _get_ep_from_str(ep_string: str) -> Tuple[str, list, dict]:
+def _get_ep_from_str(ep_string: str) -> tuple[str, list, dict]:
     ep, args, kwargs = _parse_function(ep_string)
 
     if not ep:
@@ -454,7 +454,7 @@ def _get_ep_from_str(ep_string: str) -> Tuple[str, list, dict]:
     return ep, args, kwargs
 
 
-def _parse_query_path(query_path: str) -> Union[Tuple[str, Optional[str]], List[str]]:
+def _parse_query_path(query_path: str) -> Union[tuple[str, Optional[str]], list[str]]:
     query_path_splitted = query_path.rsplit("::", maxsplit=1)
 
     if len(query_path_splitted) == 1:
@@ -531,7 +531,7 @@ def _parse_ep(ep_string: str, parse_eval_from_params: bool = False) -> Union[EP,
     return EP(name=ep, raw_string=ep_string, args=args, kwargs=kwargs)
 
 
-def _parse_security(value: str) -> Tuple[Union[str, EP, NestedQuery], str, bool]:
+def _parse_security(value: str) -> tuple[Union[str, EP, NestedQuery], str, bool]:
     is_security_active = True
     split_value = value.split()
 
@@ -957,7 +957,7 @@ def build_node(graphs: GraphStorage, node: Node, config: Config):
         table.cell([("[■]", {"port": "symbols"})])
 
     if node.ep and (node.ep.args or node.ep.kwargs):
-        params: List[Tuple[Optional[str], Union[str, NestedQuery]]] = \
+        params: list[tuple[Optional[str], Union[str, NestedQuery]]] = \
             [(None, v) for v in node.ep.args] + list(node.ep.kwargs.values())
 
         param_args_lines = []
@@ -1202,12 +1202,12 @@ def _render_graph(
 
 
 def render_otq(
-    path: Union[str, List[str]],
+    path: Union[str, list[str]],
     image_path: Optional[str] = None,
     output_format: Optional[str] = None,
     load_external_otqs: bool = True,
     view: bool = False,
-    line_limit: Optional[Tuple[int, int]] = (10, 60),
+    line_limit: Optional[tuple[int, int]] = (10, 60),
     parse_eval_from_params: bool = False,
     render_debug_info: bool = False,
     debug: bool = False,
@@ -1220,7 +1220,7 @@ def render_otq(
 
     Parameters
     ----------
-    path: str, List[str]
+    path: str, list[str]
         Path to .otq file or list of paths to multiple .otq files.
         Needed to render query could be specified with the next format: `path_to_otq::query_name`
     image_path: str, None
@@ -1233,7 +1233,7 @@ def render_otq(
         will be loaded automatically.
     view: bool
         Defines should generated image be shown after render.
-    line_limit: Tuple[int, int], None
+    line_limit: tuple[int, int], None
         Limit for maximum number of lines and length of some EP parameters strings.
         First param is limit of lines, second - limit of characters in each line.
         If set to None limit disabled.
@@ -1301,8 +1301,8 @@ def render_otq(
 
     graphs = GraphStorage()
 
-    queries_to_render: Dict[str, Set[str]] = defaultdict(set)
-    path_files: List[str] = []
+    queries_to_render: dict[str, set[str]] = defaultdict(set)
+    path_files: list[str] = []
 
     for otq_path in path:
         query_file, query_name = _parse_query_path(otq_path)
@@ -1317,7 +1317,7 @@ def render_otq(
         else:
             queries_to_render[query_file] = {"*"}
 
-    otq_files: Deque[str] = deque(path_files)
+    otq_files: deque[str] = deque(path_files)
 
     while otq_files:
         otq_path = otq_files.popleft()

@@ -1665,13 +1665,13 @@ def percentile(*args, **kwargs):
         Specifies the number ``n`` of quantiles. Setting it to 2 will propagate only one tick - the median.
 
         Default: 2
-    input_field_names: List[Union[Union[str, onetick.py.Column], Tuple[Union[str, onetick.py.Column], str]]]
+    input_field_names: list[Union[Union[str, onetick.py.Column], tuple[Union[str, onetick.py.Column], str]]]
         List of numeric field names to run aggregation on.
         You can use as list elements either string column name, either :py:class:`Columns <onetick.py.Column>`.
 
         You can change default comparison order (``desc``) for the field,
         by passing a tuple of column name and comparison order (``desc`` or ``asc``) instead column name.
-    output_field_names: Optional[List[str]]
+    output_field_names: Optional[list[str]]
         Output columns name in the same order as columns from ``input_field_names``
 
         ``output_field_names`` and ``input_field_names`` must have the same number of fields.

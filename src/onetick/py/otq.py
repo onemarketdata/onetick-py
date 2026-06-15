@@ -11,7 +11,22 @@ import inspect
 import os
 import tempfile
 import warnings
+import functools
+
 import onetick.py as otp
+
+
+# PY-1539: let's generate token only once
+@functools.cache
+def get_access_token_cached(access_token_url, client_id, client_secret, scope=None):
+    if not hasattr(otq, 'get_access_token'):
+        raise RuntimeError('Current `onetick.query_webapi` version doesn\'t have `get_access_token` function')
+    kwargs = {}
+    if scope is not None:
+        if 'scope' not in inspect.signature(otq.get_access_token).parameters.keys():
+            raise RuntimeError('Parameter `scope` is not supported on used version of OneTick')
+        kwargs['scope'] = scope
+    return otq.get_access_token(access_token_url, client_id, client_secret, **kwargs)
 
 
 class OneTickLib:
@@ -62,7 +77,6 @@ elif otp.__webapi__:
         from onetick.py import config
         from onetick.py.compatibility import (
             is_max_concurrency_with_webapi_supported,
-            is_webapi_access_token_scope_supported
         )
 
         if not config.http_address and 'http_address' not in kwargs:
@@ -117,9 +131,6 @@ elif otp.__webapi__:
 
         access_token_url = kwargs.get('access_token_url', config.access_token_url)
         if access_token_url:
-            if not hasattr(otq, 'get_access_token'):
-                raise RuntimeError('Current `onetick.query_webapi` version doesn\'t have `get_access_token` function')
-
             if kwargs.get('access_token'):
                 raise ValueError('Both `access_token` and `access_token_url` set, instead of only one of them.')
 
@@ -145,12 +156,9 @@ elif otp.__webapi__:
                 scope = config.access_token_scope
 
             if scope:
-                if not is_webapi_access_token_scope_supported():
-                    raise RuntimeError('Parameter `scope` is not supported on used version of OneTick')
-
                 token_kwargs['scope'] = scope
 
-            kwargs['access_token'] = otq.get_access_token(access_token_url, client_id, client_secret, **token_kwargs)
+            kwargs['access_token'] = get_access_token_cached(access_token_url, client_id, client_secret, **token_kwargs)
 
             if 'access_token_url' in kwargs:
                 del kwargs['access_token_url']
@@ -183,7 +191,18 @@ elif otp.__webapi__:
         if 'max_concurrency' in kwargs and not is_max_concurrency_with_webapi_supported():
             kwargs['max_concurrency'] = None
 
-        return __original_run(*args, **kwargs)
+        try:
+            return __original_run(*args, **kwargs)
+        except otq.OneTickException as e:
+            if 'authentication' in str(e).lower() and access_token_url:
+                # that's *probably* an error with expired token, let's regenerate and try again
+                # previously the token was generated for each otq.run
+                get_access_token_cached.cache_clear()
+                kwargs['access_token'] = get_access_token_cached(access_token_url, client_id, client_secret,
+                                                                 **token_kwargs)
+                return __original_run(*args, **kwargs)
+            else:
+                raise
 
     otq.run = run
 

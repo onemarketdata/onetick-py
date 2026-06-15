@@ -1,4 +1,4 @@
-from typing import List, Union, Literal
+from typing import Union, Literal
 
 import onetick.py as otp
 from onetick.py.core.source import Source
@@ -13,8 +13,8 @@ from .common import update_node_tick_type
 
 def PointInTime(  # NOSONAR
     source: 'Source',
-    times: List[Union[str, ott.datetime]],
-    offsets: List[int],
+    times: list[Union[str, ott.datetime]],
+    offsets: list[int],
     offset_type: Literal['time_msec', 'num_ticks'] = 'time_msec',
     db=utils.adaptive_to_default,
     tick_type=utils.adaptive,

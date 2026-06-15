@@ -10,6 +10,24 @@
 
 ### Removed
 
+## [1.199.0] - 2026-06-15
+
+### Added
+
+- Add support of returning `long` values in `return` statements in per-tick script
+- Add `query_properties` parameter to database inspection functions
+
+### Changed
+
+- Add cache for access token in WebAPI mode
+- Replace deprecated `typing` generics with built-in equivalents
+
+### Fixed
+
+- Fixed tests on OneTick `rel_20260420_update2`
+
+### Removed
+
 ## [1.198.0] - 2026-06-08
 
 ### Added

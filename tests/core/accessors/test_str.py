@@ -20,7 +20,7 @@ def generate_bigger_strings(lines, only_one=True):
 
     Parameters
     ----------
-    lines: List[str]
+    lines: list[str]
         List of strings
     only_one: bool, optional, default = True
         If True the method will return only one string, if False list of strings the same size
@@ -43,7 +43,7 @@ def generate_different_alphabet_strings(lines=None, only_one=True, new_alphabet=
 
     Parameters
     ----------
-    lines: List[str], optional
+    lines: list[str], optional
         List of strings, isn't necessary for only_one=True case
     only_one: bool, optional, default = True
         If True the method will return only one string, if False list of strings the same size

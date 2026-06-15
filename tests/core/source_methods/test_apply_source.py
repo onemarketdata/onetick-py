@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -1505,7 +1505,7 @@ class TestPerTickScript:
         def test_invalid_type(self):
             def func(tick):
                 if tick['X'] > 2:
-                    return 3
+                    return 3.2
 
             data = otp.Ticks(dict(X=[1, 2, 3]))
 
@@ -1564,7 +1564,7 @@ class TestPerTickScript:
             assert all(df['X'] == [4, -3, 8, 5])
 
     class TestNewColumnsInPerTickScript:
-        params: Dict[str, Any] = {}
+        params: dict[str, Any] = {}
 
         @classmethod
         def setup_class(cls):

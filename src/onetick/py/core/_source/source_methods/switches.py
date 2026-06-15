@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 from onetick import py as otp
 from onetick.py.otq import otq
@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from onetick.py.core.source import Source
 
 
-def split(self: 'Source', expr, cases, default=False) -> Tuple['Source', ...]:
+def split(self: 'Source', expr, cases, default=False) -> tuple['Source', ...]:
     """
     The method splits data using passed expression ``expr`` for several
     outputs by passed ``cases``. The method is the alias for the :meth:`Source.switch`
@@ -94,7 +94,7 @@ def split(self: 'Source', expr, cases, default=False) -> Tuple['Source', ...]:
     return tuple(result)
 
 
-def switch(self: 'Source', expr, cases, default=False) -> Tuple['Source', ...]:
+def switch(self: 'Source', expr, cases, default=False) -> tuple['Source', ...]:
     """
     The method splits data using passed expression for several
     outputs by passed cases. This method is an alias for

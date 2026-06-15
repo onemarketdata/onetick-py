@@ -1,6 +1,5 @@
 import pytest
 import datetime
-from typing import Type
 
 from contextlib import contextmanager
 
@@ -283,7 +282,7 @@ class TestNativeTable:
         for name, dtype in select.items():
             assert name in data.schema
             if dtype is not None:
-                if isinstance(dtype, Type):
+                if isinstance(dtype, type):
                     assert data.schema[name] is dtype
                 else:
                     if not isinstance(dtype, (otp.nsectime, otp.msectime)):

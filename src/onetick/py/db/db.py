@@ -6,7 +6,7 @@ import warnings
 from datetime import timedelta
 from collections import defaultdict
 from dateutil.relativedelta import relativedelta
-from typing import List, Union, Optional
+from typing import Union, Optional
 from uuid import uuid4
 
 from onetick import py as otp
@@ -1240,8 +1240,8 @@ class RefDB(DB):
 
     def put(
         self,
-        src: Union[str, List[Section]],
-        tickdb_symbology: Optional[List[str]] = None,
+        src: Union[str, list[Section]],
+        tickdb_symbology: Optional[list[str]] = None,
         delta_mode: bool = False,
         full_integrity_check: bool = False,
         load_by_sections: bool = True,

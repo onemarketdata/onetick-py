@@ -2,7 +2,7 @@ import re
 import warnings
 from contextlib import suppress
 from datetime import time
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union, Literal, Sequence
+from typing import TYPE_CHECKING, Any, Optional, Union, Literal, Sequence
 
 from onetick import py as otp
 from onetick.py import types as ott
@@ -68,7 +68,7 @@ def if_else(self: 'Source', condition: _Operation, if_expr, else_expr) -> 'otp.C
 
 def where_clause(
     self: 'Source', condition, discard_on_match: bool = False, stop_on_first_mismatch: bool = False
-) -> Tuple['Source', 'Source']:
+) -> tuple['Source', 'Source']:
     """
     Split source in two branches depending on ``condition``:
     one branch with ticks that meet the condition and
@@ -328,11 +328,11 @@ def __getitem__(self: 'Source', item):
 
         - ``otp.eval`` to express filter condition based on external query
 
-        - ``List[str]`` select subset of specified columns or columns specified in regexes.
+        - ``list[str]`` select subset of specified columns or columns specified in regexes.
 
-        - ``slice[List[str]::]`` set order of columns
+        - ``slice[list[str]::]`` set order of columns
 
-        - ``slice[Tuple[str, Type]::]`` type defaulting
+        - ``slice[tuple[str, type]::]`` type defaulting
 
         - ``slice[:]`` alias to :meth:`Source.copy()`
 
@@ -593,7 +593,7 @@ def __getitem__(self: 'Source', item):
 
 @inplace_operation
 def dropna(
-    self: 'Source', how: Literal["any", "all"] = "any", subset: Optional[List[Any]] = None, inplace=False
+    self: 'Source', how: Literal["any", "all"] = "any", subset: Optional[list[Any]] = None, inplace=False
 ) -> Optional['Source']:
     """
     Drops ticks that contain NaN values according to the policy in the ``how`` parameter
@@ -698,7 +698,7 @@ def time_filter(
     discard_on_match: bool = False,
     start_time: Union[str, int, time] = 0,
     end_time: Union[str, int, time] = 0,
-    day_patterns: Union[str, List[str]] = "",
+    day_patterns: Union[str, list[str]] = "",
     timezone=utils.default,  # type: ignore
     end_time_tick_matches: bool = False,
     inplace=False,
@@ -903,7 +903,7 @@ def skip_bad_tick(
 def character_present(
     self: 'Source',
     field: Union[str, _Column],
-    characters: Union[str, List[str]],
+    characters: Union[str, list[str]],
     characters_field: Union[str, _Column] = "",
     discard_on_match: bool = False,
     inplace: bool = False,
@@ -917,7 +917,7 @@ def character_present(
     ----------
     field: str, :py:class:`~onetick.py.Column`
         Name of the field (must be present in the input tick descriptor).
-    characters: str, List[str]
+    characters: str, list[str]
         A set of characters that are searched for in the value of the ``field``.
         If set as string, works as list of characters.
     characters_field: str, :py:class:`~onetick.py.Column`
@@ -1005,7 +1005,7 @@ def character_present(
 def value_present(
     self: 'Source',
     field: Union[str, _Column],
-    values: List[Any],
+    values: list[Any],
     discard_on_match: bool = False,
     inplace: bool = False,
 ):
@@ -1016,7 +1016,7 @@ def value_present(
     ----------
     field: str, :py:class:`~onetick.py.Column`
         Name of the field (must be present in the input tick descriptor).
-    values: str, List[str]
+    values: str, list[str]
         A set of values that are searched for in the value of the ``field``.
     discard_on_match: bool
         When set to ``True`` only ticks that did not match the filter are propagated,
@@ -1089,7 +1089,7 @@ def value_present(
     return self
 
 
-def primary_exch(self: 'Source', discard_on_match: bool = False) -> Tuple['Source', 'Source']:
+def primary_exch(self: 'Source', discard_on_match: bool = False) -> tuple['Source', 'Source']:
     """
     Propagates the tick if its exchange is the PRIMARY exchange of the security. The primary exchange information
     is supplied through the Reference Database. It expects the security level symbol (IBM, not IBM.N) and works
