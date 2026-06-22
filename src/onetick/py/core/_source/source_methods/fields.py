@@ -4,7 +4,6 @@ import numpy as np
 
 from onetick import py as otp
 from onetick.py import types as ott
-from onetick.py.compatibility import is_existing_fields_handling_supported
 from onetick.py.core._internal._state_objects import _StateColumn
 from onetick.py.core.column import _Column, _ColumnAggregation, _LagOperator
 from onetick.py.core.column_operations._methods.methods import is_arithmetical, is_compare
@@ -457,7 +456,7 @@ def add_fields(self: 'Source', fields: dict, override: bool = False, inplace=Fal
     Parameter ``override`` can be used to rewrite existing fields:
 
     .. testcode::
-        :skipif: not is_existing_fields_handling_supported()
+        :skipif: not otp.compatibility._is_existing_fields_handling_supported()
 
         data = otp.Tick(A=1)
         data = data.add_fields({'A': 2, 'B': 'b'}, override=True)
@@ -473,7 +472,7 @@ def add_fields(self: 'Source', fields: dict, override: bool = False, inplace=Fal
 
     kwargs = {}
     if override:
-        if not is_existing_fields_handling_supported():
+        if not otp.compatibility._is_existing_fields_handling_supported():
             raise ValueError("Parameter 'override' is not supported on this OneTick build")
         kwargs['existing_fields_handling'] = 'OVERRIDE'
 

@@ -5,6 +5,8 @@ import onetick.py as otp
 
 from onetick.py.core._internal._state_objects import TickList, TickSet, TickSetUnordered, TickDeque
 
+import tests
+
 
 zero_time = pd.Timestamp(0, tz=otp.config['tz']).replace(tzinfo=None)
 
@@ -420,8 +422,7 @@ class TestTickList:
 
         data = otp.Tick(A=1)
         data.state_vars["LIST"] = otp.state.tick_list(otp.eval(generate_list))
-        if isinstance(value, otp.decimal) or (isinstance(value, otp.varstring) and
-                                              not otp.compatibility.is_supported_varstring_in_get_string_value()):
+        if isinstance(value, otp.decimal):
             with pytest.raises(TypeError):
                 data.script(update_from_list)
         else:
@@ -432,8 +433,15 @@ class TestTickList:
                 assert data.schema['B'] is otp.nsectime
             else:
                 assert data.schema['B'] is type(value)
-            df = otp.run(data)
-            assert all(df['B'] == [value])
+            if (
+                isinstance(value, otp.varstring) and
+                not tests.compatibility.is_supported_varstring_in_get_string_value()
+            ):
+                with pytest.raises(Exception):
+                    otp.run(data)
+            else:
+                df = otp.run(data)
+                assert all(df['B'] == [value])
 
     def test_schema(self, session):
         """

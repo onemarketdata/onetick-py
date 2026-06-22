@@ -4,6 +4,8 @@ import pytest
 from onetick.py.otq import otq
 import onetick.py as otp
 
+import tests
+
 
 @pytest.fixture(scope="module", autouse=True)
 def session():
@@ -56,11 +58,10 @@ def test_ep_repr():
     data = otp.Tick(A=1)
     data.sink(otq.AddField(field='B', value=2))
     ep = data.node().get()
-    if otp.compatibility.is_event_processor_repr_upper():
-        regex = r"^ADD_FIELD\(FIELD=([\'\"])B([\'\"]),VALUE=2(,STACK_INFO=.+)?\)$"
+    if tests.compatibility.is_event_processor_repr_upper():
+        regex = r"""^ADD_FIELD\(FIELD=(['"])B(['"]),VALUE=2(,STACK_INFO=.+)?\)$"""
     else:
-        regex = r"^AddField\(field=([\'\"])B([\'\"]),value=2(,STACK_INFO=.+)?\)$"
-
+        regex = r"""^AddField\(field=(['"])B(['"]),value=2(,STACK_INFO=.+)?\)$"""
     match = re.match(regex, repr(ep))
     assert match, f'Regex {regex} is not matched with string {repr(ep)} (webapi: {otq.webapi})'
     # check quotes equality

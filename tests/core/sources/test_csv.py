@@ -14,7 +14,6 @@ except ImportError:
 import onetick.py as otp
 from onetick.py.utils import TmpDir
 from onetick.py.core._csv_inspector import inspect_by_pandas
-from onetick.py.compatibility import is_supported_uint_numpy_interface
 
 
 @pytest.fixture(scope="module")
@@ -517,10 +516,7 @@ def test_integers(m_session, data_dir):
     assert df['BYTE_VAR'][0] == 127
     assert df['SHORT_VAR'][0] == 32767
     assert df['ULONG_VAR'][0] == 18446744073709551615
-    if is_supported_uint_numpy_interface():
-        assert df['UINT_VAR'][0] == 4294967295
-    else:
-        assert df['UINT_VAR'][0] == -1
+    assert df['UINT_VAR'][0] == 4294967295
 
 
 def test_start_time_nanos(m_session, data_dir):

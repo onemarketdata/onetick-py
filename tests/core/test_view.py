@@ -2,8 +2,10 @@ import pytest
 
 import onetick.py as otp
 
+import tests
 
-if not otp.compatibility.is_database_view_schema_supported():
+
+if not tests.compatibility.is_database_view_schema_supported():
     pytest.skip(allow_module_level=True,
                 reason='Getting schema from database view is not supported on this OneTick version')
 

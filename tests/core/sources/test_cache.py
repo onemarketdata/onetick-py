@@ -7,11 +7,9 @@ import onetick.py as otp
 from onetick.py.otq import otq
 
 import onetick.py.types as ott
-from onetick.py.compatibility import is_supported_per_cache_otq_params
 
+import tests
 
-if not is_supported_per_cache_otq_params(throw_warning=True):
-    pytest.skip("skipping cache tests for unsupported OneTick version", allow_module_level=True)
 
 cache_name = "test_cache"
 
@@ -286,7 +284,7 @@ def test_otq_params(f_session, cur_dir):
 
 @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False),
                     reason='WebAPI test mode do not clear cache after this fail')
-@pytest.mark.skipif(not otp.compatibility.is_concurrent_cache_is_fixed(), reason='unstable on this onetick version')
+@pytest.mark.skipif(not tests.compatibility.is_concurrent_cache_is_fixed(), reason='unstable on this onetick version')
 def test_otq_params_unstable(f_session):
     """
     Sometimes fails with error `ERR_04697650AWWIW: Attempt to use uninitialized cache`

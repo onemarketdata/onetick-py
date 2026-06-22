@@ -9,7 +9,6 @@ from onetick.py import types as ott
 if TYPE_CHECKING:
     from onetick.py.core.source import Source   # hack for annotations
 from onetick.py.core.column import _Column
-from onetick.py.compatibility import is_supported_otq_ob_summary, is_max_spread_supported
 from ._base import _Aggregation, get_seconds_from_time_offset
 from ._docs import (_running_doc,
                     _bucket_interval_doc,
@@ -172,7 +171,7 @@ class _OrderBookAggregation(_Aggregation, ABC):
             if self.side:
                 raise ValueError('Parameters `max_spread` and `side` shouldn\'t be specified both at the same time')
 
-            if not is_max_spread_supported():
+            if not otp.compatibility._is_max_spread_supported():
                 raise RuntimeError('Parameter `max_spread` is not supported on this OneTick version')
 
     def disable_ob_input_columns_validation(self):
@@ -256,12 +255,8 @@ class ObSnapshot(_OrderBookAggregation):
     def _param_validation(self):
         super()._param_validation()
         if self.include_market_order_ticks is not None:
-            if 'include_market_order_ticks' not in self.EP.Parameters.list_parameters():
+            if not otp.compatibility._is_include_market_order_ticks_supported(self.EP):
                 raise ValueError("Parameter 'include_market_order_ticks' is not supported on this OneTick API version")
-            otp.compatibility.is_include_market_order_ticks_supported(
-                throw_warning=True,
-                feature_name="parameter 'include_market_order_ticks'",
-            )
 
     def _get_output_schema(self, src: 'Source', name: Optional[str] = None) -> dict:
         schema = {
@@ -356,7 +351,7 @@ class ObSummary(_OrderBookAggregation):
                  size_max_fractional_digits: int = 0,
                  include_market_order_ticks: Optional[bool] = None,
                  **kwargs):
-        if is_supported_otq_ob_summary():
+        if otp.compatibility._is_supported_otq_ob_summary():
             self.EP = otq.ObSummary
         else:
             raise RuntimeError("Used onetick installation not support onetick.query.ObSummary")
@@ -373,12 +368,8 @@ class ObSummary(_OrderBookAggregation):
     def _param_validation(self):
         super()._param_validation()
         if self.include_market_order_ticks is not None:
-            if 'include_market_order_ticks' not in self.EP.Parameters.list_parameters():
+            if not otp.compatibility._is_include_market_order_ticks_supported(self.EP):
                 raise ValueError("Parameter 'include_market_order_ticks' is not supported on this OneTick API version")
-            otp.compatibility.is_include_market_order_ticks_supported(
-                throw_warning=True,
-                feature_name="parameter 'include_market_order_ticks'",
-            )
 
     def _get_output_schema(self, src: 'Source', name: Optional[str] = None) -> dict:
         schema = {

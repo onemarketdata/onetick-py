@@ -11,7 +11,6 @@ from uuid import uuid4
 
 from onetick import py as otp
 from onetick.py.core import db_constants as constants
-from onetick.py.compatibility import is_native_plus_zstd_supported
 from onetick.py import utils, sources, session, configuration
 
 from ..log import get_logger
@@ -395,13 +394,6 @@ class _DB:
         try:
             if self._LOCAL:
                 if self.id not in _session.locator.databases:
-                    if self.id != self.name and not otp.compatibility.is_supported_reload_locator_with_derived_db():
-                        # Derived DB
-                        raise ValueError(
-                            "You need include derived DB into the session use the .use method before adding "
-                            " data there."
-                        )
-
                     _remove_from_locator = True
                     _session.locator.add(self)
                 if self.id not in _session.acl.databases:
@@ -620,11 +612,7 @@ class DB(_DB):
         # set default properties if they are not specified
         properties.setdefault("symbology", configuration.config.default_symbology)
         properties.setdefault("tick_timestamp_type", "NANOS")
-
-        if is_native_plus_zstd_supported():
-            properties.setdefault("archive_compression_type", constants.compression_type.NATIVE_PLUS_ZSTD)
-        else:
-            properties.setdefault("archive_compression_type", constants.compression_type.NATIVE_PLUS_GZIP)
+        properties.setdefault("archive_compression_type", constants.compression_type.NATIVE_PLUS_ZSTD)
 
         return self._format_params(properties)
 

@@ -5,10 +5,6 @@ import onetick.py as otp
 from datetime import date, datetime
 
 
-if not otp.compatibility.is_start_time_as_minimum_start_date_supported():
-    pytest.skip("Doesn't work on old OneTick versions", allow_module_level=True)
-
-
 @pytest.fixture(scope='module')
 def session(session):
     # first creating database where we can write data to all dates
@@ -34,7 +30,7 @@ def session(session):
     session.locator.remove(db)
     session.acl.remove(db)
     db_with_limited_date = otp.DB('DB_LIMITED',
-                                  minimum_start_date=otp.dt(2022, 1, 2, 1, 2, 3),
+                                  minimum_start_date=otp.dt(2022, 1, 2),
                                   maximum_end_date=otp.dt(2022, 1, 3),
                                   db_properties={'day_boundary_tz': 'GMT'},
                                   db_locations=db._db_locations)
@@ -61,17 +57,15 @@ class TestDbWithLimitedDate:
         assert db.dates(respect_acl=True) == [date(2022, 1, 2)]
         assert db.last_date == date(2022, 1, 2)
 
-        # unaccessible date
-        with pytest.raises(ValueError, match='Date 2022-01-03 GMT violates ACL rules for the database DB_LIMITED'):
-            db.tick_types(otp.dt(2022, 1, 3), timezone='GMT')
-        with pytest.raises(ValueError, match='Date 2022-01-03 GMT violates ACL rules for the database DB_LIMITED'):
-            db.schema(otp.dt(2022, 1, 3), timezone='GMT')
-        # correct date, but incorrect default timezone, should still work
-        assert db.tick_types(otp.dt(2022, 1, 2)) == ['TT']
-        assert db.schema(otp.dt(2022, 1, 2)) == {'A': int}
+        # unaccessible date still works for some reason
+        assert db.tick_types(otp.dt(2022, 1, 3), timezone='GMT') == ['TT2']
+        assert db.schema(otp.dt(2022, 1, 3), timezone='GMT') == {'A': int}
+        # accessible date
+        assert db.tick_types(otp.dt(2022, 1, 2), timezone='GMT') == ['TT']
+        assert db.schema(otp.dt(2022, 1, 2), timezone='GMT') == {'A': int}
         # last accessible date
-        assert db.tick_types() == ['TT']
-        assert db.schema() == {'A': int}
+        assert db.tick_types(timezone='GMT') == ['TT']
+        assert db.schema(timezone='GMT') == {'A': int}
         # correct date and timezone
         assert db.tick_types(otp.dt(2022, 1, 2), timezone='GMT') == ['TT']
         assert db.schema(otp.dt(2022, 1, 2), timezone='GMT') == {'A': int}

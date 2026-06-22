@@ -1,10 +1,12 @@
 import onetick.py as otp
-from onetick.py.compatibility import is_supported_stack_info, is_supported_pnl_realized, OnetickVersionFromServer
 from onetick.py.otq import otq
+
 import pytest
 
 from datetime import datetime
 from pathlib import Path
+
+import tests
 
 
 @pytest.fixture(scope='function')
@@ -115,7 +117,8 @@ def test_default_config(config_preserving_session, monkeypatch):
     assert otp.config.default_end_time == datetime(2022, 1, 1, 0, 0, 0, 123456)
 
 
-@pytest.mark.skipif(not is_supported_stack_info(), reason='stack_info does not work on old versions')
+@pytest.mark.skipif(not tests.compatibility.is_supported_stack_info(),
+                    reason='stack_info does not work on old versions')
 def test_show_stack_info(config_preserving_session):
     assert 'show_stack_info' in otp.config.get_changeable_config_options()
 
@@ -166,20 +169,3 @@ def test_context_manager_multiple(config_preserving_session):
 
     assert otp.config.context == original_context
     assert otp.config.default_symbol == original_default_symbol
-
-
-@pytest.mark.parametrize('disable_compatibility_checks', [True, False])
-def test_disable_compatibility_checks(config_preserving_session, mocker, disable_compatibility_checks):
-    otp.config.disable_compatibility_checks = disable_compatibility_checks
-
-    mock = mocker.patch(
-        'onetick.py.compatibility.get_onetick_version',
-        return_value=OnetickVersionFromServer(False, None, None, 20221111120000, 'LOCAL', otp.config.context),
-    )
-
-    if disable_compatibility_checks:
-        assert is_supported_pnl_realized()
-        mock.assert_not_called()
-    else:
-        assert not is_supported_pnl_realized()
-        mock.assert_called()

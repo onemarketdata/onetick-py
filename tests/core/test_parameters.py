@@ -4,6 +4,8 @@ from onetick.py.otq import otq
 from datetime import timedelta, datetime
 from pathlib import Path
 
+import tests
+
 
 def test_add_field(session):
     t = otp.Tick(A=1)
@@ -54,9 +56,9 @@ def test_string(session, param, expected):
     # mixed, should be interpreted as a string "hello" (with double quotes)
     ("""'"hello"'""",  '"hello"'),
     # string with escaped single quotes
-    (r"\'hello\'", Exception if otp.compatibility.is_duplicating_quotes_not_supported() else '\\hello\\'),
+    (r"\'hello\'", Exception if tests.compatibility.is_duplicating_quotes_not_supported() else '\\hello\\'),
     # string with escaped double quotes
-    (r'\"hello\"', Exception if otp.compatibility.is_duplicating_quotes_not_supported() else '\\hello\\'),
+    (r'\"hello\"', Exception if tests.compatibility.is_duplicating_quotes_not_supported() else '\\hello\\'),
 ))
 def test_string_graph(session, param, expected):
     run_params = dict(

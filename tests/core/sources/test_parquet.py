@@ -4,11 +4,13 @@ import pytest
 import onetick.py as otp
 from onetick.py.otq import otq
 
+import tests
+
 if not (hasattr(otq, "ReadFromParquet") and hasattr(otq, "WriteToParquet")):
     pytest.skip("READ_FROM_PARQUET or WRITE_TO_PARQUET does not work on old OneTick versions", allow_module_level=True)
 
 
-@pytest.mark.skipif(not otp.compatibility.is_write_parquet_directories_fixed(),
+@pytest.mark.skipif(not tests.compatibility.is_write_parquet_directories_fixed(),
                     reason='not supported on older OneTick versions')
 @pytest.mark.parametrize("write_opts,read_opts,expected_result", [
     ({}, {}, {"A": [1, 2, 3], "B": [4, 5, 6]}),

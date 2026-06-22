@@ -8,7 +8,6 @@ from onetick.py.core.column_operations.base import OnetickParameter
 from onetick.py.core.eval_query import _QueryEvalWrapper
 from onetick.py.core._source.tmp_otq import TmpOtq
 from onetick.py.core._source.query_parameters import QueryParameters
-from onetick.py.compatibility import is_symbols_prepend_db_name_supported
 
 from .. import types as ott
 from .. import utils

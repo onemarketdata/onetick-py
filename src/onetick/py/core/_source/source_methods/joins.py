@@ -12,11 +12,6 @@ from onetick.py.core.column_operations._methods.op_types import are_strings
 from onetick.py.core.column_operations.base import _Operation
 from onetick.py.core.eval_query import prepare_params
 from onetick.py.otq import otq
-from onetick.py.compatibility import (
-    is_supported_point_in_time,
-    is_join_with_query_symbol_time_otq_supported,
-    is_join_with_snapshot_snapshot_fields_parameter_supported,
-)
 
 if TYPE_CHECKING:
     from onetick.py.core.source import Source
@@ -897,7 +892,7 @@ def join_with_query(
                 f'Parameter of type {ott.get_object_type(symbol_time)} passed as symbol_time! '
                 'This parameter only supports datetime values or strings'
             )
-        if is_join_with_query_symbol_time_otq_supported():
+        if otp.compatibility._is_join_with_query_symbol_time_otq_supported():
             params = params.copy()
             params['_SYMBOL_TIME'] = symbol_time
         else:
@@ -1045,7 +1040,7 @@ def point_in_time(
     Joining each quote with first trade with equal or less timestamp:
 
     .. testcode::
-       :skipif: not is_supported_point_in_time()
+       :skipif: not otp.compatibility._is_supported_point_in_time()
 
        data = qte.point_in_time(trd, offsets=[0])
        print(otp.run(data))
@@ -1063,7 +1058,7 @@ def point_in_time(
     use parameter ``input_ts_fields_to_propagate`` to add them to the output:
 
     .. testcode::
-       :skipif: not is_supported_point_in_time()
+       :skipif: not otp.compatibility._is_supported_point_in_time()
 
        data = qte.point_in_time(trd, offsets=[0], input_ts_fields_to_propagate=['ASK_PRICE', 'BID_PRICE'])
        print(otp.run(data))
@@ -1083,7 +1078,7 @@ def point_in_time(
     If several offsets are specified, several output ticks may be generated for a single input tick:
 
     .. testcode::
-       :skipif: not is_supported_point_in_time()
+       :skipif: not otp.compatibility._is_supported_point_in_time()
 
        data = qte.point_in_time(trd, offsets=[0, 1], input_ts_fields_to_propagate=['ASK_PRICE', 'BID_PRICE'])
        print(otp.run(data))
@@ -1107,7 +1102,7 @@ def point_in_time(
     You can also specify the number of ticks as an offset:
 
     .. testcode::
-       :skipif: not is_supported_point_in_time()
+       :skipif: not otp.compatibility._is_supported_point_in_time()
 
        data = qte.point_in_time(trd, offset_type='num_ticks', offsets=[-1, 1],
                                 input_ts_fields_to_propagate=['ASK_PRICE', 'BID_PRICE'])
@@ -1125,7 +1120,7 @@ def point_in_time(
        6 2003-12-01 00:00:00.004         24         24      5   500 2003-12-01 00:00:00.005       1
        7 2003-12-01 00:00:00.005         25         25      3   300 2003-12-01 00:00:00.003      -1
     """
-    if not is_supported_point_in_time():
+    if not otp.compatibility._is_supported_point_in_time():
         raise RuntimeError('PointInTime event processor is not supported on this OneTick version')
 
     res = self.copy()
@@ -1363,9 +1358,7 @@ def join_with_snapshot(
     if snapshot_storage not in ['memory', 'memory_mapped_file']:
         raise ValueError('`snapshot_storage` must be one of "memory", "memory_mapped_file"')
 
-    is_snapshot_fields_param_supported = is_join_with_snapshot_snapshot_fields_parameter_supported()
-
-    if snapshot_fields and not is_snapshot_fields_param_supported:
+    if snapshot_fields and not otp.compatibility._is_join_with_snapshot_snapshot_fields_parameter_supported():
         raise RuntimeError(
             "Current version of OneTick doesn't support `snapshot_fields` parameter on JOIN_WITH_SNAPSHOT EP"
         )

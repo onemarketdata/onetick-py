@@ -4,7 +4,9 @@ from pathlib import Path
 
 from onetick.py.otq import otq
 import onetick.py as otp
-from onetick.py.compatibility import is_supported_stack_info
+
+import tests
+
 
 if os.getenv('OTP_WEBAPI_TEST_MODE'):
     pytest.skip('otp.perf is not supported in WebAPI mode', allow_module_level=True)
@@ -30,7 +32,8 @@ def test_measure_perf(session):
         assert e['EP_name']
 
 
-@pytest.mark.skipif(not is_supported_stack_info(), reason='stack_info does not work on some OneTick versions')
+@pytest.mark.skipif(not tests.compatibility.is_supported_stack_info(),
+                    reason='stack_info does not work on some OneTick versions')
 def test_measure_perf_with_stack_info(session, monkeypatch):
     monkeypatch.setattr(otp.config, 'show_stack_info', True)
 
@@ -44,7 +47,7 @@ def test_measure_perf_with_stack_info(session, monkeypatch):
 @pytest.mark.parametrize('stack_info', (False, True))
 def test_presort(session, stack_info, monkeypatch):
 
-    if stack_info and not is_supported_stack_info():
+    if stack_info and not tests.compatibility.is_supported_stack_info():
         return
 
     monkeypatch.setattr(otp.config, 'show_stack_info', stack_info)

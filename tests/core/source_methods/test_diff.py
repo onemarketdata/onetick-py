@@ -3,8 +3,6 @@ import pytest
 import onetick.py as otp
 from onetick.py.otq import otq
 
-from onetick.py.compatibility import is_diff_show_all_ticks_supported
-
 
 def test_default(session):
     t = otp.Ticks(A=[1, 2], B=[0, 0])
@@ -22,7 +20,8 @@ def test_default(session):
     assert list(df['R.A']) == [3]
 
 
-@pytest.mark.skipif(not is_diff_show_all_ticks_supported(), reason='Not supported on current OneTick version')
+@pytest.mark.skipif(not otp.compatibility._is_diff_show_all_ticks_supported(),
+                    reason='Not supported on current OneTick version')
 def test_default_show_all_ticks(session):
     t = otp.Ticks(A=[1, 2, 3], B=[0, 0, 1])
     q = otp.Ticks(A=[1, 3], B=[0, 0])
@@ -108,7 +107,7 @@ def test_output_ignored_fields(session):
 def test_show_matching_ticks(session):
     t = otp.Ticks(A=[1, 2, 3, 4, 5])
     q = otp.Ticks(A=[5, 4, 3, 2, 1])
-    if not otp.compatibility.is_diff_show_matching_ticks_supported():
+    if not otp.compatibility._is_diff_show_matching_ticks_supported():
         with pytest.warns(Warning,
                           match="Parameter 'show_matching_ticks' is not supported on this version of OneTick"):
             data = t.diff(q, show_matching_ticks=True)

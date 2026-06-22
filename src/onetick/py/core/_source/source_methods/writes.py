@@ -6,7 +6,6 @@ from onetick.py import configuration
 from onetick.py.core.column import _Column, field_name_contains_lowercase
 from onetick.py.otq import otq
 from onetick.py.utils import adaptive
-from onetick.py.compatibility import is_save_snapshot_database_parameter_supported
 
 from .misc import inplace_operation
 
@@ -668,10 +667,8 @@ def save_snapshot(
     if symbol_name_field and symbol_name_field not in self.schema:
         raise ValueError(f'Field "{symbol_name_field}" passed as `symbol_name_field` parameter is not in schema.')
 
-    is_database_param_supported = is_save_snapshot_database_parameter_supported()
-
     if database:
-        if not is_database_param_supported:
+        if not otp.compatibility._is_save_snapshot_database_parameter_supported():
             raise RuntimeError("Current version of OneTick doesn't support `database` parameter on SAVE_SNAPSHOT EP")
 
         kwargs['database'] = database

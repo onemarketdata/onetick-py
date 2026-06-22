@@ -1,9 +1,10 @@
 import pytest
 
 import onetick.py as otp
+import tests
 
 
-if not otp.compatibility.is_supported_modify_state_var_from_query():
+if not otp.compatibility._is_supported_modify_state_var_from_query():
     pytest.skip("skip tests if ModifyStateVarFromQuery is not supported", allow_module_level=True)
 
 
@@ -58,13 +59,13 @@ def test_start_end_time(session):
 
     data = data.state_vars['VAR'].modify_from_query(fun, output_field_name='S', start=data['_START_TIME'])
     data['S'] = data.state_vars['VAR']
-    if otp.compatibility.is_fixed_modify_state_var_from_query():
+    if tests.compatibility.is_fixed_modify_state_var_from_query():
         data = data.state_vars['VAR'].modify_from_query(fun, output_field_name='E', end=data['_END_TIME'])
         data['E'] = data.state_vars['VAR']
     df = otp.run(data)
     assert df['S'][0] == otp.config.default_start_time
-    if otp.compatibility.is_fixed_modify_state_var_from_query():
-        if otp.compatibility.is_supported_end_time_in_modify_state_var_from_query():
+    if tests.compatibility.is_fixed_modify_state_var_from_query():
+        if tests.compatibility.is_supported_end_time_in_modify_state_var_from_query():
             assert df['E'][0] == otp.config.default_end_time
         else:
             assert df['E'][0] == otp.config.default_start_time

@@ -8,10 +8,6 @@ from onetick.py import types as ott
 from onetick.py import utils
 from onetick.py.core.column import _Column
 from onetick.py.otq import otq
-from onetick.py.compatibility import (
-    is_ob_virtual_prl_and_show_full_detail_supported,
-    is_per_tick_script_boolean_problem,
-)
 from onetick.py.aggregations._docs import copy_signature
 
 if TYPE_CHECKING:
@@ -829,21 +825,14 @@ def fillna(self: 'Source', value=None, columns=None, inplace=False) -> Optional[
 
     Parameter ``columns`` can be used to specify the columns where values will be replaced:
 
-    .. testcode::
-       :skipif: is_per_tick_script_boolean_problem()
-
-       data = otp.Ticks({'A': [0, 1, 2, 3], 'B': [otp.nan, 2.2, otp.nan, 3.3], 'C': [otp.nan, 2.2, otp.nan, 3.3]})
-       data = data.fillna(columns=['B'])
-       df = otp.run(data)
-       print(df)
-
-    .. testoutput::
-
-                            Time  A    B    C
-       0 2003-12-01 00:00:00.000  0  NaN  NaN
-       1 2003-12-01 00:00:00.001  1  2.2  2.2
-       2 2003-12-01 00:00:00.002  2  2.2  NaN
-       3 2003-12-01 00:00:00.003  3  3.3  3.3
+    >>> data = otp.Ticks({'A': [0, 1, 2, 3], 'B': [otp.nan, 2.2, otp.nan, 3.3], 'C': [otp.nan, 2.2, otp.nan, 3.3]})
+    >>> data = data.fillna(columns=['B'])
+    >>> otp.run(data)
+                         Time  A    B    C
+    0 2003-12-01 00:00:00.000  0  NaN  NaN
+    1 2003-12-01 00:00:00.001  1  2.2  2.2
+    2 2003-12-01 00:00:00.002  2  2.2  NaN
+    3 2003-12-01 00:00:00.003  3  3.3  3.3
     """
     if columns:
         for column in columns:
@@ -1157,7 +1146,7 @@ def limit(self: 'Source',
     Simple example, get first 3 ticks:
 
     .. testcode::
-       :skipif: not otp.compatibility.is_limit_ep_supported()
+       :skipif: not otp.compatibility._is_limit_ep_supported()
 
        data = otp.Ticks(X=[1, 2, 3, 4, 5, 6])
        data = data.limit(3)
@@ -1174,7 +1163,7 @@ def limit(self: 'Source',
     Disable limit by setting it to -1:
 
     .. testcode::
-       :skipif: not otp.compatibility.is_limit_ep_supported()
+       :skipif: not otp.compatibility._is_limit_ep_supported()
 
        data = otp.Ticks(X=[1, 2, 3, 4, 5, 6])
        data = data.limit(-1)
@@ -1196,7 +1185,7 @@ def limit(self: 'Source',
     For example, we can skip first 2 ticks and propagate all other:
 
     .. testcode::
-       :skipif: not otp.compatibility.is_limit_tick_offset_supported()
+       :skipif: not otp.compatibility._is_limit_tick_offset_supported()
 
        data = otp.Ticks(X=[1, 2, 3, 4, 5, 6])
        data = data.limit(-1, tick_offset=2)
@@ -1215,7 +1204,7 @@ def limit(self: 'Source',
     by skipping first 2 ticks and then returning next 2 ticks like this:
 
     .. testcode::
-       :skipif: not otp.compatibility.is_limit_tick_offset_supported()
+       :skipif: not otp.compatibility._is_limit_tick_offset_supported()
 
        data = otp.Ticks(X=[1, 2, 3, 4, 5, 6])
        data = data.limit(2, tick_offset=2)
@@ -1238,7 +1227,7 @@ def limit(self: 'Source',
     >>> print(', '.join(f'{len(df)} ticks for symbol {symbol}' for symbol, df in result.items()))  # doctest: +SKIP
     5 ticks for symbol S1, 2 ticks for symbol S2
     """
-    if not otp.compatibility.is_limit_ep_supported():
+    if not otp.compatibility._is_limit_ep_supported():
         raise RuntimeError('LIMIT EP isn\'t supported by the current OneTick version.')
 
     if tick_limit < 0 and tick_limit != -1:
@@ -1249,13 +1238,13 @@ def limit(self: 'Source',
         if not isinstance(tick_offset, int) or tick_offset < 0:
             raise ValueError("Parameter 'tick_offset' must be non-negative.")
 
-        if not otp.compatibility.is_limit_tick_offset_supported():
+        if not otp.compatibility._is_limit_tick_offset_supported():
             warnings.warn("Parameter 'tick_offset' is set, but is not supported on this OneTick version")
         else:
             ep_kwargs = {'tick_offset': tick_offset}
 
     if apply_across_symbols is not None:
-        if 'apply_across_symbols' not in otq.Limit.Parameters.list_parameters():
+        if not otp.compatibility._is_limit_apply_across_symbols_supported():
             raise RuntimeError('Current version of OneTick doesn\'t support parameter `apply_across_symbols`')
 
         ep_kwargs['apply_across_symbols'] = apply_across_symbols
@@ -1397,7 +1386,7 @@ def virtual_ob(
     if show_full_detail and output_book_format != 'prl':
         raise ValueError('`output_book_format` should be set to \'prl\' when `show_full_detail` set to `True`')
 
-    is_pnl_and_show_full_detail_supported = is_ob_virtual_prl_and_show_full_detail_supported()
+    is_pnl_and_show_full_detail_supported = otp.compatibility._is_ob_virtual_prl_and_show_full_detail_supported()
 
     if show_full_detail and not is_pnl_and_show_full_detail_supported:
         raise RuntimeError('`virtual_ob` not supports `show_full_detail` parameter on this OneTick version')

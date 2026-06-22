@@ -3,9 +3,7 @@ import pytest
 import os
 import pandas as pd
 
-from onetick.py.otq import otq
 from onetick import py as otp
-from onetick.py.compatibility import is_supported_otq_reference_data_loader
 
 if os.getenv('OTP_WEBAPI_TEST_MODE'):
     pytest.skip(allow_module_level=True,
@@ -25,9 +23,6 @@ def tz(monkeypatch):
     tz = 'UTC'
     monkeypatch.setenv('TZ', tz)
     return tz
-
-
-reason_otq_query = 'skip, because otq_query not supported by reference_data_loader.exe yet'
 
 
 def ticks_symbol_name_history(tz):
@@ -122,7 +117,6 @@ def test_put_source_types_file(f_session, tz):
     assert len(data) == 4 and len(data['SYMBOL_NAME'].unique()) == 2
 
 
-@pytest.mark.skipif(not is_supported_otq_reference_data_loader(), reason=reason_otq_query)
 def test_put_source_types_otq_query(f_session, tz):
     test_put_source_types(f_session, tz, ticks_symbol_name_history(tz))  # input as a section (otp.Source)
 
@@ -162,7 +156,6 @@ def test_ref_db_without_session(tz, data):
         s.close()
 
 
-@pytest.mark.skipif(not is_supported_otq_reference_data_loader(), reason=reason_otq_query)
 def test_ref_db_without_session_otq_query(tz):
     test_ref_db_without_session(tz, ticks_symbol_name_history(tz))
 
@@ -337,7 +330,6 @@ def test_symbol_name_history(f_session, tz, data):
                                               f' expected {expected_len} ticks'
 
 
-@pytest.mark.skipif(not is_supported_otq_reference_data_loader(), reason=reason_otq_query)
 def test_symbol_name_history_otq_query(f_session, tz):
     test_symbol_name_history(f_session, tz, ticks_symbol_name_history(tz))
 
@@ -429,7 +421,6 @@ def test_symbology_mapping(f_session, tz, data):
                                           f' expected {expected_len} ticks'
 
 
-@pytest.mark.skipif(not is_supported_otq_reference_data_loader(), reason=reason_otq_query)
 def test_symbology_mapping_otq_query(f_session, tz):
     test_symbology_mapping(f_session, tz, ticks_symbology_mapping(tz))
 
@@ -542,7 +533,6 @@ def test_corp_actions(f_session, tz, data):
         assert len(data_b) == 2 and data_b[['PRICE', 'SIZE']].equals(expected)
 
 
-@pytest.mark.skipif(not is_supported_otq_reference_data_loader(), reason=reason_otq_query)
 def test_corp_actions_otq_query(f_session, tz):
     test_corp_actions(f_session, tz, ticks_corp_actions(tz))
 
@@ -672,7 +662,6 @@ def test_continuous_contracts(f_session, tz, data):
     assert list(df['X']) == ['CORE_A__X', 'CORE_B__X']
 
 
-@pytest.mark.skipif(not is_supported_otq_reference_data_loader(), reason=reason_otq_query)
 def test_continuous_contracts_otq_query(f_session, tz):
     test_continuous_contracts(f_session, tz, ticks_continuous_contracts(tz))
 

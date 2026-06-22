@@ -2,10 +2,9 @@ import pytest
 
 import onetick.py as otp
 from onetick.py.otq import otq
-from onetick.py.compatibility import is_limit_ep_supported
 
 pytestmark = pytest.mark.skipif(
-    not is_limit_ep_supported(), reason='LIMIT EP not supported on the current OneTick version',
+    not otp.compatibility._is_limit_ep_supported(), reason='LIMIT EP not supported on the current OneTick version',
 )
 
 
@@ -38,7 +37,7 @@ def test_exceptions():
 
 
 @pytest.mark.skipif(
-    'apply_across_symbols' not in otq.Limit.Parameters.list_parameters(),
+    not otp.compatibility._is_limit_apply_across_symbols_supported(),
     reason='Not supported on this OneTick version',
 )
 def test_apply_across_symbols(session):

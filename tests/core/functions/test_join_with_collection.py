@@ -1,7 +1,8 @@
 import pytest
 
 import onetick.py as otp
-from onetick.py.compatibility import is_supported_nsectime_tick_set_eval
+
+import tests
 
 
 class TestJoinWithCollection:
@@ -310,7 +311,7 @@ class TestJoinWithCollection:
         main_src = main_src.join_with_collection(collection_name='COLL', how='inner',
                                                  start=main_src['ST'], end=main_src['ET'])
         res = otp.run(main_src, start=date, end=date + otp.Day(1))
-        if tick_set and not is_supported_nsectime_tick_set_eval():
+        if tick_set and not tests.compatibility.is_supported_nsectime_tick_set_eval():
             # BDS-321: nsectime is truncated to msectime for ticksets loaded from eval()
             assert len(res) == 0
         else:
@@ -398,7 +399,7 @@ class TestJoinWithCollection:
                                        )
         res = otp.run(src, start=date, end=date + otp.Day(1))
         assert len(res) == 1
-        if tick_set and not is_supported_nsectime_tick_set_eval():
+        if tick_set and not tests.compatibility.is_supported_nsectime_tick_set_eval():
             # BDS-321: nsectime is truncated to msectime for ticksets loaded from eval()
             assert res['JWC_TS'][0] == date + otp.Milli(123)
         else:

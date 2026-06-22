@@ -16,7 +16,6 @@ from onetick.py.aggregations._docs import (
 )
 from onetick.py.docs.utils import docstring, param_doc
 from onetick.py.aggregations._base import _Aggregation
-from onetick.py.compatibility import is_diff_show_all_ticks_supported
 
 
 if TYPE_CHECKING:
@@ -167,7 +166,7 @@ def diff(self: 'Source', other: 'Source',
     If there are several matching ticks then only the first will be matched:
 
     .. testcode::
-       :skipif: not otp.compatibility.is_diff_show_matching_ticks_supported()
+       :skipif: not otp.compatibility._is_diff_show_matching_ticks_supported()
 
        t = otp.Ticks(A=[1, 1, 1, 1, 1], B=[1, 2, 3, 4, 5], offset=[0, 0, 1000, 2000, 2000])
        q = otp.Ticks(A=[1, 1, 1, 1, 1], B=[3, 4, 5, 6, 7], offset=[0, 1000, 1000, 2000, 2000])
@@ -185,7 +184,7 @@ def diff(self: 'Source', other: 'Source',
     Showing diff for every tick with ``show_all_ticks`` parameter:
 
     .. testcode::
-       :skipif: not otp.compatibility.is_diff_show_all_ticks_supported()
+       :skipif: not otp.compatibility._is_diff_show_all_ticks_supported()
 
        t = otp.Ticks(A=[1, 2, 3], B=[0, 0, 1])
        q = otp.Ticks(A=[1, 3], B=[0, 0])
@@ -230,7 +229,7 @@ def diff(self: 'Source', other: 'Source',
         for field in non_decreasing_value_fields:
             if field not in self.schema or field not in other.schema:
                 raise ValueError(f"Field {field} is not in schema")
-        if otp.compatibility.is_diff_non_decreasing_value_fields_supported():
+        if otp.compatibility._is_diff_non_decreasing_value_fields_supported():
             ep_params['non_decreasing_value_fields'] = ','.join(map(str, non_decreasing_value_fields))
         else:
             warnings.warn("Parameter 'non_decreasing_value_fields' is not supported on this version of OneTick")
@@ -241,7 +240,7 @@ def diff(self: 'Source', other: 'Source',
         )
 
     if show_all_ticks:
-        if not is_diff_show_all_ticks_supported():
+        if not otp.compatibility._is_diff_show_all_ticks_supported():
             raise RuntimeError('`show_all_ticks` parameter not supported on current OneTick version')
 
         ep_params['show_all_ticks'] = show_all_ticks
@@ -259,7 +258,7 @@ def diff(self: 'Source', other: 'Source',
         ep_params['show_only_fields_that_differ'] = show_only_fields_that_differ
 
     if show_matching_ticks is not None:
-        if otp.compatibility.is_diff_show_matching_ticks_supported():
+        if otp.compatibility._is_diff_show_matching_ticks_supported():
             ep_params['show_matching_ticks'] = show_matching_ticks
         else:
             warnings.warn("Parameter 'show_matching_ticks' is not supported on this version of OneTick")
@@ -483,7 +482,7 @@ def estimate_ts_delay(self: 'Source', other: 'Source',
     (Note that correlation method may return NaN values for smaller buckets):
 
     .. testcode::
-       :skipif: not otp.compatibility.is_supported_estimate_ts_delay()
+       :skipif: not otp.compatibility._is_supported_estimate_ts_delay()
 
        import os
        trd = otp.CSV(os.path.join(csv_path, 'trd.csv'))
@@ -512,7 +511,7 @@ def estimate_ts_delay(self: 'Source', other: 'Source',
     Try changing timestamps of other time-series to see how delay values are changed:
 
     .. testcode::
-       :skipif: not otp.compatibility.is_supported_estimate_ts_delay()
+       :skipif: not otp.compatibility._is_supported_estimate_ts_delay()
 
        import os
        trd = otp.CSV(os.path.join(csv_path, 'trd.csv'))
@@ -542,7 +541,7 @@ def estimate_ts_delay(self: 'Source', other: 'Source',
     Try filtering out some ticks from other time-series to see how delay and correlation values are changed:
 
     .. testcode::
-       :skipif: not otp.compatibility.is_supported_estimate_ts_delay()
+       :skipif: not otp.compatibility._is_supported_estimate_ts_delay()
 
        import os
        trd = otp.CSV(os.path.join(csv_path, 'trd.csv'))
@@ -569,7 +568,7 @@ def estimate_ts_delay(self: 'Source', other: 'Source',
 
        [360 rows x 3 columns]
     """
-    if not otp.compatibility.is_supported_estimate_ts_delay():
+    if not otp.compatibility._is_supported_estimate_ts_delay():
         raise RuntimeError('estimate_ts_delay() is not supported on this OneTick version')
 
     if input_field1_name not in self.schema:

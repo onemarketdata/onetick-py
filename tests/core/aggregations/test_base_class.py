@@ -3,7 +3,7 @@ from onetick.py.aggregations._base import _Aggregation, _AggregationTSType, _Agg
 import onetick.py as otp
 from onetick.py.otq import otq
 
-from onetick.py.compatibility import is_all_fields_when_ticks_exit_window_supported
+import tests
 
 import pytest
 
@@ -128,7 +128,7 @@ class TestBaseClass:
             DummyAgg('A', all_fields=True)
 
     @pytest.mark.skipif(
-        not is_all_fields_when_ticks_exit_window_supported(),
+        not tests.compatibility.is_all_fields_when_ticks_exit_window_supported(),
         reason="when_ticks_exit_window in `all_fields` not supported on this OneTick version",
     )
     def test_all_fields_when_ticks_exit_window(self):
@@ -143,7 +143,7 @@ class TestBaseClass:
         assert list(df['B']) == [3, 5, 7]
 
     @pytest.mark.skipif(
-        not is_all_fields_when_ticks_exit_window_supported(),
+        not tests.compatibility.is_all_fields_when_ticks_exit_window_supported(),
         reason="when_ticks_exit_window in `all_fields` not supported on this OneTick version",
     )
     def test_all_fields_when_ticks_exit_window_errors(self):

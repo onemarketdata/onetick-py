@@ -8,6 +8,8 @@ import pytest
 import onetick.py as otp
 from onetick.py.otq import otq
 
+import tests
+
 
 @pytest.fixture(scope="module", autouse=True)
 def session(m_session):
@@ -1168,7 +1170,7 @@ class TestTypes:
         assert all(df["a"] == [1.1, 1.5])
 
     @pytest.mark.skipif(
-        not otp.compatibility.is_double_nan_supported_when_the_result_type_is_decimal(),
+        not tests.compatibility.is_double_nan_supported_when_the_result_type_is_decimal(),
         reason='double NaN is converted to 0 in this OneTick build',
     )
     @pytest.mark.parametrize("value", [None, otp.nan, otp.raw("DECIMAL_NAN()", otp.decimal)])

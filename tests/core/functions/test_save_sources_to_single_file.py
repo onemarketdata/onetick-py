@@ -2,8 +2,10 @@ import pytest
 
 import onetick.py as otp
 
+import tests
 
-pytestmark = pytest.mark.skipif(otp.compatibility.is_not_fixed_bds_484(), reason="broken in OneTick")
+
+pytestmark = pytest.mark.skipif(not tests.compatibility.is_timezone_override_fixed(), reason="broken in OneTick")
 
 
 @pytest.mark.parametrize('autogenerate_file', [False, True])
@@ -101,7 +103,7 @@ def test_eval(session):
 
 
 @pytest.mark.skipif(
-    not otp.compatibility.is_get_query_property_flag_supported(),
+    not tests.compatibility.is_get_query_property_flag_supported(),
     reason="Not supports additional flag in GET_QUERY_PROPERTY",
 )
 def test_save_query_properties(session):

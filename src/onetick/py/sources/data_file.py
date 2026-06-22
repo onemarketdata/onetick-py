@@ -1,15 +1,12 @@
 from typing import Optional, Literal
 
+import onetick.py as otp
 from onetick.py.otq import otq
 
 from onetick.py.core.source import Source
 from onetick.py.core._source.query_parameters import QueryParameters
 
 from .. import utils
-from ..compatibility import (
-    is_data_file_query_supported,
-    is_data_file_query_symbology_supported,
-)
 
 from .common import update_node_tick_type
 
@@ -142,7 +139,7 @@ class DataFile(Source):
         Get data from the arrow file:
 
         .. testcode::
-           :skipif: not is_data_file_query_supported()
+           :skipif: not otp.compatibility._is_data_file_query_supported()
 
            import os
            path_to_arrow_file = os.path.join(csv_path, 'data.arrow')
@@ -162,7 +159,7 @@ class DataFile(Source):
         The symbols specified for the query will determine which data will be queried from the Arrow file:
 
         .. testcode::
-           :skipif: not is_data_file_query_supported()
+           :skipif: not otp.compatibility._is_data_file_query_supported()
 
            data = otp.DataFile(path_to_arrow_file)
            df = otp.run(data, symbols='MSFT')
@@ -176,7 +173,7 @@ class DataFile(Source):
         To get all symbols from file, you can specify a database without a symbol when running query:
 
         .. testcode::
-           :skipif: not is_data_file_query_supported()
+           :skipif: not otp.compatibility._is_data_file_query_supported()
 
            data = otp.DataFile(path_to_arrow_file)
            df = otp.run(data, symbols=f'{otp.config.default_db}::')
@@ -193,7 +190,7 @@ class DataFile(Source):
         Use parameter ``time_assignment`` to change the timestamps for ticks to the query start time:
 
         .. testcode::
-           :skipif: not is_data_file_query_supported()
+           :skipif: not otp.compatibility._is_data_file_query_supported()
 
            data = otp.DataFile(path_to_arrow_file, time_assignment='start')
            df = otp.run(data)
@@ -208,7 +205,7 @@ class DataFile(Source):
         Or use parameter ``timestamp_column`` to get the timestamps from some field:
 
         .. testcode::
-           :skipif: not is_data_file_query_supported()
+           :skipif: not otp.compatibility._is_data_file_query_supported()
 
            data = otp.DataFile(path_to_arrow_file, timestamp_column='T_TIME')
            df = otp.run(data)
@@ -225,7 +222,7 @@ class DataFile(Source):
         schema must be specified manually:
 
         .. testcode::
-           :skipif: not is_data_file_query_supported()
+           :skipif: not otp.compatibility._is_data_file_query_supported()
 
            data = otp.DataFile(path_to_arrow_file,
                                schema={'A': int, 'SYMBOL_NAME': str, 'T_TIME': otp.nsectime})
@@ -242,7 +239,7 @@ class DataFile(Source):
         if self._try_default_constructor(schema=schema, **kwargs):
             return
 
-        if not is_data_file_query_supported():
+        if not otp.compatibility._is_data_file_query_supported():
             raise RuntimeError("The otp.DataFile is not supported on this OneTick build")
 
         if not file and not file_contents:
@@ -284,8 +281,7 @@ class DataFile(Source):
 
         ep_kwargs = {}
         if self._symbology is not None:
-            if is_data_file_query_symbology_supported(throw_warning=True,
-                                                      feature_name="parameter 'symbology' in otp.DataFile"):
+            if otp.compatibility._is_data_file_query_symbology_supported():
                 ep_kwargs['symbology'] = self._symbology
 
         src = Source(

@@ -1,4 +1,3 @@
-import os
 import re
 import datetime
 import math
@@ -10,13 +9,7 @@ import pandas as pd
 import onetick.py as otp
 from onetick.py.otq import otq
 
-from onetick.py.compatibility import (
-    is_all_fields_when_ticks_exit_window_supported,
-    is_first_ep_skip_tick_if_supported,
-    is_last_ep_fwd_fill_if_supported,
-    is_standardized_moment_supported,
-    is_multi_column_generic_aggregations_supported,
-)
+import tests
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -208,7 +201,7 @@ class TestCompute:
         assert df['A'][0] == 1
 
     @pytest.mark.skipif(
-        not is_all_fields_when_ticks_exit_window_supported(),
+        not tests.compatibility.is_all_fields_when_ticks_exit_window_supported(),
         reason="when_ticks_exit_window in `all_fields` not supported on this OneTick version",
     )
     def test_all_fields_when_ticks_exit_window(self):
@@ -222,7 +215,7 @@ class TestCompute:
         assert list(df['X']) == [3.0, 5.0]
 
     @pytest.mark.skipif(
-        not is_all_fields_when_ticks_exit_window_supported(),
+        not tests.compatibility.is_all_fields_when_ticks_exit_window_supported(),
         reason="when_ticks_exit_window in `all_fields` not supported on this OneTick version",
     )
     def test_all_fields_when_ticks_exit_window_errors(self):
@@ -2002,7 +1995,7 @@ class TestTwAverage:
 
 class TestFirstLastAggregationParams:
     @pytest.mark.skipif(
-        not is_first_ep_skip_tick_if_supported(),
+        not otp.compatibility._is_first_ep_skip_tick_if_supported(),
         reason="`skip_tick_if` (`SKIP_TICK_IF`) parameter not supported in the FIRST EP on this OneTick version",
     )
     def test_first_tick_skip_tick_if_1(self):
@@ -2013,7 +2006,7 @@ class TestFirstLastAggregationParams:
         assert list(df['Y']) == [2]
 
     @pytest.mark.skipif(
-        not is_first_ep_skip_tick_if_supported(),
+        not otp.compatibility._is_first_ep_skip_tick_if_supported(),
         reason="`skip_tick_if` (`SKIP_TICK_IF`) parameter not supported in the FIRST EP on this OneTick version",
     )
     def test_first_tick_skip_tick_if_2(self):
@@ -2024,7 +2017,7 @@ class TestFirstLastAggregationParams:
         assert list(df['Y']) == [2, 3, 0]
 
     @pytest.mark.skipif(
-        not is_last_ep_fwd_fill_if_supported(),
+        not otp.compatibility._is_last_ep_fwd_fill_if_supported(),
         reason="`skip_tick_if` (`FWD_FILL_IF`) parameter not supported in the LAST EP on this OneTick version",
     )
     def test_last_tick_skip_tick_if_1(self):
@@ -2035,7 +2028,7 @@ class TestFirstLastAggregationParams:
         assert list(df['Y']) == [3]
 
     @pytest.mark.skipif(
-        not is_last_ep_fwd_fill_if_supported(),
+        not otp.compatibility._is_last_ep_fwd_fill_if_supported(),
         reason="`skip_tick_if` (`FWD_FILL_IF`) parameter not supported in the LAST EP on this OneTick version",
     )
     def test_last_tick_skip_tick_if_2(self):
@@ -2046,7 +2039,7 @@ class TestFirstLastAggregationParams:
         assert list(df['Y']) == [1, 3, 0]
 
     @pytest.mark.skipif(
-        not is_first_ep_skip_tick_if_supported(),
+        not otp.compatibility._is_first_ep_skip_tick_if_supported(),
         reason="`skip_tick_if` (`SKIP_TICK_IF`) parameter not supported in the FIRST EP on this OneTick version",
     )
     def test_first_skip_tick_if_nan(self):
@@ -2056,7 +2049,7 @@ class TestFirstLastAggregationParams:
         assert list(df['RESULT']) == [1]
 
     @pytest.mark.skipif(
-        not is_last_ep_fwd_fill_if_supported(),
+        not otp.compatibility._is_last_ep_fwd_fill_if_supported(),
         reason="`skip_tick_if` (`FWD_FILL_IF`) parameter not supported in the LAST EP on this OneTick version",
     )
     def test_last_skip_tick_if_nan(self):
@@ -2135,7 +2128,8 @@ class TestExpAverageAggregations:
 
 
 @pytest.mark.skipif(
-    not is_standardized_moment_supported(), reason='StandardizedMoment is not available on older builds',
+    not otp.compatibility._is_standardized_moment_supported(),
+    reason='StandardizedMoment is not available on older builds',
 )
 class TestStandardizedMoment:
     def test_simple(self):
@@ -2282,6 +2276,10 @@ class TestMultiColumnEPs:
         del res['Time']
         assert res == {'C': [15], 'D.A': [1], 'D.B': [3], 'E.A': [5], 'E.B': [4]}
 
+    @pytest.mark.skipif(
+        not tests.compatibility.is_compute_all_fields_fixed(),
+        reason='Not supported on older OneTick',
+    )
     @pytest.mark.parametrize('all_fields,result', [
         ('first', [15, 1, 3, 5, 4]),
         ('last', [15, 5, 4, 5, 4]),
@@ -2373,7 +2371,7 @@ class TestMultiColumnEPs:
         assert df == {'X.T': [5]}
 
     @pytest.mark.skipif(
-        not is_multi_column_generic_aggregations_supported(),
+        not tests.compatibility.is_multi_column_generic_aggregations_supported(),
         reason='Not supported on this version of OneTick',
     )
     def test_generic_all_columns(self, data):

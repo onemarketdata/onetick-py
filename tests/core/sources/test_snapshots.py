@@ -5,16 +5,11 @@ import onetick.py as otp
 from onetick.py import types as ott
 from onetick.py.otq import otq
 
-from onetick.py.compatibility import (
-    is_save_snapshot_database_parameter_supported,
-    is_join_with_snapshot_snapshot_fields_parameter_supported,
-)
-
 
 if (
         not hasattr(otq, "ReadSnapshot") or
         not hasattr(otq, "SaveSnapshot") or
-        not is_save_snapshot_database_parameter_supported()
+        not otp.compatibility._is_save_snapshot_database_parameter_supported()
 ):
     pytest.skip("Current version of OneTick doesn't support basic snapshots related EPs", allow_module_level=True)
 
@@ -332,7 +327,7 @@ class TestJoinWithSnapshot:
         assert df.empty
 
     @pytest.mark.skipif(
-        not is_join_with_snapshot_snapshot_fields_parameter_supported(),
+        not otp.compatibility._is_join_with_snapshot_snapshot_fields_parameter_supported(),
         reason="Current version of OneTick doesn't support parameter `snapshot_fields` in JOIN_WITH_SNAPSHOT EP",
     )
     def test_snapshot_fields(self, snapshot):

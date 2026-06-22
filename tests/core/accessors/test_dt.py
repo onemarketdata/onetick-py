@@ -4,6 +4,7 @@ import pytest
 import pandas as pd
 
 import onetick.py as otp
+import tests
 
 
 class TestCommon:
@@ -212,7 +213,7 @@ class TestDateTrunc:
         assert all(df['X'] == otp.datetime(2020, 11, 11, 5, 4, 13, 101737, 879).ts)
         df = df[['TRUNCATED_X', 'DATE_PART']]
         assert dict(df.iloc[0]) == {'TRUNCATED_X': pd.Timestamp(2020, 1, 1), 'DATE_PART': 'year'}
-        if otp.compatibility.is_date_trunc_fixed():
+        if tests.compatibility.is_date_trunc_fixed():
             assert dict(df.iloc[1]) == {'TRUNCATED_X': pd.Timestamp(2020, 10, 1), 'DATE_PART': 'quarter'}
             assert dict(df.iloc[2]) == {'TRUNCATED_X': pd.Timestamp(2020, 11, 1), 'DATE_PART': 'month'}
             assert dict(df.iloc[3]) == {'TRUNCATED_X': pd.Timestamp(2020, 11, 9), 'DATE_PART': 'week'}
@@ -235,7 +236,7 @@ class TestDateTrunc:
         data = otp.Tick(X=otp.dt(2020, 5, 11, 5, 4, 13, 101737, 879))
         data['TRUNCATED_X'] = data['X'].dt.date_trunc('year')
         df = otp.run(data)
-        if otp.compatibility.is_date_trunc_fixed():
+        if tests.compatibility.is_date_trunc_fixed():
             assert df['TRUNCATED_X'][0] == pd.Timestamp(2020, 1, 1)
         else:
             assert df['TRUNCATED_X'][0] == pd.Timestamp(2019, 12, 31, 23)

@@ -2,7 +2,6 @@ import os
 
 import pytest
 from onetick import py as otp
-from onetick.py.compatibility import is_native_plus_zstd_supported
 
 from onetick.py.otq import otq
 import datetime
@@ -623,7 +622,6 @@ def test_db_properties_lowercase_keys():
     assert 'abc' in test_db.properties and test_db.properties['abc'] == 'TEST'
 
 
-@pytest.mark.skipif(not is_native_plus_zstd_supported(), reason='Older versions of OneTick not support ZSTD')
 def test_db_properties():
     # moved from doctest due to compatibility issues with older versions of OneTick
     db_properties = otp.DB('X').properties

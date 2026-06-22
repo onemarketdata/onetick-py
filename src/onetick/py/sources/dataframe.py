@@ -314,7 +314,7 @@ def ReadFromDataFrame(
     3 2024-01-01 12:00:03.100  SELL  49.98    80   AAPL
     4 2024-01-01 12:00:03.250   BUY  50.02   250   AAPL
     """
-    if not hasattr(otq, 'ReadFromDataFrame'):
+    if not otp.compatibility._is_read_from_dataframe_supported():
         raise RuntimeError('Current version of OneTick doesn\'t support ReadFromDataFrame')
 
     dataframe, columns, timestamp_column, symbol_name_field, symbol, symbol_value = _process_common_params(

@@ -8,7 +8,8 @@ import pandas as pd
 from onetick.test.utils import random_string, random_regex
 
 import onetick.py as otp
-from onetick.py.compatibility import is_repeat_with_field_name_works_correctly
+
+import tests
 
 
 def generate_bigger_strings(lines, only_one=True):
@@ -532,7 +533,8 @@ class TestFind:
         assert all(data["other_alphabet"] == [-1] * len(lines))
 
 
-@pytest.mark.skipif(not is_repeat_with_field_name_works_correctly(), reason="REPEAT EP on fields is broken")
+@pytest.mark.skipif(not tests.compatibility.is_repeat_with_field_name_works_correctly(),
+                    reason="REPEAT EP on fields is broken")
 class TestRepeat:
     old_column_name = "x"
     new_column_name = "y"

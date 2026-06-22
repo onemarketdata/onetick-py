@@ -9,8 +9,8 @@ from itertools import chain, zip_longest, repeat
 from typing import Union, Optional, Sequence, Literal
 from enum import Enum
 
+import onetick.py as otp
 from onetick.py.otq import otq
-
 from onetick.py.configuration import config, default_presort_concurrency
 from onetick.py.core.eval_query import _QueryEvalWrapper
 from onetick.py.core._source._symbol_param import _SymbolParamSource
@@ -21,11 +21,6 @@ import onetick.py.types as ott
 from onetick.py.core.column import Column
 from onetick.py.core.column_operations.base import Operation
 from onetick.py.core.cut_builder import _QCutBuilder, _CutBuilder
-from onetick.py.compatibility import (
-    is_supported_join_with_aggregated_window,
-    is_supported_next_in_join_with_aggregated_window,
-    is_apply_rights_supported,
-)
 
 
 __all__ = ['merge', 'join', 'join_by_time', 'apply_query', 'apply', 'cut', 'qcut', 'coalesce', 'corp_actions', 'format']
@@ -267,7 +262,6 @@ def merge(sources, align_schema=True, symbols=None, identify_input_ts=False,
             # onetick.query doesn't have an interface to set symbol_date for the EP node
             # so instead of setting symbols for the EP node,
             # we will turn symbol list into the first stage query, and symbol_date will be set for this query
-            import onetick.py as otp
             if isinstance(symbols, str):
                 symbols = [symbols]
             symbols = otp.Ticks(SYMBOL_NAME=symbols)
@@ -1823,7 +1817,7 @@ def corp_actions(source,
                           "it is the only valid value when `adjustment_date` is in YYYYMMDD format.")
 
     kwargs = {}
-    if apply_rights is not None and is_apply_rights_supported(throw_warning=True):
+    if apply_rights is not None and otp.compatibility._is_apply_rights_supported():
         kwargs['apply_rights'] = apply_rights
 
     source.sink(otq.CorpActions(
@@ -2240,7 +2234,7 @@ def join_with_aggregated_window(
     from query start time until (but not including) the *effective* timestamp of the tick from ``pass_src``:
 
     .. testcode::
-       :skipif: not is_supported_join_with_aggregated_window()
+       :skipif: not otp.compatibility._is_supported_join_with_aggregated_window()
 
        agg_src = otp.Ticks(A=[0, 1, 2, 3, 4, 5, 6])
        pass_src = otp.Ticks(B=[1, 3, 5], offset=[1, 3, 5])
@@ -2264,7 +2258,7 @@ def join_with_aggregated_window(
     to be included in bucket, you can set ``boundary_aggr_tick`` to ``previous``:
 
     .. testcode::
-       :skipif: not is_supported_join_with_aggregated_window()
+       :skipif: not otp.compatibility._is_supported_join_with_aggregated_window()
 
        agg_src = otp.Ticks(A=[0, 1, 2, 3, 4, 5, 6])
        pass_src = otp.Ticks(B=[1, 3, 5], offset=[1, 3, 5])
@@ -2289,7 +2283,7 @@ def join_with_aggregated_window(
     For example, to aggregate buckets of two ticks:
 
     .. testcode::
-       :skipif: not is_supported_join_with_aggregated_window()
+       :skipif: not otp.compatibility._is_supported_join_with_aggregated_window()
 
        agg_src = otp.Ticks(A=[0, 1, 2, 3, 4, 5, 6])
        pass_src = otp.Ticks(B=[1, 3, 5], offset=[1, 3, 5])
@@ -2319,7 +2313,7 @@ def join_with_aggregated_window(
     This allows to shift bucket end boundary like this:
 
     .. testcode::
-       :skipif: not is_supported_join_with_aggregated_window()
+       :skipif: not otp.compatibility._is_supported_join_with_aggregated_window()
 
        agg_src = otp.Ticks(A=[0, 1, 2, 3, 4, 5, 6])
        pass_src = otp.Ticks(B=[1, 3, 5], offset=[1, 3, 5])
@@ -2345,7 +2339,7 @@ def join_with_aggregated_window(
     It may be useful in case some custom user class was used as input:
 
     .. testcode::
-       :skipif: not is_supported_join_with_aggregated_window()
+       :skipif: not otp.compatibility._is_supported_join_with_aggregated_window()
 
        class CustomTick(otp.Tick):
            def custom_method(self):
@@ -2381,7 +2375,7 @@ def join_with_aggregated_window(
     5 2022-03-03 00:01:00.002    2.2   202
 
     .. testcode::
-       :skipif: not is_supported_join_with_aggregated_window()
+       :skipif: not otp.compatibility._is_supported_join_with_aggregated_window()
 
        data = otp.DataSource('US_COMP', tick_type='TRD', symbols='MSFT', date=otp.dt(2022, 3, 3))
        data = otp.join_with_aggregated_window(
@@ -2403,17 +2397,13 @@ def join_with_aggregated_window(
        4 2022-03-03 00:01:00.001     202    2.1   201
        5 2022-03-03 00:01:00.002       0    2.2   202
     """
-    if not is_supported_join_with_aggregated_window():
+    if not otp.compatibility._is_supported_join_with_aggregated_window():
         raise RuntimeError('Function join_with_aggregated_window() is not supported on this OneTick build')
 
     if boundary_aggr_tick not in {'next', 'previous'}:
         raise ValueError(f"Wrong value of 'boundary_aggr_tick' parameter: '{boundary_aggr_tick}'")
     if boundary_aggr_tick == 'next':
         boundary_aggr_tick_behavior = 'NEXT_WINDOW'
-        is_supported_next_in_join_with_aggregated_window(
-            throw_warning=True,
-            feature_name="setting parameter 'boundary_aggr_tick' to 'next' (as this may result in crash)"
-        )
     else:
         boundary_aggr_tick_behavior = 'PREV_WINDOW'
 

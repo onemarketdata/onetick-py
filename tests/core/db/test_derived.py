@@ -4,6 +4,8 @@ import pytest
 
 import onetick.py as otp
 
+import tests
+
 
 @pytest.fixture(scope='function')
 def temp_base_dir(f_session, keep_generated_dir):
@@ -104,25 +106,17 @@ def test_derived_definition_only(f_session, temp_base_dir):
     ) == ['DB_A//DB_D']
 
 
-@pytest.mark.skipif(not otp.compatibility.is_supported_list_empty_derived_databases(),
+@pytest.mark.skipif(not tests.compatibility.is_supported_list_empty_derived_databases(),
                     reason='Raised a segfault on older builds, cannot test')
 def test_derived_databases_empty(f_session):
     assert not otp.derived_databases()
 
 
+@pytest.mark.skipif(not tests.compatibility.is_derived_databases_crash_fixed(),
+                    reason='Raised a segfault on older builds, cannot test')
 def test_add_data_before_use():
-    """
-    See tasks PY-134, PY-388, BDS-334.
-    Was fixed in update1_20231108120000.
-    0032118: OneTick processes that refresh their locator may crash
-             if they make use databases derived from the dbs in that locator
-    """
     with otp.Session() as session:
         derived_db1 = otp.DB("DB_A//DB_D")
-        if not otp.compatibility.is_supported_reload_locator_with_derived_db():
-            with pytest.raises(Exception, match='use the .use method before adding'):
-                derived_db1.add(otp.Ticks(A=[3, 2, 1]))
-            return
         derived_db1.add(otp.Ticks(A=[3, 2, 1]), tick_type='TT', symbol='S')
         session.use(derived_db1)
         df = otp.run(otp.DataSource("DB_A//DB_D", tick_type='TT', symbol='S'))
@@ -151,7 +145,7 @@ def test_3_level_merge_with_upper(f_session, temp_base_dir):
     assert all(df["A"] == [1, 1, 2, 2, 3, 3])
 
 
-@pytest.mark.skipif(not otp.compatibility.is_derived_databases_crash_fixed(),
+@pytest.mark.skipif(not tests.compatibility.is_derived_databases_crash_fixed(),
                     reason='Raised a segfault on older builds, cannot test')
 @pytest.mark.skipif(os.name == 'nt', reason="Doesn't work on Windows")
 @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason="Doesn't work in WebAPI test environment")

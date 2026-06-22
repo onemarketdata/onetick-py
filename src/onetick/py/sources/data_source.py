@@ -19,7 +19,6 @@ from .. import types as ott
 from .. import utils
 from ..core.column_operations.base import _Operation
 from ..db.db import DB
-from ..compatibility import is_supported_where_clause_for_back_ticks
 
 from onetick.py.docs.utils import docstring, param_doc
 
@@ -927,7 +926,7 @@ class DataSource(Source):
         ``where_clause_for_back_ticks`` is used to filter out ticks before the start time:
 
         .. testcode::
-           :skipif: not is_supported_where_clause_for_back_ticks()
+           :skipif: not otp.compatibility._is_supported_where_clause_for_back_ticks()
 
            data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL', date=otp.dt(2022, 3, 2),
                                  where_clause_for_back_ticks=otp.raw('SIZE>=50', dtype=bool),

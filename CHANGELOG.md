@@ -10,6 +10,27 @@
 
 ### Removed
 
+## [1.200.0] - 2026-06-22
+
+### Added
+
+- Add `pyarrow` output mode to `otp.run` WebAPI mode
+
+### Changed
+
+- Rework `otp.compatibility` module
+- Do not check OneTick server version for compatibility checks (in most cases)
+- Remove compatibility checks for unsupported old OneTick versions
+- Move some compatibility checks to `tests` directory
+- Rename most compatibility check functions to be *private* (starts with underscore)
+
+### Fixed
+
+- Don't show entitlement warnings when getting database schema
+- Set default value of parameter `running` in `otp.run` to None
+
+### Removed
+
 ## [1.199.0] - 2026-06-15
 
 ### Added

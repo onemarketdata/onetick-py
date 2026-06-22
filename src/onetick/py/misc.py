@@ -1,4 +1,3 @@
-from onetick.py.compatibility import is_sha2_hashing_supported
 from onetick.py.core.column_operations.base import _Operation
 from onetick.py.types import value2str, string, varstring
 
@@ -246,9 +245,6 @@ class _HashCodeOperator(_Operation):
         if hash_type not in self.HASH_TYPES:
             raise ValueError(f'Incorrect hash_type was passed: {hash_type}')
 
-        if hash_type.startswith('sha') and not is_sha2_hashing_supported():
-            raise RuntimeError("SHA2 hashing unavailable on current OneTick version")
-
         dtype = self.HASH_TYPES[hash_type]
 
         def _repr(_value, _hash_type):
@@ -300,50 +296,29 @@ def hash_code(value, hash_type):
     --------
     Basic example:
 
-    .. testcode::
-        :skipif: not is_sha2_hashing_supported()
-
-        data = otp.Tick(A=1)
-        data['HASH'] = otp.hash_code('some_string', 'sha_224')
-        df = otp.run(data)
-        print(df)
-
-    .. testoutput::
-
-                Time  A                                                      HASH
-        0 2003-12-01  1  12d3f96511450121e6343b5ace065ec9de7b2a946b86f7dfab8ac51f
+    >>> data = otp.Tick(A=1)
+    >>> data['HASH'] = otp.hash_code('some_string', 'sha_224')
+    >>> otp.run(data)
+            Time  A                                                      HASH
+    0 2003-12-01  1  12d3f96511450121e6343b5ace065ec9de7b2a946b86f7dfab8ac51f
 
     You can also pass :py:class:`~onetick.py.Operation` as a ``value`` parameter:
 
-    .. testcode::
-        :skipif: not is_sha2_hashing_supported()
-
-        data = otp.Tick(A=otp.varstring('some_string'))
-        data['HASH'] = otp.hash_code(data['A'], 'sha_224')
-        df = otp.run(data)
-        print(df)
-
-    .. testoutput::
-
-                Time            A                                                      HASH
-        0 2003-12-01  some_string  12d3f96511450121e6343b5ace065ec9de7b2a946b86f7dfab8ac51f
+    >>> data = otp.Tick(A=otp.varstring('some_string'))
+    >>> data['HASH'] = otp.hash_code(data['A'], 'sha_224')
+    >>> otp.run(data)
+            Time            A                                                      HASH
+    0 2003-12-01  some_string  12d3f96511450121e6343b5ace065ec9de7b2a946b86f7dfab8ac51f
 
     For the same string stored in strings with different fixed sizes, the hash value may differ:
 
-    .. testcode::
-        :skipif: not is_sha2_hashing_supported()
-
-        test_str = 'example'
-        data = otp.Tick(A=otp.string[128](test_str))
-        data['Fixed'] = otp.hash_code(data['A'], 'sha_1')
-        data['Var'] = otp.hash_code(otp.varstring(test_str), 'sha_1')
-        df = otp.run(data)
-        print(df)
-
-    .. testoutput::
-
-                Time        A                                     Fixed                                       Var
-        0 2003-12-01  example  bdab82ec533c09646e45f15dc4e7ad2d2d1a8ff1  c3499c2729730a7f807efb8676a92dcb6f8a3f8f
+    >>> test_str = 'example'
+    >>> data = otp.Tick(A=otp.string[128](test_str))
+    >>> data['Fixed'] = otp.hash_code(data['A'], 'sha_1')
+    >>> data['Var'] = otp.hash_code(otp.varstring(test_str), 'sha_1')
+    >>> otp.run(data)
+            Time        A                                     Fixed                                       Var
+    0 2003-12-01  example  bdab82ec533c09646e45f15dc4e7ad2d2d1a8ff1  c3499c2729730a7f807efb8676a92dcb6f8a3f8f
     """
     return _HashCodeOperator(value, hash_type)
 

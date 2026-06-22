@@ -8,7 +8,6 @@ from onetick.py.core._source.query_parameters import QueryParameters
 
 from .. import utils, configuration
 from ..core.column_operations.base import _Operation
-from ..compatibility import is_odbc_query_supported
 
 from .common import update_node_tick_type
 
@@ -257,7 +256,7 @@ class ODBC(Source):
         if self._try_default_constructor(schema=schema, **kwargs):
             return
 
-        if not is_odbc_query_supported():
+        if not otp.compatibility._is_odbc_query_supported():
             raise RuntimeError("ODBC source is not supported in this version of OneTick, "
                                "it is available starting from release 1.24 (or development build 20231108)")
 

@@ -2166,7 +2166,7 @@ wheels = [
 
 [[package]]
 name = "onetick-query-webapi"
-version = "20260420.0.0"
+version = "20260612.0.0"
 source = { registry = "https://pip.sol.onetick.com/" }
 dependencies = [
     { name = "backports-zstd", marker = "python_full_version < '3.14'" },
@@ -2186,7 +2186,7 @@ dependencies = [
     { name = "zstandard" },
 ]
 wheels = [
-    { url = "https://pip.sol.onetick.com/packages/onetick_query_webapi-20260420.0.0-py3-none-any.whl", hash = "sha256:77ba4f8358d5de9b3c1b070753d32ddd7cb17d9c1d7719a5caa49dfee9bff16a" },
+    { url = "https://pip.sol.onetick.com/packages/onetick_query_webapi-20260612.0.0-py3-none-any.whl", hash = "sha256:014fe54c011a58930d3af07c48e0749a37b6657b6fcaecb7468fe8f47c7f1a6c" },
 ]
 
 [[package]]

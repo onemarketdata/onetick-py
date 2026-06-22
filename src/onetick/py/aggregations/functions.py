@@ -1114,7 +1114,6 @@ def option_price(*args, **kwargs):
     Enable aggregation over running window and keep all fields in the output:
 
     .. testcode::
-        :skipif: not otp.compatibility.is_all_fields_for_running_supported()
 
         data = otp.Ticks(PRICE=[100.7, 101.1, 99.5], symbol=symbol)
         data = otp.agg.option_price(compute_delta=True,
@@ -1199,31 +1198,24 @@ def option_price(*args, **kwargs):
 
     Usage with the ``.agg()`` method (on the latest OneTick builds).
 
-    .. testcode::
-       :skipif: not otp.compatibility.is_supported_agg_option_price()
-
-       data = otp.Ticks(
-           PRICE=[100.7, 101.1, 99.5],
-           OPTION_TYPE=['CALL']*3,
-           STRIKE_PRICE=[100.0]*3,
-           DAYS_TILL_EXPIRATION=[30]*3,
-       )
-       data = data.agg({
-           'RESULT': otp.agg.option_price(
-               option_type_field_name='OPTION_TYPE',
-               strike_price_field_name='STRIKE_PRICE',
-               days_till_expiration_field_name='DAYS_TILL_EXPIRATION',
-               volatility=0.25,
-               interest_rate=0.05,
-           )
-       })
-       df = otp.run(data)
-       print(df)
-
-    .. testoutput::
-
-               Time    RESULT
-       0 2003-12-04  2.800999
+    >>> data = otp.Ticks(
+    ...     PRICE=[100.7, 101.1, 99.5],
+    ...     OPTION_TYPE=['CALL']*3,
+    ...     STRIKE_PRICE=[100.0]*3,
+    ...     DAYS_TILL_EXPIRATION=[30]*3,
+    ... )
+    >>> data = data.agg({
+    ...     'RESULT': otp.agg.option_price(
+    ...         option_type_field_name='OPTION_TYPE',
+    ...         strike_price_field_name='STRIKE_PRICE',
+    ...         days_till_expiration_field_name='DAYS_TILL_EXPIRATION',
+    ...         volatility=0.25,
+    ...         interest_rate=0.05,
+    ...     )
+    ... })
+    >>> otp.run(data)
+            Time    RESULT
+    0 2003-12-04  2.800999
 
     The following examples show results for different cases of option price calculation.
     Results are compared with two online calculators:
@@ -1277,7 +1269,6 @@ def option_price(*args, **kwargs):
     Put option, strike price 110.0, underlying price 120.0, volatility 20.0%, interest 5.0%, expiring in 15 days.
 
     .. testcode::
-       :skipif: not otp.compatibility.is_option_price_theta_value_changed()
 
        data = {
            "PRICE": 120.,
@@ -1328,7 +1319,6 @@ def option_price(*args, **kwargs):
     Put option, strike price 90.0, underlying price 80.0, volatility 30.0%, interest 8.0%, expiring in 20 days.
 
     .. testcode::
-       :skipif: not otp.compatibility.is_option_price_theta_value_changed()
 
        data = {
            "PRICE": 80.,
@@ -1468,7 +1458,6 @@ def option_price(*args, **kwargs):
     Put option, strike price 140.0, underlying price 150.0, volatility 60.0%, interest 7.0%, expiring in 10 days.
 
     .. testcode::
-       :skipif: not otp.compatibility.is_option_price_theta_value_changed()
 
        data = {
            "PRICE": 150.,
@@ -1763,7 +1752,7 @@ def find_value_for_percentile(*args, **kwargs):
     Find interpolated value of 50% percentile rank:
 
     .. testcode::
-       :skipif: not otp.compatibility.is_find_value_for_percentile_supported()
+       :skipif: not otp.compatibility._is_find_value_for_percentile_supported()
 
        t = otp.Ticks({'A': [1, 2, 3, 4]})
        data = t.find_value_for_percentile('A', 50, 'interpolated_value')
@@ -1778,7 +1767,7 @@ def find_value_for_percentile(*args, **kwargs):
     Find first value greater or equal to 50% percentile rank:
 
     .. testcode::
-       :skipif: not otp.compatibility.is_find_value_for_percentile_supported()
+       :skipif: not otp.compatibility._is_find_value_for_percentile_supported()
 
        data = t.find_value_for_percentile('A', 50, 'first_value_with_ge_percentile')
        df = otp.run(data)
@@ -1792,7 +1781,7 @@ def find_value_for_percentile(*args, **kwargs):
     Use :py:meth:`~onetick.py.Source.agg` method to apply several aggregations at the same time:
 
     .. testcode::
-       :skipif: not otp.compatibility.is_find_value_for_percentile_supported()
+       :skipif: not otp.compatibility._is_find_value_for_percentile_supported()
 
        data = t.agg({
            'X': otp.agg.find_value_for_percentile('A', 50, 'interpolated_value'),
@@ -1946,7 +1935,7 @@ def standardized_moment(*args, **kwargs):
     Basic example
 
     .. testcode::
-       :skipif: not otp.compatibility.is_standardized_moment_supported()
+       :skipif: not otp.compatibility._is_standardized_moment_supported()
 
        data = otp.Ticks({'A': [1, 2, 4, 4, 4, 6]})
        data = data.standardized_moment('A', degree=3, bucket_interval=3, bucket_units='ticks')

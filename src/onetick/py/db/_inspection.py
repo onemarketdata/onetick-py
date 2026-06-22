@@ -11,7 +11,6 @@ from dateutil.tz import gettz
 import onetick.py as otp
 from onetick.py import configuration, utils
 from onetick.py import types as ott
-from onetick.py.compatibility import is_native_plus_zstd_supported, is_show_db_list_show_description_supported
 from onetick.py.core import db_constants
 from onetick.py.otq import otq
 
@@ -195,22 +194,16 @@ class DB:
 
         Examples
         --------
-        .. testcode::
-           :skipif: not is_native_plus_zstd_supported()
 
-           some_db = otp.databases()['SOME_DB']
-           print(some_db.show_config()['LOCATOR_STRING'])
-
-        .. testoutput::
-           :options: +ELLIPSIS
-
-           <DB ARCHIVE_COMPRESSION_TYPE="NATIVE_PLUS_ZSTD" ID="SOME_DB" SYMBOLOGY="BZX" TICK_TIMESTAMP_TYPE="NANOS" >
-           <LOCATIONS >
-               <LOCATION ACCESS_METHOD="file" DAY_BOUNDARY_TZ="EST5EDT"
-                         END_TIME="21000101000000" LOCATION="..." START_TIME="20021230000000" />
-           </LOCATIONS>
-           <RAW_DATA />
-           </DB>
+        >>> some_db = otp.databases()['SOME_DB']
+        >>> print(some_db.show_config()['LOCATOR_STRING']) # doctest: +ELLIPSIS
+        <DB ARCHIVE_COMPRESSION_TYPE="NATIVE_PLUS_ZSTD" ID="SOME_DB" SYMBOLOGY="BZX" TICK_TIMESTAMP_TYPE="NANOS" >
+        <LOCATIONS >
+            <LOCATION ACCESS_METHOD="file" DAY_BOUNDARY_TZ="EST5EDT"
+                      END_TIME="21000101000000" LOCATION="..." START_TIME="20021230000000" />
+        </LOCATIONS>
+        <RAW_DATA />
+        </DB>
 
         >>> some_db = otp.databases()['SOME_DB']
         >>> some_db.show_config(config_type='db_time_intervals')  # doctest: +ELLIPSIS
@@ -309,7 +302,8 @@ class DB:
                          start=db_constants.DEFAULT_START_DATE,
                          end=db_constants.DEFAULT_END_DATE,
                          timezone='GMT',
-                         context=self.context)
+                         context=self.context,
+                         **_get_params_to_ignore_acl_violation())
         return result
 
     def _set_intervals(self):
@@ -595,15 +589,13 @@ class DB:
             # in the usual case it would mean that there is no data in the database,
             # but _show_loaded_time_ranges doesn't return dates for database views
             # in this case let's just try to get the database schema with default time range
-            start = end = utils.adaptive
             # also it seems that show_schema=True doesn't work for views either
             show_schema = False
         else:
-            start, end = self._fit_date_in_acl(date, timezone=timezone)  # type: ignore[assignment]
             show_schema = True
 
         # PY-458: don't use cache, it can return different result in some cases
-        result = self._get_schema(use_cache=False, start=start, end=end, timezone=timezone, show_schema=show_schema,
+        result = self._get_schema(use_cache=False, date=date, timezone=timezone, show_schema=show_schema,
                                   query_properties=query_properties)
         if len(result) == 0:
             return []
@@ -620,17 +612,19 @@ class DB:
         return self._locator_date_ranges[0]
 
     @_method_cache
-    def _get_schema(self, start, end, timezone, use_cache, show_schema, query_properties=None):
+    def _get_schema(self, date, timezone, use_cache, show_schema, query_properties=None):
         ep = otq.DbShowTickTypes(use_cache=use_cache,
                                  show_schema=show_schema,
                                  include_memdb=True)
+        safe_params = _get_params_to_ignore_acl_violation()
+        if query_properties:
+            safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
         return otp.run(ep,
                        symbols=f'{self.name}::',
-                       start=start,
-                       end=end,
+                       date=date,
                        timezone=timezone,
                        context=self.context,
-                       query_properties=query_properties)
+                       **safe_params)
 
     def schema(self, date=None, tick_type=None, timezone=None, check_index_file=utils.adaptive,
                query_properties: Optional[dict] = None) -> dict[str, type]:
@@ -695,10 +689,8 @@ class DB:
         # could be date or datetime types, and datetime is not comparable with datetime.date
         date = _datetime2date(date)
 
-        start, end = self._fit_date_in_acl(date, timezone=timezone)
-
         kwargs = dict(
-            start=start, end=end, timezone=timezone, show_schema=True, query_properties=query_properties,
+            date=date, timezone=timezone, show_schema=True, query_properties=query_properties,
         )
         # PY-458, BEXRTS-1220, PY-1421
         # the results of the query may vary depending on using use_cache parameter, so we are trying both
@@ -885,20 +877,12 @@ class DB:
         Examples
         --------
 
-        Show stats for a particular date for a database SOME_DB:
+        Show stats for a particular date for a database *SOME_DB*:
 
-        .. testcode::
-           :skipif: not is_native_plus_zstd_supported()
-
-           db = otp.databases()['SOME_DB']
-           stats = db.show_archive_stats(date=otp.dt(2003, 12, 1))
-           print(stats)
-
-        .. testoutput::
-           :options: +ELLIPSIS
-
-                            Time  COMPRESSION_TYPE TIME_RANGE_VALIDITY LOWEST_LOADED_DATETIME HIGHEST_LOADED_DATETIME...
-           0 2003-12-01 05:00:00  NATIVE_PLUS_ZSTD               VALID    2003-12-01 05:00:00 2003-12-01 05:00:00.002...
+        >>> db = otp.databases()['SOME_DB']
+        >>> db.show_archive_stats(date=otp.dt(2003, 12, 1))  # doctest: +ELLIPSIS
+                         Time  COMPRESSION_TYPE TIME_RANGE_VALIDITY LOWEST_LOADED_DATETIME HIGHEST_LOADED_DATETIME...
+        0 2003-12-01 05:00:00  NATIVE_PLUS_ZSTD               VALID    2003-12-01 05:00:00 2003-12-01 05:00:00.002...
         """
         node = otq.ShowArchiveStats()
         graph = otq.GraphQuery(node)
@@ -1057,6 +1041,16 @@ def _get_safe_params_for_running(db=None, context=utils.default):
         end=end,
         timezone=timezone,
         context=db.context,
+        **_get_params_to_ignore_acl_violation(),
+    )
+
+
+def _get_params_to_ignore_acl_violation():
+    """
+    This function returns parameters to use when running queries that may violate ACL rules.
+    We ignore these errors and do not print them so we do not confuse the user.
+    """
+    return dict(
         # OneTick can return ACL violation error if we use database name as symbol
         query_properties={'IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE': 'TRUE'},
         # don't print symbol errors from onetick about start/end time adjusted due to entitlement checks
@@ -1142,9 +1136,7 @@ def databases(
     ...         ...                ...          ...           ...         ...
     """
     show_db_list_kwargs = {}
-    if fetch_description is not None and is_show_db_list_show_description_supported() and (
-        'show_description' in otq.ShowDbList.Parameters.list_parameters()
-    ):
+    if fetch_description is not None and otp.compatibility._is_show_db_list_show_description_supported():
         show_db_list_kwargs['show_description'] = fetch_description
 
     # PY-1540: using deep_scan=True leads to significant delay in query execution,

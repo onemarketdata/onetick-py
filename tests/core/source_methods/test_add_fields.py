@@ -27,7 +27,7 @@ def test_all(session):
     assert df['Z'][0] == '1abc'
 
 
-@pytest.mark.skipif(not otp.compatibility.is_existing_fields_handling_supported(),
+@pytest.mark.skipif(not otp.compatibility._is_existing_fields_handling_supported(),
                     reason='not supported on old OneTick builds')
 def test_override(session):
     data = otp.Tick(A=1)

@@ -7,6 +7,8 @@ import pandas as pd
 import onetick.py as otp
 from onetick.py.otq import otq
 
+import tests
+
 
 @pytest.fixture(scope='module')
 def session(m_session):
@@ -38,6 +40,8 @@ def test_source(session):
     assert df['Y'][0] == 'FALSE'
 
 
+@pytest.mark.skipif(not tests.compatibility.is_get_query_property_flag_supported(),
+                    reason="Second parameter of GET_QUERY_PROPERTY was not supported before")
 def test_override(session):
     ep = otq.TickGenerator(fields='X=GET_QUERY_PROPERTY("MAX_CONCURRENCY", true)', bucket_interval=0)
     t = otp.Source(ep,
@@ -115,6 +119,8 @@ def test_data_source(session):
     assert list(df['X']) == ['TRUE'] * 3
 
 
+@pytest.mark.skipif(not tests.compatibility.is_allow_graph_reuse_property_fixed(),
+                    reason="Doesn't work on older OneTick versions")
 def test_merge_and_join(session):
     t1 = otp.Tick(
         X=otp.get_query_property('ALLOW_GRAPH_REUSE'),
@@ -172,6 +178,8 @@ def test_csv(session):
     assert df['X'][0] == 'TRUE'
 
 
+@pytest.mark.skipif(not tests.compatibility.is_allow_graph_reuse_property_fixed(),
+                    reason="Doesn't work on older OneTick versions")
 def test_join_with_query(session):
     t = otp.Tick(A=1, query_parameters=otp.QueryParameters(query_properties={'ALLOW_GRAPH_REUSE': 'FALSE'}))
     t['A_X'] = otp.get_query_property('ALLOW_GRAPH_REUSE')
@@ -218,7 +226,7 @@ def test_query(session):
 
 @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE'),
                     reason='doctest_resources are not available in WebAPI testing mode')
-@pytest.mark.skipif(not otp.compatibility.is_data_file_query_supported(),
+@pytest.mark.skipif(not otp.compatibility._is_data_file_query_supported(),
                     reason="Not supported on some OneTick versions")
 def test_data_file(session, pytestconfig):
     data = otp.DataFile(
@@ -242,7 +250,7 @@ def test_load_ticks_from_dataframe(session, pytestconfig):
     assert list(df['X']) == ['TRUE'] * 3
 
 
-@pytest.mark.skipif(not otp.compatibility.is_read_from_dataframe_supported(),
+@pytest.mark.skipif(not otp.compatibility._is_read_from_dataframe_supported(),
                     reason='Not supported on this OneTick version')
 def test_read_from_dataframe(session, pytestconfig):
     data = otp.ReadFromDataFrame(

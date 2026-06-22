@@ -6,7 +6,7 @@ from pathlib import Path
 
 import onetick.py as otp
 
-if not otp.compatibility.is_odbc_query_supported():
+if not otp.compatibility._is_odbc_query_supported():
     pytest.skip("Doesn't work on old OneTick versions", allow_module_level=True)
 
 if os.getenv('OTP_WEBAPI_TEST_MODE'):

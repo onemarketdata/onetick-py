@@ -247,7 +247,8 @@ def read_and_remove_file(path):
 
 
 @pytest.mark.skipif(
-    not otp.compatibility.is_supported_bucket_units_for_tick_generator(), reason='not supported on old OneTick versions'
+    not otp.compatibility._is_supported_bucket_units_for_tick_generator(),
+    reason='not supported on old OneTick versions'
 )
 def test_output_files(session):
     tmp_dir = otp.utils.TmpDir()

@@ -1,7 +1,8 @@
 import pytest
 
 import onetick.py as otp
-from onetick.py.compatibility import is_supported_rename_fields_symbol_change
+
+import tests
 
 
 @pytest.fixture
@@ -106,7 +107,7 @@ def test_join_by_time(f_session, data, use_rename_ep):
 
     data = otp.agg.generic(agg_fun).apply(data)
 
-    if use_rename_ep and not is_supported_rename_fields_symbol_change():
+    if use_rename_ep and not tests.compatibility.is_supported_rename_fields_symbol_change():
         with pytest.raises(Exception, match='RENAME_FIELDS does not currently support dynamic symbol changes'):
             otp.run(data)
     else:
@@ -130,18 +131,6 @@ def test_unsupported_join(f_session, data, unsupported_on):
 
     data = otp.agg.generic(agg_fun).apply(data)
     with pytest.raises(Exception, match='does not currently support dynamic symbol changes'):
-        otp.run(data)
-
-
-@pytest.mark.skipif(is_supported_rename_fields_symbol_change(), reason='PY-557')
-def test_unsupported_rename(f_session, data):
-    def agg_fun(source):
-        source = source.agg({'A': otp.agg.sum('A')})
-        source = source.rename({'A': 'AA'})
-        return source
-
-    data = otp.agg.generic(agg_fun).apply(data)
-    with pytest.raises(Exception, match='RENAME_FIELDS does not currently support dynamic symbol changes'):
         otp.run(data)
 
 

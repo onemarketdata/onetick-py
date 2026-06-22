@@ -7,16 +7,12 @@ from onetick.py.aggregations.other import (First, Last, FirstTime, LastTime, Cou
                                            StandardizedMoment, PortfolioPrice, MultiPortfolioPrice, Return,
                                            ImpliedVol, LinearRegression, PartitionEvenlyIntoGroups)
 from onetick.py.aggregations.high_low import Max, Min, HighTime, LowTime, HighTick, LowTick
-from onetick.py.compatibility import (is_percentile_bug_fixed,
-                                      is_supported_agg_option_price,
-                                      is_supported_num_distinct,
-                                      is_supported_large_ints_empty_interval,
-                                      is_standardized_moment_supported,
-                                      is_expect_decimals_supported)
 from onetick.py.otq import otq
 import pytest
 import numpy as np
 import pandas as pd
+
+import tests
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -560,7 +556,8 @@ class TestInheritance:
         assert obj.keep_timestamp is False
 
 
-@pytest.mark.skipif(not is_supported_num_distinct(), reason='NumDistinct is not available on older builds')
+@pytest.mark.skipif(not otp.compatibility._is_supported_num_distinct(),
+                    reason='NumDistinct is not available on older builds')
 class TestNumDistinct:
 
     def test_apply(self):
@@ -637,29 +634,17 @@ class TestOptionPrice:
             STRIKE_PRICE=[100.0] * 3,
             DAYS_TILL_EXPIRATION=[30] * 3,
         )
-        if is_supported_agg_option_price():
-            data = data.agg({
-                'RESULT': otp.agg.option_price(
-                    option_type_field_name='OPTION_TYPE',
-                    strike_price_field_name='STRIKE_PRICE',
-                    days_till_expiration_field_name='DAYS_TILL_EXPIRATION',
-                    volatility=0.25,
-                    interest_rate=0.05,
-                )
-            })
-            df = otp.run(data)
-            assert df['RESULT'][0] == pytest.approx(2.800999260123, abs=1e-13)
-        else:
-            with pytest.raises(NotImplementedError):
-                data.agg({
-                    'RESULT': otp.agg.option_price(
-                        option_type_field_name='OPTION_TYPE',
-                        strike_price_field_name='STRIKE_PRICE',
-                        days_till_expiration_field_name='DAYS_TILL_EXPIRATION',
-                        volatility=0.25,
-                        interest_rate=0.05,
-                    )
-                })
+        data = data.agg({
+            'RESULT': otp.agg.option_price(
+                option_type_field_name='OPTION_TYPE',
+                strike_price_field_name='STRIKE_PRICE',
+                days_till_expiration_field_name='DAYS_TILL_EXPIRATION',
+                volatility=0.25,
+                interest_rate=0.05,
+            )
+        })
+        df = otp.run(data)
+        assert df['RESULT'][0] == pytest.approx(2.800999260123, abs=1e-13)
 
     def test_case1(self):
         data = {
@@ -692,7 +677,7 @@ class TestOptionPrice:
             VEGA=0.83110672212574,
             RHO=-0.06658254802357,
         )
-        if otp.compatibility.is_option_price_theta_value_changed():
+        if tests.compatibility.is_option_price_theta_value_changed():
             expected['THETA'] = -1.94135092374397
         for key, val in expected.items():
             assert val == pytest.approx(df[key][0])
@@ -728,7 +713,7 @@ class TestOptionPrice:
             VEGA=2.1453108389800515,
             RHO=-4.666995510197969,
         )
-        if otp.compatibility.is_option_price_theta_value_changed():
+        if tests.compatibility.is_option_price_theta_value_changed():
             expected['THETA'] = 0.9410250231811439
         for key, val in expected.items():
             assert val == pytest.approx(df[key][0])
@@ -763,7 +748,7 @@ class TestOptionPrice:
             VEGA=7.3997358024512,
             RHO=-0.9694344974913,
         )
-        if otp.compatibility.is_option_price_theta_value_changed():
+        if tests.compatibility.is_option_price_theta_value_changed():
             expected['THETA'] = -78.5502018957506
         for key, val in expected.items():
             assert val == pytest.approx(df[key][0])
@@ -972,7 +957,7 @@ class TestPercentile:
             _ = Percentile(input_field_names=['A'], output_field_names='A')
 
 
-@pytest.mark.skipif(not otp.compatibility.is_find_value_for_percentile_supported(),
+@pytest.mark.skipif(not otp.compatibility._is_find_value_for_percentile_supported(),
                     reason='not supported on older OneTick versions')
 class TestFindValueForPercentile:
 
@@ -982,7 +967,7 @@ class TestFindValueForPercentile:
         (100, 'interpolated_value', 4.0),
         (0, 'first_value_with_ge_percentile', 1.0),
         (50, 'first_value_with_ge_percentile', 3.0),
-        (100, 'first_value_with_ge_percentile', 4.0 if is_percentile_bug_fixed() else float('nan')),
+        (100, 'first_value_with_ge_percentile', 4.0 if tests.compatibility.is_percentile_bug_fixed() else float('nan')),
     ])
     def test_all(self, percentile, show_percentile_as, result):
         t = otp.Ticks({'A': [1, 2, 3, 4]})
@@ -994,12 +979,12 @@ class TestFindValueForPercentile:
         else:
             assert df['A'][0] == result
 
-    @pytest.mark.xfail(condition=not is_percentile_bug_fixed(),
+    @pytest.mark.xfail(condition=not tests.compatibility.is_percentile_bug_fixed(),
                        reason='default show_percentile_as value is unstable on older builds')
     @pytest.mark.parametrize('percentile,result', [
         (0, 1.0),
         (50, 2.5),
-        (100, 4.0 if is_percentile_bug_fixed() else float('nan')),
+        (100, 4.0 if tests.compatibility.is_percentile_bug_fixed() else float('nan')),
     ])
     def test_empty_show_percentile_as(self, percentile, result):
         t = otp.Ticks({'A': [1, 2, 3, 4]})
@@ -1087,7 +1072,8 @@ class TestExpTwAverage:
 
 
 @pytest.mark.skipif(
-    not is_standardized_moment_supported(), reason='StandardizedMoment is not available on older builds',
+    not otp.compatibility._is_standardized_moment_supported(),
+    reason='StandardizedMoment is not available on older builds',
 )
 class TestStandardizedMoment:
     def test_simple(self):
@@ -1482,7 +1468,7 @@ class TestNewTypes:
         (Max, 2.0e-20), (Min, 1.0e-20), (First, 1.0e-20), (Last, 2.0e-20), (Sum, 3.0e-20), (Median, 1.5e-20)
     ])
     def test_expect_decimals_aggregations(self, aggr, result):
-        if not is_expect_decimals_supported(aggr.NAME):
+        if not otp.compatibility._is_expect_decimals_supported(aggr.EP):
             pytest.skip(f'`expect_decimals` not supported on this OneTick build for `{aggr.NAME}` aggregation')
             return
 
@@ -1494,7 +1480,8 @@ class TestNewTypes:
         assert df['X'].to_list() == [result]
 
     @pytest.mark.skipif(
-        not is_expect_decimals_supported('HIGH'), reason='EXPECT_DECIMALS not supported on this OneTick build',
+        not otp.compatibility._is_expect_decimals_supported(Max.EP),
+        reason='EXPECT_DECIMALS not supported on this OneTick build',
     )
     @pytest.mark.parametrize('value', [True, 'if_input_val_is_decimal'])
     def test_expect_decimals_aggregations_forced(self, value):
@@ -1587,12 +1574,12 @@ class TestLargeInts:
         assert df['MAX_FALSE'][0] == 0
         assert df['MIN_FALSE'][0] == 0
         assert df['MAX_ADAPTIVE'][0] == 0
-        if is_supported_large_ints_empty_interval():
+        if tests.compatibility.is_supported_large_ints_empty_interval():
             assert df['MIN_ADAPTIVE'][0] == 9223372036854775807
         else:
             assert df['MIN_ADAPTIVE'][0] == 0
         assert df['MAX_TRUE'][0] == 0
-        if is_supported_large_ints_empty_interval():
+        if tests.compatibility.is_supported_large_ints_empty_interval():
             assert df['MIN_TRUE'][0] == 9223372036854775807
         else:
             assert df['MIN_TRUE'][0] == 0
@@ -1600,12 +1587,12 @@ class TestLargeInts:
         assert pd.isna(df['MAX_FLOAT_FALSE'][0])
         assert pd.isna(df['MIN_FLOAT_FALSE'][0])
         assert df['MAX_FLOAT_ADAPTIVE'][0] == 0.0
-        if is_supported_large_ints_empty_interval():
+        if tests.compatibility.is_supported_large_ints_empty_interval():
             assert df['MIN_FLOAT_ADAPTIVE'][0] == pytest.approx(9.223372e+18)
         else:
             assert pd.isna(df['MIN_FLOAT_ADAPTIVE'][0])
         assert df['MAX_FLOAT_TRUE'][0] == 0.0
-        if is_supported_large_ints_empty_interval():
+        if tests.compatibility.is_supported_large_ints_empty_interval():
             assert df['MIN_FLOAT_TRUE'][0] == pytest.approx(9.223372e+18)
         else:
             assert pd.isna(df['MIN_FLOAT_TRUE'][0])

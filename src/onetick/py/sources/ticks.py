@@ -19,7 +19,6 @@ from .. import utils, configuration
 from ..core.column_operations._methods.methods import is_arithmetical
 from ..core.column_operations.base import _Operation
 from ..core._source.query_parameters import QueryParameters
-from ..compatibility import is_supported_bucket_units_for_tick_generator
 from onetick.py.aggregations._base import get_bucket_interval_from_datepart
 
 from ..aggregations._docs import _bucket_time_doc
@@ -180,7 +179,7 @@ class Tick(Source):
         Use :ref:`datetime offset object <datetime_offsets>` as a ``bucket_interval``:
 
         .. testcode::
-           :skipif: not is_supported_bucket_units_for_tick_generator()
+           :skipif: not otp.compatibility._is_supported_bucket_units_for_tick_generator()
 
            t = otp.Tick(A=1, bucket_interval=otp.Day(1))
            df = otp.run(t, start=otp.dt(2023, 1, 1), end=otp.dt(2023, 1, 5))
@@ -306,7 +305,7 @@ class Tick(Source):
 
         tick_generator_kwargs = {}
         if bucket_units is not utils.adaptive:
-            if is_supported_bucket_units_for_tick_generator(throw_warning=True):
+            if otp.compatibility._is_supported_bucket_units_for_tick_generator():
                 tick_generator_kwargs['bucket_interval_units'] = bucket_units.upper()
             elif bucket_units != 'seconds':
                 raise ValueError("Parameter 'bucket_units' in otp.Tick is not supported on this OneTick version")

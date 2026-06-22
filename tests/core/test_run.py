@@ -2,15 +2,6 @@ import os
 import datetime
 import decimal
 from pathlib import Path
-from onetick.py.compatibility import (
-    has_max_expected_ticks_per_symbol,
-    has_password_param,
-    has_timezone_parameter,
-    has_query_encoding_parameter,
-    is_repeat_with_field_name_works_correctly,
-    is_max_concurrency_with_webapi_supported,
-    OnetickVersion,
-)
 from onetick.py.configuration import nothing
 
 from onetick.py.otq import otq, pyomd
@@ -24,7 +15,8 @@ from dateutil.tz import gettz
 
 import onetick.py as otp
 from onetick.py.types import time2nsectime
-from onetick.py.compatibility import is_supported_uint_numpy_interface
+
+import tests
 
 DEFAULT_USE_FT = 'FALSE'
 
@@ -125,12 +117,6 @@ class TestSource:
                                            ('svg_path', '.'),
                                            ('use_connection_pool', True)])
     def test_pass_args(self, f_session, mocker, arg, value):
-        if (
-            os.getenv('OTP_WEBAPI_TEST_MODE', False) and
-            arg == 'concurrency' and not is_max_concurrency_with_webapi_supported()
-        ):
-            return
-
         spy = mocker.spy(otq, 'run')
         params = {arg: value}
         data = otp.Ticks(X=["A", "B"])
@@ -151,13 +137,8 @@ class TestSource:
     def test_encoding(self, f_session):
         data = ['AA測試AA']
         source = otp.Ticks({'A': data})
-
-        if has_query_encoding_parameter(throw_warning=True):
-            result = otp.run(source, encoding="utf-8")
-            assert result["A"][0] == data[0]
-        else:
-            with pytest.warns(UserWarning, match='which is supported starting from release'):
-                otp.run(source, encoding="utf-8")
+        result = otp.run(source, encoding="utf-8")
+        assert result["A"][0] == data[0]
 
     def test_start_end_time(self, f_session, monkeypatch):
         monkeypatch.setattr(otp.config.__class__.__dict__.get('default_start_time'), '_set_value', None)
@@ -273,7 +254,8 @@ class TestSymbol:
         result = result if isinstance(result, dict) else result.get_dict()
         assert len(result) == 2
 
-    @pytest.mark.skipif(not is_repeat_with_field_name_works_correctly(), reason="REPEAT EP on fields is broken")
+    @pytest.mark.skipif(not tests.compatibility.is_repeat_with_field_name_works_correctly(),
+                        reason="REPEAT EP on fields is broken")
     @pytest.mark.parametrize("data", (otq.Passthrough().tick_type("TRD"), otp.DataSource(tick_type="TRD")))
     def test_source_and_custom(self, db, session, data):
         symbol = otp.Ticks(SYMBOL=["A", "B"])
@@ -729,51 +711,16 @@ class TestManualDataframeCallback:
 
 def test_max_expected_ticks_per_symbol(session):
     t = otp.Tick(A=1)
-    if not has_max_expected_ticks_per_symbol(throw_warning=True):
-        with pytest.warns(UserWarning, match='which is supported starting from release'):
-            otp.run(t, max_expected_ticks_per_symbol=1)
-    else:
-        df = otp.run(t, max_expected_ticks_per_symbol=1)
-        assert df['A'][0] == 1
+    df = otp.run(t, max_expected_ticks_per_symbol=1)
+    assert df['A'][0] == 1
 
 
 @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False),
                     reason='Password is not supported in WebAPI (use http_password instead)')
 def test_password_param(session):
     t = otp.Tick(A=1)
-    if not has_password_param(throw_warning=True):
-        with pytest.warns(UserWarning, match='which is supported starting from release'):
-            otp.run(t, password='password')
-    else:
-        df = otp.run(t, password='password')
-        assert df['A'][0] == 1
-
-
-@pytest.mark.parametrize('value', [OnetickVersion('rel_1_22_20230714120000', '1.22', None, 20230714120000),
-                                   OnetickVersion('BUILD_initial_20210714120000', None, 0, 20210714120000)])
-def test_has_max_expected_ticks_per_symbol(session, mocker, value):
-    mocker.patch('onetick.py.compatibility.get_onetick_version',
-                 return_value=value)
-    with pytest.warns(UserWarning, match='which is supported starting from release'):
-        has_max_expected_ticks_per_symbol(throw_warning=True)
-
-
-@pytest.mark.parametrize('value', [OnetickVersion('rel_1_22_20230714120000', '1.22', None, 20230714120000),
-                                   OnetickVersion('BUILD_initial_20210714120000', None, 0, 20210714120000)])
-def test_has_password_param(session, mocker, value):
-    mocker.patch('onetick.py.compatibility.get_onetick_version',
-                 return_value=value)
-    with pytest.warns(UserWarning, match='which is supported starting from release'):
-        has_password_param(throw_warning=True)
-
-
-@pytest.mark.parametrize('value', [OnetickVersion('rel_1_22_20230714120000', '1.22', None, 20230714120000),
-                                   OnetickVersion('BUILD_initial_20210714120000', None, 0, 20210714120000)])
-def test_has_timezone_parameter(session, mocker, value):
-    mocker.patch('onetick.py.compatibility.get_onetick_version',
-                 return_value=value)
-    with pytest.warns(UserWarning, match='which is supported starting from release'):
-        has_timezone_parameter(throw_warning=True)
+    df = otp.run(t, password='password')
+    assert df['A'][0] == 1
 
 
 def test_date(session):
@@ -909,15 +856,6 @@ class TestEmptyResults:
         empty_schema = self.get_result_schema(empty_df, output_schema)
         base_schema = self.get_result_schema(base_df, output_schema)
 
-        if not is_supported_uint_numpy_interface():
-            first_empty_response_schema = list(empty_schema.values())[0]
-            first_base_response_schema = list(base_schema.values())[0]
-
-            assert first_empty_response_schema['F'] == 'uint32'
-
-            del first_empty_response_schema['F']
-            del first_base_response_schema['F']
-
         if otq.webapi and output_schema != 'df':
             # WebAPI differs this field type on empty results: <U4 turns <U64
             del empty_schema['AAPL']['C3']
@@ -949,7 +887,7 @@ def test_query_properties(session):
     assert list(df['X']) == [1, 2, 3]
 
 
-@pytest.mark.skipif(not otp.compatibility.are_quotes_in_query_params_supported(),
+@pytest.mark.skipif(not tests.compatibility.are_quotes_in_query_params_supported(),
                     reason="Quotes were not supported without escaping before")
 @pytest.mark.parametrize('use_file', (True, False))
 @pytest.mark.parametrize('escaped', (True, False))
@@ -1020,10 +958,8 @@ def test_start_end_timezone(session, run_timezone, datetime_with_timezone):
     assert otp.dt(res['Time'][0], tz=run_timezone).timestamp() == datetime_with_timezone.timestamp()
 
 
-@pytest.mark.skipif(not otp.compatibility.is_get_query_property_flag_supported(),
+@pytest.mark.skipif(not tests.compatibility.is_get_query_property_flag_supported(),
                     reason="Second parameter of GET_QUERY_PROPERTY was not supported before")
-@pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False) and not is_max_concurrency_with_webapi_supported(),
-                    reason="Used version of OneTick has bug with setting `concurrency` param with WebAPI.")
 def test_concurrency(session):
     t = otp.Tick(A=otp.raw('GET_QUERY_PROPERTY("MAX_CONCURRENCY", true)', dtype=otp.string[64]))
     df = otp.run(t)
@@ -1178,36 +1114,24 @@ def test_ticks_with_query_params(session, use_db, use_tt, use_sym):
     assert result['DBNAME'] == 'TMP_DB'
 
 
-@pytest.fixture(scope='module')
-def polars_m():
-    try:
-        import polars  # type: ignore
-        return polars
-    except ImportError:
-        return None
-
-
 @pytest.mark.skipif(not os.getenv('OTP_WEBAPI_TEST_MODE', False),
                     reason='polars output is only supported in webapi')
 class TestPolars:
-    def test_simple(self, session, polars_m):
-        t = otp.Tick(A=1)
-        if polars_m is None:
-            with pytest.raises(ValueError):
-                otp.run(t, output_structure='polars')
-            return
+    def test_simple(self, session):
+        import polars
 
         # test one symbol
+        t = otp.Tick(A=1)
         res = otp.run(t, output_structure='polars')
-        assert isinstance(res, polars_m.DataFrame)
+        assert isinstance(res, polars.DataFrame)
         assert list(res['A']) == [1]
 
         # test many symbols
         t = otp.Tick(S=otp.meta_fields.symbol_name)
         res = otp.run(t, output_structure='polars', symbols=['A', 'B'])
         assert isinstance(res, dict)
-        assert isinstance(res['A'], polars_m.DataFrame)
-        assert isinstance(res['B'], polars_m.DataFrame)
+        assert isinstance(res['A'], polars.DataFrame)
+        assert isinstance(res['B'], polars.DataFrame)
         assert list(res['A']['S']) == ['A']
         assert list(res['B']['S']) == ['B']
 
@@ -1215,16 +1139,15 @@ class TestPolars:
         t = otp.Tick(A=1)
         t, _ = t[t['A'] == 2]
         res = otp.run(t, output_structure='polars')
-        assert isinstance(res, polars_m.DataFrame)
+        assert isinstance(res, polars.DataFrame)
         assert res.is_empty()
-        assert res.schema == {'A': polars_m.Int64, 'Time': polars_m.Datetime(time_unit='ns', time_zone=None)}
+        assert res.schema == {'A': polars.Int64, 'Time': polars.Datetime(time_unit='ns', time_zone=None)}
 
 
 @pytest.mark.skipif(not os.getenv('OTP_WEBAPI_TEST_MODE', False), reason='pandas output is only supported in webapi')
 @pytest.mark.skipif(not hasattr(otq.QueryOutputMode, 'pandas'), reason='Not supported on current onetick query version')
 def test_output_mode_pandas(session):
     data = otp.Tick(A=1, B='str')
-
     res = otp.run(data, output_structure='pandas')
     assert isinstance(res, pd.DataFrame)
     res_dict = res.to_dict(orient='list')
@@ -1248,6 +1171,52 @@ def test_output_mode_pandas(session):
     assert res.empty
     assert res.dtypes['A'] == np.int64
     assert res.dtypes['Time'].type == np.datetime64
+
+
+@pytest.mark.skipif(not os.getenv('OTP_WEBAPI_TEST_MODE', False), reason='pyarrow output is only supported in webapi')
+def test_output_mode_pyarrow(session):
+    import pyarrow
+
+    # test one symbol
+    data = otp.Tick(A=1, B='str')
+    res = otp.run(data, output_structure='pyarrow',
+                  date=otp.dt(2024, 2, 1), timezone='America/New_York')
+    assert isinstance(res, pyarrow.Table)
+    # for some reason onetick-query-webapi returns GMT localized timestamps
+    assert res.to_pydict() == {'Time': [otp.dt(2024, 2, 1, tz='GMT')], 'A': [1], 'B': ['str']}
+
+    # test many symbols
+    data = otp.Tick(S=otp.meta_fields.symbol_name)
+    res = otp.run(data, output_structure='pyarrow',
+                  date=otp.dt(2024, 2, 1), timezone='America/New_York',
+                  symbols=['AA', 'BB'])
+    assert isinstance(res, dict)
+    assert isinstance(res['AA'], pyarrow.Table)
+    assert isinstance(res['BB'], pyarrow.Table)
+    assert res['AA'].to_pydict() == {'Time': [otp.dt(2024, 2, 1, tz='GMT')], 'S': ['AA']}
+    assert res['BB'].to_pydict() == {'Time': [otp.dt(2024, 2, 1, tz='GMT')], 'S': ['BB']}
+
+    # test empty no schema
+    data = otp.Empty()
+    res = otp.run(data, output_structure='pyarrow',
+                  date=otp.dt(2024, 2, 1), timezone='America/New_York')
+    assert isinstance(res, pyarrow.Table)
+    assert res.to_pydict() == {}
+    assert len(res.schema) == 0
+    assert res.shape == (0, 0)
+
+    # test empty with schema
+    data = otp.Tick(A=1, B='str')
+    data, _ = data[data['A'] == 2]
+    res = otp.run(data, output_structure='pyarrow',
+                  date=otp.dt(2024, 2, 1), timezone='America/New_York')
+    assert isinstance(res, pyarrow.Table)
+    assert res.to_pydict() == {'Time': [], 'A': [], 'B': []}
+    assert len(res.schema) == 3
+    assert res.shape == (0, 3)
+    assert res.field('Time').type == pyarrow.timestamp('ns')
+    assert res.field('A').type == pyarrow.int64()
+    assert res.field('B').type == pyarrow.string()
 
 
 def test_run_with_otq_and_start_end_dt_defaults(session, monkeypatch):
@@ -1281,14 +1250,11 @@ def test_otq_run_with_timeval(session):
                   timezone='EST5EDT',
                   symbols='LOCAL::')
     res = res['LOCAL::']
-    if otp.compatibility.is_correct_timezone_used_in_otq_run():
-        assert list(res['S']) == [pd.Timestamp(2003, 12, 1, 1)]
-    else:
-        assert list(res['S']) == [pd.Timestamp(2003, 12, 1, 6)]
+    assert list(res['S']) == [pd.Timestamp(2003, 12, 1, 1)]
     assert list(res['E']) == [pd.Timestamp(2003, 12, 4)]
 
 
-@pytest.mark.skipif(not otp.compatibility.is_preserve_decimal_flag_supported(),
+@pytest.mark.skipif(not otp.compatibility._is_preserve_decimal_flag_supported(),
                     reason='not supported on older OneTick versions')
 def test_preserve_decimal_flag(session):
     t = otp.Tick(A=otp.decimal(0.1))

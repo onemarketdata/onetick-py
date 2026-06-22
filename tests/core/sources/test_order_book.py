@@ -2,7 +2,6 @@ import pytest
 
 import onetick.py as otp
 from onetick.py.otq import otq
-from onetick.py.compatibility import is_supported_otq_ob_summary
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -109,7 +108,7 @@ class TestObSnapshotFlat:
 
 class TestObSummary:
     def test_ob_summary(self):
-        if not is_supported_otq_ob_summary(throw_warning=True):
+        if not otp.compatibility._is_supported_otq_ob_summary():
             with pytest.raises(RuntimeError):
                 otp.run(
                     otp.ObSummary('SOME_DB', tick_type='PRL', symbols='AA', max_levels=1)
@@ -118,7 +117,6 @@ class TestObSummary:
             return
 
         data = otp.ObSummary('SOME_DB', tick_type='PRL', symbols='AA', max_levels=1)
-        print(data.schema)
         assert data.schema == {
             'BID_SIZE': int,
             'BID_VWAP': float,

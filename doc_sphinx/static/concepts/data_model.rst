@@ -127,7 +127,7 @@ If you try to save lowercase field name to a database, Onetick will silently con
 
 ::
 
-    test_db = otp.db.DB('TEST_DB')
+    test_db = otp.DB('TEST_DB')
     test_db.add(otp.Tick(FieldName=1), symbol='TEST', tick_type='TEST')
     session.use(test_db)
     otp.run(otp.DataSource(db='TEST_DB', tick_type='TEST'), symbols='TEST')

@@ -90,6 +90,7 @@ redirects = {
 extlinks = {
     'pandas_main': ('https://pandas.pydata.org/docs/index.html', None),
     'pandas': ('https://pandas.pydata.org/docs/reference/api/%s.html', '%s'),
+    'pyarrow': ('https://arrow.apache.org/docs/python/generated/%s.html', '%s'),
     'ray': ('https://docs.ray.io/en/latest/index.html', None),
     'graphviz': ('https://graphviz.org/%s', None),
     'python_tmpdir': ('https://docs.python.org/3/library/tempfile.html#tempfile.gettempdir', None)

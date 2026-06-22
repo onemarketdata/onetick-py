@@ -1,5 +1,5 @@
 import pytest
-from multiprocessing import Process, Queue
+import multiprocessing
 import threading
 import subprocess
 import time
@@ -142,8 +142,9 @@ def tick_server():
                 q.put(p.pid)  # put the process to have ability to kill it externally
                 q.put(os.environ['ONE_TICK_CONFIG'])
 
-    queue = Queue()
-    tick_server = Process(target=run_server, args=(queue,))
+    ctx = multiprocessing.get_context('fork')
+    queue = ctx.Queue()
+    tick_server = ctx.Process(target=run_server, args=(queue,))
     tick_server.start()
 
     tick_server_pid = queue.get()
@@ -169,8 +170,9 @@ def writer(tick_server):
                     start=otp.now(),
                     end=otp.now() + otp.Second(20))
 
-    queue = Queue()
-    running_query = Process(target=cep_query, args=(queue, tick_server,))
+    ctx = multiprocessing.get_context('fork')
+    queue = ctx.Queue()
+    running_query = ctx.Process(target=cep_query, args=(queue, tick_server,))
     running_query.start()
 
     yield

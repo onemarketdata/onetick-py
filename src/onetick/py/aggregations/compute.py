@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 from copy import deepcopy
 from collections import namedtuple
-from onetick.py.compatibility import is_supported_agg_option_price
 
 if TYPE_CHECKING:
     from onetick.py.core.source import Source  # hack for annotations
@@ -95,9 +94,6 @@ class Compute(_Aggregation):
     def _validate_aggregation(self, aggr: _Aggregation):
         if not isinstance(aggr, _Aggregation):
             raise TypeError(f"It is allowed to pass only aggregations, but got '{type(aggr)}'")
-
-        if isinstance(aggr, OptionPrice) and not is_supported_agg_option_price():
-            raise NotImplementedError(f".agg() method does not support {type(aggr)} on OneTick {otp.__build__} build")
 
         if isinstance(aggr, Ranking):
             raise ValueError('Using ranking aggregation in otp.Source.agg method is not supported. '

@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Iterable, Optional, Union
 from functools import wraps
 
+import onetick.py as otp
 from onetick.py.otq import otq
 import onetick.py.types as ott
 from onetick.py.core.column import _Column
@@ -15,10 +16,6 @@ from onetick.py.types import (
 )
 from onetick.py.core.column_operations._methods.op_types import are_numerics, are_strings
 from onetick.py.core.eval_query import _QueryEvalWrapper, prepare_params
-from onetick.py.compatibility import (
-    is_supported_varstring_in_get_string_value,
-    is_supported_modify_state_var_from_query
-)
 
 
 class _StateBase(ABC):
@@ -115,7 +112,7 @@ class _StateBase(ABC):
         Update simple state variable from query:
 
         .. testcode::
-           :skipif: not is_supported_modify_state_var_from_query()
+           :skipif: not otp.compatibility._is_supported_modify_state_var_from_query()
 
            data = otp.Ticks(A=[1, 2, 3])
            data.state_vars['VAR'] = 0
@@ -139,7 +136,7 @@ class _StateBase(ABC):
         Update tick sequence from query:
 
         .. testcode::
-           :skipif: not is_supported_modify_state_var_from_query()
+           :skipif: not otp.compatibility._is_supported_modify_state_var_from_query()
 
            data = otp.Tick(A=1)
            data.state_vars['VAR'] = otp.state.tick_list()
@@ -159,7 +156,7 @@ class _StateBase(ABC):
         Passing parameters to the ``query``:
 
         .. testcode::
-           :skipif: not is_supported_modify_state_var_from_query()
+           :skipif: not otp.compatibility._is_supported_modify_state_var_from_query()
 
            data = otp.Tick(A=1)
            data.state_vars['VAR'] = otp.state.tick_list()
@@ -177,7 +174,6 @@ class _StateBase(ABC):
                                 Time    X
            0 2003-12-01 00:00:00.001  234
         """
-        import onetick.py as otp
         obj_ref: otp.Source = getattr(self.obj_ref, '_owner')
 
         action = action.lower()
@@ -2016,8 +2012,7 @@ class _TickSequenceTickMixin(_TickSequenceTickBase, ABC):
             return func(field_name)  # type: ignore[operator]
         if issubclass(dtype, int):
             return func_dict[int](field_name, dtype=dtype)  # type: ignore[operator]
-        if (issubclass(dtype, str) and
-           (dtype is not varstring or is_supported_varstring_in_get_string_value())):
+        if issubclass(dtype, str):
             return func_dict[str](field_name, dtype=dtype)  # type: ignore[operator]
         # decimal is unsupported
         raise TypeError(f'`{dtype}` is unsupported')

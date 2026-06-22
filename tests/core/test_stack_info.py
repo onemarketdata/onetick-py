@@ -2,11 +2,12 @@ import os
 import pytest
 
 import onetick.py as otp
-from onetick.py.compatibility import is_supported_stack_info
 from onetick.py.otq import otq
 
+import tests
 
-pytestmark = pytest.mark.skipif(not is_supported_stack_info(),
+
+pytestmark = pytest.mark.skipif(not tests.compatibility.is_supported_stack_info(),
                                 reason='stack_info does not work on old OneTick versions')
 
 

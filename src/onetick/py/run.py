@@ -16,9 +16,6 @@ from onetick.py.types import datetime2timeval, datetime2expr
 from onetick.py.core.source import _is_dict_required
 from onetick.py.core.eval_query import _QueryEvalWrapper
 from onetick.py.compatibility import (
-    has_max_expected_ticks_per_symbol,
-    has_password_param,
-    has_query_encoding_parameter,
     _add_version_info_to_exception,
 )
 from onetick.py._stack_info import _add_stack_info_to_exception
@@ -41,7 +38,7 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
         alternative_username: Optional[str] = None,
         password: Optional[str] = None,
         batch_size: Union[int, type[utils.default], None] = utils.default,
-        running: Optional[bool] = False,
+        running: Optional[bool] = None,
         query_properties: Optional[dict] = None,
         concurrency: Union[int, type[utils.default], None] = utils.default,
         apply_times_daily: Optional[int] = None,
@@ -180,6 +177,8 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
             or dictionary of symbol names and dataframe objects
             (**Only supported in WebAPI mode**).
           - `pandas` - the result is returned as :pandas:`pandas.DataFrame`
+            (**Only supported in WebAPI mode**).
+          - `pyarrow` - the result is returned as :pyarrow:`pyarrow.Table`
             (**Only supported in WebAPI mode**).
 
         `df` output structure is default for both standard and WebAPI modes.
@@ -331,20 +330,13 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
             Time           A
     0 2003-12-01  AAæ¸¬è©¦AA
 
-    To fix this you can pass `encoding` parameter to `otp.run`:
+    To fix this you can pass ``encoding`` parameter:
 
-    .. testcode::
-       :skipif: not has_query_encoding_parameter()
-
-       data = ['AA測試AA']
-       source = otp.Ticks({'A': data})
-       df = otp.run(source, encoding="utf-8")
-       print(df)
-
-    .. testoutput::
-
-               Time        A
-       0 2003-12-01  AA測試AA
+    >>> data = ['AA測試AA']
+    >>> source = otp.Ticks({'A': data})
+    >>> otp.run(source, encoding="utf-8")
+            Time        A
+    0 2003-12-01  AA測試AA
 
     Note that query ``start`` time is inclusive, but query ``end`` time is not,
     meaning that ticks with timestamps equal to the query end time will not be included:
@@ -554,13 +546,13 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
         has_source_start, has_source_end = query.has_start_end_time()
 
     if (start is None or start is utils.adaptive) and otp.config.get('default_start_time') is None and \
-            not has_source_start:
+            not has_source_start and not isinstance(query, otq.SqlQuery):
         warnings.warn('Start time is None and default start time is not set, '
                       'onetick.query will use 19700101 as start time, '
                       'which can cause unexpected results. '
                       'Please set start time explicitly.')
     if (end is None or end is utils.adaptive) and otp.config.get('default_end_time') is None and \
-            not has_source_end:
+            not has_source_end and not isinstance(query, otq.SqlQuery):
         warnings.warn('End time is None and default end time is not set, '
                       'onetick.query will use 19700101 as end time, '
                       'which can cause unexpected results. '
@@ -617,6 +609,7 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
     output_mode = otq.QueryOutputMode.numpy
     if callback is not None:
         output_mode = otq.QueryOutputMode.callback
+
     if output_structure == 'polars':
         if not otq.webapi:
             raise ValueError("Parameter output_structure='polars' is only supported in WebAPI mode.")
@@ -630,11 +623,17 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
         except AttributeError:
             raise ValueError("Parameter output_structure='polars' is specified, but it's not supported "
                              "by installed onetick.query_webapi library.")
-    if output_structure == 'pandas':
+    elif output_structure == 'pandas':
         try:
             output_mode = otq.QueryOutputMode.pandas
         except AttributeError:
             raise ValueError("Parameter output_structure='pandas' is specified, but it's not supported "
+                             "by installed onetick.query_webapi library.")
+    elif output_structure == 'pyarrow':
+        try:
+            output_mode = otq.QueryOutputMode.pyarrow
+        except AttributeError:
+            raise ValueError("Parameter output_structure='pyarrow' is specified, but it's not supported "
                              "by installed onetick.query_webapi library.")
 
     output_structure, output_structure_for_otq = _process_output_structure(output_structure)
@@ -729,18 +728,21 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
     # authentication
     username = username or otp.config.default_username
     alternative_username = alternative_username or otp.config.default_auth_username
-    password = password or otp.config.default_password
+
     kwargs = {}
-    if password is not None and has_password_param(throw_warning=True):
+
+    password = password or otp.config.default_password
+    if password is not None and otp.compatibility._has_password_param():
         kwargs['password'] = password
 
     max_expected_ticks_per_symbol = max_expected_ticks_per_symbol or otp.config.max_expected_ticks_per_symbol
-    if max_expected_ticks_per_symbol is not None and has_max_expected_ticks_per_symbol(throw_warning=True):
-        kwargs['max_expected_ticks_per_symbol'] = max_expected_ticks_per_symbol
-    elif max_expected_ticks_per_symbol is None and has_max_expected_ticks_per_symbol(throw_warning=False):
-        kwargs['max_expected_ticks_per_symbol'] = 2000
+    if otp.compatibility._has_max_expected_ticks_per_symbol():
+        if max_expected_ticks_per_symbol is not None:
+            kwargs['max_expected_ticks_per_symbol'] = max_expected_ticks_per_symbol
+        else:
+            kwargs['max_expected_ticks_per_symbol'] = 2000
 
-    if encoding is not None and has_query_encoding_parameter(throw_warning=True):
+    if encoding is not None and otp.compatibility._has_query_encoding_parameter():
         kwargs['encoding'] = encoding
 
     if preserve_decimal_flag is not None:
@@ -790,9 +792,8 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
     else:
         node_names = node_name
 
-    if query_schema:
-        # check if we have empty result for any symbol to add schema to empty dataframes
-        _process_empty_results(result, query_schema, output_structure)
+    # check if we have empty result for any symbol to add schema to empty dataframes
+    _process_empty_results(result, query_schema, output_structure)
 
     return _format_call_output(result, output_structure=output_structure,
                                require_dict=require_dict, node_names=node_names,
@@ -930,16 +931,10 @@ def _form_dict_from_list(data_list, output_structure, print_symbol_errors):
         return d
 
     def get_dataframe(data):
-        if output_structure in ['df', 'pandas']:
+        if output_structure == 'df':
             return pd.DataFrame(dict(data))
         else:
-            import polars
-            if isinstance(data, polars.DataFrame):
-                # polars only works in webapi mode,
-                # and it's already returned as polars.DataFrame by onetick.query_webapi
-                return data
-            # but if there is no data, then we want to return empty polars.DataFrame
-            return polars.DataFrame()
+            return data
 
     symbols_dict = defaultdict(list)
     for symbol, data, error_data, node, *_ in data_list:
@@ -960,12 +955,13 @@ def _form_dict_from_list(data_list, output_structure, print_symbol_errors):
 
 
 def _format_call_output(result, output_structure, node_names, require_dict, print_symbol_errors):
-    """Formats output of otq.run() according to passed parameters.
+    """
+    Formats output of otq.run() according to passed parameters.
     See parameters' description for more information
 
     Parameters
     ----------
-    output_structure: ['df', 'list', 'map', 'polars', 'pandas']
+    output_structure: ['df', 'list', 'map', 'polars', 'pandas', 'pyarrow']
         If 'df' or 'pandas': forms pandas.DataFrame from the result.
 
         Returns a dictionary with symbols as keys if there's more than one symbol
@@ -995,12 +991,12 @@ def _format_call_output(result, output_structure, node_names, require_dict, prin
     elif output_structure == 'map':
         return _filter_returned_map_by_node(result, node_names)
 
-    assert output_structure in ('df', 'polars', 'pandas'), (
-        f'Output structure should be one of: "df", "map", "list", "polars", "pandas" '
+    assert output_structure in ('df', 'polars', 'pandas', 'pyarrow'), (
+        f'Output structure should be one of: "df", "map", "list", "polars", "pandas", "pyarrow" '
         f'instead "{output_structure}" was passed'
     )
 
-    # "df" output structure implies that raw results came as a list
+    # all output structures above mean that raw results came as a list
     result_list = _filter_returned_list_by_node(result, node_names)
     result_dict = _form_dict_from_list(result_list, output_structure, print_symbol_errors)
 
@@ -1014,18 +1010,29 @@ def _process_empty_results(result, query_schema, output_structure):
     """
     Process query results and add columns to empty responses based on query schema.
     """
+    query_schema = query_schema or {}
+    if query_schema:
+        query_schema = {**query_schema, 'Time': otp.nsectime}
     schema = [
         (field, np.array([], dtype=otp.types.type2np(dtype)))
-        for field, dtype in {**query_schema, 'Time': otp.nsectime}.items()
+        for field, dtype in query_schema.items()
     ]
     if isinstance(result, otq.SymbolNumpyResultMap):
         empty_data = dict(schema)
     else:
         empty_data = schema
 
+    # webapi output modes
+    # they return empty list if result is empty
+    # we want to return empty dataframe/table object instead
     if output_structure == 'polars':
         import polars
         empty_data = polars.DataFrame(dict(schema))
+    elif output_structure == 'pandas':
+        empty_data = pd.DataFrame(dict(schema))
+    elif output_structure == 'pyarrow':
+        import pyarrow
+        empty_data = pyarrow.Table.from_pydict(dict(schema))
 
     if isinstance(result, otq.SymbolNumpyResultMap):
         for result_item in result.get_dict().values():
@@ -1068,11 +1075,7 @@ def _get_start_end(start, end, timezone):
                 elif isinstance(time, otp.datetime):
                     return time.ts
             else:
-                if otp.compatibility.is_correct_timezone_used_in_otq_run():
-                    time = datetime2timeval(time, timezone)
-                else:
-                    # there is a bug in older onetick versions using wrong timezone
-                    time = datetime2timeval(time, 'GMT')
+                time = datetime2timeval(time, timezone)
         return time
 
     if start is utils.adaptive:
@@ -1108,6 +1111,8 @@ def _process_output_structure(output_structure):
         output_structure_for_otq = "symbol_result_list"
     elif output_structure == "pandas":
         output_structure_for_otq = "symbol_result_list"
+    elif output_structure == "pyarrow":
+        output_structure_for_otq = "symbol_result_list"
     else:
-        raise ValueError("output_structure support only the following values: df, list, map and polars")
+        raise ValueError("output_structure support only the following values: df, list, map, polars, pandas, pyarrow")
     return output_structure, output_structure_for_otq

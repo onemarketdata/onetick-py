@@ -1,9 +1,10 @@
 import pytest
 import onetick.py as otp
 import numpy as np
+import tests
 
 
-if not otp.compatibility.is_supported_join_with_aggregated_window():
+if not otp.compatibility._is_supported_join_with_aggregated_window():
     pytest.skip("skip tests if JoinWithAggregatedWindow is not supported", allow_module_level=True)
 
 
@@ -29,7 +30,7 @@ def test_boundary_aggr_tick(session, boundary_aggr_tick):
     t1 = otp.Ticks(A=[0, 1, 2, 3, 4, 5, 6])
     t2 = otp.Ticks(B=[1, 3, 5], offset=[1, 3, 5])
 
-    if boundary_aggr_tick == 'next' and not otp.compatibility.is_supported_next_in_join_with_aggregated_window():
+    if boundary_aggr_tick == 'next' and not tests.compatibility.is_supported_next_in_join_with_aggregated_window():
         with pytest.warns(match="does not support setting parameter 'boundary_aggr_tick' to 'next'"):
             otp.join_with_aggregated_window(
                 t1, t2, {
@@ -65,7 +66,7 @@ def test_boundary_aggr_tick(session, boundary_aggr_tick):
 @pytest.mark.parametrize('boundary_aggr_tick', ('previous', 'next'))
 def test_bucket(session, boundary_aggr_tick):
 
-    if boundary_aggr_tick == 'next' and not otp.compatibility.is_supported_next_in_join_with_aggregated_window():
+    if boundary_aggr_tick == 'next' and not tests.compatibility.is_supported_next_in_join_with_aggregated_window():
         pytest.skip('not supported on this onetick build')
 
     t1 = otp.Ticks(A=[0, 1, 2, 3, 4, 5, 6])
@@ -97,7 +98,7 @@ def test_bucket(session, boundary_aggr_tick):
 @pytest.mark.parametrize('boundary_aggr_tick', ('previous', 'next'))
 def test_delay(session, pass_src_delay_msec, boundary_aggr_tick):
 
-    if boundary_aggr_tick == 'next' and not otp.compatibility.is_supported_next_in_join_with_aggregated_window():
+    if boundary_aggr_tick == 'next' and not tests.compatibility.is_supported_next_in_join_with_aggregated_window():
         pytest.skip('not supported on this onetick build')
 
     t1 = otp.Ticks(A=[0, 1, 2, 3, 4, 5, 6])

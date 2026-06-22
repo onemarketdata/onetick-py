@@ -2,7 +2,6 @@ import pytest
 from pathlib import Path
 
 import onetick.py as otp
-from onetick.py.compatibility import is_supported_where_clause_for_back_ticks
 
 
 @pytest.fixture(scope='module')
@@ -48,7 +47,8 @@ def test_max_back_ticks_to_prepend(session, max_back_ticks_to_prepend):
             )
 
 
-@pytest.mark.skipif(not is_supported_where_clause_for_back_ticks(), reason='parameter was added later')
+@pytest.mark.skipif(not otp.compatibility._is_supported_where_clause_for_back_ticks(),
+                    reason='parameter was added later')
 @pytest.mark.parametrize("where_clause_for_back_ticks,ans", [
     (otp.raw('A=5', dtype=bool), [5, 7, 8]),
     (otp.raw('A=100', dtype=bool), [7, 8]),
@@ -65,7 +65,8 @@ def test_where_clause_for_back_ticks(session, where_clause_for_back_ticks, ans):
     assert all(df['A'] == ans)
 
 
-@pytest.mark.skipif(not is_supported_where_clause_for_back_ticks(), reason='parameter was added later')
+@pytest.mark.skipif(not otp.compatibility._is_supported_where_clause_for_back_ticks(),
+                    reason='parameter was added later')
 def test_where_clause_for_back_ticks_exception(session):
     with pytest.raises(ValueError):
         otp.DataSource(

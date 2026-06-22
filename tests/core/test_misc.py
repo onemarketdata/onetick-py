@@ -1,7 +1,6 @@
 import pytest
 
 import onetick.py as otp
-from onetick.py.compatibility import is_sha2_hashing_supported
 
 
 @pytest.mark.parametrize(
@@ -24,19 +23,17 @@ from onetick.py.compatibility import is_sha2_hashing_supported
     ]
 )
 def test_hash_code(session, hash_type, result):
-    if is_sha2_hashing_supported():
-        data = otp.Tick(A=otp.varstring('some_string'))
-        data['HASH'] = otp.hash_code(data['A'], hash_type)
-        df = otp.run(data)
-        assert df["HASH"].to_list() == [result]
+    data = otp.Tick(A=otp.varstring('some_string'))
+    data['HASH'] = otp.hash_code(data['A'], hash_type)
+    df = otp.run(data)
+    assert df["HASH"].to_list() == [result]
 
 
 def test_hash_code_simple(session):
-    if is_sha2_hashing_supported():
-        data = otp.Tick(A=1)
-        data['HASH'] = otp.hash_code('some_string', 'sha_256')
-        df = otp.run(data)
-        assert df["HASH"].to_list() == ["539a374ff43dce2e894fd4061aa545e6f7f5972d40ee9a1676901fb92125ffee"]
+    data = otp.Tick(A=1)
+    data['HASH'] = otp.hash_code('some_string', 'sha_256')
+    df = otp.run(data)
+    assert df["HASH"].to_list() == ["539a374ff43dce2e894fd4061aa545e6f7f5972d40ee9a1676901fb92125ffee"]
 
 
 def test_incorrect_hash_type(session):

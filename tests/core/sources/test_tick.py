@@ -970,7 +970,7 @@ def test_timedelta_offset(session):
 
 def test_datetime_offset_bucket_interval(session):
     t = otp.Tick(A=1, bucket_interval=otp.Day(1))
-    if not otp.compatibility.is_supported_bucket_units_for_tick_generator():
+    if not otp.compatibility._is_supported_bucket_units_for_tick_generator():
         with pytest.raises(ValueError,
                            match="Parameter 'bucket_units' in otp.Tick is not supported on this OneTick version"):
             _ = otp.run(t, start=otp.dt(2003, 12, 1), end=otp.dt(2003, 12, 5))

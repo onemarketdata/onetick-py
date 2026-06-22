@@ -1,10 +1,9 @@
 import pytest
 
 import onetick.py as otp
-from onetick.py.compatibility import (
-    is_supported_new_ob_snapshot_behavior, is_supported_otq_ob_summary, is_max_spread_supported,
-)
 from onetick.py.otq import otq
+
+import tests
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -81,13 +80,15 @@ class TestObSnapshot:
         df = otp.run(data)
         assert len(df) == 2
 
-    @pytest.mark.skipif(not is_max_spread_supported(), reason='Not supported on this version of OneTick')
+    @pytest.mark.skipif(not otp.compatibility._is_max_spread_supported(),
+                        reason='Not supported on this version of OneTick')
     def test_ob_snapshot_max_spread(self, data):
         data = otp.agg.ob_snapshot(max_spread=0.5).apply(data)
         df = otp.run(data)
         assert len(df) == 2
 
-    @pytest.mark.skipif(not is_supported_new_ob_snapshot_behavior(), reason='new parameter was added')
+    @pytest.mark.skipif(not tests.compatibility.is_supported_new_ob_snapshot_behavior(),
+                        reason='new parameter was added')
     def test_ob_snapshot_book_uncross_method(self):
         data = otp.Ticks(
             BID_PRICE=[1, 1, 2, 3],
@@ -103,13 +104,6 @@ class TestObSnapshot:
             TICK_STATUS=int,
             DELETED_TIME=otp.nsectime,
         )
-        with pytest.raises(ValueError):
-            data = otp.agg.ob_snapshot(book_uncross_method='wrong').apply(data)
-        data = otp.agg.ob_snapshot(book_uncross_method='REMOVE_OLDER_CROSSED_LEVELS').apply(data)
-        otp.run(data)
-
-    @pytest.mark.skipif(is_supported_new_ob_snapshot_behavior(), reason='ob_snapshot behavior was changed')
-    def test_ob_snapshot_book_uncross_method_old(self, data):
         with pytest.raises(ValueError):
             data = otp.agg.ob_snapshot(book_uncross_method='wrong').apply(data)
         data = otp.agg.ob_snapshot(book_uncross_method='REMOVE_OLDER_CROSSED_LEVELS').apply(data)
@@ -265,7 +259,8 @@ class TestObSnapshotFlat:
         assert d['ASK_SIZE2'] == 0.
 
 
-@pytest.mark.skipif(not is_supported_otq_ob_summary(), reason='not supported on older OneTick versions')
+@pytest.mark.skipif(not otp.compatibility._is_supported_otq_ob_summary(),
+                    reason='not supported on older OneTick versions')
 class TestObSummary:
 
     @pytest.fixture
@@ -411,7 +406,8 @@ class TestObSize:
         with pytest.raises(ValueError):
             _ = otp.agg.ob_size(min_levels=2).apply(data)
 
-    @pytest.mark.skipif(not is_max_spread_supported(), reason='Not supported on this version of OneTick')
+    @pytest.mark.skipif(not otp.compatibility._is_max_spread_supported(),
+                        reason='Not supported on this version of OneTick')
     def test_ob_snapshot_max_spread(self, data):
         data = otp.agg.ob_size(max_spread=0.2).apply(data)
         df = otp.run(data)

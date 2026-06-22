@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 
 import onetick.py as otp
-from onetick.py.compatibility import has_timezone_parameter
 import onetick.py.types as ott
 
 
@@ -266,7 +265,6 @@ hour_ns = 60 * 60 * 1_000_000_000
     (datetime.date(2005, 1, 2), None, 1104624000000000000),
     (datetime.date(2005, 1, 2), 'EST5EDT', 1104624000000000000 + 5 * hour_ns),
 ])
-@pytest.mark.skipif(not has_timezone_parameter(), reason='SURV-1786')
 def test_time2nsectime(dt, tz, ns):
     assert ott.time2nsectime(dt, tz) == ns
 

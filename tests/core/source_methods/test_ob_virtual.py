@@ -5,7 +5,6 @@ import pytest
 
 import onetick.py as otp
 from onetick.py.core._source.source_methods.misc import _merge_fields_by_regex
-from onetick.py.compatibility import is_ob_virtual_prl_and_show_full_detail_supported
 
 
 class TestVirtualOb:
@@ -24,7 +23,7 @@ class TestVirtualOb:
 
     @pytest.mark.parametrize('output_book_format', ['ob', 'prl'])
     def test_simple(self, output_book_format):
-        if output_book_format == 'prl' and not is_ob_virtual_prl_and_show_full_detail_supported():
+        if output_book_format == 'prl' and not otp.compatibility._is_ob_virtual_prl_and_show_full_detail_supported():
             return
 
         data = otp.DataSource(db='TEST_DB', symbols='TEST', tick_type='QTE', date=otp.date(2003, 12, 1))
@@ -61,7 +60,7 @@ class TestVirtualOb:
         assert list(df['SIZE']) == [30, 10, 40, 150]
 
     @pytest.mark.skipif(
-        not is_ob_virtual_prl_and_show_full_detail_supported(),
+        not otp.compatibility._is_ob_virtual_prl_and_show_full_detail_supported(),
         reason="not `ob_virtual` not supports `show_full_detail` on this OneTick version",
     )
     def test_show_full_detail(self):

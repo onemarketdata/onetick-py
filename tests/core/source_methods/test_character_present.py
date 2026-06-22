@@ -2,6 +2,8 @@ import pytest
 
 import onetick.py as otp
 
+import tests
+
 
 class TestCharacterPresent:
     def run(self, params, result, columns_as_str=True):
@@ -40,7 +42,7 @@ class TestCharacterPresent:
         self.run(params, [3, 4, 5, 6, 7, 8])
 
     @pytest.mark.skipif(
-        not otp.compatibility.is_character_present_characters_field_fixed(),
+        not tests.compatibility.is_character_present_characters_field_fixed(),
         reason="CHARACTER_FIELD parameter issues on OneTick side for used OneTick version",
     )
     @pytest.mark.parametrize('columns_as_str', [True, False])

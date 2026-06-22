@@ -2,7 +2,7 @@ import pytest
 
 import onetick.py as otp
 
-if not otp.compatibility.is_supported_point_in_time():
+if not otp.compatibility._is_supported_point_in_time():
     pytest.skip(allow_module_level=True,
                 reason='PointInTime event processor is not supported on this OneTick version')
 

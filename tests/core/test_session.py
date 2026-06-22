@@ -22,6 +22,8 @@ DIR = os.path.dirname(os.path.abspath(__file__))
 import onetick.py as otp
 from onetick.py.otq import otq, otli
 
+import tests
+
 # these variables are used in some tests in onetick text configs
 os.environ["USER"] = getpass.getuser()
 os.environ["LICENSE_DIR"] = otp.config.default_license_dir
@@ -1547,7 +1549,7 @@ def test_redirect_logs(redirect_logs, capfd):
         assert 'Hello from LOGF' in log_line, log_line
 
 
-@pytest.mark.skipif(not otp.compatibility.is_supported_reload_locator_with_derived_db(),
+@pytest.mark.skipif(not tests.compatibility.is_derived_databases_crash_fixed(),
                     reason='skipping old one because we cannot catch segfault')
 def test_reload_locator_with_derived_database():
     """
@@ -1567,7 +1569,7 @@ def test_reload_locator_with_derived_database():
         # comment this to make it work OR move it after .use(SOME_DB) to make it work
         db_derived1.add(src, date=otp.config.default_start_time, tick_type="A", symbol="B")
 
-        market_db = otp.db.DB("SOME_DB")
+        market_db = otp.DB("SOME_DB")
         # or comment this to make it work
         session.use(market_db)
     finally:

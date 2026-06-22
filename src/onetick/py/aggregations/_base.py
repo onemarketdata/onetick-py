@@ -8,12 +8,12 @@ import pandas as pd
 if TYPE_CHECKING:
     from onetick.py.core.source import Source   # hack for annotations
 
+import onetick.py as otp
 from onetick.py.core.column import _Column
 from onetick.py.core.column_operations.base import _Operation, OnetickParameter
 from onetick.py.core._source._symbol_param import _SymbolParamColumn
 from onetick.py import types as ott
 from onetick.py import utils
-from onetick.py.compatibility import is_expect_decimals_supported
 from onetick.py.otq import otq
 
 
@@ -667,7 +667,7 @@ class _ExpectDecimals(_Aggregation):
                 not isinstance(self.column_name, OnetickParameter) and src.schema.get(self.column_name) is ott.decimal
             )
         ):
-            is_supported = is_expect_decimals_supported(self.NAME)
+            is_supported = otp.compatibility._is_expect_decimals_supported(self.EP)
 
             if self.expect_decimals and not is_supported:
                 raise RuntimeError(

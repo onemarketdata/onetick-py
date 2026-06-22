@@ -7,7 +7,6 @@ from onetick.py.otq import otq
 
 from .. import types as ott
 from .. import utils
-from ..compatibility import is_supported_point_in_time
 from .common import update_node_tick_type
 
 
@@ -104,7 +103,7 @@ def PointInTime(  # NOSONAR
     Getting quotes exactly at specified timestamps:
 
     .. testcode::
-       :skipif: not is_supported_point_in_time()
+       :skipif: not otp.compatibility._is_supported_point_in_time()
 
        data = otp.PointInTime(qte,
                               times=[otp.dt(2003, 12, 1, 0, 0, 0, 1000), '20031201000000.003'],
@@ -122,7 +121,7 @@ def PointInTime(  # NOSONAR
     If several offsets are specified, several output ticks may be generated for a single timestamp:
 
     .. testcode::
-       :skipif: not is_supported_point_in_time()
+       :skipif: not otp.compatibility._is_supported_point_in_time()
 
        data = otp.PointInTime(qte,
                               times=[otp.dt(2003, 12, 1, 0, 0, 0, 3000)],
@@ -139,7 +138,7 @@ def PointInTime(  # NOSONAR
     You can also specify the number of ticks as an offset:
 
     .. testcode::
-       :skipif: not is_supported_point_in_time()
+       :skipif: not otp.compatibility._is_supported_point_in_time()
 
        data = otp.PointInTime(qte,
                               times=[otp.dt(2003, 12, 1, 0, 0, 0, 3000)],
@@ -153,7 +152,7 @@ def PointInTime(  # NOSONAR
        0 2003-12-01 00:00:00.003         22         22 2003-12-01 00:00:00.002      -1
        1 2003-12-01 00:00:00.003         24         24 2003-12-01 00:00:00.004       1
     """
-    if not is_supported_point_in_time():
+    if not otp.compatibility._is_supported_point_in_time():
         raise RuntimeError('PointInTime event processor is not supported on this OneTick version')
 
     res = otp.Source(_symbols=symbol, _start=start, _end=end, query_parameters=query_parameters)

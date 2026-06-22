@@ -5,7 +5,6 @@ import onetick.py as otp
 from onetick.py.otq import otq
 
 from onetick.py.db._inspection import databases
-from onetick.py.compatibility import is_show_db_list_show_description_supported
 
 
 def cmp_lists(l1, l2):
@@ -323,7 +322,8 @@ def test_big_dates(f_session):
 
 
 @pytest.mark.skipif(
-    not is_show_db_list_show_description_supported(), reason="Not supported on this version of OneTick",
+    not otp.compatibility._is_show_db_list_show_description_supported(),
+    reason="Not supported on this version of OneTick",
 )
 @pytest.mark.parametrize('readable_only', [True, False])
 def test_description(f_session, readable_only):

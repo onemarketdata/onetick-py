@@ -1,13 +1,11 @@
 import os
-import sys
 import signal
 import subprocess
-from multiprocessing import Process, Queue
+import multiprocessing
 
 import pytest
 
 import onetick.py as otp
-from onetick.py.compatibility import is_supported_otq_run_password
 
 
 if os.getenv('OTP_WEBAPI_TEST_MODE'):
@@ -41,8 +39,9 @@ def tick_server():
                 q.put(p.pid)
                 q.put(os.environ['ONE_TICK_CONFIG'])
 
-    queue = Queue()
-    tick_server = Process(target=run_server, args=(queue,))
+    ctx = multiprocessing.get_context('fork')
+    queue = ctx.Queue()
+    tick_server = ctx.Process(target=run_server, args=(queue,))
     tick_server.start()
 
     tick_server_pid = queue.get()
@@ -54,7 +53,6 @@ def tick_server():
 
 
 @pytest.mark.skipif(os.name == 'nt', reason='We do not have OneTick server on the windows')
-@pytest.mark.skipif(not is_supported_otq_run_password(), reason='password not supported on older OneTick versions')
 def test_password(tick_server):
     with otp.Session(otp.Config(locator=otp.RemoteTS('localhost:47002'))):
         t = otp.Tick(A=1)
@@ -70,7 +68,6 @@ def test_password(tick_server):
 
 
 @pytest.mark.skipif(os.name == 'nt', reason='We do not have OneTick server on the windows')
-@pytest.mark.skipif(not is_supported_otq_run_password(), reason='password not supported on older OneTick versions')
 def test_data_source_and_config(tick_server):
     with otp.Session(otp.Config(locator=otp.RemoteTS('localhost:47002'))):
         with pytest.warns(UserWarning, match='OT authentication failed'):
@@ -84,7 +81,6 @@ def test_data_source_and_config(tick_server):
 
 
 @pytest.mark.skipif(os.name == 'nt', reason='We do not have OneTick server on the windows')
-@pytest.mark.skipif(not is_supported_otq_run_password(), reason='password not supported on older OneTick versions')
 def test_data_source_and_env_config(tick_server):
     with otp.Session(otp.Config(locator=otp.RemoteTS('localhost:47002'))):
         with pytest.warns(UserWarning, match='OT authentication failed'):

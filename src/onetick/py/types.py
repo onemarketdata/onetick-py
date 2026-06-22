@@ -15,7 +15,6 @@ from packaging.version import parse as parse_version
 
 import onetick.py as otp
 from onetick.py.otq import otq, pyomd
-from onetick.py.compatibility import has_timezone_parameter
 from onetick.py.core._internal._op_utils.every_operand import every_operand
 from onetick.py.utils import get_tzfile_by_name, get_timezone_from_datetime
 from onetick.py.docs.utils import is_windows
@@ -2086,16 +2085,13 @@ def time2nsectime(time, timezone=None):
     elif isinstance(time, date):
         time = datetime(time)
     if timezone:
-        if not has_timezone_parameter():  # accommodating legacy behavior prior to 20220327-3 weekly build
-            time = time.replace(tzinfo=None)
+        if time.tzinfo is None:
+            time = time.tz_localize(timezone)
         else:
-            if time.tzinfo is None:
-                time = time.tz_localize(timezone)
-            else:
-                # timezone conversion doesn't change the offset from epoch, only string representation,
-                # so time.value (the number of nanoseconds) will stay the same
-                # this line can be deleted
-                time = time.tz_convert(timezone)
+            # timezone conversion doesn't change the offset from epoch, only string representation,
+            # so time.value (the number of nanoseconds) will stay the same
+            # this line can be deleted
+            time = time.tz_convert(timezone)
     return time.value
 
 

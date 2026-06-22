@@ -7,6 +7,8 @@ from functools import partial
 
 import onetick.py as otp
 
+import tests
+
 
 @pytest.fixture(scope='module', autouse=True)
 def session(m_session):
@@ -223,7 +225,7 @@ class TestNow:
         assert timestamp_before < int(df['Time'][0].timestamp() * 10**9) < timestamp_after
 
     @pytest.mark.skipif(os.environ.get('OTP_WEBAPI', False), reason="WebAPI works fine")
-    @pytest.mark.skipif(not otp.compatibility.is_now_in_start_end_time_expressions_fixed(),
+    @pytest.mark.skipif(not tests.compatibility.is_now_in_start_end_time_expressions_fixed(),
                         reason="Fixed on newer OneTick builds")
     def test_small_difference(self):
         data = otp.Tick(X=1)

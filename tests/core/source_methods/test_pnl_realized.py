@@ -2,7 +2,9 @@ import pytest
 
 import onetick.py as otp
 
-if not otp.compatibility.is_supported_pnl_realized():
+import tests
+
+if not otp.compatibility._is_supported_pnl_realized():
     pytest.skip("PNL_REALIZE isn't supported by this OneTick version", allow_module_level=True)
 
 
@@ -53,7 +55,7 @@ def test_pnl_realized_output_field_name():
 
 
 @pytest.mark.skipif(
-    not otp.compatibility.is_supported_pnl_realized_buy_sell_flag_bin(),
+    not tests.compatibility._is_supported_pnl_realized_buy_sell_flag_bin(),
     reason="PNL_REALIZED on this version of OneTick doesn't support 0 and 1 as BUY_SELL_FLAG values",
 )
 def test_pnl_realized_buy_sell_flag_bin():

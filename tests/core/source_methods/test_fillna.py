@@ -37,8 +37,6 @@ def test_double(session):
     assert compare_float_lists(df['B'], [float('nan'), 2.2, 2.2, 3.3])
 
 
-@pytest.mark.skipif(otp.compatibility.is_per_tick_script_boolean_problem(),
-                    reason='Fails on a specific OneTick release')
 def test_columns(session):
     data = otp.Ticks({'A': [0, 1, 2, 3], 'B': [otp.nan, 2.2, otp.nan, 3.3], 'C': [otp.nan, 2.2, otp.nan, 3.3]})
     with pytest.raises(ValueError, match="Column 'XXX' is not in schema"):
