@@ -285,17 +285,17 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
     Note that daily intervals are processed separately so, for example,
     we can't access column **COUNT** from previous day.
 
-    >>> trd = otp.DataSource('US_COMP', symbols='AAPL', tick_type='TRD')  # doctest: +SKIP
+    >>> trd = otp.DataSource('US_COMP_SAMPLE', symbols='AAPL', tick_type='TRD')
     >>> trd = trd.agg({'COUNT': otp.agg.count()},
-    ...               bucket_interval=12 * 3600, bucket_time='start')  # doctest: +SKIP
-    >>> trd['PREV_COUNT'] = trd['COUNT'][-1]  # doctest: +SKIP
+    ...               bucket_interval=12 * 3600, bucket_time='start')
+    >>> trd['PREV_COUNT'] = trd['COUNT'][-1]
     >>> otp.run(trd, apply_times_daily=True,
-    ...         start=otp.dt(2023, 4, 3), end=otp.dt(2023, 4, 5), timezone='EST5EDT')  # doctest: +SKIP
+    ...         start=otp.dt(2024, 2, 1), end=otp.dt(2024, 2, 3))
                      Time   COUNT  PREV_COUNT
-    0 2023-04-03 00:00:00  328447           0
-    1 2023-04-03 12:00:00  240244      328447
-    2 2023-04-04 00:00:00  263293           0
-    3 2023-04-04 12:00:00  193018      263293
+    0 2024-02-01 00:00:00  392770           0
+    1 2024-02-01 12:00:00  428211      392770
+    2 2024-02-02 00:00:00  750682           0
+    3 2024-02-02 12:00:00  357788      750682
 
     Using a function as a ``query``, accessing symbol name and parameters:
 
@@ -381,6 +381,23 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
             Time  A
     0 2003-12-01  1
 
+    Running for multiple symbols returns a dictionary keyed by symbol name:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD',
+    ...                       schema_policy='manual_strict', schema={'PRICE': float, 'SIZE': float})
+    >>> data = data[:3]
+    >>> result = otp.run(data, symbols=['AAPL', 'MSFT'], date=otp.dt(2024, 2, 1))
+    >>> result['AAPL']
+                               Time   PRICE   SIZE
+    0 2024-02-01 04:00:00.008283417  186.50    6.0
+    1 2024-02-01 04:00:00.008290927  185.59    1.0
+    2 2024-02-01 04:00:00.008291153  185.49  107.0
+    >>> result['MSFT']
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.016997102  400.15  42.0
+    1 2024-02-01 04:00:00.024299525  402.00  30.0
+    2 2024-02-01 04:00:00.024325756  402.00  10.0
+
     Use ``require_dict=True`` to always get a dictionary result,
     even when running a single symbol:
 
@@ -389,32 +406,16 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
     >>> type(result)
     <class 'dict'>
 
-    Running for multiple symbols returns a dictionary keyed by symbol name:
-
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='TT')
-    >>> result = otp.run(data, symbols=['S1', 'S2'])
-    >>> result['S1']
-                         Time  X
-    0 2003-12-01 00:00:00.000  1
-    1 2003-12-01 00:00:00.001  2
-    2 2003-12-01 00:00:00.002  3
-    >>> result['S2']
-                         Time  X
-    0 2003-12-01 00:00:00.000 -3
-    1 2003-12-01 00:00:00.001 -2
-    2 2003-12-01 00:00:00.002 -1
-
     Using a :py:class:`~onetick.py.Source` as ``symbols`` creates a first-stage query
     that dynamically generates the symbol list. The source must produce a ``SYMBOL_NAME`` column:
 
     .. code-block:: python
 
-       # First-stage query: get symbols from a reference database
-       symbol_src = otp.DataSource('REF_DB', tick_type='SYMBOLS')
-       symbol_src = symbol_src[['SYMBOL_NAME']]
+       # First-stage query: get symbols from the database
+       symbol_src = otp.Symbols('US_COMP_SAMPLE', for_tick_type='TRD')[:3]
 
-       data = otp.DataSource('US_COMP', tick_type='TRD')
-       result = otp.run(data, symbols=symbol_src, date=otp.dt(2022, 3, 1))
+       data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')[:1]
+       result = otp.run(data, symbols=symbol_src, date=otp.dt(2024, 2, 1))
        # result is a dict keyed by symbol names from symbol_src
 
     ``output_structure`` controls the format of the return value.
@@ -422,15 +423,15 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
 
     .. code-block:: python
 
-       data = otp.DataSource('US_COMP', tick_type='TRD')
-       result = otp.run(data, symbols='AAPL', output_structure='list')
+       data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', date=otp.dt(2024, 2, 1))
+       result = otp.run(data, output_structure='list')
        # result is [(symbol, ticks_data, error_data, node_name), ...]
 
     Use ``output_structure='map'`` for a ``SymbolNumpyResultMap`` object:
 
     .. code-block:: python
 
-       result = otp.run(data, symbols='AAPL', output_structure='map')
+       result = otp.run(data, output_structure='map')
 
     ``running=True`` marks the query as a CEP (Complex Event Processing) query
     for real-time streaming:
@@ -438,16 +439,16 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
     .. code-block:: python
 
        # CEP query for real-time data
-       data = otp.DataSource('US_COMP', tick_type='TRD')
-       result = otp.run(data, symbols='AAPL', running=True,
-                        start=otp.dt(2023, 1, 1), end=otp.dt(2099, 1, 1))
+       data = otp.DataSource('US_COMP_REPLAY', tick_type='TRD', symbols='AAPL')
+       result = otp.run(data, running=True, start=otp.now(), end=otp.now() + otp.Second(3))
 
     ``batch_size`` and ``concurrency`` tune performance for multi-symbol queries:
 
     .. code-block:: python
 
-       data = otp.DataSource('US_COMP', tick_type='TRD')
-       result = otp.run(data, symbols=large_symbol_list,
+       data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
+       result = otp.run(data,
+                        symbols=large_symbol_list,
                         batch_size=50,    # process 50 symbols per batch
                         concurrency=4)    # use 4 CPU cores
 
@@ -456,33 +457,34 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
 
     .. code-block:: python
 
-       data = otp.DataSource('US_COMP', tick_type='TRD')
-       result = otp.run(data, symbols=['AAPL', 'MSFT'],
-                        symbol_date=otp.dt(2022, 3, 1),
-                        date=otp.dt(2022, 3, 1))
+       data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
+       result = otp.run(data,
+                        symbols=['AAPL', 'MSFT'],
+                        symbol_date=otp.dt(2024, 2, 1),
+                        date=otp.dt(2024, 2, 1))
 
        # Also accepts integer YYYYMMDD format
-       result = otp.run(data, symbols=['AAPL'], symbol_date=20220301,
-                        date=otp.dt(2022, 3, 1))
+       result = otp.run(data, symbols=['AAPL'], symbol_date=20240201,
+                        date=otp.dt(2024, 2, 1))
 
     ``start_time_expression`` and ``end_time_expression`` allow dynamic time boundaries
     using OneTick expressions. They take precedence over ``start``/``end``:
 
     .. code-block:: python
 
-       data = otp.DataSource('US_COMP', tick_type='TRD')
+       data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
        result = otp.run(data, symbols='AAPL',
-                        start_time_expression='20220301093000',
-                        end_time_expression='20220301160000')
+                        start_time_expression='20240201093000',
+                        end_time_expression='20240201160000')
 
     ``query_properties`` passes OneTick query properties as a dict:
 
     .. code-block:: python
 
-       data = otp.DataSource('US_COMP', tick_type='TRD')
+       data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
        result = otp.run(data, symbols='AAPL',
                         query_properties={'ALLOW_GRAPH_REUSE': 'true'},
-                        date=otp.dt(2022, 3, 1))
+                        date=otp.dt(2024, 2, 1))
 
     ``node_name`` selects the output from a specific node when running
     an OTQ file with multiple output nodes:
@@ -546,13 +548,13 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
         has_source_start, has_source_end = query.has_start_end_time()
 
     if (start is None or start is utils.adaptive) and otp.config.get('default_start_time') is None and \
-            not has_source_start and not isinstance(query, otq.SqlQuery):
+            not has_source_start and not isinstance(query, otq.SqlQuery) and not start_time_expression:
         warnings.warn('Start time is None and default start time is not set, '
                       'onetick.query will use 19700101 as start time, '
                       'which can cause unexpected results. '
                       'Please set start time explicitly.')
     if (end is None or end is utils.adaptive) and otp.config.get('default_end_time') is None and \
-            not has_source_end and not isinstance(query, otq.SqlQuery):
+            not has_source_end and not isinstance(query, otq.SqlQuery) and not end_time_expression:
         warnings.warn('End time is None and default end time is not set, '
                       'onetick.query will use 19700101 as end time, '
                       'which can cause unexpected results. '

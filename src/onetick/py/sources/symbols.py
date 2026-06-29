@@ -265,21 +265,21 @@ class Symbols(Source):
     You can also use parameter ``show_original_symbols`` to print original symbols.
     Note that some symbols may not have a translation in target symbology, so their names will be empty:
 
-    >>> data = otp.Symbols('US_COMP', for_tick_type='TRD',
-    ...                    symbology='FGV', show_original_symbols=True)                     # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2023, 5, 15, 9, 30), end=otp.dt(2023, 5, 15, 9, 30, 1))  # doctest: +SKIP
-                         Time   SYMBOL_NAME  ORIGINAL_SYMBOL_NAME
-    0     2023-05-15 09:30:00  BBG000C2V3D6                     A
-    1     2023-05-15 09:30:00  BBG00B3T3HD3                    AA
-    2     2023-05-15 09:30:00  BBG01B0JRCS6                   AAA
-    3     2023-05-15 09:30:00  BBG00LPXX872                  AAAU
-    4     2023-05-15 09:30:00  BBG00YZC2Z91                   AAC
-    ...                   ...           ...                   ...
-    10946 2023-05-15 09:30:00                               ZXIET
-    10947 2023-05-15 09:30:00                               ZXZZT
-    10948 2023-05-15 09:30:00  BBG019XSYC89                  ZYME
-    10949 2023-05-15 09:30:00  BBG007BBS8B7                  ZYNE
-    10950 2023-05-15 09:30:00  BBG000BJBXZ2                  ZYXI
+    >>> data = otp.Symbols('US_COMP_SAMPLE', for_tick_type='TRD',
+    ...                    symbology='FGV', show_original_symbols=True)                   # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 9, 30), end=otp.dt(2024, 2, 1, 9, 30, 1))  # doctest: +SKIP
+                       Time   SYMBOL_NAME ORIGINAL_SYMBOL_NAME
+    0   2024-02-01 09:30:00  BBG000C2V3D6                    A
+    1   2024-02-01 09:30:00  BBG005P7Q881                  AAL
+    2   2024-02-01 09:30:00  BBG000B9XRY4                 AAPL
+    3   2024-02-01 09:30:00  BBG0025Y4RY4                 ABBV
+    4   2024-02-01 09:30:00  BBG001Y2XS07                 ABNB
+    ..                  ...           ...                  ...
+    496 2024-02-01 09:30:00  BBG001D8R5D0                  XYL
+    497 2024-02-01 09:30:00  BBG000BH3GZ2                  YUM
+    498 2024-02-01 09:30:00  BBG000BKPL53                  ZBH
+    499 2024-02-01 09:30:00  BBG000CC7LQ7                 ZBRA
+    500 2024-02-01 09:30:00  BBG0039320N9                  ZTS
 
     **Escaping special characters in the pattern**
 

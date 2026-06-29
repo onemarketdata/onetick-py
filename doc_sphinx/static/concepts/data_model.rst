@@ -10,7 +10,8 @@ Every piece of ``onetick.py`` code starts with specifying a data source.
 
 ::
 
-    data = otp.DataSource(db='US_COMP', tick_type='TRD', symbol='AAPL', start=otp.dt(2003, 12, 1), end=otp.dt(2003, 12, 2))
+    data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL',
+                          start=otp.dt(2024, 2, 1), end=otp.dt(2024, 2, 2))
 
 :class:`onetick.py.Source` is the base abstract class. We provide several predefined inherited
 classes to cover various use cases: e.g., :class:`onetick.py.DataSource` for retrieving data from OneTick databases,
@@ -22,24 +23,36 @@ specified  manually; see :ref:`the schema concept <schema concept>`).
 The schema is available through the :attr:`onetick.py.Source.schema` property and behaves
 like a Python `dict`.
 
-.. testsetup::
-
-   >>> sample_trd_tick = otp.Tick(PRICE=float(0))
-   >>> sample_trd_tick.table(**session.real_db_schemas['us_comp_trd'], inplace=True)
-   >>> session.dbs['US_COMP'].add(sample_trd_tick)
 
 .. doctest::
 
-   >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL', start=otp.dt(2022, 3, 1), end=otp.dt(2022, 3, 2))
+   >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL',
+   ...                       start=otp.dt(2024, 2, 1), end=otp.dt(2024, 2, 2))
    >>> data.schema
-    {'COND': string[4], 'CORR': <class 'onetick.py.types._int'>, 'DELETED_TIME': <class 'onetick.py.types.msectime'>, 'EXCHANGE': string[1], 'OMDSEQ': <class 'onetick.py.types.uint'>, 'PARTICIPANT_TIME': <class 'onetick.py.types.nsectime'>, 'PRICE': <class 'float'>, 'SEQ_NUM': <class 'int'>, 'SIZE': <class 'int'>, 'SOURCE': string[1], 'STOP_STOCK': string[1], 'TICKER': string[16], 'TICK_STATUS': <class 'onetick.py.types._int'>, 'TRADE_ID': string[20], 'TRF': string[1], 'TRF_TIME': <class 'onetick.py.types.nsectime'>, 'TTE': string[1]}
+   {'COND': string[4],
+    'CORR': <class 'onetick.py.types._int'>,
+    'DELETED_TIME': <class 'onetick.py.types.msectime'>,
+    'EXCHANGE': string[1],
+    'OMDSEQ': <class 'onetick.py.types.uint'>,
+    'PARTICIPANT_TIME': <class 'onetick.py.types.nsectime'>,
+    'PRICE': <class 'float'>,
+    'SEQ_NUM': <class 'int'>,
+    'SIZE': <class 'int'>,
+    'SOURCE': string[1],
+    'STOP_STOCK': string[1],
+    'TICKER': string[16],
+    'TICK_STATUS': <class 'onetick.py.types._int'>,
+    'TRADE_ID': string[20],
+    'TRF': string[1],
+    'TRF_TIME': <class 'onetick.py.types.nsectime'>,
+    'TTE': string[1]}
 
 Next we discuss the ``Column`` and ``Operation`` classes that make it easy to work with the fields in data sources
 and to create new ones. We then talk about the methods and functions that operate on
 individual fields and on entire data sources.
 
 Column and Operation
-======================
+====================
 
 A **column** (:class:`onetick.py.Column`) represents a data series for a single field of the data source
 (The relationship between a column and a data source is similar to the one between pandas's Series and
@@ -82,7 +95,7 @@ for example
 
 
 Some functions operate on columns only but it's clear from the context that the use of operations is not applicable
-there (e.g., the ``apply`` method that casts a column to a different type):
+there (e.g., the :meth:`onetick.py.Operation.apply` method that casts a column to a different type):
 
 .. testcode::
 
@@ -104,7 +117,7 @@ Onetick allows using field names that:
 
 - have length between 1 and 127 characters
 - contain upper- and lowercase Latin characters
-- contain symbols "_" and "."
+- contain symbols ``_`` and ``.``
 
 Any other character is not allowed in a field name.
 
@@ -157,8 +170,7 @@ that can then be used for further operations (no pun intended):
 
 ::
 
-    data['TAKEOUT_SUCCESS'] = \
-        data['QTY_FILLED'] >= otp.math.min(data['BID_SIZE'], data['ASK_SIZE'])
+    data['TAKEOUT_SUCCESS'] = data['QTY_FILLED'] >= otp.math.min(data['BID_SIZE'], data['ASK_SIZE'])
 
 
 The :class:`onetick.py.Operation` class also has methods, some of which are collected into *accessors*.
@@ -171,7 +183,7 @@ An *accessor* is a special property that collects methods for a certain data typ
 
 
 Methods/functions on Sources
---------------------------------
+----------------------------
 
 :class:`onetick.py.Source` has methods that operate on entire ticks (rather than on particular columns) like
 aggregations :attr:`onetick.py.Source.agg` or :meth:`onetick.py.Source.sort`. Usually
@@ -200,7 +212,7 @@ as :func:`onetick.py.merge` or :func:`onetick.py.join_by_time`
 
 ::
 
-    trades = otp.DataSource(db='US_COMP', tick_type='TRD', symbol='APPL')
-    quotes = otp.DataSource(db='US_COMP', tick_type='QTE', symbol='AAPL')
+    trades = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbol='APPL')
+    quotes = otp.DataSource(db='US_COMP_SAMPLE', tick_type='QTE', symbol='AAPL')
 
     data = otp.join_by_time([trades, quotes])

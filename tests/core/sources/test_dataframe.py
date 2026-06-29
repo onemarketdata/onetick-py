@@ -6,7 +6,13 @@ import pandas as pd
 import pytest
 
 import onetick.py as otp
-from onetick.py.otq import otq
+
+
+def test_load_ticks_from_dataframe_empty_session(empty_session):
+    in_df = pd.DataFrame({'A': [1, 2, 3]})
+    data = otp.LoadTicksFromDataFrame(in_df)
+    df = otp.run(data, symbols='LOCAL::')
+    assert list(df['A']) == [1, 2, 3]
 
 
 class TestReadFromDataFrame:
@@ -332,3 +338,25 @@ class TestReadFromDataFrame:
         assert list(result['ORIG_QTY']) == [100] * 12
         assert list(result['LEAVES_QTY']) == [100, 50, 0, 0, 0, 100, 80, 60, 40, 20, 10, 0]
         assert list(result['NEW_QTY']) == [100, 50, 100, 100, 100, 100, 80, 60, 40, 20, 10, 100]
+
+
+def test_load_ticks_from_dataframe(session):
+    symbols_df = pd.DataFrame({
+        'Time': [pd.Timestamp('2003-12-04'), pd.Timestamp('2003-12-04')],
+        'SYMBOL_NAME': ['AAPL', 'NVDA'],
+        '_PARAM_START_TIME': [
+            pd.Timestamp('2024-02-01 09:30:00'),
+            pd.Timestamp('2024-02-01 10:00:00'),
+        ],
+        '_PARAM_END_TIME': [
+            pd.Timestamp('2024-02-01 09:31:00'),
+            pd.Timestamp('2024-02-01 10:01:00'),
+        ],
+    })
+    with pytest.warns(FutureWarning):
+        df_ticks = otp.run(otp.Ticks(symbols_df))
+
+    data = otp.LoadTicksFromDataFrame(symbols_df.drop(columns=['Time']))
+    df = otp.run(data)
+    assert df.equals(df_ticks)
+    assert list(df['SYMBOL_NAME']) == ['AAPL', 'NVDA']

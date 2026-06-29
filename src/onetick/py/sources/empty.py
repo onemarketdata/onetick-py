@@ -36,7 +36,16 @@ class Empty(Source):
 
     Examples
     --------
-    We can define schema:
+
+    Empty source returns no data:
+
+    >>> data = otp.Empty()
+    >>> otp.run(data)
+    Empty DataFrame
+    Columns: []
+    Index: []
+
+    But we can still define schema if needed:
 
     >>> data = otp.Empty(schema={'A': str, 'B': int})
     >>> otp.run(data)
@@ -45,12 +54,6 @@ class Empty(Source):
     Index: []
     >>> data.schema
     {'A': <class 'str'>, 'B': <class 'int'>}
-
-    Or we can get schema from the database:
-
-    >>> data = otp.Empty(db='SOME_DB', tick_type='TT')
-    >>> data.schema
-    {'X': <class 'int'>}
     """
 
     def __init__(

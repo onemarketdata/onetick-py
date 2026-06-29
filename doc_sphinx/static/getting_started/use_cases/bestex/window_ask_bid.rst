@@ -12,8 +12,8 @@ Here's a full code example that implements the function get_window_ask_bid to ac
     # Define your symbols, orders, and quotes database
     symbol = 'TSLA'
     orders_db = 'ORDERS_DB'
-    quotes_db = 'US_COMP'
-    date = otp.dt(2022, 3, 2)
+    quotes_db = 'US_COMP_SAMPLE'
+    date = otp.dt(2024, 2, 1)
 
     # Define the time window parameters
     window_before = 5.0  # seconds before the order

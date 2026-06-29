@@ -754,13 +754,15 @@ def time_filter(
 
     Examples
     --------
-    >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL')
-    >>> data = data.time_filter(start_time='000000001', end_time='000000003')
-    >>> otp.run(data, start=otp.dt(2022, 3, 1), end=otp.dt(2022, 3, 2))
-                         Time  PRICE  SIZE
-    0 2022-03-01 00:00:00.001    1.4    10
-    1 2022-03-01 00:00:00.002    1.4    50
-
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE']]
+    >>> data = data.time_filter(start_time='040008000', end_time='040010000')
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:08.500354204  185.72     1
+    1 2024-02-01 04:00:08.506996841  185.70     1
+    2 2024-02-01 04:00:08.507262225  185.72     1
+    3 2024-02-01 04:00:09.461682352  185.72    11
     """
     if timezone is utils.default:
         # doesn't work without expr for some reason
@@ -1178,17 +1180,32 @@ def show_hidden_ticks(self: 'Source', inplace: bool = False) -> 'Source':
     Examples
     --------
 
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = data.show_hidden_ticks()  # doctest: +SKIP
-    >>> otp.run(data)  # doctest: +SKIP
-                         Time         UPDATE_TIME  PRICE  SIZE  BUY_SELL_FLAG  TICK_STATUS RECORD_TYPE
-    0 2003-12-01 00:00:00.000 1969-12-31 19:00:00      0     0              0           31
-    1 2003-12-01 00:00:00.000 2003-12-01 00:00:00    100    10              0            0           R
-    2 2003-12-01 00:00:00.001 2003-12-01 00:00:00     80    30              0           31           R
-    3 2003-12-01 00:00:00.002 2003-12-01 00:00:00     90    25              1            0           R
-    4 2003-12-01 00:00:00.003 2003-12-01 00:00:00    110   100              1            0           R
-    5 2003-12-01 00:00:00.004 2003-12-01 00:00:00    100    20              1           31           R
-    6 2003-12-01 00:00:00.005 2003-12-01 00:00:00     75    30              0            0           R
+    Show hidden ticks and filter them by choosing non-zero *TICK_STATUS* values:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data.show_hidden_ticks()
+    >>> data = data.where(data['TICK_STATUS'] != 0)
+    >>> data = data[['PRICE', 'SIZE', 'TICK_STATUS']]
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                                Time     PRICE  SIZE  TICK_STATUS
+    0  2024-02-01 11:50:15.621123654  185.6950     1            1
+    1  2024-02-01 14:43:17.690903111  185.6950     1            4
+    2  2024-02-01 14:43:17.690903111  185.6950     1            7
+    3  2024-02-01 15:36:14.597279750  186.6100    50            1
+    4  2024-02-01 15:42:02.658055953  186.8700     1            1
+    5  2024-02-01 15:42:02.661911428  186.8700     1            1
+    6  2024-02-01 15:46:38.890972031  186.6100    50            4
+    7  2024-02-01 15:46:38.890972031  186.6100    50            7
+    8  2024-02-01 15:46:38.891369862  186.6100    45            1
+    9  2024-02-01 15:49:02.043717846  186.6100    45            4
+    10 2024-02-01 15:49:02.043717846  186.6100    45            7
+    11 2024-02-01 15:57:29.621873687  186.7078   306            1
+    12 2024-02-01 16:06:23.115605520  186.7078   306            4
+    13 2024-02-01 16:06:23.115605520  186.7078   306            7
+    14 2024-02-01 16:15:02.784032763  186.8700     1            4
+    15 2024-02-01 16:15:02.784032763  186.8700     1            7
+    16 2024-02-01 16:15:02.801559379  186.8700     1            4
+    17 2024-02-01 16:15:02.801559379  186.8700     1            7
     """
     self.sink(otq.ShowHiddenTicks())
     return self

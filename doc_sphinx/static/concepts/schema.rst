@@ -8,17 +8,27 @@ A developer could access and modify the schema using :attr:`onetick.py.Source.sc
 
 The schema for a data source looks like this:
 
-.. testsetup::
-
-   >>> sample_trd_tick = otp.Tick(PRICE=float(0))
-   >>> sample_trd_tick.table(**session.real_db_schemas['us_comp_trd'], inplace=True)
-   >>> session.dbs['US_COMP'].add(sample_trd_tick)
-
 .. doctest::
 
-   >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL', start=otp.dt(2022, 3, 1), end=otp.dt(2022, 3, 2))
+   >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', date=otp.dt(2024, 2, 1))
    >>> data.schema
-    {'COND': string[4], 'CORR': <class 'onetick.py.types._int'>, 'DELETED_TIME': <class 'onetick.py.types.msectime'>, 'EXCHANGE': string[1], 'OMDSEQ': <class 'onetick.py.types.uint'>, 'PARTICIPANT_TIME': <class 'onetick.py.types.nsectime'>, 'PRICE': <class 'float'>, 'SEQ_NUM': <class 'int'>, 'SIZE': <class 'int'>, 'SOURCE': string[1], 'STOP_STOCK': string[1], 'TICKER': string[16], 'TICK_STATUS': <class 'onetick.py.types._int'>, 'TRADE_ID': string[20], 'TRF': string[1], 'TRF_TIME': <class 'onetick.py.types.nsectime'>, 'TTE': string[1]}
+   {'COND': string[4],
+    'CORR': <class 'onetick.py.types._int'>,
+    'DELETED_TIME': <class 'onetick.py.types.msectime'>,
+    'EXCHANGE': string[1],
+    'OMDSEQ': <class 'onetick.py.types.uint'>,
+    'PARTICIPANT_TIME': <class 'onetick.py.types.nsectime'>,
+    'PRICE': <class 'float'>,
+    'SEQ_NUM': <class 'int'>,
+    'SIZE': <class 'int'>,
+    'SOURCE': string[1],
+    'STOP_STOCK': string[1],
+    'TICKER': string[16],
+    'TICK_STATUS': <class 'onetick.py.types._int'>,
+    'TRADE_ID': string[20],
+    'TRF': string[1],
+    'TRF_TIME': <class 'onetick.py.types.nsectime'>,
+    'TTE': string[1]}
 
 
 The schema is updated when a new column is added:
@@ -80,7 +90,7 @@ It is possible to control this behaviour with the `schema_policy` parameter.
 
 .. testcode::
 
-    data = otp.DataSource(db='US_COMP',
+    data = otp.DataSource('US_COMP_SAMPLE',
                           tick_type='QTE',
                           symbol='AAPL',
                           schema_policy='manual')

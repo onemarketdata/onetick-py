@@ -10,6 +10,23 @@
 
 ### Removed
 
+## [1.201.0] - 2026-06-29
+
+### Added
+
+### Changed
+
+- Removed using of `SOME_DB`, `TRAIN_A_PRL_TRD` and `US_COMP` databases
+- Allow using cloud server in doctests
+- Move doctests to `integration` testing stage
+
+### Fixed
+
+- Use authentication parameters when calling compatibility checks
+- Do not rewrite `SYMBOL_NAME` column in `otp.LoadTicksFromDataFrame`
+
+### Removed
+
 ## [1.200.0] - 2026-06-22
 
 ### Added

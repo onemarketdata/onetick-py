@@ -932,6 +932,8 @@ def mkt_activity(self: 'Source', calendar_name=None, inplace=False) -> Optional[
     See Also
     --------
     **MKT_ACTIVITY** OneTick event processor
+    :class:`otp.RefData <onetick.py.RefData>`
+    :meth:`DB.ref_data <onetick.py.db._inspection.DB.ref_data>`
 
     Examples
     --------
@@ -939,64 +941,58 @@ def mkt_activity(self: 'Source', calendar_name=None, inplace=False) -> Optional[
     By default, security- or exchange-level calendars configured for the queried database and symbol are used
     (but symbol date must be specified in this case):
 
-    >>> data = otp.DataSource(...)  # doctest: +SKIP
-    >>> data = data.mkt_activity()  # doctest: +SKIP
-    >>> otp.run(data, date=otp.date(2022, 1, 1), symbol_date=otp.date(2022, 1, 1))  # doctest: +SKIP
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE']][:5]
+    >>> data = data.mkt_activity()
+    >>> otp.run(data, date=otp.date(2024, 2, 1), symbol_date=otp.date(2024, 2, 1))
+                               Time   PRICE  SIZE MKT_ACTIVITY
+    0 2024-02-01 04:00:00.008283417  186.50     6           Rb
+    1 2024-02-01 04:00:00.008290927  185.59     1           Rb
+    2 2024-02-01 04:00:00.008291153  185.49   107           Rb
+    3 2024-02-01 04:00:00.010381671  185.49     1           Rb
+    4 2024-02-01 04:00:00.011224206  185.50     2           Rb
 
     Otherwise, parameter ``calendar_name`` must be specified:
 
-    >>> data = otp.DataSource(...)  # doctest: +SKIP
-    >>> data = data.mkt_activity(calendar_name='WNY')  # doctest: +SKIP
-    >>> otp.run(data, date=otp.date(2022, 1, 1))  # doctest: +SKIP
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE']][:5]
+    >>> data = data.mkt_activity(calendar_name='CLOUD_DB_US_COMP')
+    >>> otp.run(data, date=otp.date(2024, 2, 1))
+                               Time   PRICE  SIZE MKT_ACTIVITY
+    0 2024-02-01 04:00:00.008283417  186.50     6           Rb
+    1 2024-02-01 04:00:00.008290927  185.59     1           Rb
+    2 2024-02-01 04:00:00.008291153  185.49   107           Rb
+    3 2024-02-01 04:00:00.010381671  185.49     1           Rb
+    4 2024-02-01 04:00:00.011224206  185.50     2           Rb
 
     Parameter ``calendar_name`` can also be specified as a column.
     In this case calendar name can be different for each tick:
 
-    >>> data = otp.DataSource(...)  # doctest: +SKIP
-    >>> data = data.mkt_activity(calendar_name=data['CALENDAR_NAME'])  # doctest: +SKIP
-    >>> otp.run(data, date=otp.date(2022, 1, 1))  # doctest: +SKIP
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')  # doctest: +SKIP
+    >>> data['CALENDAR_NAME'] = ...                                               # doctest: +SKIP
+    >>> data = data.mkt_activity(calendar_name=data['CALENDAR_NAME'])             # doctest: +SKIP
+    >>> otp.run(data, date=otp.date(2024, 2, 1))                                  # doctest: +SKIP
 
-    In this example you can see how market activity status is changing during the days.
+    In this example you can see how market activity status is changing during the day.
     We are getting first and last tick of the group each time the type of market activity is changed.
-    You can see regular trades (R) from 9:30 to 16:00, and a holiday (H) on 2018-02-07.
+    You can see PRE_MARKET (Rb) trades before 9:30,
+    regular trades (R) from 9:30 to 16:00,
+    and POST_MARKET trades (Ra) after 16:00.
 
-    >>> data = otp.DataSource('TRAIN_A_PRL_TRD', tick_type='TRD', symbols='MSFT')  # doctest: +SKIP
-    >>> data = data.mkt_activity('FRED')  # doctest: +SKIP
-    >>> data = data[['PRICE', 'SIZE', 'MKT_ACTIVITY']]  # doctest: +SKIP
-    >>> first = data.first(1, bucket_interval=(data['MKT_ACTIVITY'] != data['MKT_ACTIVITY'][-1]))  # doctest: +SKIP
-    >>> last = data.last(1, bucket_interval=(data['MKT_ACTIVITY'] != data['MKT_ACTIVITY'][-1]))  # doctest: +SKIP
-    >>> data = otp.merge([first, last])  # doctest: +SKIP
-    >>> df = otp.run(data,  # doctest: +SKIP
-    ...              start=otp.dt(2018, 2, 1), end=otp.dt(2018, 2, 9),
-    ...              symbol_date=otp.dt(2018, 2, 1), timezone='EST5EDT')
-    >>> df[['Time', 'MKT_ACTIVITY']]  # doctest: +SKIP
-                          Time MKT_ACTIVITY
-    0  2018-02-01 01:31:44.466
-    1  2018-02-01 09:29:59.996
-    2  2018-02-01 09:30:00.225            R
-    3  2018-02-01 15:59:58.857            R
-    4  2018-02-01 16:00:01.858
-    5  2018-02-02 09:29:50.366
-    6  2018-02-02 09:30:01.847            R
-    7  2018-02-02 15:59:59.829            R
-    8  2018-02-02 16:00:01.782
-    9  2018-02-05 09:29:43.084
-    10 2018-02-05 09:30:00.301            R
-    11 2018-02-05 15:59:59.974            R
-    12 2018-02-05 16:00:02.438
-    13 2018-02-06 09:29:27.279
-    14 2018-02-06 09:30:00.045            R
-    15 2018-02-06 15:59:59.903            R
-    16 2018-02-06 16:01:03.524
-    17 2018-02-07 09:29:56.739
-    18 2018-02-07 09:30:00.365            H
-    19 2018-02-07 15:59:59.940            H
-    20 2018-02-07 16:00:00.187
-    21 2018-02-08 09:29:28.446
-    22 2018-02-08 09:30:00.658            F
-    23 2018-02-08 15:59:59.564            F
-    24 2018-02-08 16:00:02.355
-    25 2018-02-08 19:59:57.061
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data.mkt_activity(calendar_name='CLOUD_DB_US_COMP')
+    >>> data = data[['PRICE', 'SIZE', 'MKT_ACTIVITY']]
+    >>> first = data.first(1, bucket_interval=(data['MKT_ACTIVITY'] != data['MKT_ACTIVITY'][-1]))
+    >>> last = data.last(1, bucket_interval=(data['MKT_ACTIVITY'] != data['MKT_ACTIVITY'][-1]))
+    >>> data = otp.merge([first, last])
+    >>> otp.run(data, date=otp.date(2024, 2, 1))
+                               Time     PRICE  SIZE MKT_ACTIVITY
+    0 2024-02-01 04:00:00.008283417  186.5000     6           Rb
+    1 2024-02-01 09:29:59.963219812  184.1000   900           Rb
+    2 2024-02-01 09:30:00.000961260  184.0100   302           Rr
+    3 2024-02-01 15:59:59.990606937  186.8312     1           Rr
+    4 2024-02-01 16:00:00.000287011  186.8900   100           Ra
+    5 2024-02-01 19:59:59.547785229  181.4500    59           Ra
     """
     if calendar_name is None:
         calendar_name = ''
@@ -1217,15 +1213,14 @@ def limit(self: 'Source',
        0 2003-12-01 00:00:00.002  3
        1 2003-12-01 00:00:00.003  4
 
-    Using `apply_across_symbols` to limit ticks through all symbols in one database.
+    Using ``apply_across_symbols`` to limit ticks through all symbols in one database:
 
-    Assume that we have database with symbols `S1` and `S2`. And there are 5 ticks for each of them in the database.
-
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='TT')  # doctest: +SKIP
-    >>> data = data.limit(7, apply_across_symbols=True)  # doctest: +SKIP
-    >>> result = otp.run(data, symbols=['S1', 'S2'])  # doctest: +SKIP
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', date=otp.dt(2024, 2, 1))       # doctest: +SKIP
+    >>> data = data.limit(5)                                                                       # doctest: +SKIP
+    >>> data = data.limit(7, apply_across_symbols=True)                                            # doctest: +SKIP
+    >>> result = otp.run(data, symbols=['AAPL', 'MSFT'])                                           # doctest: +SKIP
     >>> print(', '.join(f'{len(df)} ticks for symbol {symbol}' for symbol, df in result.items()))  # doctest: +SKIP
-    5 ticks for symbol S1, 2 ticks for symbol S2
+    5 ticks for symbol AAPL, 2 ticks for symbol MSFT
     """
     if not otp.compatibility._is_limit_ep_supported():
         raise RuntimeError('LIMIT EP isn\'t supported by the current OneTick version.')
@@ -1513,17 +1508,17 @@ def corp_actions(self: 'Source', *args, **kwargs) -> 'Source':
 
     Examples
     --------
-    >>> src = otp.DataSource('US_COMP',
-    ...                      tick_type='TRD',
-    ...                      start=otp.dt(2022, 5, 20, 9, 30),
-    ...                      end=otp.dt(2022, 5, 26, 16))
-    >>> df = otp.run(src, symbols='MKD', symbol_date=otp.date(2022, 5, 22))
-    >>> df["PRICE"][0]
-    0.0911
-    >>> src = src.corp_actions(adjustment_date=otp.date(2022, 5, 22),
-    ...                        fields="PRICE")
-    >>> df = otp.run(src, symbols='MKD', symbol_date=otp.date(2022, 5, 22))
-    >>> df["PRICE"][0]
-    1.36649931675
+    >>> src = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> src = src[['PRICE']][:5]
+    >>> src['ORIG_PRICE'] = src['PRICE']
+    >>> src = src.corp_actions(adjustment_date=otp.date(2024, 2, 8),
+    ...                        fields="PRICE", apply_cash_dividend=True)
+    >>> otp.run(src, date=otp.date(2024, 2, 9), symbol_date=otp.date(2024, 2, 8))
+                               Time   PRICE  ORIG_PRICE
+    0 2024-02-09 04:00:00.010340517  188.56      188.32
+    1 2024-02-09 04:00:00.011124015  188.56      188.32
+    2 2024-02-09 04:00:00.011139241  188.64      188.40
+    3 2024-02-09 04:00:00.034406735  188.93      188.69
+    4 2024-02-09 04:00:00.038220459  188.93      188.69
     """
     return otp.functions.corp_actions(self, *args, **kwargs)

@@ -271,7 +271,7 @@ Let's change our test example to use ticks from a database:
         ])
 
         # define database
-        db = otp.DB('SOME_DB')
+        db = otp.DB('TEST_DB')
 
         # add ticks into the database
         db.add(orders,
@@ -283,7 +283,7 @@ Let's change our test example to use ticks from a database:
         f_session.use(db)
 
         # read ticks from our database
-        src = otp.DataSource(db='SOME_DB',
+        src = otp.DataSource(db='TEST_DB',
                              tick_type='ORDER',
                              symbol='MSFT',
                              date=otp.dt(2023, 1, 1))
@@ -324,7 +324,7 @@ The following example shows how to re-use databases:
         ])
 
         # define database
-        db = otp.DB('SOME_DB')
+        db = otp.DB('TEST_DB')
 
         # add ticks into the database
         db.add(orders,

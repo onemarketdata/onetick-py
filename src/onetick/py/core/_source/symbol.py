@@ -14,20 +14,18 @@ class SymbolType:
 
         Examples
         --------
-        >>> symbols = otp.Symbols('SOME_DB')
+        >>> symbols = otp.Symbols('US_COMP_SAMPLE')[:3]
         >>> symbols['PARAM'] = 'PAM'
-        >>> ticks = otp.DataSource('SOME_DB', tick_type='TT')
+        >>> ticks = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
+        >>> ticks = ticks[['PRICE']][:1]
         >>> ticks['SYMBOL_PARAM'] = ticks.Symbol['PARAM', str]
         >>> ticks['SYMBOL_NAME'] = ticks.Symbol.name
         >>> ticks = otp.merge([ticks], symbols=symbols)
-        >>> otp.run(ticks)
-                             Time  X SYMBOL_PARAM SYMBOL_NAME
-        0 2003-12-01 00:00:00.000  1          PAM          S1
-        1 2003-12-01 00:00:00.000 -3          PAM          S2
-        2 2003-12-01 00:00:00.001  2          PAM          S1
-        3 2003-12-01 00:00:00.001 -2          PAM          S2
-        4 2003-12-01 00:00:00.002  3          PAM          S1
-        5 2003-12-01 00:00:00.002 -1          PAM          S2
+        >>> otp.run(ticks, date=otp.dt(2024, 2, 1))
+                                   Time   PRICE SYMBOL_PARAM SYMBOL_NAME
+        0 2024-02-01 04:00:00.008283417  186.50          PAM        AAPL
+        1 2024-02-01 04:00:00.097381367   14.33          PAM         AAL
+        2 2024-02-01 07:56:00.692942080  131.40          PAM           A
 
         See also
         --------
@@ -48,18 +46,16 @@ class SymbolType:
 
         Examples
         --------
-        >>> symbols = otp.Symbols('SOME_DB')
-        >>> ticks = otp.DataSource('SOME_DB', tick_type='TT')
+        >>> symbols = otp.Symbols('US_COMP_SAMPLE')[:3]
+        >>> ticks = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
+        >>> ticks = ticks[['PRICE']][:1]
         >>> ticks['SYMBOL_NAME'] = ticks.Symbol.name
         >>> ticks = otp.merge([ticks], symbols=symbols)
-        >>> otp.run(ticks)
-                             Time  X SYMBOL_NAME
-        0 2003-12-01 00:00:00.000  1          S1
-        1 2003-12-01 00:00:00.000 -3          S2
-        2 2003-12-01 00:00:00.001  2          S1
-        3 2003-12-01 00:00:00.001 -2          S2
-        4 2003-12-01 00:00:00.002  3          S1
-        5 2003-12-01 00:00:00.002 -1          S2
+        >>> otp.run(ticks, date=otp.dt(2024, 2, 1))
+                                   Time   PRICE SYMBOL_NAME
+        0 2024-02-01 04:00:00.008283417  186.50        AAPL
+        1 2024-02-01 04:00:00.097381367   14.33         AAL
+        2 2024-02-01 07:56:00.692942080  131.40           A
         """
         return self.__name
 
@@ -83,34 +79,28 @@ class SymbolType:
 
         Examples
         --------
-        >>> symbols = otp.Symbols('SOME_DB')
+        >>> symbols = otp.Symbols('US_COMP_SAMPLE')[:3]
         >>> symbols['PARAM'] = 'PAM'
-        >>> ticks = otp.DataSource('SOME_DB', tick_type='TT')
+        >>> ticks = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
+        >>> ticks = ticks[['PRICE']][:1]
         >>> ticks['SYMBOL_PARAM'] = ticks.Symbol.get(name='PARAM', dtype=str, default='default')
         >>> ticks = otp.merge([ticks], symbols=symbols)
-        >>> otp.run(ticks)
-                             Time  X SYMBOL_PARAM
-        0 2003-12-01 00:00:00.000  1          PAM
-        1 2003-12-01 00:00:00.000 -3          PAM
-        2 2003-12-01 00:00:00.001  2          PAM
-        3 2003-12-01 00:00:00.001 -2          PAM
-        4 2003-12-01 00:00:00.002  3          PAM
-        5 2003-12-01 00:00:00.002 -1          PAM
+        >>> otp.run(ticks, date=otp.dt(2024, 2, 1))
+                                   Time   PRICE SYMBOL_PARAM
+        0 2024-02-01 04:00:00.008283417  186.50          PAM
+        1 2024-02-01 04:00:00.097381367   14.33          PAM
+        2 2024-02-01 07:56:00.692942080  131.40          PAM
 
-        >>> symbol1 = otq.Symbol('SOME_DB::S1', params={'PARAM': 1})
-        >>> symbol2 = otq.Symbol('SOME_DB::S2')
-        >>> data = otp.DataSource(tick_type='TT')
+        >>> symbol1 = otq.Symbol('US_COMP_SAMPLE::AAPL', params={'PARAM': 1})
+        >>> symbol2 = otq.Symbol('US_COMP_SAMPLE::MSFT')
+        >>> data = otp.DataSource(tick_type='TRD')
+        >>> data = data.table(PRICE=float, strict=True)[:1]
         >>> data['P'] = data.Symbol.get(name='PARAM', dtype=int, default=10)
         >>> data = otp.merge([data], symbols=[symbol1, symbol2], identify_input_ts=True)
-        >>> otp.run(data)
-                             Time   P  X  SYMBOL_NAME TICK_TYPE
-        0 2003-12-01 00:00:00.000   1  1  SOME_DB::S1        TT
-        1 2003-12-01 00:00:00.000  10 -3  SOME_DB::S2        TT
-        2 2003-12-01 00:00:00.001   1  2  SOME_DB::S1        TT
-        3 2003-12-01 00:00:00.001  10 -2  SOME_DB::S2        TT
-        4 2003-12-01 00:00:00.002   1  3  SOME_DB::S1        TT
-        5 2003-12-01 00:00:00.002  10 -1  SOME_DB::S2        TT
-
+        >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                                   Time   PRICE   P           SYMBOL_NAME TICK_TYPE
+        0 2024-02-01 04:00:00.008283417  186.50   1  US_COMP_SAMPLE::AAPL       TRD
+        1 2024-02-01 04:00:00.016997102  400.15  10  US_COMP_SAMPLE::MSFT       TRD
         """
         if default is None:
             default = ott.default_by_type(dtype)
@@ -156,28 +146,27 @@ class SymbolType:
         --------
         The second parameter is symbol parameter's type.
 
-        >>> symbols = otp.Symbols('SOME_DB')
+        >>> symbols = otp.Symbols('US_COMP_SAMPLE')[:3]
         >>> symbols['PARAM'] = 5
-        >>> ticks = otp.DataSource('SOME_DB', tick_type='TT')
+        >>> ticks = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
+        >>> ticks = ticks[['PRICE']][:1]
         >>> ticks['SYMBOL_PARAM'] = ticks.Symbol['PARAM', int] + 1
         >>> ticks['SYMBOL_PARAM'].dtype
         <class 'int'>
         >>> ticks = otp.merge([ticks], symbols=symbols)
-        >>> otp.run(ticks)
-                             Time  X  SYMBOL_PARAM
-        0 2003-12-01 00:00:00.000  1             6
-        1 2003-12-01 00:00:00.000 -3             6
-        2 2003-12-01 00:00:00.001  2             6
-        3 2003-12-01 00:00:00.001 -2             6
-        4 2003-12-01 00:00:00.002  3             6
-        5 2003-12-01 00:00:00.002 -1             6
+        >>> otp.run(ticks, date=otp.dt(2024, 2, 1))
+                                   Time   PRICE  SYMBOL_PARAM
+        0 2024-02-01 04:00:00.008283417  186.50             6
+        1 2024-02-01 04:00:00.097381367   14.33             6
+        2 2024-02-01 07:56:00.692942080  131.40             6
 
         It also works with :py:class:`~onetick.py.msectime` and :py:class:`~onetick.py.nsectime` types:
 
-        >>> symbols = otp.Symbols('SOME_DB')
+        >>> symbols = otp.Symbols('US_COMP_SAMPLE')[:3]
         >>> symbols['NSECTIME_PARAM'] = symbols['Time'] + otp.Nano(100)
         >>> symbols['MSECTIME_PARAM'] = symbols['Time'] + otp.Milli(1)
-        >>> ticks = otp.DataSource('SOME_DB', tick_type='TT')
+        >>> ticks = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
+        >>> ticks = ticks[['PRICE']][:1]
         >>> ticks['NSECTIME_PARAM'] = ticks.Symbol['NSECTIME_PARAM', otp.nsectime] + otp.Nano(1)
         >>> ticks['MSECTIME_PARAM'] = ticks.Symbol['MSECTIME_PARAM', otp.msectime] + otp.Milli(1)
         >>> ticks['NSECTIME_PARAM'].dtype
@@ -185,14 +174,11 @@ class SymbolType:
         >>> ticks['MSECTIME_PARAM'].dtype
         <class 'onetick.py.types.msectime'>
         >>> ticks = otp.merge([ticks], symbols=symbols)
-        >>> otp.run(ticks)
-                             Time  X                NSECTIME_PARAM          MSECTIME_PARAM
-        0 2003-12-01 00:00:00.000  1 2003-12-01 00:00:00.000000101 2003-12-01 00:00:00.002
-        1 2003-12-01 00:00:00.000 -3 2003-12-01 00:00:00.000000101 2003-12-01 00:00:00.002
-        2 2003-12-01 00:00:00.001  2 2003-12-01 00:00:00.000000101 2003-12-01 00:00:00.002
-        3 2003-12-01 00:00:00.001 -2 2003-12-01 00:00:00.000000101 2003-12-01 00:00:00.002
-        4 2003-12-01 00:00:00.002  3 2003-12-01 00:00:00.000000101 2003-12-01 00:00:00.002
-        5 2003-12-01 00:00:00.002 -1 2003-12-01 00:00:00.000000101 2003-12-01 00:00:00.002
+        >>> otp.run(ticks, date=otp.dt(2024, 2, 1))
+                                   Time   PRICE                NSECTIME_PARAM          MSECTIME_PARAM
+        0 2024-02-01 04:00:00.008283417  186.50 2024-02-01 00:00:00.000000101 2024-02-01 00:00:00.002
+        1 2024-02-01 04:00:00.097381367   14.33 2024-02-01 00:00:00.000000101 2024-02-01 00:00:00.002
+        2 2024-02-01 07:56:00.692942080  131.40 2024-02-01 00:00:00.000000101 2024-02-01 00:00:00.002
         """
         if not isinstance(item, tuple):
             raise ValueError(f"tuple should be passed, but {type(item)} was passed")

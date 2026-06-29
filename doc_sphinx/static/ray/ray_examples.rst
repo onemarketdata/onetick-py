@@ -18,10 +18,10 @@ Example remote function
     def example_otp_code():
 
         # here goes OTP code you want to run
-        data = otp.DataSource(db='US_COMP',
+        data = otp.DataSource(db='US_COMP_SAMPLE',
                               tick_type='TRD',
-                              start=otp.dt(2022, 4, 1),
-                              end=otp.dt(2022, 4, 2))
+                              start=otp.dt(2024, 2, 1),
+                              end=otp.dt(2024, 2, 2))
 
         data['VOLUME'] = data['PRICE'] * data['SIZE']
         return otp.run(data)
@@ -40,12 +40,13 @@ Example remote function
 
 ::
 
-                                Time EXCHANGE  COND STOP_STOCK SOURCE TRF TTE TICKER   PRICE        DELETED_TIME  TICK_STATUS  SIZE  CORR  SEQ_NUM TRADE_ID           PARTICIPANT_TIME            TRF_TIME  OMDSEQ   VOLUME
-    0 2022-04-01 04:00:00.018381502        K  @ TI                 N       0   AAPL  175.00 1969-12-31 19:00:00            0     1     0     1970        1 2022-04-01 04:00:00.000186 1969-12-31 19:00:00       0   175.00
-    1 2022-04-01 04:00:00.018693590        K  @ TI                 N       0   AAPL  175.00 1969-12-31 19:00:00            0     3     0     1971        2 2022-04-01 04:00:00.000186 1969-12-31 19:00:00       1   525.00
-    2 2022-04-01 04:00:00.018702708        K  @ TI                 N       0   AAPL  175.01 1969-12-31 19:00:00            0     3     0     1972        3 2022-04-01 04:00:00.000186 1969-12-31 19:00:00       2   525.03
-    3 2022-04-01 04:00:00.018876909        K  @ TI                 N       0   AAPL  175.03 1969-12-31 19:00:00            0     1     0     1973        4 2022-04-01 04:00:00.000186 1969-12-31 19:00:00       3   175.03
-    4 2022-04-01 04:00:00.059225208        K  @FTI                 N       1   AAPL  175.08 1969-12-31 19:00:00            0    49     0     2024        5 2022-04-01 04:00:00.058673 1969-12-31 19:00:00       0  8578.92
+                               Time EXCHANGE  COND STOP_STOCK SOURCE TRF TTE TICKER   PRICE  ... TICK_STATUS  SIZE  CORR  SEQ_NUM  TRADE_ID              PARTICIPANT_TIME            TRF_TIME OMDSEQ   VOLUME
+    0 2024-02-01 00:00:00.048190824        Q  @ TI                 N       0   AAPL  185.12  ...           0     1     0  7036146    132606 2024-02-01 00:00:00.048173690 1970-01-01 01:00:00      0   185.12
+    1 2024-02-01 00:00:00.048193652        Q  @ TI                 N       0   AAPL  185.15  ...           0     2     0  7036147    132607 2024-02-01 00:00:00.048173690 1970-01-01 01:00:00      1   370.30
+    2 2024-02-01 00:00:00.048196114        Q  @ TI                 N       0   AAPL  185.15  ...           0     4     0  7036148    132608 2024-02-01 00:00:00.048173690 1970-01-01 01:00:00      2   740.60
+    3 2024-02-01 00:00:00.048225536        K  @ TI                 N       1   AAPL  185.15  ...           0    20     0  7036149     42210 2024-02-01 00:00:00.048014000 1970-01-01 01:00:00      3  3703.00
+    4 2024-02-01 00:00:00.048550857        P  @ TI                 N       0   AAPL  185.15  ...           0     2     0  7036150     48700 2024-02-01 00:00:00.048207295 1970-01-01 01:00:00      4   370.30
+
 
 Example function with arguments
 :::::::::::::::::::::::::::::::
@@ -147,14 +148,14 @@ with functions and lambda expressions that will be used as arguments to :doc:`/a
 
     @ray.remote(max_retries=1)
     def quicktest(start, end, symbol):
-        ds_trd = otp.DataSource(db='US_COMP', tick_type='TRD', start=start, end=end)
+        ds_trd = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', start=start, end=end)
         ds_trd.schema['COND'] = str
         ds_trd['OC_TRD'] = ds_trd.apply(match_condition)
         return otp.run(ds_trd, symbol=[symbol])
 
-    start = otp.dt(2022, 8, 25, 9, 29)
-    end = otp.dt(2022, 8, 25, 16, 30)
-    symbol = 'BAC'
+    start = otp.dt(2024, 2, 1, 9, 29)
+    end = otp.dt(2024, 2, 1, 16, 30)
+    symbol = 'AAPL'
     ray.init()
     result = ray.get(quicktest.remote(start, end, symbol))
     print(result)

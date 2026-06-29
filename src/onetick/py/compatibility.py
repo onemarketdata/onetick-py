@@ -147,6 +147,13 @@ def _get_onetick_version(db_name, context, start, end) -> dict:
     graph = otq.GraphQuery(node.tick_type('DUMMY'))
     symbols = f'{db_name}::'
 
+    auth_kwargs = {
+        'username': otp.config.default_username,
+        'alternative_username': otp.config.default_auth_username,
+        'password': otp.config.default_password,
+    }
+    auth_kwargs = {k: v for k, v in auth_kwargs.items() if k in inspect.signature(otq.run).parameters}
+
     # setting this is important so we don't get access error
     qp = pyomd.QueryProperties()
     qp.set_property_value('IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE', 'TRUE')
@@ -157,7 +164,8 @@ def _get_onetick_version(db_name, context, start, end) -> dict:
                      end=end,
                      context=context,
                      query_properties=qp,
-                     timezone='UTC')
+                     timezone='UTC',
+                     **auth_kwargs)
     data = result.output(symbols).data
     if not data:
         raise RuntimeError(f"Can't get OneTick version from database '{db_name}'")

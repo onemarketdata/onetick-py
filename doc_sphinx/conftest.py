@@ -9,31 +9,8 @@ import onetick.py as otp
 from onetick.py.otq import otq
 
 
-@pytest.fixture(scope='session')
-def real_db_schemas(cloud_server):
-    """ A temporary session that helps to get real database schemas to
-    generate realistic ticks """
-
-    res = {}
-
-    with otp.Session() as session:
-        session.use(cloud_server)
-
-        res['us_comp_trd'] = otp.databases()['US_COMP'].schema(
-            tick_type='TRD',
-            date=otp.dt(2022, 3, 2)
-        )
-
-        res['us_comp_qte'] = otp.databases()['US_COMP'].schema(
-            tick_type='QTE',
-            date=otp.dt(2022, 3, 2)
-        )
-
-    return res
-
-
 @pytest.fixture(scope='module')
-def session(pytestconfig, real_db_schemas):
+def session(pytestconfig, cloud_server):
 
     def add_data(db, *args, **kwargs):
         """ Facade that helps to prevent a case when existing data is ovewritten """
@@ -65,13 +42,13 @@ def session(pytestconfig, real_db_schemas):
     config = otp.Config(
         otq_path=[
             os.path.join(pytestconfig.rootdir, 'doctest_resources')
-        ]
+        ],
     )
 
     with otp.Session(config) as session:
         session.dbs = DBsDict()
         session.dbs.session = session
-        session.real_db_schemas = real_db_schemas
+        session.use(cloud_server)
 
         yield session
 

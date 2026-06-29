@@ -66,34 +66,32 @@ class SymbologyMapping(Source):
         Getting mapping for OID symbology for one symbol:
 
         >>> data = otp.SymbologyMapping(dest_symbology='OID')
-        >>> otp.run(data, symbols='US_COMP::AAPL',  # doctest: +SKIP
-        ...         symbol_date=otp.dt(2022, 1, 3),
-        ...         date=otp.dt(2022, 1, 3))
+        >>> otp.run(data, symbols='US_COMP_SAMPLE::AAPL',  # doctest: +SKIP
+        ...         symbol_date=otp.dt(2024, 2, 1),
+        ...         date=otp.dt(2024, 2, 1))
                 Time END_DATETIME MAPPED_SYMBOL_NAME
-        0 2022-01-03   2022-01-04               9706
+        0 2024-02-01   2024-02-02               9706
 
-        Getting mapping for all symbols in `US_COMP` database in single source:
+        Getting mapping for all symbols in `US_COMP_SAMPLE` database in single source:
 
         >>> data = otp.SymbologyMapping(dest_symbology='OID')
         >>> data = otp.merge([data],
-        ...                  symbols=otp.Symbols('US_COMP', keep_db=True),
+        ...                  symbols=otp.Symbols('US_COMP_SAMPLE', keep_db=True),
         ...                  identify_input_ts=True)
         >>> data = data[['SYMBOL_NAME', 'MAPPED_SYMBOL_NAME']]
-        >>> otp.run(data,  # doctest: +SKIP
-        ...         symbol_date=otp.dt(2022, 1, 3),
-        ...         date=otp.dt(2022, 1, 3))
-                    Time    SYMBOL_NAME MAPPED_SYMBOL_NAME
-        0     2022-01-03     US_COMP::A               3751
-        1     2022-01-03    US_COMP::AA             647321
-        2     2022-01-03   US_COMP::AAA             695581
-        3     2022-01-03  US_COMP::AAAU             673522
-        4     2022-01-03   US_COMP::AAC             703090
-        ...          ...            ...                ...
-        11746 2022-01-03   US_COMP::ZWS             273584
-        11747 2022-01-03    US_COMP::ZY             704054
-        11748 2022-01-03  US_COMP::ZYME             655470
-        11749 2022-01-03  US_COMP::ZYNE             633589
-        11750 2022-01-03  US_COMP::ZYXI             208375
+        >>> otp.run(data, symbol_date=otp.dt(2024, 2, 1), date=otp.dt(2024, 2, 1))  # doctest: +SKIP
+                           Time           SYMBOL_NAME MAPPED_SYMBOL_NAME
+        0   2024-02-01 00:00:00     US_COMP_SAMPLE::A               3751
+        1   2024-02-01 00:00:00   US_COMP_SAMPLE::AAL             322707
+        2   2024-02-01 00:00:00  US_COMP_SAMPLE::AAPL               9706
+        3   2024-02-01 00:00:00  US_COMP_SAMPLE::ABBV             289689
+        4   2024-02-01 00:00:00  US_COMP_SAMPLE::ABNB             698663
+        ..                  ...                   ...                ...
+        496 2024-02-01 00:00:00   US_COMP_SAMPLE::YUM             208045
+        497 2024-02-01 00:00:00   US_COMP_SAMPLE::ZBH             208268
+        498 2024-02-01 00:00:00  US_COMP_SAMPLE::ZBRA             208166
+        499 2024-02-01 00:00:00   US_COMP_SAMPLE::ZTS             291586
+        500 2024-02-01 06:00:00   US_COMP_SAMPLE::DAY             668642
         """
         if self._try_default_constructor(schema=schema, **kwargs):
             return

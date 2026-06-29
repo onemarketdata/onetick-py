@@ -686,20 +686,21 @@ class DataSource(Source):
 
         Query a single symbol from a database, specifying ``db`` as a string:
 
-        >>> data = otp.DataSource(db='SOME_DB', tick_type='TT', symbols='S1')
-        >>> otp.run(data)
-                             Time  X
-        0 2003-12-01 00:00:00.000  1
-        1 2003-12-01 00:00:00.001  2
-        2 2003-12-01 00:00:00.002  3
+        >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+        >>> data = data[['PRICE']][:3]
+        >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                                   Time   PRICE
+        0 2024-02-01 04:00:00.008283417  186.50
+        1 2024-02-01 04:00:00.008290927  185.59
+        2 2024-02-01 04:00:00.008291153  185.49
 
         ``db`` can also be an :py:class:`~onetick.py.DB` object:
 
         .. code-block:: python
 
-           db = otp.DB('US_COMP')
+           db = otp.DB('US_COMP_SAMPLE')
            data = otp.DataSource(db=db, tick_type='TRD', symbols='AAPL')
-           otp.run(data)
+           otp.run(data, date=otp.dt(2024, 2, 1))
 
         ``db`` can be a list to merge data from multiple databases.
         Each entry can embed its tick type using ``'DB_NAME::TICK_TYPE'`` format:
@@ -707,18 +708,18 @@ class DataSource(Source):
         .. code-block:: python
 
            data = otp.DataSource(
-               db=['US_COMP::TRD', 'CME::TRD'],
+               db=['US_COMP_SAMPLE::TRD', 'CME_SAMPLE::TRD'],
                symbols='AAPL',
            )
-           otp.run(data)
+           otp.run(data, date=otp.dt(2024, 2, 1))
 
         When some databases in the list lack a tick type, ``tick_type`` fills them in:
 
         .. code-block:: python
 
-           # Equivalent to db=['US_COMP::TRD', 'CME::TRD']
+           # Equivalent to db=['US_COMP_SAMPLE::TRD', 'CME_SAMPLE::TRD']
            data = otp.DataSource(
-               db=['US_COMP', 'CME'],
+               db=['US_COMP_SAMPLE', 'CME_SAMPLE'],
                tick_type='TRD',
                symbols='AAPL',
            )
@@ -727,52 +728,58 @@ class DataSource(Source):
         In this case specified symbols will be merged into a single data flow:
 
         >>> # OTdirective: snippet-name:fetch data.simple;
-        >>> data = otp.DataSource(db='SOME_DB', tick_type='TT', symbols=['S1', 'S2'])
-        >>> otp.run(data)
-                             Time  X
-        0 2003-12-01 00:00:00.000  1
-        1 2003-12-01 00:00:00.000 -3
-        2 2003-12-01 00:00:00.001  2
-        3 2003-12-01 00:00:00.001 -2
-        4 2003-12-01 00:00:00.002  3
-        5 2003-12-01 00:00:00.002 -1
+        >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols=['AAPL', 'MSFT'])
+        >>> data = data[['PRICE']][:6]
+        >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                                   Time   PRICE
+        0 2024-02-01 04:00:00.008283417  186.50
+        1 2024-02-01 04:00:00.008290927  185.59
+        2 2024-02-01 04:00:00.008291153  185.49
+        3 2024-02-01 04:00:00.010381671  185.49
+        4 2024-02-01 04:00:00.011224206  185.50
+        5 2024-02-01 04:00:00.011671193  185.50
 
         Parameter ``identify_input_ts`` can be used to automatically add field with symbol name for each tick:
 
-        >>> data = otp.DataSource(db='SOME_DB', tick_type='TT', symbols=['S1', 'S2'], identify_input_ts=True)
-        >>> otp.run(data)
-                             Time SYMBOL_NAME TICK_TYPE  X
-        0 2003-12-01 00:00:00.000          S1        TT  1
-        1 2003-12-01 00:00:00.000          S2        TT -3
-        2 2003-12-01 00:00:00.001          S1        TT  2
-        3 2003-12-01 00:00:00.001          S2        TT -2
-        4 2003-12-01 00:00:00.002          S1        TT  3
-        5 2003-12-01 00:00:00.002          S2        TT -1
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD',
+        ...                       symbols=['AAPL', 'MSFT'], identify_input_ts=True)
+        >>> data = data[['PRICE', 'SYMBOL_NAME', 'TICK_TYPE']][:6]
+        >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                                   Time   PRICE SYMBOL_NAME TICK_TYPE
+        0 2024-02-01 04:00:00.008283417  186.50        AAPL       TRD
+        1 2024-02-01 04:00:00.008290927  185.59        AAPL       TRD
+        2 2024-02-01 04:00:00.008291153  185.49        AAPL       TRD
+        3 2024-02-01 04:00:00.010381671  185.49        AAPL       TRD
+        4 2024-02-01 04:00:00.011224206  185.50        AAPL       TRD
+        5 2024-02-01 04:00:00.011671193  185.50        AAPL       TRD
 
-        Source also can be passed as symbols, in such case magic named column SYMBOL_NAME will be transform to symbol
-        and all other columns will be symbol parameters
+        :class:`~onetick.py.Source` can also be passed as symbols,
+        in this case column *SYMBOL_NAME* will be transformed to symbol names
+        and all other columns will be symbol parameters:
 
         >>> # OTdirective: snippet-name:fetch data.symbols as a source;
-        >>> symbols = otp.Ticks(SYMBOL_NAME=['S1', 'S2'])
-        >>> data = otp.DataSource(db='SOME_DB', symbols=symbols, tick_type='TT')
-        >>> otp.run(data)
-                             Time  X
-        0 2003-12-01 00:00:00.000  1
-        1 2003-12-01 00:00:00.000 -3
-        2 2003-12-01 00:00:00.001  2
-        3 2003-12-01 00:00:00.001 -2
-        4 2003-12-01 00:00:00.002  3
-        5 2003-12-01 00:00:00.002 -1
+        >>> symbols = otp.Ticks(SYMBOL_NAME=['AAPL', 'MSFT'])
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', symbols=symbols, tick_type='TRD')
+        >>> data = data[['PRICE']][:6]
+        >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                                   Time   PRICE
+        0 2024-02-01 04:00:00.008283417  186.50
+        1 2024-02-01 04:00:00.008290927  185.59
+        2 2024-02-01 04:00:00.008291153  185.49
+        3 2024-02-01 04:00:00.010381671  185.49
+        4 2024-02-01 04:00:00.011224206  185.50
+        5 2024-02-01 04:00:00.011671193  185.50
 
         Use ``date`` to query a full day of data. It sets ``start`` to the beginning
-        of the day and ``end`` to the last millisecond of the day:
+        of the day and ``end`` to the beginning of the next day (non-inclusive):
 
-        >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL', date=otp.dt(2022, 3, 1))
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', date=otp.dt(2024, 2, 1))
+        >>> data = data[['PRICE', 'SIZE']][:3]
         >>> otp.run(data)
-                             Time  PRICE  SIZE
-        0 2022-03-01 00:00:00.000    1.3   100
-        1 2022-03-01 00:00:00.001    1.4    10
-        2 2022-03-01 00:00:00.002    1.4    50
+                                   Time   PRICE  SIZE
+        0 2024-02-01 04:00:00.008283417  186.50     6
+        1 2024-02-01 04:00:00.008290927  185.59     1
+        2 2024-02-01 04:00:00.008291153  185.49   107
 
         Alternatively, use ``start`` and ``end`` for a custom time interval.
         Standard :py:class:`datetime.datetime` objects are also accepted:
@@ -781,9 +788,9 @@ class DataSource(Source):
 
            import datetime
            data = otp.DataSource(
-               db='US_COMP', tick_type='TRD', symbols='AAPL',
-               start=datetime.datetime(2022, 3, 1, 9, 30),
-               end=datetime.datetime(2022, 3, 1, 16, 0),
+               db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL',
+               start=datetime.datetime(2024, 2, 1, 9, 30),
+               end=datetime.datetime(2024, 2, 1, 16, 0),
            )
            otp.run(data)
 
@@ -792,9 +799,9 @@ class DataSource(Source):
         .. code-block:: python
 
            data = otp.DataSource(
-               db='US_COMP', tick_type='TRD', symbols='AAPL',
-               start=otp.dt(2022, 3, 1, 9, 30),
-               end=otp.dt(2022, 3, 1, 16, 0),
+               db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL',
+               start=otp.dt(2024, 2, 1, 9, 30),
+               end=otp.dt(2024, 2, 1, 16, 0),
            )
 
         If ``date`` is set together with ``start``/``end``, ``date`` takes precedence.
@@ -805,7 +812,7 @@ class DataSource(Source):
 
            # Merge trades and quotes from the same database
            data = otp.DataSource(
-               db='US_COMP', tick_type=['TRD', 'QTE'],
+               db='US_COMP_SAMPLE', tick_type=['TRD', 'QTE'],
                symbols='AAPL', identify_input_ts=True,
            )
            # Use identify_input_ts=True to tell which tick type each row came from
@@ -814,40 +821,40 @@ class DataSource(Source):
         left ``schema_policy`` with default value, when it will be set to **manual**).
 
         >>> data = otp.DataSource(
-        ...     db='US_COMP', tick_type='TRD', symbols='AAPL', date=otp.dt(2022, 3, 1),
+        ...     db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', date=otp.dt(2024, 2, 1),
         ... )
-        >>> data.schema
-        {'PRICE': <class 'float'>, 'SIZE': <class 'int'>}
+        >>> data.schema  # doctest: +ELLIPSIS
+        {..., 'PRICE': <class 'float'>, ..., 'SIZE': <class 'int'>, ...}
 
         >>> data = otp.DataSource(
-        ...     db='US_COMP', tick_type='TRD', symbols='AAPL', schema={'PRICE': int},
-        ...     schema_policy='tolerant', date=otp.dt(2022, 3, 1),
+        ...     db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', schema={'PRICE': int},
+        ...     schema_policy='tolerant', date=otp.dt(2024, 2, 1),
         ... )
         Traceback (most recent call last):
           ...
-        ValueError: Database(-s) US_COMP::TRD schema field PRICE has type <class 'float'>,
+        ValueError: Database(-s) US_COMP_SAMPLE::TRD schema field PRICE has type <class 'float'>,
         but <class 'int'> was requested
 
         Schema policy **manual** uses exactly ``schema``:
 
-        >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL', schema={'PRICE': float},
-        ...                       date=otp.dt(2022, 3, 1), schema_policy='manual')
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', schema={'PRICE': float},
+        ...                       date=otp.dt(2024, 2, 1), schema_policy='manual')
         >>> data.schema
         {'PRICE': <class 'float'>}
 
         Schema policy **fail** raises an exception if the schema cannot be deduced:
 
-        >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL', date=otp.dt(2021, 3, 1),
-        ...                       schema_policy='fail')
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', date=otp.dt(2021, 3, 1),
+        ...                       schema_policy='fail')  # doctest: +SKIP
         Traceback (most recent call last):
           ...
-        ValueError: No ticks found in database(-s) US_COMP::TRD
+        ValueError: No ticks found in database(-s) US_COMP_SAMPLE::TRD
 
         Schema policy **tolerant_strict** uses ``schema`` if provided, otherwise falls back to
         the database schema. It still validates type compatibility:
 
-        >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL',
-        ...                       schema={'PRICE': float}, date=otp.dt(2022, 3, 1),
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL',
+        ...                       schema={'PRICE': float}, date=otp.dt(2024, 2, 1),
         ...                       schema_policy='tolerant_strict')
         >>> data.schema
         {'PRICE': <class 'float'>}
@@ -859,7 +866,7 @@ class DataSource(Source):
         .. code-block:: python
 
            data = otp.DataSource(
-               db='US_COMP', tick_type='TRD', symbols='AAPL',
+               db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL',
                schema={'PRICE': float, 'CUSTOM_FLAG': int},
                schema_policy='manual_strict',
            )
@@ -874,7 +881,7 @@ class DataSource(Source):
         .. code-block:: python
 
            data = otp.DataSource(
-               db='US_COMP', tick_type='TRD', symbols='AAPL',
+               db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL',
                schema={
                    'PRICE': float,              # 64-bit float
                    'SIZE': int,                  # 64-bit integer
@@ -888,61 +895,65 @@ class DataSource(Source):
 
         ``back_to_first_tick`` sets how far back to go looking for the latest tick before ``start`` time:
 
-        >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL', date=otp.dt(2022, 3, 2),
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', date=otp.dt(2024, 2, 1),
         ...                       back_to_first_tick=otp.Day(1))
+        >>> data = data[['PRICE', 'SIZE']][:4]
         >>> otp.run(data)
-                             Time  PRICE  SIZE
-        0 2022-03-02 00:00:00.000    1.4    50
-        1 2022-03-02 00:00:00.000    1.0   100
-        2 2022-03-02 00:00:00.001    1.1   101
-        3 2022-03-02 00:00:00.002    1.2   102
+                                   Time   PRICE  SIZE
+        0 2024-02-01 00:00:00.000000000  185.68    10
+        1 2024-02-01 04:00:00.008283417  186.50     6
+        2 2024-02-01 04:00:00.008290927  185.59     1
+        3 2024-02-01 04:00:00.008291153  185.49   107
 
         ``keep_first_tick_timestamp`` allows to show the original timestamp of the tick that was taken from before
         the start time of the query:
 
-        >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL', date=otp.dt(2022, 3, 2),
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', date=otp.dt(2024, 2, 1),
         ...                       back_to_first_tick=otp.Day(1), keep_first_tick_timestamp='ORIGIN_TIMESTAMP')
+        >>> data = data[['PRICE', 'SIZE', 'ORIGIN_TIMESTAMP']][:4]
         >>> otp.run(data)
-                             Time         ORIGIN_TIMESTAMP  PRICE  SIZE
-        0 2022-03-02 00:00:00.000  2022-03-01 00:00:00.002    1.4    50
-        1 2022-03-02 00:00:00.000  2022-03-02 00:00:00.000    1.0   100
-        2 2022-03-02 00:00:00.001  2022-03-02 00:00:00.001    1.1   101
-        3 2022-03-02 00:00:00.002  2022-03-02 00:00:00.002    1.2   102
+                                   Time   PRICE  SIZE              ORIGIN_TIMESTAMP
+        0 2024-02-01 00:00:00.000000000  185.68    10 2024-01-31 19:59:57.877747563
+        1 2024-02-01 04:00:00.008283417  186.50     6 2024-02-01 04:00:00.008283417
+        2 2024-02-01 04:00:00.008290927  185.59     1 2024-02-01 04:00:00.008290927
+        3 2024-02-01 04:00:00.008291153  185.49   107 2024-02-01 04:00:00.008291153
 
         ``max_back_ticks_to_prepend`` is used with ``back_to_first_tick``
         if more than 1 ticks before start time should be retrieved:
 
-        >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL', date=otp.dt(2022, 3, 2),
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', date=otp.dt(2024, 2, 1),
         ...                       max_back_ticks_to_prepend=2, back_to_first_tick=otp.Day(1),
         ...                       keep_first_tick_timestamp='ORIGIN_TIMESTAMP')
+        >>> data = data[['PRICE', 'SIZE', 'ORIGIN_TIMESTAMP']][:5]
         >>> otp.run(data)
-                             Time         ORIGIN_TIMESTAMP  PRICE  SIZE
-        0 2022-03-02 00:00:00.000  2022-03-01 00:00:00.001    1.4    10
-        1 2022-03-02 00:00:00.000  2022-03-01 00:00:00.002    1.4    50
-        2 2022-03-02 00:00:00.000  2022-03-02 00:00:00.000    1.0   100
-        3 2022-03-02 00:00:00.001  2022-03-02 00:00:00.001    1.1   101
-        4 2022-03-02 00:00:00.002  2022-03-02 00:00:00.002    1.2   102
+                                   Time     PRICE  SIZE              ORIGIN_TIMESTAMP
+        0 2024-02-01 00:00:00.000000000  185.6999     5 2024-01-31 19:59:53.314804162
+        1 2024-02-01 00:00:00.000000000  185.6800    10 2024-01-31 19:59:57.877747563
+        2 2024-02-01 04:00:00.008283417  186.5000     6 2024-02-01 04:00:00.008283417
+        3 2024-02-01 04:00:00.008290927  185.5900     1 2024-02-01 04:00:00.008290927
+        4 2024-02-01 04:00:00.008291153  185.4900   107 2024-02-01 04:00:00.008291153
 
         ``where_clause_for_back_ticks`` is used to filter out ticks before the start time:
 
         .. testcode::
            :skipif: not otp.compatibility._is_supported_where_clause_for_back_ticks()
 
-           data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL', date=otp.dt(2022, 3, 2),
+           data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', date=otp.dt(2024, 2, 1),
                                  where_clause_for_back_ticks=otp.raw('SIZE>=50', dtype=bool),
                                  back_to_first_tick=otp.Day(1), max_back_ticks_to_prepend=2,
                                  keep_first_tick_timestamp='ORIGIN_TIMESTAMP')
+           data = data[['PRICE', 'SIZE', 'ORIGIN_TIMESTAMP']][:5]
            df = otp.run(data)
            print(df)
 
         .. testoutput::
 
-                                Time         ORIGIN_TIMESTAMP  PRICE  SIZE
-           0 2022-03-02 00:00:00.000  2022-03-01 00:00:00.000    1.3   100
-           1 2022-03-02 00:00:00.000  2022-03-01 00:00:00.002    1.4    50
-           2 2022-03-02 00:00:00.000  2022-03-02 00:00:00.000    1.0   100
-           3 2022-03-02 00:00:00.001  2022-03-02 00:00:00.001    1.1   101
-           4 2022-03-02 00:00:00.002  2022-03-02 00:00:00.002    1.2   102
+                                      Time   PRICE  SIZE              ORIGIN_TIMESTAMP
+           0 2024-02-01 00:00:00.000000000  185.70   440 2024-01-31 19:59:51.062739337
+           1 2024-02-01 00:00:00.000000000  185.70   100 2024-01-31 19:59:53.302285347
+           2 2024-02-01 04:00:00.008283417  186.50     6 2024-02-01 04:00:00.008283417
+           3 2024-02-01 04:00:00.008290927  185.59     1 2024-02-01 04:00:00.008290927
+           4 2024-02-01 04:00:00.008291153  185.49   107 2024-02-01 04:00:00.008291153
 
         ``presort`` controls whether to use parallel data fetching when querying multiple
         bound symbols. It defaults to True when ``symbols`` is set. Set to False to use
@@ -952,14 +963,14 @@ class DataSource(Source):
 
            # With presort (default) - parallel fetching, faster for many symbols
            data = otp.DataSource(
-               db='US_COMP', tick_type='TRD',
+               db='US_COMP_SAMPLE', tick_type='TRD',
                symbols=['AAPL', 'MSFT', 'GOOGL'],
                presort=True,  # this is the default when symbols is set
            )
 
            # Without presort - sequential merge
            data = otp.DataSource(
-               db='US_COMP', tick_type='TRD',
+               db='US_COMP_SAMPLE', tick_type='TRD',
                symbols=['AAPL', 'MSFT', 'GOOGL'],
                presort=False,
            )
@@ -971,7 +982,7 @@ class DataSource(Source):
         .. code-block:: python
 
            data = otp.DataSource(
-               db='US_COMP', tick_type='TRD',
+               db='US_COMP_SAMPLE', tick_type='TRD',
                symbols=large_symbol_list,  # e.g., 500+ symbols
                batch_size=50,              # process 50 symbols at a time
                concurrency=4,              # use 4 CPU cores
@@ -983,16 +994,16 @@ class DataSource(Source):
         .. code-block:: python
 
            data = otp.DataSource(
-               db='US_COMP', tick_type='TRD',
+               db='US_COMP_SAMPLE', tick_type='TRD',
                symbols=['AAPL', 'MSFT'],
-               symbol_date=otp.dt(2022, 3, 1),
+               symbol_date=otp.dt(2024, 2, 1),
            )
 
            # symbol_date also accepts integers in YYYYMMDD format
            data = otp.DataSource(
-               db='US_COMP', tick_type='TRD',
+               db='US_COMP_SAMPLE', tick_type='TRD',
                symbols=['AAPL', 'MSFT'],
-               symbol_date=20220301,
+               symbol_date=20240201,
            )
         """
 

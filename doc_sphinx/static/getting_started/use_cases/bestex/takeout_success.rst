@@ -7,7 +7,7 @@ Takeout success
     Takeout_Success := SizeFilled >= min(Size, Ask_Size), when Side = 'BUY', and
     Takeout_Success := SizeFilled >= min(Size, Bid_Size), otherwise
 
-Calculate `takeout success` for orders and US_COMP databases using for the ``TSLA`` ticker in ``onetick.py``
+Calculate `takeout success` for orders and US_COMP_SAMPLE databases using for the ``TSLA`` ticker in ``onetick.py``
 
 .. testcode::
 
@@ -18,7 +18,7 @@ Calculate `takeout success` for orders and US_COMP databases using for the ``TSL
     # add the direction that is equl to 1 for buy orders and -1 for sell orders
     orders['DIRECTION'] = 2 * orders['BUY_FLAG'] - 1
 
-    quotes = otp.DataSource('US_COMP', tick_type='QTE')
+    quotes = otp.DataSource('US_COMP_SAMPLE', tick_type='QTE')
 
     res = otp.join_by_time([orders, quotes])
 
@@ -34,4 +34,4 @@ Calculate `takeout success` for orders and US_COMP databases using for the ``TSL
                 where=(res['DIRECTION'] == -1) & (res['QTY_FILLED'] >= res['BID_SIZE'])
     )
 
-    otp.run(res, date=otp.dt(2022, 3, 2), symbols='TSLA')
+    otp.run(res, date=otp.dt(2024, 2, 1), symbols='TSLA')

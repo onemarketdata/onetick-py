@@ -1033,23 +1033,24 @@ class Session:
 
     >>> 'ONE_TICK_CONFIG' in os.environ
     True
-    >>> list(otp.databases()) # doctest: +ELLIPSIS
-    ['COMMON', 'DEMO_L1', ..., 'SOME_DB', 'SOME_DB_2'...
-    >>> data = otp.DataSource('SOME_DB', symbol='S1', tick_type='TT')
-    >>> otp.run(data)
-                         Time  X
-    0 2003-12-01 00:00:00.000  1
-    1 2003-12-01 00:00:00.001  2
-    2 2003-12-01 00:00:00.002  3
+    >>> list(otp.databases())  # doctest: +ELLIPSIS
+    [..., 'US_COMP_SAMPLE', ...]
+    >>> data = otp.DataSource('US_COMP_SAMPLE', symbol='AAPL', tick_type='TRD')
+    >>> data = data[['PRICE']][:3]
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                               Time   PRICE
+    0 2024-02-01 04:00:00.008283417  186.50
+    1 2024-02-01 04:00:00.008290927  185.59
+    2 2024-02-01 04:00:00.008291153  185.49
 
     Collecting performance metrics with ``gather_performance_metrics`` parameter:
 
-    >>> with otp.Session(gather_performance_metrics=True) as session:  # doctest: +SKIP
-    >>>    data_a = otp.DataSource('DB_A', symbol='S1', tick_type='TT')  # doctest: +SKIP
-    >>>    data_b = otp.DataSource('DB_B', symbol='S1', tick_type='TT')  # doctest: +SKIP
-    >>>    _ = otp.run(otp.merge([data_a, data_b]))  # doctest: +SKIP
-    >>>
-    >>> session.performance_metrics  # doctest: +SKIP
+    >>> with otp.Session(gather_performance_metrics=True) as session:    # doctest: +SKIP
+    ...    data_a = otp.DataSource('DB_A', symbol='S1', tick_type='TT')  # doctest: +SKIP
+    ...    data_b = otp.DataSource('DB_B', symbol='S1', tick_type='TT')  # doctest: +SKIP
+    ...    _ = otp.run(otp.merge([data_a, data_b]))                      # doctest: +SKIP
+
+    >>> session.performance_metrics                                      # doctest: +SKIP
     {
         'user_time': {'name': 'User Time', 'value': 3.39063, 'units': 's'},
         'system_time': {'name': 'System Time', 'value': 1.07813, 'units': 's'},
@@ -1173,11 +1174,11 @@ class Session:
         (note that ``session`` is created before this example)
 
         >>> list(otp.databases()) # doctest: +ELLIPSIS
-        ['COMMON', 'DEMO_L1', ...]
+        [..., 'US_COMP_SAMPLE', ...]
         >>> new_db = otp.DB('ZZZZ')
         >>> session.use(new_db)
         >>> list(otp.databases()) # doctest: +ELLIPSIS
-        ['COMMON', 'DEMO_L1', ..., 'ZZZZ']
+        [..., 'US_COMP_SAMPLE', ..., 'ZZZZ', ...]
         """
         self.locator.add(*items)
         dbs = []

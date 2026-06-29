@@ -175,7 +175,7 @@ def merge(sources, align_schema=True, symbols=None, identify_input_ts=False,
     >>> symbols = otp.Ticks(SYMBOL_NAME=['COMMON::S1', 'DEMO_L1::S2'])
     >>> data = otp.Tick(A=1, db=None, tick_type='TT')
     >>> data = otp.merge([data], symbols=symbols, identify_input_ts=True,
-    ...                        separate_db_name=True, add_symbol_index=True, added_field_name_suffix='__')
+    ...                  separate_db_name=True, add_symbol_index=True, added_field_name_suffix='__')
     >>> otp.run(data)
             Time  A SYMBOL_NAME__ DB_NAME__ TICK_TYPE__  SYMBOL_INDEX__
     0 2003-12-01  1            S1    COMMON          TT               1
@@ -1751,19 +1751,18 @@ def corp_actions(source,
 
     Examples
     --------
-    >>> src = otp.DataSource('US_COMP',
-    ...                      tick_type='TRD',
-    ...                      start=otp.dt(2022, 5, 20, 9, 30),
-    ...                      end=otp.dt(2022, 5, 26, 16))
-    >>> df = otp.run(src, symbols='MKD', symbol_date=otp.date(2022, 5, 22))
-    >>> df["PRICE"][0]
-    0.0911
-    >>> src = otp.corp_actions(src,
-    ...                        adjustment_date=otp.date(2022, 5, 22),
-    ...                        fields="PRICE")
-    >>> df = otp.run(src, symbols='MKD', symbol_date=otp.date(2022, 5, 22))
-    >>> df["PRICE"][0]
-    1.36649931675
+    >>> src = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> src = src[['PRICE']][:5]
+    >>> src['ORIG_PRICE'] = src['PRICE']
+    >>> src = src.corp_actions(adjustment_date=otp.date(2024, 2, 8),
+    ...                        fields="PRICE", apply_cash_dividend=True)
+    >>> otp.run(src, date=otp.date(2024, 2, 9), symbol_date=otp.date(2024, 2, 8))
+                               Time   PRICE  ORIG_PRICE
+    0 2024-02-09 04:00:00.010340517  188.56      188.32
+    1 2024-02-09 04:00:00.011124015  188.56      188.32
+    2 2024-02-09 04:00:00.011139241  188.64      188.40
+    3 2024-02-09 04:00:00.034406735  188.93      188.69
+    4 2024-02-09 04:00:00.038220459  188.93      188.69
     """
     source = source.copy()
 
@@ -2224,6 +2223,7 @@ def join_with_aggregated_window(
     4 2003-12-01 00:00:00.004  4
     5 2003-12-01 00:00:00.005  5
     6 2003-12-01 00:00:00.006  6
+
     >>> otp.run(pass_src)
                          Time  B
     0 2003-12-01 00:00:00.001  1
@@ -2364,38 +2364,44 @@ def join_with_aggregated_window(
 
     Use-case: check the volume in the 60 seconds following this trade (not including this trade):
 
-    >>> data = otp.DataSource('US_COMP', tick_type='TRD', symbols='MSFT', date=otp.dt(2022, 3, 3))
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='MSFT', date=otp.dt(2024, 2, 1))
+    >>> data = data[['PRICE', 'SIZE']][:6]
     >>> otp.run(data)
-                         Time  PRICE  SIZE
-    0 2022-03-03 00:00:00.000    1.0   100
-    1 2022-03-03 00:00:00.001    1.1   101
-    2 2022-03-03 00:00:00.002    1.2   102
-    3 2022-03-03 00:01:00.000    2.0   200
-    4 2022-03-03 00:01:00.001    2.1   201
-    5 2022-03-03 00:01:00.002    2.2   202
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.016997102  400.15    42
+    1 2024-02-01 04:00:00.024299525  402.00    30
+    2 2024-02-01 04:00:00.024325756  402.00    10
+    3 2024-02-01 04:00:00.024358407  400.00    10
+    4 2024-02-01 04:00:00.024362235  399.99     5
+    5 2024-02-01 04:00:00.024393291  399.99    15
 
     .. testcode::
        :skipif: not otp.compatibility._is_supported_join_with_aggregated_window()
 
-       data = otp.DataSource('US_COMP', tick_type='TRD', symbols='MSFT', date=otp.dt(2022, 3, 3))
+       data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='MSFT', date=otp.dt(2024, 2, 1))
        data = otp.join_with_aggregated_window(
            data, data, {'VOLUME': otp.agg.sum('SIZE')},
            boundary_aggr_tick='next',
            pass_src_delay_msec=-60000,
            bucket_interval=60, bucket_units='seconds',
        )
+       data = data[['VOLUME', 'PRICE', 'SIZE']][:10]
        df = otp.run(data)
        print(df)
 
     .. testoutput::
 
-                            Time  VOLUME  PRICE  SIZE
-       0 2022-03-03 00:00:00.000     203    1.0   100
-       1 2022-03-03 00:00:00.001     302    1.1   101
-       2 2022-03-03 00:00:00.002     401    1.2   102
-       3 2022-03-03 00:01:00.000     403    2.0   200
-       4 2022-03-03 00:01:00.001     202    2.1   201
-       5 2022-03-03 00:01:00.002       0    2.2   202
+                                  Time  VOLUME   PRICE  SIZE
+       0 2024-02-01 04:00:00.016997102    2031  400.15    42
+       1 2024-02-01 04:00:00.024299525    1989  402.00    30
+       2 2024-02-01 04:00:00.024325756    1989  402.00    10
+       3 2024-02-01 04:00:00.024358407    1989  400.00    10
+       4 2024-02-01 04:00:00.024362235    1989  399.99     5
+       5 2024-02-01 04:00:00.024393291    1989  399.99    15
+       6 2024-02-01 04:00:00.024396937    1989  399.81    13
+       7 2024-02-01 04:00:00.024449244    1989  399.81    50
+       8 2024-02-01 04:00:00.024545103    1989  399.81    10
+       9 2024-02-01 04:00:00.026232445    1846  400.00     4
     """
     if not otp.compatibility._is_supported_join_with_aggregated_window():
         raise RuntimeError('Function join_with_aggregated_window() is not supported on this OneTick build')

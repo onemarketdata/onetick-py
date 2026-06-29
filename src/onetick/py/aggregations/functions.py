@@ -716,8 +716,8 @@ def ob_snapshot(*args, **kwargs):
     Examples
     --------
     >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
-    >>> data = otp.agg.ob_snapshot(max_levels=3).apply(data)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+    >>> data = otp.agg.ob_snapshot(max_levels=3).apply(data)                             # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10))          # doctest: +SKIP
                      Time     PRICE  SIZE  LEVEL                   UPDATE_TIME  BUY_SELL_FLAG
     0 2024-02-01 10:00:00  17351.75     1      1 2024-02-01 09:59:59.701711193              1
     1 2024-02-01 10:00:00  17352.00     3      2 2024-02-01 09:59:59.582195881              1
@@ -743,8 +743,8 @@ def ob_snapshot_wide(*args, **kwargs):
     Examples
     --------
     >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\\H24')  # doctest: +SKIP
-    >>> data = otp.agg.ob_snapshot_wide(max_levels=3).apply(data)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+    >>> data = otp.agg.ob_snapshot_wide(max_levels=3).apply(data)                         # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10))           # doctest: +SKIP
                      Time  BID_PRICE  BID_SIZE               BID_UPDATE_TIME  ASK_PRICE  ASK_SIZE \
                                       ASK_UPDATE_TIME  LEVEL
     0 2024-02-01 10:00:00   17351.25         1 2024-02-01 09:59:59.867609851   17351.75         1 \
@@ -771,8 +771,8 @@ def ob_snapshot_flat(*args, **kwargs):
     Examples
     --------
     >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
-    >>> data = otp.agg.ob_snapshot_flat(max_levels=3).apply(data)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+    >>> data = otp.agg.ob_snapshot_flat(max_levels=3).apply(data)                        # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10))          # doctest: +SKIP
                      Time  BID_PRICE1  BID_SIZE1              BID_UPDATE_TIME1  ASK_PRICE1  ASK_SIZE1 ...
     0 2024-02-01 10:00:00    17351.25          1 2024-02-01 09:59:59.867609851    17351.75          1 ...
     """
@@ -793,8 +793,8 @@ def ob_summary(*args, **kwargs):
     Examples
     --------
     >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\\H24')  # doctest: +SKIP
-    >>> data = otp.agg.ob_summary(max_levels=3).apply(data)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+    >>> data = otp.agg.ob_summary(max_levels=3).apply(data)                               # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10))           # doctest: +SKIP
                      Time  BID_SIZE      BID_VWAP  BEST_BID_PRICE  WORST_BID_PRICE  NUM_BID_LEVELS  ASK_SIZE \
                              ASK_VWAP  BEST_ASK_PRICE  WORST_ASK_PRICE  NUM_ASK_LEVELS
     0 2024-02-01 10:00:00         9  17350.972222        17351.25         17350.75               3         7 \
@@ -820,7 +820,7 @@ def ob_size(*args, **kwargs):
 
     >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
     >>> data = otp.agg.ob_size(bucket_interval=otp.Minute(5), max_levels=3).apply(data)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11))          # doctest: +SKIP
                       Time  ASK_VALUE  BID_VALUE
     0  2024-02-01 10:05:00       12.0       10.0
     1  2024-02-01 10:10:00       12.0        5.0
@@ -829,9 +829,9 @@ def ob_size(*args, **kwargs):
 
     Selecting side via ``side`` parameter:
 
-    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')              # doctest: +SKIP
     >>> data = otp.agg.ob_size(bucket_interval=otp.Minute(5), max_levels=3, side='ASK').apply(data)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11))                      # doctest: +SKIP
                       Time  VALUE
     0  2024-02-01 10:05:00   12.0
     1  2024-02-01 10:10:00   12.0
@@ -857,8 +857,8 @@ def ob_vwap(*args, **kwargs):
     Basic example:
 
     >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
-    >>> data = otp.agg.ob_vwap(bucket_interval=otp.Minute(5)).apply(data)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+    >>> data = otp.agg.ob_vwap(bucket_interval=otp.Minute(5)).apply(data)                # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11))          # doctest: +SKIP
                       Time     ASK_VALUE     BID_VALUE
     0  2024-02-01 10:05:00  17493.087642  17013.839286
     1  2024-02-01 10:10:00  17486.863024  17006.515027
@@ -868,8 +868,8 @@ def ob_vwap(*args, **kwargs):
     Selecting side via ``side`` parameter:
 
     >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
-    >>> data = otp.agg.ob_vwap(bucket_interval=otp.Minute(5), side='BID').apply(data)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+    >>> data = otp.agg.ob_vwap(bucket_interval=otp.Minute(5), side='BID').apply(data)    # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11))          # doctest: +SKIP
                       Time         VALUE
     0  2024-02-01 10:05:00  17013.839286
     1  2024-02-01 10:10:00  17006.515027
@@ -897,8 +897,8 @@ def ob_num_levels(*args, **kwargs):
     --------
 
     >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
-    >>> data = otp.agg.ob_num_levels(bucket_interval=otp.Second(300)).apply(data)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+    >>> data = otp.agg.ob_num_levels(bucket_interval=otp.Second(300)).apply(data)        # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11))          # doctest: +SKIP
                       Time  ASK_VALUE  BID_VALUE
     0  2024-02-01 10:05:00      743.0      830.0
     1  2024-02-01 10:10:00      753.0      820.0
@@ -1971,23 +1971,23 @@ def portfolio_price(*args, **kwargs):
     Basic example, by default this EP takes ``PRICE`` column as input
 
     >>> data = otp.DataSource(
-    ...     'US_COMP', symbol='AAPL', tick_type='TRD',
-    ...     start=otp.dt(2022, 3, 1), end=otp.dt(2022, 3, 2),
+    ...     'US_COMP_SAMPLE', symbol='AAPL', tick_type='TRD',
+    ...     date=otp.dt(2024, 2, 1), end=otp.dt(2024, 2, 2),
     ... )
     >>> data = data.portfolio_price()
     >>> otp.run(data)
-            Time  VALUE  NUM_SYMBOLS
-    0 2022-03-02    1.4            1
+            Time   VALUE  NUM_SYMBOLS
+    0 2024-02-02  181.45            1
 
     Getting portfolio price for multiple symbols:
 
-    >>> data = otp.DataSource('US_COMP', tick_type='TRD', start=otp.dt(2022, 3, 1), end=otp.dt(2022, 3, 2))
-    >>> data = data.portfolio_price(symbols=['AAPL', 'AAP'])
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', start=otp.dt(2024, 2, 1), end=otp.dt(2024, 2, 2))
+    >>> data = data.portfolio_price(symbols=['AAPL', 'AAL'])
     >>> otp.run(data)
-            Time  VALUE  NUM_SYMBOLS
-    0 2022-03-02  46.81            2
+            Time   VALUE  NUM_SYMBOLS
+    0 2024-02-02  195.75            2
 
-    Applying **PORTFOLIO_PRICE** on custom column
+    Applying **PORTFOLIO_PRICE** on custom column:
 
     >>> data = otp.Ticks(X=[10.0, 12.5, 11.0, 10.2, 15])
     >>> data = data.portfolio_price('X')
@@ -1995,7 +1995,7 @@ def portfolio_price(*args, **kwargs):
             Time  VALUE  NUM_SYMBOLS
     0 2003-12-04   15.0            1
 
-    Specifying weights via column 'WEIGHS'
+    Specifying weights via column 'WEIGHS':
 
     >>> data = otp.Ticks(PRICE=[10.0, 12.5, 11.0, 10.2, 15], WEIGHTS=[1, 2, -1, 2, 2])
     >>> data = data.portfolio_price(weight_field_name=data['WEIGHTS'])
@@ -2125,31 +2125,31 @@ def return_ep(*args, **kwargs):
     Examples
     --------
 
-    Basic example as :py:class:`~onetick.py.Source` method
+    Basic example as :py:class:`~onetick.py.Source` method:
 
-    >>> data = otp.DataSource('US_COMP', symbol='AAPL', tick_type='TRD')
+    >>> data = otp.DataSource('US_COMP_SAMPLE', symbol='AAPL', tick_type='TRD')
     >>> data = data.return_ep(data['PRICE'], bucket_interval=otp.Minute(10))
-    >>> otp.run(data, date=otp.dt(2022, 3, 1))  # doctest: +SKIP
-                         Time    PRICE
-    0 2022-03-01 00:00:00.000  0.99953
-    1 2022-03-01 00:10:00.000   1.0043
-    2 2022-03-01 00:20:00.000   0.9986
-    3 2022-03-01 00:30:00.000  0.99643
-    4 2022-03-01 00:40:00.000    1.042
-    ...
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))  # doctest: +SKIP
+                       Time     PRICE
+    0   2024-02-01 00:10:00  0.999784
+    1   2024-02-01 00:20:00  1.000513
+    2   2024-02-01 00:30:00  1.000567
+    3   2024-02-01 00:40:00  1.000135
+    4   2024-02-01 00:50:00  1.000027
+    ..                  ...       ...
 
-    Basic example as aggregation
+    Basic example as aggregation:
 
-    >>> data = otp.DataSource('US_COMP', symbol='AAPL', tick_type='TRD')
+    >>> data = otp.DataSource('US_COMP_SAMPLE', symbol='AAPL', tick_type='TRD')
     >>> data = otp.agg.return_ep(data['PRICE'], bucket_interval=otp.Minute(10)).apply(data)
-    >>> otp.run(data, date=otp.dt(2022, 3, 1))  # doctest: +SKIP
-                         Time    PRICE
-    0 2022-03-01 00:00:00.000  0.99953
-    1 2022-03-01 00:10:00.000   1.0043
-    2 2022-03-01 00:20:00.000   0.9986
-    3 2022-03-01 00:30:00.000  0.99643
-    4 2022-03-01 00:40:00.000    1.042
-    ...
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))  # doctest: +SKIP
+                       Time     PRICE
+    0   2024-02-01 00:10:00  0.999784
+    1   2024-02-01 00:20:00  1.000513
+    2   2024-02-01 00:30:00  1.000567
+    3   2024-02-01 00:40:00  1.000135
+    4   2024-02-01 00:50:00  1.000027
+    ..                  ...       ...
     """
     return Return(*args, **kwargs)
 

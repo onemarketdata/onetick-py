@@ -1,6 +1,6 @@
 Volatility
 ==========
-To calculate the `volatility` of a financial instrument using ``onetick.py``, you'll need to retrieve trade data (typically with the 'TRD' tick type) from the US_COMP database and then apply your defined function to calculate the volatility. The volatility is computed as the standard deviation of the trade prices divided by their average, multiplied by 100 (to get a percentage).
+To calculate the `volatility` of a financial instrument using ``onetick.py``, you'll need to retrieve trade data (typically with the 'TRD' tick type) from the US_COMP_SAMPLE database and then apply your defined function to calculate the volatility. The volatility is computed as the standard deviation of the trade prices divided by their average, multiplied by 100 (to get a percentage).
 
 
 .. testcode::
@@ -9,10 +9,10 @@ To calculate the `volatility` of a financial instrument using ``onetick.py``, yo
 
     # Define your symbol and the database
     symbol = 'TSLA'
-    database = 'US_COMP'
-    date = otp.dt(2023, 3, 2)
+    database = 'US_COMP_SAMPLE'
+    date = otp.dt(2024, 2, 1)
 
-    # Load trades data from US_COMP database
+    # Load trades data from US_COMP_SAMPLE database
     trades = otp.DataSource(database, tick_type='TRD', symbol=symbol)
 
     def add_volatility(md: otp.Source):

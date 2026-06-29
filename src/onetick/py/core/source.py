@@ -1088,10 +1088,10 @@ class Source:
         Examples
         --------
 
-        >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAA')  # doctest: +SKIP
-        >>> data1, data2 = data[(data['PRICE'] > 50)]  # doctest: +SKIP
-        >>> data = otp.merge([data1, data2])  # doctest: +SKIP
-        >>> data.render_otq('./path/to/image.png')  # doctest: +SKIP
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')  # doctest: +SKIP
+        >>> data1, data2 = data[(data['PRICE'] > 50)]                                    # doctest: +SKIP
+        >>> data = otp.merge([data1, data2])                                             # doctest: +SKIP
+        >>> data.render_otq('./path/to/image.png')                                       # doctest: +SKIP
 
         .. image:: ../../static/testing/images/render_otq_3.png
         """
@@ -1452,16 +1452,16 @@ class Source:
 
         Examples
         --------
-        >>> symbols = otp.Ticks({'SYMBOL_NAME': ['S1', 'S2'], 'PARAM': ['A', 'B']})
+        >>> symbols = otp.Ticks({'SYMBOL_NAME': ['AAPL', 'MSFT'], 'PARAM': ['A', 'B']})
         >>> symbol_params = symbols.to_symbol_param()
-        >>> t = otp.DataSource('SOME_DB', tick_type='TT')
+        >>> t = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
+        >>> t = t[['PRICE']][:2]
         >>> t['S_PARAM'] = symbol_params['PARAM']
-        >>> result = otp.run(t, symbols=symbols)
-        >>> result['S1']
-                             Time  X S_PARAM
-        0 2003-12-01 00:00:00.000  1       A
-        1 2003-12-01 00:00:00.001  2       A
-        2 2003-12-01 00:00:00.002  3       A
+        >>> result = otp.run(t, symbols=symbols, date=otp.dt(2024, 2, 1))
+        >>> result['AAPL']
+                                   Time   PRICE S_PARAM
+        0 2024-02-01 04:00:00.008283417  186.50       A
+        1 2024-02-01 04:00:00.008290927  185.59       A
         """
         return _SymbolParamSource(**self.columns())
 

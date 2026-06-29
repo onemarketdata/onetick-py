@@ -4,29 +4,6 @@ import onetick.py as otp
 
 @pytest.fixture(scope='module')
 def session(session):
-
-    session.dbs['US_COMP'].add(
-        otp.Tick(
-            PRICE=0.0,
-            SIZE=0.0,
-        ).table(
-            **session.real_db_schemas['us_comp_trd']
-        ),
-        tick_type='TRD',
-        symbol='TSLA',
-        date=otp.dt(2022, 3, 2),
-    )
-    session.dbs['US_COMP'].add(
-        otp.Tick(
-            ASK_PRICE=0.0,
-            ASK_SIZE=0.0,
-        ).table(
-            **session.real_db_schemas['us_comp_qte']
-        ),
-        tick_type='QTE',
-        symbol='TSLA',
-        date=otp.dt(2022, 3, 2),
-    )
     session.dbs['ORDERS_DB'].add(
         otp.Tick(
             PRICE=0.0,
@@ -40,7 +17,7 @@ def session(session):
         ),
         tick_type='ORDER',
         symbol='TSLA',
-        date=otp.dt(2022, 3, 2),
+        date=otp.dt(2024, 2, 1),
     )
 
     yield session

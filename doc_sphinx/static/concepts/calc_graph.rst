@@ -1,5 +1,5 @@
 Calculation graph
-===================
+=================
 
 Every source holds the underlying calculation graph.
 Operations on sources are not executed right away but are recorded as nodes in the calculation graphs.

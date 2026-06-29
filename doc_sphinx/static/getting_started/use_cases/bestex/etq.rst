@@ -17,8 +17,8 @@ To calculate the Effective to Quoted Spread Ratio (ETQ) for every order, we need
     # Define the symbol, orders database, quotes database, and date
     symbol = 'TSLA'
     orders_db = 'ORDERS_DB'
-    quotes_db = 'US_COMP'
-    date = otp.dt(2022, 3, 2)
+    quotes_db = 'US_COMP_SAMPLE'
+    date = otp.dt(2024, 2, 1)
 
     # Load orders and quotes data
     orders = otp.DataSource(orders_db, tick_type='ORDER', symbol=symbol)

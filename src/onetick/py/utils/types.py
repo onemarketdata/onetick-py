@@ -56,21 +56,23 @@ class adaptive:
     For example, setting :py:class:`~onetick.py.DataSource` ``symbols`` parameter
     to ``otp.adaptive`` allows to set symbols when running the query later.
 
-    >>> data = otp.DataSource('SOME_DB', tick_type='TT', symbols=otp.adaptive)
-    >>> otp.run(data, symbols='S1')
-                         Time  X
-    0 2003-12-01 00:00:00.000  1
-    1 2003-12-01 00:00:00.001  2
-    2 2003-12-01 00:00:00.002  3
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols=otp.adaptive)
+    >>> data = data[['PRICE']][:3]
+    >>> otp.run(data, date=otp.dt(2024, 2, 1), symbols='AAPL')
+                               Time   PRICE
+    0 2024-02-01 04:00:00.008283417  186.50
+    1 2024-02-01 04:00:00.008290927  185.59
+    2 2024-02-01 04:00:00.008291153  185.49
 
     This is the default value of ``symbols`` parameter, so omitting it also works:
 
-    >>> data = otp.DataSource('SOME_DB', tick_type='TT')
-    >>> otp.run(data, symbols='S1')
-                         Time  X
-    0 2003-12-01 00:00:00.000  1
-    1 2003-12-01 00:00:00.001  2
-    2 2003-12-01 00:00:00.002  3
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
+    >>> data = data[['PRICE']][:3]
+    >>> otp.run(data, date=otp.dt(2024, 2, 1), symbols='AAPL')
+                               Time   PRICE
+    0 2024-02-01 04:00:00.008283417  186.50
+    1 2024-02-01 04:00:00.008290927  185.59
+    2 2024-02-01 04:00:00.008291153  185.49
     """
 
 

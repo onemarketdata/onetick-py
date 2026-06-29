@@ -90,7 +90,7 @@ However, you need to specify locations to load database from via ``db_locations`
 
 .. doctest::
 
-   >>> db = otp.DB('US_COMP', db_locations=[{'location': '/home/user/data/US_COMP'}])
+   >>> db = otp.DB('NEW_DB', db_locations=[{'location': '/home/user/data/NEW_DB'}])
    >>> session.use(db)  # doctest: +SKIP
 
 Additional locator configuration variables could be set via ``db_locations`` and ``db_properties`` parameters,
@@ -122,9 +122,9 @@ Of course, a parent database must be added to create a derived database.
 
 .. doctest::
 
-   >>> db = otp.DB('SOME_DB')
+   >>> db = otp.DB('DB_NAME')
    >>> session.use(db)  # doctest: +SKIP
-   >>> derived_db = otp.DB('SOME_DB//DERIVED_LABEL')
+   >>> derived_db = otp.DB('DB_NAME//DERIVED_LABEL')
    >>> session.use(derived_db)  # doctest: +SKIP
 
 You can also add data to derived database.
@@ -132,7 +132,7 @@ You can also add data to derived database.
 .. doctest::
 
    >>> data = otp.Ticks(A=[1, 2, 3])
-   >>> derived_db = otp.DB('SOME_DB//DERIVED_LABEL')
+   >>> derived_db = otp.DB('DB_NAME//DERIVED_LABEL')
    >>> session.use(derived_db)  # doctest: +SKIP
    >>> derived_db.add(data)  # doctest: +SKIP
 

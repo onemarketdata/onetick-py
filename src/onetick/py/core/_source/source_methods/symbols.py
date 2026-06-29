@@ -90,24 +90,25 @@ def modify_symbol_name(
     --------
     Replacing with static string:
 
-    >>> data = otp.DataSource('SOME_DB', symbol='S1', tick_type='TT')
-    >>> data = data.modify_symbol_name(symbol_name='S2')
+    >>> data = otp.DataSource('US_COMP_SAMPLE', symbol='AAPL', tick_type='TRD', date=otp.dt(2024, 2, 1))
+    >>> data = data[['PRICE']][:3]
+    >>> data = data.modify_symbol_name(symbol_name='MSFT')
     >>> otp.run(data)
-                         Time   X
-    0 2003-12-01 00:00:00.000  -3
-    1 2003-12-01 00:00:00.001  -2
-    2 2003-12-01 00:00:00.002  -1
+                               Time   PRICE
+    0 2024-02-01 04:00:00.016997102  400.15
+    1 2024-02-01 04:00:00.024299525  402.00
+    2 2024-02-01 04:00:00.024325756  402.00
 
     Replacing with expression:
 
-    >>> data = otp.DataSource('SOME_DB', symbol='S2', tick_type='TT')
-    >>> data = data.modify_symbol_name(symbol_name=data['_SYMBOL_NAME'].str.replace('2', '1'))
+    >>> data = otp.DataSource('US_COMP_SAMPLE', symbol='AAPL', tick_type='TRD', date=otp.dt(2024, 2, 1))
+    >>> data = data[['PRICE']][:3]
+    >>> data = data.modify_symbol_name(symbol_name=data['_SYMBOL_NAME'].str.replace('P', ''))
     >>> otp.run(data)
-                         Time  X
-    0 2003-12-01 00:00:00.000  1
-    1 2003-12-01 00:00:00.001  2
-    2 2003-12-01 00:00:00.002  3
-
+                               Time  PRICE
+    0 2024-02-01 04:00:00.097381367  14.33
+    1 2024-02-01 04:00:00.138908789  14.37
+    2 2024-02-01 04:00:00.726613365  14.36
     """
     if not isinstance(symbol_name, (str, _Operation)):
         raise ValueError("Unsupported symbol_name argument value type")

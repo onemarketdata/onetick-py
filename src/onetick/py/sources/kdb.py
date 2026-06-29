@@ -103,7 +103,7 @@ class ReadFromKdb(Source):
         Simple query from ``some_table``
 
         >>> src = otp.ReadFromKdb('kdb-server:5000', 'some_table')  # doctest: +SKIP
-        >>> otp.run(src, symbol='US_COMP_SAMPLE::AAPL')  # doctest: +SKIP
+        >>> otp.run(src, symbol='LOCAL::AAPL')                      # doctest: +SKIP
                                    Time                date            time      price  size   sym
         0 2003-12-01 04:42:42.156933546 2003-11-30 19:00:00  34962156933546  68.668341   300  AAPL
         1 2003-12-01 08:59:33.463062196 2003-11-30 19:00:00  50373463062196  64.309823    60  AAPL
@@ -118,8 +118,8 @@ class ReadFromKdb(Source):
         ...         'PRICE': (float, 'price'),
         ...         'SIZE': (int, 'size')
         ...     },
-        ... )  # doctest: +SKIP
-        >>> otp.run(src, symbol='US_COMP_SAMPLE::AAPL')  # doctest: +SKIP
+        ... )                                   # doctest: +SKIP
+        >>> otp.run(src, symbol='LOCAL::AAPL')  # doctest: +SKIP
                                    Time      PRICE  SIZE
         0 2003-12-01 04:42:42.156933546  68.668341   300
         1 2003-12-01 08:59:33.463062196  64.309823    60
@@ -129,7 +129,7 @@ class ReadFromKdb(Source):
         Pass query as ``query`` parameter instead of table name. In this case filtering by symbol wouldn't work.
 
         >>> src = otp.ReadFromKdb('kdb-server:5000', 'select from some_table')  # doctest: +SKIP
-        >>> otp.run(src, symbol='US_COMP_SAMPLE::AAPL')  # doctest: +SKIP
+        >>> otp.run(src, symbol='LOCAL::ANY')                                   # doctest: +SKIP
                          Time                date            time      price  size   sym
         0 2199-12-31 19:00:00 2003-11-30 19:00:00  12311440987139  65.868242   170  AAPL
         1 2199-12-31 19:00:00 2003-11-30 19:00:00  33435228341817  95.989642   248  MSFT

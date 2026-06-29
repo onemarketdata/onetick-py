@@ -20,8 +20,8 @@ Here's the complete code to achieve this:
     # Define your symbols, orders, and trades database
     symbol = 'TSLA'
     orders_db = 'ORDERS_DB'
-    trades_db = 'US_COMP'
-    date = otp.dt(2022, 3, 2)
+    trades_db = 'US_COMP_SAMPLE'
+    date = otp.dt(2024, 2, 1)
 
     # Load orders data
     orders = otp.DataSource(orders_db, tick_type='ORDER', symbol=symbol)

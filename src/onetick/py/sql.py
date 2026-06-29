@@ -26,42 +26,48 @@ class SqlQuery(otq.SqlQuery):
 
         Select two fields from a single tick type and symbol and return first three ticks from a single day:
 
-        >>> otp.run(
-        ...     otp.SqlQuery("select PRICE,SIZE from US_COMP.TRD"
-        ...                  " where symbol_name = 'AAPL'"
-        ...                  " and start_time = '2022-03-01 00:00:00 GMT' and end_time = '2022-03-02 00:00:00 GMT'"
-        ...                  " limit 3")
+        >>> otp.run(  # doctest: +SKIP
+        ...     otp.SqlQuery(
+        ...         "select PRICE,SIZE from US_COMP_SAMPLE.TRD"
+        ...         " where symbol_name = 'AAPL'"
+        ...         " and start_time = '2024-02-01 00:00:00 EST5EDT' and end_time = '2024-02-02 00:00:00 EST5EDT'"
+        ...         " limit 3"
+        ...     ),
         ... )
-                             Time  PRICE  SIZE
-        0 2022-03-01 00:00:00.000    1.3   100
-        1 2022-03-01 00:00:00.001    1.4    10
-        2 2022-03-01 00:00:00.002    1.4    50
+                                   Time   PRICE  SIZE
+        0 2024-02-01 04:00:00.008283417  186.50     6
+        1 2024-02-01 04:00:00.008290927  185.59     1
+        2 2024-02-01 04:00:00.008291153  185.49   107
 
         Join quotes and trades:
 
-        >>> otp.run(
-        ...     otp.SqlQuery("select t.PRICE,q.ASK_PRICE,q.BID_PRICE"
-        ...                  " from US_COMP.TRD t join US_COMP.QTE q"
-        ...                  " on sametime_as_existing(t.timestamp, q.timestamp, 0) = TRUE"
-        ...                  " where t.symbol_name = 'AAPL' and q.symbol_name = 'AAPL'"
-        ...                  " and start_time = '2022-03-01 00:00:00 GMT' and end_time = '2022-03-02 00:00:00 GMT'"
-        ...                  " limit 2")
+        >>> otp.run(  # doctest: +SKIP
+        ...     otp.SqlQuery(
+        ...         "select t.PRICE,q.ASK_PRICE,q.BID_PRICE"
+        ...         " from US_COMP_SAMPLE.TRD t join US_COMP_SAMPLE.QTE q"
+        ...         " on sametime_as_existing(t.timestamp, q.timestamp, 0) = TRUE"
+        ...         " where t.symbol_name = 'AAPL' and q.symbol_name = 'AAPL'"
+        ...         " and start_time = '2024-02-01 00:00:00 EST5EDT' and end_time = '2024-02-02 00:00:00 EST5EDT'"
+        ...         " limit 2"
+        ...     ),
         ... )
-                             Time  T.PRICE  Q.ASK_PRICE  Q.BID_PRICE
-        0 2022-03-01 00:00:00.001      1.4          1.5          1.2
-        1 2022-03-01 00:00:00.002      1.4          1.4          1.3
+                                   Time  T.PRICE  Q.ASK_PRICE  Q.BID_PRICE
+        0 2024-02-01 04:00:00.008283417   186.50       187.02       185.49
+        1 2024-02-01 04:00:00.008290927   185.59       187.02       185.49
 
         Calculate average price of trades across several symbols:
 
-        >>> otp.run(
-        ...     otp.SqlQuery("select COUNT(*) as COUNT, AVG(PRICE) as AVG_PRICE"
-        ...                  " from US_COMP.TRD"
-        ...                  " where symbol_name in ('AAPL', 'AAP')"
-        ...                  " and start_time = '2022-03-01 00:00:00 GMT' and end_time = '2022-03-02 00:00:00 GMT'",
-        ...                  merge_all_symbols=True)
+        >>> otp.run(  # doctest: +SKIP
+        ...     otp.SqlQuery(
+        ...         "select COUNT(*) as COUNT, AVG(PRICE) as AVG_PRICE"
+        ...         " from US_COMP_SAMPLE.TRD"
+        ...         " where symbol_name in ('AAPL', 'AAL')"
+        ...         " and start_time = '2024-02-01 00:00:00 EST5EDT' and end_time = '2024-02-02 00:00:00 EST5EDT'",
+        ...         merge_all_symbols=True
+        ...     ),
         ... )
-                         Time  COUNT  AVG_PRICE
-        0 2022-03-01 19:00:00    5.0     18.976
+                Time     COUNT   AVG_PRICE
+        0 2024-02-02  921779.0  166.697838
         """
         super().__init__(sql_statement)
         if merge_all_symbols:

@@ -19,22 +19,22 @@ Query interval can be set when the query is executed:
 
 ::
 
-    # trades are retrieved for the interval [2022/3/1, 2022/3/2) specified when the query is executed on line 2
-    trades = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL')
-    otp.run(trades, start=otp.dt(2022, 3, 1), end=otp.dt(2022, 3, 2))
+    # trades are retrieved for the interval [2024/2/1, 2024/2/2) specified when the query is executed on line 2
+    trades = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    otp.run(trades, start=otp.dt(2024, 2, 1), end=otp.dt(2024, 2, 2))
 
 
 The query interval specified when executing the query applies to every source that does not specify its own interval:
 
 ::
 
-    # trades are retrieved for the interval [2022/3/1, 2022/3/2) specified when the query is executed
-    trades = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL')
-    # quotes are retrieved for the interval [2022/3/1, 2022/3/2) specified when the query is executed
-    quotes = otp.DataSource(db='US_COMP', tick_type='QTE', symbols='AAPL')
+    # trades are retrieved for the interval [2024/2/1, 2024/2/2) specified when the query is executed
+    trades = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    # quotes are retrieved for the interval [2024/2/1, 2024/2/2) specified when the query is executed
+    quotes = otp.DataSource(db='US_COMP_SAMPLE', tick_type='QTE', symbols='AAPL')
 
     res = otp.join([trades, quotes])
-    otp.run(res, start=otp.dt(2022, 3, 1), end=otp.dt(2022, 3, 2))
+    otp.run(res, start=otp.dt(2024, 2, 1), end=otp.dt(2024, 2, 2))
 
 Query interval on a source
 --------------------------
@@ -42,7 +42,8 @@ Query interval can be specified when a source is defined:
 
 ::
 
-    trades = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL', start=otp.dt(2022, 3, 1), end=otp.dt(2022, 3, 2))
+    trades = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL',
+                            start=otp.dt(2024, 2, 1), end=otp.dt(2024, 2, 2))
     otp.run(trades)
 
 
@@ -52,47 +53,34 @@ in one source and the volume on March 2 in another source. We then merge the two
 about setting the interval for the resulting query.
 
 
-.. testsetup:: *
-
-    >>> session.dbs['US_COMP'].add(
-    ...     otp.Tick(SIZE=62351689),
-    ...     symbol='AAPL',
-    ...     tick_type='TRD',
-    ...     date=otp.dt(2023, 3, 1)
-    ... )
-    >>> session.dbs['US_COMP'].add(
-    ...     otp.Tick(SIZE=60242644),
-    ...     symbol='AAPL',
-    ...     tick_type='TRD',
-    ...     date=otp.dt(2023, 3, 2)
-    ... )
-
 .. doctest::
 
-    >>> day1_trades = otp.DataSource(db='US_COMP', symbol='AAPL', tick_type='TRD', start=otp.dt(2023, 3, 1), end=otp.dt(2023, 3, 2))
+    >>> day1_trades = otp.DataSource(db='US_COMP_SAMPLE', symbol='AAPL', tick_type='TRD',
+    ...                              start=otp.dt(2024, 2, 1), end=otp.dt(2024, 2, 2))
     >>> day1_volume = day1_trades.agg({'VOLUME': otp.agg.sum(day1_trades['SIZE'])}, bucket_time='start')
-    >>> otp.run(day1_volume)  # volume on March 1
+    >>> otp.run(day1_volume)  # volume on February 1
             Time    VOLUME
-    0 2023-03-01  62351689
+    0 2024-02-01  70610921
 
 .. doctest::
 
-    >>> day2_trades = otp.DataSource(db='US_COMP', symbol='AAPL', tick_type='TRD', start=otp.dt(2023, 3, 2), end=otp.dt(2023, 3, 3))
+    >>> day2_trades = otp.DataSource(db='US_COMP_SAMPLE', symbol='AAPL', tick_type='TRD',
+    ...                              start=otp.dt(2024, 2, 2), end=otp.dt(2024, 2, 3))
     >>> day2_volume = day2_trades.agg({'VOLUME': otp.agg.sum(day2_trades['SIZE'])}, bucket_time='start')
-    >>> otp.run(day2_volume)  # volume on March 2
-            Time    VOLUME
-    0 2023-03-02  60242644
+    >>> otp.run(day2_volume)  # volume on February 2
+            Time     VOLUME
+    0 2024-02-02  112766644
 
 .. doctest::
 
-    >>> res = day1_volume + day2_volume  # merge ticks
+    >>> res = otp.merge([day1_volume, day2_volume])  # merge ticks
     >>> otp.run(res)
-            Time    VOLUME
-    0 2023-03-01  62351689
-    1 2023-03-01  60242644
+            Time     VOLUME
+    0 2024-02-01   70610921
+    1 2024-02-01  112766644
 
-The interval can also be specified using the ``date`` parameter of the :class:`otp.DataSource <onetick.py.DataSource>`, that sets
-the start and end parameters to ``00:00:00`` and next day's ``00:00:00`` respectively.
+The interval can also be specified using the ``date`` parameter of the :class:`otp.DataSource <onetick.py.DataSource>`,
+that sets the start and end parameters to ``00:00:00`` and next day's ``00:00:00`` respectively.
 
 
 Default query interval
@@ -124,9 +112,11 @@ nanoseconds and DST as the standard python ``datetime.datetime`` class does not 
 Timezone
 ========
 
-The timezone can be specified in the :func:`otp.run <onetick.py.run>` using the ``timezone`` parameter. If it is not set then default timezone is used.
+The timezone can be specified in the :func:`otp.run <onetick.py.run>` using the ``timezone`` parameter.
+If it is not set then default timezone is used.
 
-It is possible to change the default timezone using the ``OTP_DEFAULT_TZ`` environment variable or using the ``otp.config['tz']`` config variable:
+It is possible to change the default timezone using the ``OTP_DEFAULT_TZ`` environment variable
+or using the ``otp.config['tz']`` config variable:
 
 ::
 

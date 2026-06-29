@@ -122,13 +122,14 @@ def add_prefix(self: 'Source', prefix, inplace=False, columns=None, ignore_colum
 
     Add prefix *test_* to all columns (note that column **Time** is not renamed):
 
-    >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL')
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE']][:3]
     >>> data = data.add_prefix('test_')
-    >>> otp.run(data, start=otp.dt(2022, 3, 1), end=otp.dt(2022, 3, 2))
-                         Time  test_PRICE  test_SIZE
-    0 2022-03-01 00:00:00.000         1.3        100
-    1 2022-03-01 00:00:00.001         1.4         10
-    2 2022-03-01 00:00:00.002         1.4         50
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                               Time  test_PRICE  test_SIZE
+    0 2024-02-01 04:00:00.008283417      186.50          6
+    1 2024-02-01 04:00:00.008290927      185.59          1
+    2 2024-02-01 04:00:00.008291153      185.49        107
 
     Parameter ``columns`` specifies columns to be updated with prefix:
 
@@ -197,13 +198,14 @@ def add_suffix(self: 'Source', suffix, inplace=False, columns=None, ignore_colum
 
     Add suffix *_test* to all columns (note that column **Time** is not renamed):
 
-    >>> data = otp.DataSource(db='US_COMP', tick_type='TRD', symbols='AAPL')
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE']][:3]
     >>> data = data.add_suffix('_test')
-    >>> otp.run(data, start=otp.dt(2022, 3, 1), end=otp.dt(2022, 3, 2))
-                         Time  PRICE_test  SIZE_test
-    0 2022-03-01 00:00:00.000         1.3        100
-    1 2022-03-01 00:00:00.001         1.4         10
-    2 2022-03-01 00:00:00.002         1.4         50
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                               Time  PRICE_test  SIZE_test
+    0 2024-02-01 04:00:00.008283417      186.50          6
+    1 2024-02-01 04:00:00.008290927      185.59          1
+    2 2024-02-01 04:00:00.008291153      185.49        107
 
     Parameter ``columns`` specifies columns to be updated with suffix:
 

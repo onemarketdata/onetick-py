@@ -451,15 +451,19 @@ def low_time(self: 'Source', *args, **kwargs):
 
 @copy_method(aggregations.functions.ob_snapshot)
 def ob_snapshot(self, *args, **kwargs):
-    """
+    r"""
     Examples
     --------
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = data.ob_snapshot(max_levels=1)  # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  PRICE             UPDATE_TIME  SIZE  LEVEL  BUY_SELL_FLAG
-    0 2003-12-04    2.0 2003-12-01 00:00:00.003     6      1              1
-    1 2003-12-04    5.0 2003-12-01 00:00:00.004     7      1              0
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
+    >>> data = data.ob_snapshot(max_levels=3)                                            # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10))          # doctest: +SKIP
+                     Time     PRICE  SIZE  LEVEL                   UPDATE_TIME  BUY_SELL_FLAG
+    0 2024-02-01 10:00:00  17351.75     1      1 2024-02-01 09:59:59.701711193              1
+    1 2024-02-01 10:00:00  17352.00     3      2 2024-02-01 09:59:59.582195881              1
+    2 2024-02-01 10:00:00  17352.25     3      3 2024-02-01 09:59:59.580457957              1
+    3 2024-02-01 10:00:00  17351.25     1      1 2024-02-01 09:59:59.867609851              0
+    4 2024-02-01 10:00:00  17351.00     6      2 2024-02-01 09:59:59.867226023              0
+    5 2024-02-01 10:00:00  17350.75     2      3 2024-02-01 09:59:59.867226023              0
     """
     pass
 
@@ -469,25 +473,31 @@ def ob_snapshot_wide(self, *args, **kwargs):
     """
     Examples
     --------
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = data.ob_snapshot_wide(max_levels=1)  # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  BID_PRICE         BID_UPDATE_TIME  BID_SIZE  ASK_PRICE         ASK_UPDATE_TIME  ASK_SIZE  LEVEL
-    0 2003-12-03        5.0 2003-12-01 00:00:00.004         7        2.0 2003-12-01 00:00:00.003         6      1
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\\H24')  # doctest: +SKIP
+    >>> data = data.ob_snapshot_wide(max_levels=3)                                        # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10))           # doctest: +SKIP
+                     Time  BID_PRICE  BID_SIZE               BID_UPDATE_TIME  ASK_PRICE  ASK_SIZE \
+                                      ASK_UPDATE_TIME  LEVEL
+    0 2024-02-01 10:00:00   17351.25         1 2024-02-01 09:59:59.867609851   17351.75         1 \
+                        2024-02-01 09:59:59.701711193      1
+    1 2024-02-01 10:00:00   17351.00         6 2024-02-01 09:59:59.867226023   17352.00         3 \
+                        2024-02-01 09:59:59.582195881      2
+    2 2024-02-01 10:00:00   17350.75         2 2024-02-01 09:59:59.867226023   17352.25         3 \
+                        2024-02-01 09:59:59.580457957      3
     """
     pass
 
 
 @copy_method(aggregations.functions.ob_snapshot_flat)
 def ob_snapshot_flat(self, *args, **kwargs):
-    """
+    r"""
     Examples
     --------
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = data.ob_snapshot_flat(max_levels=1)  # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  BID_PRICE1        BID_UPDATE_TIME1  BID_SIZE1  ASK_PRICE1        ASK_UPDATE_TIME1  ASK_SIZE1
-    0 2003-12-03         5.0 2003-12-01 00:00:00.004          7         2.0 2003-12-01 00:00:00.003          6
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
+    >>> data = data.ob_snapshot_flat(max_levels=3)                                       # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10))          # doctest: +SKIP
+                     Time  BID_PRICE1  BID_SIZE1              BID_UPDATE_TIME1  ASK_PRICE1  ASK_SIZE1 ...
+    0 2024-02-01 10:00:00    17351.25          1 2024-02-01 09:59:59.867609851    17351.75          1 ...
     """
     pass
 
@@ -497,55 +507,64 @@ def ob_summary(self, *args, **kwargs):
     """
     Examples
     --------
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = data.ob_summary(max_levels=1) # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  BID_PRICE  BID_SIZE  BID_VWAP  BEST_BID_PRICE  WORST_BID_SIZE  NUM_BID_LEVELS  ASK_SIZE\
-                ASK_VWAP  BEST_ASK_PRICE  WORST_ASK_PRICE  NUM_ASK_LEVELS
-    0 2003-12-04        NaN         7       5.0             5.0             NaN               1         6\
-            2.0             2.0              2.0               1
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\\H24')  # doctest: +SKIP
+    >>> data = data.ob_summary(max_levels=3)                                              # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10))           # doctest: +SKIP
+                     Time  BID_SIZE      BID_VWAP  BEST_BID_PRICE  WORST_BID_PRICE  NUM_BID_LEVELS  ASK_SIZE \
+                             ASK_VWAP  BEST_ASK_PRICE  WORST_ASK_PRICE  NUM_ASK_LEVELS
+    0 2024-02-01 10:00:00         9  17350.972222        17351.25         17350.75               3         7 \
+                         17352.071429        17351.75         17352.25               3
     """
     pass
 
 
 @copy_method(aggregations.functions.ob_size)
 def ob_size(self, *args, **kwargs):
-    """
+    r"""
     Examples
     --------
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = data.ob_size(max_levels=10) # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  ASK_VALUE  BID_VALUE
-    0 2003-12-01      84800      64500
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
+    >>> data = data.ob_size(bucket_interval=otp.Minute(5), max_levels=3).apply(data)     # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11))          # doctest: +SKIP
+                      Time  ASK_VALUE  BID_VALUE
+    0  2024-02-01 10:05:00       12.0       10.0
+    1  2024-02-01 10:10:00       12.0        5.0
+    2  2024-02-01 10:15:00       11.0       13.0
+    ...
     """
     pass
 
 
 @copy_method(aggregations.functions.ob_vwap)
 def ob_vwap(self, *args, **kwargs):
-    """
+    r"""
     Examples
     --------
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = data.ob_vwap(max_levels=10) # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  ASK_VALUE  BID_VALUE
-    0 2003-12-01     23.313   23.20848
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
+    >>> data = data.ob_vwap(bucket_interval=otp.Minute(5)).apply(data)                   # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11))          # doctest: +SKIP
+                      Time     ASK_VALUE     BID_VALUE
+    0  2024-02-01 10:05:00  17493.087642  17013.839286
+    1  2024-02-01 10:10:00  17486.863024  17006.515027
+    2  2024-02-01 10:15:00  17494.471485  17014.829879
+    ...
     """
     pass
 
 
 @copy_method(aggregations.functions.ob_num_levels)
 def ob_num_levels(self, *args, **kwargs):
-    """
+    r"""
     Examples
     --------
-    >>> data = otp.DataSource(db='SOME_DB', tick_type='PRL', symbols='AA')  # doctest: +SKIP
-    >>> data = data.ob_num_levels() # doctest: +SKIP
-    >>> otp.run(data) # doctest: +SKIP
-            Time  ASK_VALUE  BID_VALUE
-    0 2003-12-01        248         67
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')  # doctest: +SKIP
+    >>> data = otp.agg.ob_num_levels(bucket_interval=otp.Second(300)).apply(data)        # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11))          # doctest: +SKIP
+                      Time  ASK_VALUE  BID_VALUE
+    0  2024-02-01 10:05:00      743.0      830.0
+    1  2024-02-01 10:10:00      753.0      820.0
+    2  2024-02-01 10:15:00      741.0      831.0
+    ...
     """
     pass
 

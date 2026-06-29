@@ -159,18 +159,20 @@ def eval(query, symbol=None, start=None, end=None,
     Use ``otp.eval`` to be passed as symbols when running the query:
 
     >>> def fsq():
-    ...     symbols = otp.Ticks(SYMBOL_NAME=['AAPL', 'AAP'])
+    ...     symbols = otp.Ticks(SYMBOL_NAME=['AAPL', 'AAL'])
     ...     return symbols
-    >>> main = otp.DataSource(db='US_COMP', tick_type='TRD', date=otp.dt(2022, 3, 1))
+    >>> main = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', date=otp.dt(2024, 2, 1))
+    >>> main = main[['PRICE', 'SIZE']][:3]
     >>> main['SYMBOL_NAME'] = main.Symbol.name
     >>> main = otp.merge([main], symbols=otp.eval(fsq))
     >>> otp.run(main)  # OTdirective: snippet-name: eval with symbols;
-                         Time  PRICE  SIZE SYMBOL_NAME
-    0 2022-03-01 00:00:00.000   1.30   100        AAPL
-    1 2022-03-01 00:00:00.000  45.37     0         AAP
-    2 2022-03-01 00:00:00.001   1.40    10        AAPL
-    3 2022-03-01 00:00:00.001  45.41     0         AAP
-    4 2022-03-01 00:00:00.002   1.40    50        AAPL
+                               Time   PRICE  SIZE SYMBOL_NAME
+    0 2024-02-01 04:00:00.008283417  186.50     6        AAPL
+    1 2024-02-01 04:00:00.008290927  185.59     1        AAPL
+    2 2024-02-01 04:00:00.008291153  185.49   107        AAPL
+    3 2024-02-01 04:00:00.097381367   14.33     1         AAL
+    4 2024-02-01 04:00:00.138908789   14.37     1         AAL
+    5 2024-02-01 04:00:00.726613365   14.36    10         AAL
 
     Use ``otp.eval`` as filter:
 
@@ -189,18 +191,23 @@ def eval(query, symbol=None, start=None, end=None,
     >>> def filter_by_tt(tick_type):
     ...     res = otp.Ticks({
     ...         'TICK_TYPE': ['TRD', 'QTE'],
-    ...         'WHERE': ['PRICE>=1.4', 'ASK_PRICE>=1.4']
+    ...         'WHERE': ['PRICE>=190', 'ASK_PRICE>=180']
     ...     })
     ...     res = res.where(res['TICK_TYPE'] == tick_type)
     ...     return res.drop(['TICK_TYPE'])
-    >>> t = otp.DataSource('US_COMP::TRD')
+    >>> t = otp.DataSource('US_COMP_SAMPLE::TRD')
+    >>> t = t[['PRICE', 'SIZE']]
     >>> # note that in this case column WHERE do not need to be specified,
     >>> # because evaluated query returns tick with only one field
     >>> t = t.where(otp.eval(filter_by_tt, tick_type=t['_TICK_TYPE']))
-    >>> otp.run(t, start=otp.dt(2022, 3, 1), end=otp.dt(2022, 3, 2))
-                         Time  PRICE  SIZE
-    0 2022-03-01 00:00:00.001    1.4    10
-    1 2022-03-01 00:00:00.002    1.4    50
+    >>> otp.run(t, date=otp.dt(2024, 2, 1))  # doctest: +ELLIPSIS
+                                  Time   PRICE  SIZE
+    0    2024-02-01 10:53:56.130163522  192.42     6
+    1    2024-02-01 12:58:30.442440693  192.60   200
+    2    2024-02-01 14:44:08.734358075  190.94    48
+    3    2024-02-01 16:02:02.421242609  196.09    10
+    4    2024-02-01 16:30:00.030074464  190.00    11
+    ...                            ...     ...   ...
     """
     if isinstance(query, (types.FunctionType, types.LambdaType)) or inspect.ismethod(query):
         params = {}

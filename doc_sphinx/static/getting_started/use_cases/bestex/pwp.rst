@@ -10,8 +10,8 @@ The `PWP` is calculated as the market VWAP of trades starting from the order arr
     # Define your symbols, orders database, and date
     symbol = 'TSLA'
     orders_db = 'ORDERS_DB'
-    date = otp.dt(2022, 3, 2)
-    trades_db = 'US_COMP'
+    trades_db = 'US_COMP_SAMPLE'
+    date = otp.dt(2024, 2, 1)
 
     # Participation ratios
     ratios = [0.01, 0.03, 0.07]

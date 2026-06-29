@@ -119,11 +119,11 @@ class DB:
 
         By default access fields from the basic configuration of the database are returned:
 
-        >>> some_db = otp.databases()['SOME_DB']
-        >>> some_db.access_info()  # doctest: +SKIP
-        {'DB_NAME': 'SOME_DB',
+        >>> db = otp.databases()['US_COMP_SAMPLE']  # doctest: +SKIP
+        >>> db.access_info()                        # doctest: +SKIP
+        {'DB_NAME': 'US_COMP_SAMPLE',
          'READ_ACCESS': 1,
-         'WRITE_ACCESS': 1,
+         'WRITE_ACCESS': 0,
          'MIN_AGE_SET': 0,
          'MIN_AGE_MSEC': 0,
          'MAX_AGE_SET': 0,
@@ -132,6 +132,8 @@ class DB:
          'MIN_START_DATE_MSEC': Timestamp('1970-01-01 00:00:00'),
          'MAX_END_DATE_SET': 0,
          'MAX_END_DATE_MSEC': Timestamp('1970-01-01 00:00:00'),
+         'MAX_QUERY_DURATION_SET': 0,
+         'MAX_QUERY_DURATION': '',
          'MIN_AGE_DB_DAYS': 0,
          'MIN_AGE_DB_DAYS_SET': 0,
          'MAX_AGE_DB_DAYS': 0,
@@ -142,15 +144,11 @@ class DB:
 
         Set parameter ``deep_scan`` to True to return access fields from each available host and time interval:
 
-        >>> some_db.access_info(deep_scan=True)  # doctest: +SKIP
-           DB_NAME  READ_ACCESS  WRITE_ACCESS  MIN_AGE_SET  MIN_AGE_MSEC  MAX_AGE_SET  MAX_AGE_MSEC\
-              MIN_START_DATE_SET MIN_START_DATE_MSEC  MAX_END_DATE_SET MAX_END_DATE_MSEC  MIN_AGE_DB_DAYS\
-              MIN_AGE_DB_DAYS_SET  MAX_AGE_DB_DAYS  MAX_AGE_DB_DAYS_SET  CEP_ACCESS  DESTROY_ACCESS  MEMDB_ACCESS\
-                SERVER_ADDRESS INTERVAL_START INTERVAL_END
-        0  SOME_DB            1             1            0             0            0             0\
-                               0          1970-01-01                 0        1970-01-01                0\
-                                0                0                    0           1               0             1\
-                           ...     2002-12-30   2100-01-01
+        >>> db.access_info(deep_scan=True)  # doctest: +SKIP
+                  DB_NAME  READ_ACCESS  WRITE_ACCESS  MIN_AGE_SET  MIN_AGE_MSEC  MAX_AGE_SET  ... \
+                      CEP_ACCESS  DESTROY_ACCESS MEMDB_ACCESS         SERVER_ADDRESS INTERVAL_START  INTERVAL_END
+        0  US_COMP_SAMPLE            1             0            0             0            0  ... \
+                               1               0            1                    ...     2024-01-01    2038-01-01
         """
         # get parent name for derived databases, only parent databases will be listed by AccessInfo
         name, _, _ = self.name.partition('//')
@@ -195,21 +193,25 @@ class DB:
         Examples
         --------
 
-        >>> some_db = otp.databases()['SOME_DB']
-        >>> print(some_db.show_config()['LOCATOR_STRING']) # doctest: +ELLIPSIS
-        <DB ARCHIVE_COMPRESSION_TYPE="NATIVE_PLUS_ZSTD" ID="SOME_DB" SYMBOLOGY="BZX" TICK_TIMESTAMP_TYPE="NANOS" >
+        >>> db = otp.databases()['US_COMP_SAMPLE']
+        >>> print(db.show_config()['LOCATOR_STRING'])  # doctest: +SKIP
+        <DB ARCHIVE_COMPRESSION_TYPE="NATIVE_PLUS_GZIP" ... DAY_BOUNDARY_TZ="EST5EDT" ... ID="US_COMP_SAMPLE" ...>
         <LOCATIONS >
-            <LOCATION ACCESS_METHOD="file" DAY_BOUNDARY_TZ="EST5EDT"
-                      END_TIME="21000101000000" LOCATION="..." START_TIME="20021230000000" />
+            <LOCATION ACCESS_METHOD="file" END_TIME="20380101000000" LOCATION="..." ... />
         </LOCATIONS>
         <RAW_DATA />
         </DB>
 
-        >>> some_db = otp.databases()['SOME_DB']
-        >>> some_db.show_config(config_type='db_time_intervals')  # doctest: +ELLIPSIS
-        {'START_DATE': 1041206400000, 'END_DATE': 4102444800000,
-         'GROWABLE_ARCHIVE_FLAG': 0, 'ARCHIVE_DURATION': 0,
-         'LOCATION': '...', 'DAY_BOUNDARY_TZ': 'EST5EDT', 'DAY_BOUNDARY_OFFSET': 0, 'ALTERNATIVE_LOCATIONS': ''}
+        >>> db = otp.databases()['US_COMP_SAMPLE']
+        >>> db.show_config(config_type='db_time_intervals')  # doctest: +ELLIPSIS
+        {'START_DATE': 1704067200000,
+         'END_DATE': 2145916800000,
+         'GROWABLE_ARCHIVE_FLAG': 0,
+         'ARCHIVE_DURATION': 0,
+         'LOCATION': '...',
+         'DAY_BOUNDARY_TZ': 'EST5EDT',
+         'DAY_BOUNDARY_OFFSET': 0,
+         'ALTERNATIVE_LOCATIONS': ''}
         """
         node = otq.DbShowConfig(db_name=self.name, config_type=config_type.upper())
         graph = otq.GraphQuery(node)
@@ -488,9 +490,9 @@ class DB:
 
         Examples
         --------
-        >>> some_db = otp.databases()['SOME_DB']
-        >>> some_db.dates()
-        [datetime.date(2003, 12, 1)]
+        >>> db = otp.databases()['US_COMP_SAMPLE']
+        >>> db.dates()  # doctest: +ELLIPSIS
+        [datetime.date(2024, 1, 2), ..., datetime.date(2024, 3, 28)]
         """
         return self.__get_dates(respect_acl=respect_acl, check_index_file=check_index_file)
 
@@ -527,9 +529,9 @@ class DB:
 
         Examples
         --------
-        >>> some_db = otp.databases()['SOME_DB']
-        >>> some_db.last_date
-        datetime.date(2003, 12, 1)
+        >>> db = otp.databases()['US_COMP_SAMPLE']
+        >>> db.last_date
+        datetime.date(2024, 3, 28)
         """
         return self.get_last_date()
 
@@ -576,9 +578,9 @@ class DB:
 
         Examples
         --------
-        >>> us_comp_db = otp.databases()['US_COMP']
-        >>> us_comp_db.tick_types(date=otp.dt(2022, 3, 1))
-        ['QTE', 'TRD']
+        >>> db = otp.databases()['US_COMP_SAMPLE']
+        >>> db.tick_types(date=otp.dt(2024, 2, 1))
+        ['DAY', 'IND', 'LULD', 'MKT', 'NBBO', 'QTE', 'STAT', 'TRD']
         """
         date = self.last_date if date is None else date
 
@@ -662,9 +664,23 @@ class DB:
 
         Examples
         --------
-        >>> us_comp_db = otp.databases()['US_COMP']
-        >>> us_comp_db.schema(tick_type='TRD', date=otp.dt(2022, 3, 1))
-        {'PRICE': <class 'float'>, 'SIZE': <class 'int'>}
+        >>> db = otp.databases()['US_COMP_SAMPLE']
+        >>> db.schema(tick_type='TRD', date=otp.dt(2024, 2, 1))
+        {'COND': string[4],
+         'CORR': <class 'onetick.py.types._int'>,
+         'DELETED_TIME': <class 'onetick.py.types.msectime'>,
+         'EXCHANGE': string[1],
+         'OMDSEQ': <class 'onetick.py.types.uint'>,
+         'PARTICIPANT_TIME': <class 'onetick.py.types.nsectime'>,
+         'PRICE': <class 'float'>, 'SEQ_NUM': <class 'int'>,
+         'SIZE': <class 'int'>, 'SOURCE': string[1],
+         'STOP_STOCK': string[1],
+         'TICKER': string[16],
+         'TICK_STATUS': <class 'onetick.py.types._int'>,
+         'TRADE_ID': string[20],
+         'TRF': string[1],
+         'TRF_TIME': <class 'onetick.py.types.nsectime'>,
+         'TTE': string[1]}
         """
         orig_date = date
 
@@ -785,9 +801,9 @@ class DB:
 
         Examples
         --------
-        >>> us_comp_db = otp.databases()['US_COMP']
-        >>> us_comp_db.symbols(date=otp.dt(2022, 3, 1), tick_type='TRD', pattern='^AAP.*')
-        ['AAP', 'AAPL']
+        >>> db = otp.databases()['US_COMP_SAMPLE']
+        >>> db.symbols(date=otp.dt(2024, 2, 1), tick_type='TRD', pattern='^AA.*')
+        ['AAL', 'AAPL']
         """
         if date is None:
             date = self.last_date
@@ -877,12 +893,16 @@ class DB:
         Examples
         --------
 
-        Show stats for a particular date for a database *SOME_DB*:
+        Show stats for a particular date for a database *US_COMP_SAMPLE*:
 
-        >>> db = otp.databases()['SOME_DB']
-        >>> db.show_archive_stats(date=otp.dt(2003, 12, 1))  # doctest: +ELLIPSIS
-                         Time  COMPRESSION_TYPE TIME_RANGE_VALIDITY LOWEST_LOADED_DATETIME HIGHEST_LOADED_DATETIME...
-        0 2003-12-01 05:00:00  NATIVE_PLUS_ZSTD               VALID    2003-12-01 05:00:00 2003-12-01 05:00:00.002...
+        >>> db = otp.databases()['US_COMP_SAMPLE']
+        >>> db.show_archive_stats(date=otp.dt(2024, 2, 1))  # doctest: +ELLIPSIS
+                         Time  COMPRESSION_TYPE TIME_RANGE_VALIDITY LOWEST_LOADED_DATETIME HIGHEST_LOADED_DATETIME  ...\
+              TOTAL_TICKS  TOTAL_SYMBOLS   TOTAL_SIZE  ARCHIVE_MODIFICATION_TIME NATIVE_COMPR_HEADERS_SIZE
+        0 2024-02-01 00:00:00  NATIVE_PLUS_GZIP               VALID    2024-01-31 05:00:00     2024-02-01 01:15:00  ...\
+                777458840           3371  10091704128        2025-11-05 06:09:55                        -1
+        1 2024-02-01 05:00:00  NATIVE_PLUS_GZIP               VALID    2024-02-01 05:00:00     2024-02-02 01:15:00  ...\
+                826170303           3308  10603315515        2025-11-05 06:08:18                        -1
         """
         node = otq.ShowArchiveStats()
         graph = otq.GraphQuery(node)
@@ -903,7 +923,7 @@ class DB:
         start=utils.adaptive,
         end=utils.adaptive,
         date=None,
-        timezone='GMT',
+        timezone=utils.default,
         symbol: str = '',
         query_properties: Optional[dict] = None,
     ) -> pd.DataFrame:
@@ -947,36 +967,41 @@ class DB:
         Examples
         --------
 
-        Show calendars for a database TRAIN_A_PRL_TRD in the given range:
+        Show calendars for a database US_COMP_SAMPLE in the given range:
 
-        >>> db = otp.databases()['TRAIN_A_PRL_TRD']  # doctest: +SKIP
-        >>> db.ref_data('all_calendars',  # doctest: +SKIP
-        ...             start=otp.dt(2018, 2, 1),
-        ...             end=otp.dt(2018, 2, 9),
-        ...             symbol_date=otp.dt(2018, 2, 1))
-                         Time        END_DATETIME CALENDAR_NAME SESSION_NAME SESSION_FLAGS DAY_PATTERN  START_HHMMSS\
-          END_HHMMSS TIMEZONE  PRIORITY DESCRIPTION
-        0 2018-02-01 00:00:00 2018-02-06 23:59:59          FRED      Regular             R   0.0.12345         93000\
-              160000  EST5EDT         0
-        1 2018-02-06 23:59:59 2018-02-07 23:59:59          FRED      Holiday             H   0.0.12345         93000\
-              160000  EST5EDT         1
-        2 2018-02-07 23:59:59 2050-12-31 23:59:59          FRED      Regular             F   0.0.12345         93000\
-              160000  EST5EDT         0
+        >>> db = otp.databases()['US_COMP_SAMPLE']
+        >>> db.ref_data('all_calendars',
+        ...             date=otp.dt(2024, 1, 1),
+        ...             symbol='AAPL',
+        ...             timezone='EST5EDT',
+        ...             symbol_date=otp.dt(2024, 1, 1))  # doctest: +ELLIPSIS
+                  Time END_DATETIME       CALENDAR_NAME SESSION_NAME SESSION_FLAGS DAY_PATTERN  START_HHMMSS  \
+            END_HHMMSS          TIMEZONE  PRIORITY                    DESCRIPTION
+        0   2024-01-01   2024-01-02  BBG_EQUITY_EXCH_US     DAY_TYPE             R   0.0.12345             0  \
+                240000  America/New_York         0                    @US_DEFAULT
+        1   2024-01-01   2024-01-02  BBG_EQUITY_EXCH_US   PRE_MARKET             b   0.0.12345         40000  \
+                 93000  America/New_York         0                    @US_DEFAULT
+        2   2024-01-01   2024-01-02  BBG_EQUITY_EXCH_US       MARKET             r   0.0.12345         93000  \
+                160000  America/New_York         0                    @US_DEFAULT
+        3   2024-01-01   2024-01-02  BBG_EQUITY_EXCH_US  POST_MARKET             a   0.0.12345        160000  \
+                200000  America/New_York         0                    @US_DEFAULT
+        4   2024-01-01   2024-01-02  BBG_EQUITY_EXCH_US      HOLIDAY             H       1.3.1             0  \
+                240000  America/New_York         1  MARTIN_LUTHER_KING@US_DEFAULT
+        ..         ...          ...                 ...          ...           ...         ...           ...  \
+                   ...               ...       ...                            ...
 
         Set symbol name with ``symbol`` parameter:
 
-        >>> db = otp.databases()['US_COMP_SAMPLE']  # doctest: +SKIP
-        >>> db.ref_data(ref_data_type='corp_actions',  # doctest: +SKIP
-        ...             start=otp.dt(2025, 1, 2),
-        ...             end=otp.dt(2025, 7, 2),
-        ...             symbol_date=otp.dt(2025, 7, 1),
-        ...             symbol='WMT',
+        >>> db = otp.databases()['US_COMP_SAMPLE']
+        >>> db.ref_data(ref_data_type='corp_actions',
+        ...             start=otp.dt(2024, 1, 1),
+        ...             end=otp.dt(2024, 4, 1),
+        ...             symbol_date=otp.dt(2024, 1, 1),
+        ...             symbol='AAPL',
         ...             timezone='America/New_York')
                 Time  MULTIPLICATIVE_ADJUSTMENT  ADDITIVE_ADJUSTMENT ADJUSTMENT_TYPE
-        0 2025-03-21                   1.000000                0.235   CASH_DIVIDEND
-        1 2025-03-21                   0.997261                0.000  MULTI_ADJ_CASH
-        2 2025-05-09                   1.000000                0.235   CASH_DIVIDEND
-        3 2025-05-09                   0.997588                0.000  MULTI_ADJ_CASH
+        0 2024-02-09                   1.000000                 0.24   CASH_DIVIDEND
+        1 2024-02-09                   0.998726                 0.00  MULTI_ADJ_CASH
         """
         ref_data_type = ref_data_type.upper()
         node = otq.RefData(ref_data_type=ref_data_type)

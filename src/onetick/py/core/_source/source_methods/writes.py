@@ -146,14 +146,20 @@ def write(
 
     Examples
     --------
+
+    Write to the database:
+
     >>> data = otp.Ticks(X=[1, 2, 3])
-    >>> data = data.write('SOME_DB', symbol='S_WRITE', tick_type='T_WRITE')
+    >>> data = data.write('WRITE_DB', symbol='S_WRITE', tick_type='T_WRITE')
     >>> otp.run(data)
                          Time  X
     0 2003-12-01 00:00:00.000  1
     1 2003-12-01 00:00:00.001  2
     2 2003-12-01 00:00:00.002  3
-    >>> data = otp.DataSource('SOME_DB', symbol='S_WRITE', tick_type='T_WRITE')
+
+    Then read from the same database:
+
+    >>> data = otp.DataSource('WRITE_DB', symbol='S_WRITE', tick_type='T_WRITE')
     >>> otp.run(data)
                          Time  X
     0 2003-12-01 00:00:00.000  1

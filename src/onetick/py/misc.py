@@ -359,20 +359,18 @@ def get_symbology_mapping(dest_symbology, src_symbology=None, symbol=None, times
 
     >>> data = otp.Tick(A=1, db=None)
     >>> data['SYMBOLOGY_MAPPING'] = otp.get_symbology_mapping('OID')
-    >>> otp.run(data, symbols='TDEQ::US_COMP::AAPL',  # doctest: +SKIP
-    ...         date=otp.dt(2022, 1, 3))
+    >>> otp.run(data, symbols='TDEQ::US_COMP_SAMPLE::AAPL', date=otp.dt(2024, 2, 1), symbol_date=otp.dt(2024, 2, 1))
             Time  A SYMBOLOGY_MAPPING
-    0 2022-01-03  1              9706
+    0 2024-02-01  1              9706
 
     Override source symbology, symbol and symbol date
     (Also note that parameters can be set from columns):
 
-    >>> data = otp.Tick(A=1, db=None, SYMBOL='MSFT')
-    >>> data['SYMBOLOGY_MAPPING'] = otp.get_symbology_mapping('OID', 'TDEQ', data['SYMBOL'], otp.dt(2022, 1, 3))
-    >>> otp.run(data, symbols='US_COMP::AAPL',  # doctest: +SKIP
-    ...         date=otp.dt(2022, 1, 3))
-            Time  A SYMBOLOGY_MAPPING
-    0 2022-01-03  1            109037
+    >>> data = otp.Tick(SYMBOL='MSFT', db=None)
+    >>> data['SYMBOLOGY_MAPPING'] = otp.get_symbology_mapping('OID', 'TDEQ', data['SYMBOL'], otp.dt(2024, 2, 1))
+    >>> otp.run(data, symbols='US_COMP_SAMPLE::AAPL', date=otp.dt(2024, 2, 1))
+            Time SYMBOL SYMBOLOGY_MAPPING
+    0 2024-02-01   MSFT            109037
     """
     params_correct = (
         all(v is not None for v in [src_symbology, symbol, timestamp])
@@ -415,7 +413,7 @@ def get_onetick_version():
     Examples
     --------
     >>> data = otp.Tick(VERSION=otp.get_onetick_version())
-    >>> otp.run(data, symbols='US_COMP::')  # doctest: +SKIP
+    >>> otp.run(data, symbols='US_COMP_SAMPLE::')  # doctest: +SKIP
             Time                                      VERSION
     0 2003-12-01  BUILD_rel_20250727_update2 (20250727120000)
     """

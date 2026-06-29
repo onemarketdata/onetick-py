@@ -368,6 +368,7 @@ def LoadTicksFromDataFrame(
         Timestamp column dtype should be either datetime related or string.
     symbol_name_field: str, optional
         Column containing symbol name.
+        By default column 'SYMBOL_NAME' will be used if it exists.
     symbol: str
         Symbol(s) from which data should be taken.
 
@@ -392,7 +393,7 @@ def LoadTicksFromDataFrame(
     All examples for :py:func:`onetick.py.ReadFromDataFrame` suitable for this data source.
 
     Let's look at differences. Here's :py:func:`onetick.py.ReadFromDataFrame` output
-    with `symbols` parameter in :py:func:`otp.run<onetick.py.run>`:
+    with ``symbols`` parameter in :py:func:`otp.run<onetick.py.run>`:
 
     >>> src = otp.ReadFromDataFrame(dataframe, symbol_name_field='SYMBOL_NAME')  # doctest: +SKIP
     >>> otp.run(data, date=otp.dt(2024, 1, 1), symbols=['AAA'])  # doctest: +SKIP
@@ -413,6 +414,9 @@ def LoadTicksFromDataFrame(
     3 2024-01-01 12:00:03.100  49.98     AAA
     4 2024-01-01 12:00:03.250  50.02     BBB
     """
+    if symbol is utils.adaptive and symbol_name_field is None and 'SYMBOL_NAME' in dataframe:
+        symbol_name_field = 'SYMBOL_NAME'
+
     dataframe, _, timestamp_column, symbol_name_field, _, symbol_value = _process_common_params(
         dataframe, timestamp_column, symbol_name_field, symbol,
     )
@@ -452,7 +456,7 @@ def LoadTicksFromDataFrame(
 
     src = otp.Ticks(data=data, db=db, tick_type=tick_type, query_parameters=query_parameters, **ticks_kwargs)
 
-    if symbol_name_field:
+    if symbol_name_field and symbol_name_field != 'SYMBOL_NAME':
         src.drop(['SYMBOL_NAME'], inplace=True)
 
     if not timestamp_column:

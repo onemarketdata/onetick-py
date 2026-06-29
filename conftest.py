@@ -41,6 +41,17 @@ def session(m_session):
     yield m_session
 
 
+@pytest.fixture(scope='function')
+def empty_session(monkeypatch):
+    monkeypatch.setattr(otp.config, 'default_db', otp.config.default)
+    monkeypatch.setattr(otp.config, 'default_symbol', otp.config.default)
+
+    locator = otp.Locator(empty=True)
+    cfg = otp.Config(locator=locator)
+    with otp.Session(cfg) as s:
+        yield s
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_sessionstart(session):
     from onetick.test.utils import setup_random_seed

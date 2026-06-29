@@ -140,72 +140,89 @@ def update_timestamp(
 
     Data and timestamps from the database:
 
-    >>> start = otp.dt(2022, 3, 2)
-    >>> end = otp.dt(2022, 3, 3)
-    >>> data = otp.DataSource('US_COMP', symbols='AAPL', tick_type='TRD')
-    >>> otp.run(data, start=start, end=end)
-                         Time  PRICE  SIZE
-    0 2022-03-02 00:00:00.000    1.0   100
-    1 2022-03-02 00:00:00.001    1.1   101
-    2 2022-03-02 00:00:00.002    1.2   102
+    >>> start = otp.dt(2024, 2, 1)
+    >>> end = otp.dt(2024, 2, 2)
+    >>> data = otp.DataSource('US_COMP_SAMPLE', symbols='AAPL', tick_type='TRD')
+    >>> data = data[['PRICE', 'SIZE']]
+    >>> df = otp.run(data, start=start, end=end)
+    >>> df.head()
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.008283417  186.50     6
+    1 2024-02-01 04:00:00.008290927  185.59     1
+    2 2024-02-01 04:00:00.008291153  185.49   107
+    3 2024-02-01 04:00:00.010381671  185.49     1
+    4 2024-02-01 04:00:00.011224206  185.50     2
 
     Adding one hour to all ticks.
     Parameter ``max_delay_of_original_timestamp`` must be specified in this case:
 
-    >>> data = otp.DataSource('US_COMP', symbols='AAPL', tick_type='TRD')
+    >>> data = otp.DataSource('US_COMP_SAMPLE', symbols='AAPL', tick_type='TRD')
     >>> data['ORIG_TS'] = data['TIMESTAMP']
     >>> data['NEW_TS'] = data['TIMESTAMP'] + otp.Hour(1)
     >>> data = data.update_timestamp('NEW_TS', max_delay_of_original_timestamp=otp.Hour(1))
-    >>> otp.run(data, start=start, end=end)[['Time', 'PRICE', 'SIZE', 'ORIG_TS']]
-                         Time  PRICE  SIZE                  ORIG_TS
-    0 2022-03-02 01:00:00.000    1.0   100  2022-03-02 00:00:00.000
-    1 2022-03-02 01:00:00.001    1.1   101  2022-03-02 00:00:00.001
-    2 2022-03-02 01:00:00.002    1.2   102  2022-03-02 00:00:00.002
+    >>> df = otp.run(data, start=start, end=end)
+    >>> df.head()[['Time', 'PRICE', 'SIZE', 'ORIG_TS']]
+                               Time   PRICE  SIZE                       ORIG_TS
+    0 2024-02-01 05:00:00.008283417  186.50     6 2024-02-01 04:00:00.008283417
+    1 2024-02-01 05:00:00.008290927  185.59     1 2024-02-01 04:00:00.008290927
+    2 2024-02-01 05:00:00.008291153  185.49   107 2024-02-01 04:00:00.008291153
+    3 2024-02-01 05:00:00.010381671  185.49     1 2024-02-01 04:00:00.010381671
+    4 2024-02-01 05:00:00.011224206  185.50     2 2024-02-01 04:00:00.011224206
 
     Subtracting one day from all ticks.
     Parameter ``max_delay_of_new_timestamp`` must be specified in this case.
 
-    >>> data = otp.DataSource('US_COMP', symbols='AAPL', tick_type='TRD')
+    >>> data = otp.DataSource('US_COMP_SAMPLE', symbols='AAPL', tick_type='TRD')
     >>> data['ORIG_TS'] = data['TIMESTAMP']
     >>> data['NEW_TS'] = data['TIMESTAMP'] - otp.Day(1)
     >>> data = data.update_timestamp('NEW_TS', max_delay_of_new_timestamp=otp.Day(1))
-    >>> otp.run(data, start=start - otp.Day(1), end=end)[['Time', 'PRICE', 'SIZE', 'ORIG_TS']]
-                         Time  PRICE  SIZE                 ORIG_TS
-    0 2022-03-01 00:00:00.000    1.0   100 2022-03-02 00:00:00.000
-    1 2022-03-01 00:00:00.001    1.1   101 2022-03-02 00:00:00.001
-    2 2022-03-01 00:00:00.002    1.2   102 2022-03-02 00:00:00.002
+    >>> df = otp.run(data, start=start - otp.Day(1), end=end)
+    >>> df.head()[['Time', 'PRICE', 'SIZE', 'ORIG_TS']]
+                               Time   PRICE  SIZE                       ORIG_TS
+    0 2024-01-31 04:00:00.008283417  186.50     6 2024-02-01 04:00:00.008283417
+    1 2024-01-31 04:00:00.008290927  185.59     1 2024-02-01 04:00:00.008290927
+    2 2024-01-31 04:00:00.008291153  185.49   107 2024-02-01 04:00:00.008291153
+    3 2024-01-31 04:00:00.010381671  185.49     1 2024-02-01 04:00:00.010381671
+    4 2024-01-31 04:00:00.011224206  185.50     2 2024-02-01 04:00:00.011224206
 
     Parameter ``max_delay_handling`` can be used to specify how to handle ticks exceeding the maximum:
 
-    >>> data = otp.DataSource('US_COMP', symbols='AAPL', tick_type='TRD')
+    >>> data = otp.DataSource('US_COMP_SAMPLE', symbols='AAPL', tick_type='TRD')
     >>> data['ORIG_TS'] = data['TIMESTAMP']
     >>> data['NEW_TS'] = data.apply(
     ...     lambda row: row['TIMESTAMP'] + otp.Hour(24)
-    ...     if row['PRICE'] == 1.1
+    ...     if row['SIZE'] == 1
     ...     else row['TIMESTAMP'] + otp.Hour(1)
     ... )
     >>> data = data.update_timestamp('NEW_TS',
     ...                              max_delay_of_original_timestamp=otp.Hour(1),
     ...                              max_delay_handling='discard')
-    >>> otp.run(data, start=start, end=end)[['Time', 'PRICE', 'SIZE', 'ORIG_TS']]
-                         Time  PRICE  SIZE                  ORIG_TS
-    0 2022-03-02 01:00:00.000    1.0   100  2022-03-02 00:00:00.000
-    1 2022-03-02 01:00:00.002    1.2   102  2022-03-02 00:00:00.002
+    >>> df = otp.run(data, start=start, end=end)
+    >>> df.head()[['Time', 'PRICE', 'SIZE', 'ORIG_TS']]
+                               Time   PRICE  SIZE                       ORIG_TS
+    0 2024-02-01 05:00:00.008283417  186.50     6 2024-02-01 04:00:00.008283417
+    1 2024-02-01 05:00:00.008291153  185.49   107 2024-02-01 04:00:00.008291153
+    2 2024-02-01 05:00:00.011224206  185.50     2 2024-02-01 04:00:00.011224206
+    3 2024-02-01 05:00:00.012555438  185.50     2 2024-02-01 04:00:00.012555438
+    4 2024-02-01 05:00:00.012759751  185.50    45 2024-02-01 04:00:00.012759751
 
-    Parameter ``max_out_of_order_interval`` can be used in case new timestamp are out of order:
+    Parameter ``max_out_of_order_interval`` can be used in case new timestamps are out of order:
 
-    >>> data = otp.DataSource('US_COMP', symbols='AAPL', tick_type='TRD')
+    >>> data = otp.DataSource('US_COMP_SAMPLE', symbols='AAPL', tick_type='TRD')
     >>> data['ORIG_TS'] = data['TIMESTAMP']
     >>> data = data.agg({'COUNT': otp.agg.count()}, running=True, all_fields=True)
-    >>> data['NEW_TS'] = data['TIMESTAMP'] - otp.Minute(data['COUNT'])
+    >>> data['NEW_TS'] = data['TIMESTAMP'] - otp.Minute(data['COUNT'] % 60)
     >>> data = data.update_timestamp('NEW_TS',
-    ...                              max_delay_of_new_timestamp=otp.Hour(10),
-    ...                              max_out_of_order_interval=otp.Minute(100))
-    >>> otp.run(data, start=start - otp.Hour(2), end=end)[['Time', 'PRICE', 'SIZE', 'ORIG_TS', 'COUNT']]
-                         Time  PRICE  SIZE                 ORIG_TS  COUNT
-    0 2022-03-01 23:57:00.002    1.2   102 2022-03-02 00:00:00.002      3
-    1 2022-03-01 23:58:00.001    1.1   101 2022-03-02 00:00:00.001      2
-    2 2022-03-01 23:59:00.000    1.0   100 2022-03-02 00:00:00.000      1
+    ...                              max_delay_of_new_timestamp=otp.Hour(1),
+    ...                              max_out_of_order_interval=otp.Hour(1))
+    >>> df = otp.run(data, start=start - otp.Hour(2), end=end)
+    >>> df.head()[['Time', 'PRICE', 'SIZE', 'ORIG_TS', 'COUNT']]
+                               Time   PRICE  SIZE                       ORIG_TS  COUNT
+    0 2024-02-01 03:01:06.964168852  185.64     1 2024-02-01 04:00:06.964168852     59
+    1 2024-02-01 03:02:06.964163033  185.64     1 2024-02-01 04:00:06.964163033     58
+    2 2024-02-01 03:03:06.964159309  185.64     2 2024-02-01 04:00:06.964159309     57
+    3 2024-02-01 03:04:06.964159135  185.65    50 2024-02-01 04:00:06.964159135     56
+    4 2024-02-01 03:04:14.610956524  185.75     4 2024-02-01 04:03:14.610956524    119
     """
     if timestamp_field not in self.schema:
         raise ValueError(f"Field '{timestamp_field}' is not in schema")
@@ -317,18 +334,19 @@ def modify_query_times(
     Examples
     --------
 
-    >>> start = otp.dt(2022, 3, 2)
-    >>> end = otp.dt(2022, 3, 2) + otp.Milli(3)
-    >>> data = otp.DataSource('US_COMP', symbols='AAPL', tick_type='TRD')
+    >>> start = otp.dt(2024, 2, 1, 4) + otp.Milli(9)
+    >>> end = otp.dt(2024, 2, 1, 4) + otp.Milli(12)
+    >>> data = otp.DataSource('US_COMP_SAMPLE', symbols='AAPL', tick_type='TRD')
+    >>> data = data[['PRICE', 'SIZE']]
 
     By default, method does nothing:
 
     >>> t = data.modify_query_times()
     >>> otp.run(t, start=start, end=end)
-                         Time  PRICE  SIZE
-    0 2022-03-02 00:00:00.000    1.0   100
-    1 2022-03-02 00:00:00.001    1.1   101
-    2 2022-03-02 00:00:00.002    1.2   102
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.010381671  185.49     1
+    1 2024-02-01 04:00:00.011224206  185.50     2
+    2 2024-02-01 04:00:00.011671193  185.50     1
 
     See how ``_START_TIME`` and ``_END_TIME`` meta fields are changed.
     They are changed *before* ``modify_query_times``:
@@ -340,17 +358,21 @@ def modify_query_times(
     ...                          end=t['_END_TIME'] - otp.Milli(1))
     >>> t['S_AFTER'] = t['_START_TIME']
     >>> t['E_AFTER'] = t['_END_TIME']
-    >>> otp.run(t, start=start, end=end)
-            Time  PRICE  SIZE                S_BEFORE                E_BEFORE    S_AFTER                 E_AFTER
-    0 2022-03-02    1.1   101 2022-03-02 00:00:00.001 2022-03-02 00:00:00.002 2022-03-02 2022-03-02 00:00:00.003
+    >>> df = otp.run(t, start=start, end=end)
+    >>> df[['Time', 'PRICE', 'SIZE', 'S_BEFORE', 'E_BEFORE']]
+                               Time   PRICE  SIZE                S_BEFORE                E_BEFORE
+    0 2024-02-01 04:00:00.009381671  185.49     1 2024-02-01 04:00:00.010 2024-02-01 04:00:00.011
+    >>> df[['Time', 'PRICE', 'SIZE', 'S_AFTER', 'E_AFTER']]
+                               Time   PRICE  SIZE                 S_AFTER                 E_AFTER
+    0 2024-02-01 04:00:00.009381671  185.49     1 2024-02-01 04:00:00.009 2024-02-01 04:00:00.012
 
     You can decrease time interval without problems:
 
     >>> t = data.modify_query_times(start=data['_START_TIME'] + otp.Milli(1),
     ...                             end=data['_END_TIME'] - otp.Milli(1))
     >>> otp.run(t, start=start, end=end)
-            Time  PRICE  SIZE
-    0 2022-03-02    1.1   101
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.009381671  185.49     1
 
     Note that the timestamp of the tick was changed with default expression.
     In this case we can output original timestamps,
@@ -360,38 +382,31 @@ def modify_query_times(
     ...                             end=data['_END_TIME'] - otp.Milli(1),
     ...                             output_timestamp=data['TIMESTAMP'])
     >>> otp.run(t, start=start, end=end)
-                         Time  PRICE  SIZE
-    0 2022-03-02 00:00:00.001    1.1   101
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.010381671  185.49     1
 
     But it will not work if new time range is wider than original:
 
     >>> t = data.modify_query_times(start=data['_START_TIME'] - otp.Milli(1),
     ...                             output_timestamp=data['TIMESTAMP'])
-    >>> otp.run(t, start=start + otp.Milli(1), end=end + otp.Milli(1)) # doctest: +ELLIPSIS
+    >>> otp.run(t, start=start, end=end)  # doctest: +ELLIPSIS
     Traceback (most recent call last):
     Exception...timestamp is falling out of initial start/end time range...
 
-    In this case default ``output_timestamp`` expression would work just fine:
-
-    >>> t = data.modify_query_times(start=data['_START_TIME'] - otp.Milli(1))
-    >>> otp.run(t, start=start + otp.Milli(1), end=end + otp.Milli(1))
-                         Time  PRICE  SIZE
-    0 2022-03-02 00:00:00.001    1.0   100
-    1 2022-03-02 00:00:00.002    1.1   101
-    2 2022-03-02 00:00:00.003    1.2   102
-
-    But it doesn't work, for example, if end time has crossed the borders of original time range.
     In this case other ``output_timestamp`` expression must be specified:
 
     >>> t = data.modify_query_times(
-    ...     start=data['_START_TIME'] - otp.Milli(2),
-    ...     output_timestamp=otp.math.min(data['TIMESTAMP'] + otp.Milli(2), data['_END_TIME'])
+    ...     start=data['_START_TIME'] - otp.Milli(1),
+    ...     output_timestamp=otp.math.max(data['TIMESTAMP'], data['_START_TIME'])
     ... )
-    >>> otp.run(t, start=start + otp.Milli(2), end=end)
-                         Time  PRICE  SIZE
-    0 2022-03-02 00:00:00.002    1.0   100
-    1 2022-03-02 00:00:00.003    1.1   101
-    2 2022-03-02 00:00:00.003    1.2   102
+    >>> otp.run(t, start=start, end=end)
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.009000000  186.50     6
+    1 2024-02-01 04:00:00.009000000  185.59     1
+    2 2024-02-01 04:00:00.009000000  185.49   107
+    3 2024-02-01 04:00:00.010381671  185.49     1
+    4 2024-02-01 04:00:00.011224206  185.50     2
+    5 2024-02-01 04:00:00.011671193  185.50     1
 
     Remember that ``start`` and ``end`` parameters can't depend on ticks:
 
@@ -408,8 +423,8 @@ def modify_query_times(
     >>> t = data.modify_query_times(start=start + otp.Milli(1),
     ...                             end=end - otp.Milli(1))
     >>> otp.run(t, start=start, end=end)
-            Time  PRICE  SIZE
-    0 2022-03-02    1.1   101
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.009381671  185.49     1
 
     Note that some graph patterns are not allowed when using this method.
     For example, modifying query times for a branch that will be merged later:
@@ -483,41 +498,41 @@ def time_interval_shift(self: 'Source', shift, inplace=False) -> Optional['Sourc
     `Markouts <../../static/getting_started/use_cases.html#point-in-time-benchmarks-bbo-at-different-markouts>`_
 
 
-    >>> start = otp.dt(2022, 3, 2)
-    >>> end = otp.dt(2022, 3, 2) + otp.Milli(3)
-    >>> data = otp.DataSource('US_COMP', symbols='AAPL', tick_type='TRD')
+    >>> start = otp.dt(2024, 2, 1, 4) + otp.Milli(9)
+    >>> end = otp.dt(2024, 2, 1, 4) + otp.Milli(12)
+    >>> data = otp.DataSource('US_COMP_SAMPLE', symbols='AAPL', tick_type='TRD')
+    >>> data = data[['PRICE', 'SIZE']]
 
     Default data:
 
     >>> otp.run(data, start=start, end=end)
-                         Time  PRICE  SIZE
-    0 2022-03-02 00:00:00.000    1.0   100
-    1 2022-03-02 00:00:00.001    1.1   101
-    2 2022-03-02 00:00:00.002    1.2   102
-
-    Get window for a third tick:
-
-    >>> otp.run(data, start=start + otp.Milli(2), end=start + otp.Milli(3))
-                         Time  PRICE  SIZE
-    0 2022-03-02 00:00:00.002    1.2   102
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.010381671  185.49     1
+    1 2024-02-01 04:00:00.011224206  185.50     2
+    2 2024-02-01 04:00:00.011671193  185.50     1
 
     Shifting time window will result in different set of ticks,
     but the ticks will have their timestamps changed to fit into original time range.
-    Let's shift time 2 milliseconds back and thus get the first tick:
 
-    >>> t = data.time_interval_shift(shift=-otp.Milli(2))
-    >>> otp.run(t, start=start + otp.Milli(2), end=start + otp.Milli(3))
-                         Time  PRICE  SIZE
-    0 2022-03-02 00:00:00.002    1.0   100
+    >>> t = data.time_interval_shift(shift=-otp.Milli(1))
+    >>> otp.run(t, start=start, end=end)
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.009283417  186.50     6
+    1 2024-02-01 04:00:00.009290927  185.59     1
+    2 2024-02-01 04:00:00.009291153  185.49   107
+    3 2024-02-01 04:00:00.011381671  185.49     1
 
-    Here we are querying empty time interval, but shifting one second back to get ticks.
-
-    >>> t = data.time_interval_shift(shift=-otp.Second(1))
-    >>> otp.run(t, start=start + otp.Second(1), end=end + otp.Second(1))
-                         Time  PRICE  SIZE
-    0 2022-03-02 00:00:01.000    1.0   100
-    1 2022-03-02 00:00:01.001    1.1   101
-    2 2022-03-02 00:00:01.002    1.2   102
+    >>> t = data.time_interval_shift(shift=otp.Milli(2))
+    >>> otp.run(t, start=start, end=end)
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.009224206  185.50     2
+    1 2024-02-01 04:00:00.009671193  185.50     1
+    2 2024-02-01 04:00:00.010555438  185.50     2
+    3 2024-02-01 04:00:00.010759751  185.50    45
+    4 2024-02-01 04:00:00.010928231  185.68    11
+    5 2024-02-01 04:00:00.010930606  185.68    10
+    6 2024-02-01 04:00:00.010947024  185.68    23
+    7 2024-02-01 04:00:00.010987210  185.72     5
 
     Note that tick generators
     :py:class:`otp.Tick <onetick.py.Tick>` and :py:func:`otp.Ticks <onetick.py.Ticks>`
@@ -576,45 +591,46 @@ def time_interval_change(self: 'Source', start_change=0, end_change=0, inplace=F
     Examples
     --------
 
-    >>> start = otp.dt(2022, 3, 2)
-    >>> end = otp.dt(2022, 3, 2) + otp.Milli(3)
-    >>> data = otp.DataSource('US_COMP', symbols='AAPL', tick_type='TRD')
+    >>> start = otp.dt(2024, 2, 1, 4) + otp.Milli(9)
+    >>> end = otp.dt(2024, 2, 1, 4) + otp.Milli(12)
+    >>> data = otp.DataSource('US_COMP_SAMPLE', symbols='AAPL', tick_type='TRD')
+    >>> data = data[['PRICE', 'SIZE']]
 
     By default, ``time_interval_change()`` does nothing:
 
     >>> t = data.time_interval_change()
     >>> otp.run(t, start=start, end=end)
-                         Time  PRICE  SIZE
-    0 2022-03-02 00:00:00.000    1.0   100
-    1 2022-03-02 00:00:00.001    1.1   101
-    2 2022-03-02 00:00:00.002    1.2   102
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.010381671  185.49     1
+    1 2024-02-01 04:00:00.011224206  185.50     2
+    2 2024-02-01 04:00:00.011671193  185.50     1
 
     Decreasing time range will not change ticks' timestamps:
 
     >>> t = data.time_interval_change(start_change=otp.Milli(1), end_change=-otp.Milli(1))
     >>> otp.run(t, start=start, end=end)
-                         Time  PRICE  SIZE
-    0 2022-03-02 00:00:00.001    1.1   101
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.010381671  185.49     1
 
     Increasing time range will change timestamps of the ticks that crossed the border.
-    In this case first tick's timestamp will be set to original start time,
-    and third tick's to original end time.
+    In this case first 3 ticks timestamps will be set to original start time,
+    and last 6 ticks -- to original end time.
 
     >>> t = data.time_interval_change(start_change=-otp.Milli(1), end_change=otp.Milli(1))
-    >>> otp.run(t, start=start + otp.Milli(1), end=start + otp.Milli(2))
-                         Time  PRICE  SIZE
-    0 2022-03-02 00:00:00.001    1.0   100
-    1 2022-03-02 00:00:00.001    1.1   101
-    2 2022-03-02 00:00:00.002    1.2   102
-
-    Here we are querying empty time interval, but changing start time one second back to get ticks.
-
-    >>> t = data.time_interval_change(start_change=-otp.Second(1))
-    >>> otp.run(t, start=start + otp.Second(1), end=end + otp.Second(1))
-                     Time  PRICE  SIZE
-    0 2022-03-02 00:00:01    1.0   100
-    1 2022-03-02 00:00:01    1.1   101
-    2 2022-03-02 00:00:01    1.2   102
+    >>> otp.run(t, start=start, end=end)
+                                Time   PRICE  SIZE
+    0  2024-02-01 04:00:00.009000000  186.50     6
+    1  2024-02-01 04:00:00.009000000  185.59     1
+    2  2024-02-01 04:00:00.009000000  185.49   107
+    3  2024-02-01 04:00:00.010381671  185.49     1
+    4  2024-02-01 04:00:00.011224206  185.50     2
+    5  2024-02-01 04:00:00.011671193  185.50     1
+    6  2024-02-01 04:00:00.012000000  185.50     2
+    7  2024-02-01 04:00:00.012000000  185.50    45
+    8  2024-02-01 04:00:00.012000000  185.68    11
+    9  2024-02-01 04:00:00.012000000  185.68    10
+    10 2024-02-01 04:00:00.012000000  185.68    23
+    11 2024-02-01 04:00:00.012000000  185.72     5
     """
     start = self['_START_TIME'] + start_change
     end = self['_END_TIME'] + end_change
