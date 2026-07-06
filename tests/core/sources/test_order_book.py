@@ -2,6 +2,7 @@ import pytest
 
 import onetick.py as otp
 from onetick.py.otq import otq
+from conftest import doctest_compare
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -13,10 +14,11 @@ def session(m_session):
         'PRICE': [1, 2, 1, 2, 5],
         'SIZE': [1, 2, 3, 4, 7],
         'X': ['A', 'B', 'B', 'A', 'B'],
+        'ORDER_ID': [1, 1, 1, 1, 1],
         'TICK_STATUS': [otp.byte(0)] * 5,
         'RECORD_TYPE': ['R'] * 5,
     })
-    data.sink(otq.ModifyTsProperties('STATE_KEYS', 'PRICE,BUY_SELL_FLAG'))
+    data.sink(otq.ModifyTsProperties('STATE_KEYS', 'PRICE,BUY_SELL_FLAG,ORDER_ID'))
 
     db = otp.DB('SOME_DB')
     db.add(src=data, symbol='AA', tick_type='PRL')
@@ -60,6 +62,18 @@ class TestObSnapshot:
         assert set(df['SIZE']) == {4, 7}
         assert set(df['BUY_SELL_FLAG']) == {1, 0}
         assert len(set(df['LEVEL'])) == 1
+
+    @pytest.mark.skipif(not otp.compatibility._is_supported_show_num_orders_at_level(),
+                        reason='new parameter was added')
+    def test_show_num_orders_at_level(self):
+        data = otp.ObSnapshot('SOME_DB', tick_type='PRL', symbols='AA', max_levels=1, show_num_orders_at_level=True)
+        assert data.schema['NUM_ORDERS'] is int
+        df = otp.run(data)
+        assert doctest_compare(df, """
+                Time  PRICE  SIZE  LEVEL UPDATE_TIME  BUY_SELL_FLAG  NUM_ORDERS
+        0 2003-12-04    2.0     4      1  2003-12-01              1           1
+        1 2003-12-04    5.0     7      1  2003-12-01              0           1
+        """)
 
 
 class TestObSnapshotWide:

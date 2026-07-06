@@ -1257,8 +1257,12 @@ COPY_TICK(LOCAL::OUTPUT_TICK);
         assert script_text(t, fun).strip() == """
 long main() {
 static DYNAMIC_TICK LOCAL::t;
-LOCAL::t.ADD_FIELD("A","long",12345);
-LOCAL::t.ADD_FIELD("X","long",12345);
+_ONCE {
+LOCAL::t.ADD_FIELD("A","long");
+LOCAL::t.ADD_FIELD("X","long");
+}
+LOCAL::t.SET_LONG_VALUE("A", 12345);
+LOCAL::t.SET_LONG_VALUE("X", 12345);
 COPY_TICK(LOCAL::t);
 }
 """.strip()

@@ -403,14 +403,15 @@ class DataSource(Source):
                 if _tt.startswith('$'):
                     _tt = None
 
+                # PY-1555: setting include_memdb=False to not get schema from memory dbs, they can have limited schema
                 db_obj = _inspection.DB(_db)
                 if schema_policy == self.POLICY_TOLERANT and start:
                     # repeating the same logic as in db_obj.last_date
-                    start = db_obj.last_not_empty_date(start, days_back=5, tick_type=_tt)
+                    start = db_obj.last_not_empty_date(start, days_back=5, tick_type=_tt, include_memdb=False)
 
                 db_schema = {}
                 try:
-                    db_schema = db_obj.schema(date=start, tick_type=_tt)
+                    db_schema = db_obj.schema(date=start, tick_type=_tt, include_memdb=False)
                 except Exception as e:
                     if _tt is not None:
                         warnings.warn(f"Couldn't get schema from the database {db_obj}:\n{e}.\n\n"

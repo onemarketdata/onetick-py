@@ -2,7 +2,7 @@ import itertools
 import warnings
 from collections import defaultdict
 from typing import Union, Iterable, Optional, Literal
-from datetime import date as dt_date, datetime, timedelta
+from datetime import date as dt_date, datetime, timedelta, timezone as dt_timezone
 from functools import wraps
 
 import pandas as pd
@@ -381,7 +381,7 @@ class DB:
                          symbols=f'{self.name}::',
                          start=start,
                          end=end,
-                         # GMT works properly for locators with gap
+                         # self._locator_date_ranges are in GMT
                          timezone='GMT',
                          context=self.context)
 
@@ -423,14 +423,15 @@ class DB:
         self._set_intervals()
 
         dates = []
-        today = dt_date.today()
+        today = datetime.now(tz=dt_timezone.utc).date()
         today = datetime(today.year, today.month, today.day)
+        tomorrow = today + timedelta(days=1)
         # searching in reversed order in case we need only_last date
         for locator_start, locator_end in reversed(self._locator_date_ranges):
             # future is not loaded yet
-            if locator_start > today:
+            if locator_start >= tomorrow:
                 continue
-            locator_end = min(locator_end, today)
+            locator_end = min(locator_end, tomorrow)
 
             if respect_acl:
                 try:
@@ -496,7 +497,7 @@ class DB:
         """
         return self.__get_dates(respect_acl=respect_acl, check_index_file=check_index_file)
 
-    def last_not_empty_date(self, last_date, days_back, timezone=None, tick_type=None):
+    def last_not_empty_date(self, last_date, days_back, timezone=None, tick_type=None, include_memdb=True):
         """
         Find first day that has data
         starting from ``last_date`` and going ``days_back`` number of days back.
@@ -507,7 +508,7 @@ class DB:
             if date < min_locator_date:
                 break
             try:
-                tick_types = self.tick_types(date, timezone=timezone)
+                tick_types = self.tick_types(date, timezone=timezone, include_memdb=include_memdb)
             except ValueError:
                 # acl date violation
                 break
@@ -520,7 +521,7 @@ class DB:
     @property
     def last_date(self):
         """
-        The latest date on which db has data and the current user has access to.
+        The latest date in GMT timezone on which db has data and the current user has access to.
 
         Returns
         -------
@@ -535,7 +536,8 @@ class DB:
         """
         return self.get_last_date()
 
-    def get_last_date(self, tick_type=None, timezone=None, show_warnings=True, check_index_file=utils.adaptive):
+    def get_last_date(self, tick_type=None, timezone=None, show_warnings=True, check_index_file=utils.adaptive,
+                      include_memdb: bool = True):
         last_date = self.__get_dates(only_last=True, respect_acl=True, check_index_file=check_index_file)
         if last_date is None:
             return None
@@ -547,7 +549,8 @@ class DB:
         # For example, this is a case of OneTick Cloud US_COMP database.
         # We only scan 5 previous days to cover weekends + possible conjuncted holidays.
         # According to the official NYSE calendar there are no more than 5 closed days.
-        date = self.last_not_empty_date(last_date, days_back=5, tick_type=tick_type, timezone=timezone)
+        date = self.last_not_empty_date(last_date, days_back=5, tick_type=tick_type, timezone=timezone,
+                                        include_memdb=include_memdb)
         if date is None:
             if show_warnings:
                 warnings.warn(
@@ -557,7 +560,8 @@ class DB:
             return last_date
         return date
 
-    def tick_types(self, date=None, timezone=None, query_properties: Optional[dict] = None) -> list[str]:
+    def tick_types(self, date=None, timezone=None, query_properties: Optional[dict] = None,
+                   include_memdb: bool = True) -> list[str]:
         """
         Returns list of tick types for the ``date``.
 
@@ -570,6 +574,10 @@ class DB:
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
             such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+        include_memdb: bool
+            Setting this parameter to True will return result from memory databases too.
+            Otherwise only the archive databases will be used.
+            Default is True.
 
         Returns
         -------
@@ -582,7 +590,8 @@ class DB:
         >>> db.tick_types(date=otp.dt(2024, 2, 1))
         ['DAY', 'IND', 'LULD', 'MKT', 'NBBO', 'QTE', 'STAT', 'TRD']
         """
-        date = self.last_date if date is None else date
+        if date is None:
+            date = self.get_last_date(timezone=timezone, include_memdb=include_memdb)
 
         if timezone is None:
             timezone = configuration.config.tz
@@ -598,7 +607,7 @@ class DB:
 
         # PY-458: don't use cache, it can return different result in some cases
         result = self._get_schema(use_cache=False, date=date, timezone=timezone, show_schema=show_schema,
-                                  query_properties=query_properties)
+                                  query_properties=query_properties, include_memdb=include_memdb)
         if len(result) == 0:
             return []
 
@@ -614,10 +623,10 @@ class DB:
         return self._locator_date_ranges[0]
 
     @_method_cache
-    def _get_schema(self, date, timezone, use_cache, show_schema, query_properties=None):
+    def _get_schema(self, date, timezone, use_cache, show_schema, query_properties=None, include_memdb=True):
         ep = otq.DbShowTickTypes(use_cache=use_cache,
                                  show_schema=show_schema,
-                                 include_memdb=True)
+                                 include_memdb=include_memdb)
         safe_params = _get_params_to_ignore_acl_violation()
         if query_properties:
             safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
@@ -629,7 +638,8 @@ class DB:
                        **safe_params)
 
     def schema(self, date=None, tick_type=None, timezone=None, check_index_file=utils.adaptive,
-               query_properties: Optional[dict] = None) -> dict[str, type]:
+               query_properties: Optional[dict] = None,
+               include_memdb: bool = True) -> dict[str, type]:
         """
         Gets the schema of the database.
 
@@ -655,6 +665,10 @@ class DB:
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
             such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+        include_memdb: bool
+            Setting this parameter to True will return result from memory databases too.
+            Otherwise only the archive databases will be used.
+            Default is True.
 
         Returns
         -------
@@ -685,7 +699,8 @@ class DB:
         orig_date = date
 
         if date is None:
-            date = self.get_last_date(tick_type=tick_type, timezone=timezone, check_index_file=check_index_file)
+            date = self.get_last_date(tick_type=tick_type, timezone=timezone, check_index_file=check_index_file,
+                                      include_memdb=include_memdb)
         if timezone is None:
             timezone = configuration.config.tz
         if tick_type is None:
@@ -707,6 +722,7 @@ class DB:
 
         kwargs = dict(
             date=date, timezone=timezone, show_schema=True, query_properties=query_properties,
+            include_memdb=include_memdb,
         )
         # PY-458, BEXRTS-1220, PY-1421
         # the results of the query may vary depending on using use_cache parameter, so we are trying both
@@ -781,7 +797,8 @@ class DB:
         return schema
 
     def symbols(self, date=None, timezone=None, tick_type=None, pattern='.*',
-                query_properties: Optional[dict] = None) -> list[str]:
+                query_properties: Optional[dict] = None,
+                include_memdb: bool = True) -> list[str]:
         """
         Finds a list of available symbols in the database
 
@@ -798,6 +815,10 @@ class DB:
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
             such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+        include_memdb: bool
+            Setting this parameter to True will return result from memory databases too.
+            Otherwise only the archive databases will be used.
+            Default is True.
 
         Examples
         --------
@@ -806,7 +827,7 @@ class DB:
         ['AAL', 'AAPL']
         """
         if date is None:
-            date = self.last_date
+            date = self.get_last_date(timezone=timezone, include_memdb=include_memdb)
         if timezone is None:
             timezone = configuration.config.tz
         if tick_type is None:

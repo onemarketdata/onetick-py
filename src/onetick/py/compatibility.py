@@ -550,3 +550,7 @@ def _is_preserve_decimal_flag_supported():
 
 def _is_read_from_dataframe_supported():
     return hasattr(otq, 'ReadFromDataFrame')
+
+
+def _is_supported_show_num_orders_at_level():
+    return 'show_num_orders_at_level' in otq.ObSnapshot.Parameters.list_parameters()

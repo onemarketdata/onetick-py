@@ -2218,10 +2218,18 @@ class _DynamicTick(_TickSequenceTickMixin):
     def __init__(self, name):
         super().__init__(name)
         self._schema = {}
+        self._original_fields_schema = {}
+        self._is_schema_reset = False
 
     @property
     def schema(self):
         return self._schema
+
+    def _init_fields(self):
+        return '\n'.join([
+            f'{self}.ADD_FIELD({value2str(name)},{value2str(type2str(dtype))});'
+            for name, dtype in self._original_fields_schema.items()
+        ])
 
     def add_field(self, name, value):
         """
@@ -2230,9 +2238,15 @@ class _DynamicTick(_TickSequenceTickMixin):
         if name in self.schema:
             raise ValueError(f"Can't add field '{name}' again."
                              " Use set_value or __setitem__ functions to update it.")
+
         dtype = get_object_type(value)
         self._schema[name] = dtype
-        return f'{self}.ADD_FIELD({value2str(name)},{value2str(type2str(dtype))},{value2str(value)});'
+        if not self._is_schema_reset:
+            self._original_fields_schema[name] = dtype
+        else:
+            # In this case all old fields was overridden, so we can use ADD_FIELD
+            return f'{self}.ADD_FIELD({value2str(name)},{value2str(type2str(dtype))},{value2str(value)});'
+        return super().__setitem__(name, value)
 
     def __setitem__(self, key, value):
         try:
@@ -2254,6 +2268,7 @@ class _DynamicTick(_TickSequenceTickMixin):
             for k, v in tick_object.schema.items()
             if k in field_names
         }
+        self._is_schema_reset = True
         return f'{self}.COPY_FIELDS({tick_object},{value2str(field_names)})'
 
 

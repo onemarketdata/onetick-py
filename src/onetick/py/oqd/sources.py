@@ -78,8 +78,8 @@ class OHLCV(otp.Source):
 
         Examples
         --------
-        >>> src = otp.oqd.sources.OHLCV(exch="USPRIM")  # doctest: +SKIP
-        >>> otp.run(src,  # doctest: +SKIP
+        >>> src = otp.oqd.OHLCV(exch="USPRIM")
+        >>> otp.run(src,
         ...         symbols='BTKR::::GOOGL US',
         ...         start=otp.dt(2018, 8, 1),
         ...         end=otp.dt(2018, 8, 2),
@@ -134,19 +134,19 @@ class CorporateActions(otp.Source):
 
     Examples
     --------
-    >>> src = otp.oqd.sources.CorporateActions()  # doctest: +SKIP
-    >>> otp.run(src,  # doctest: +SKIP
+    >>> src = otp.oqd.CorporateActions()
+    >>> otp.run(src,
     ...         symbols='TDEQ::::AAPL',
     ...         start=otp.dt(2021, 1, 1),
     ...         end=otp.dt(2021, 8, 6),
     ...         symbol_date=otp.dt(2021, 2, 18),
     ...         timezone='GMT')
             Time   OID  ACTION_ID    ACTION_TYPE  ACTION_ADJUST ACTION_CURRENCY  ANN_DATE   EX_DATE  PAY_DATE  REC_DATE\
-                       TERM_NOTE TERM_RECORD_TYPE ACTION_STATUS
+           TERM_NOTE TERM_RECORD_TYPE ACTION_STATUS
     0 2021-02-05  9706   16799540  CASH_DIVIDEND          0.205             USD  20210127  20210205  20210211  20210208\
-          CASH:0.205@USD                         NORMAL
+      CASH:0.205@USD                         NORMAL
     1 2021-05-07  9706   17098817  CASH_DIVIDEND          0.220             USD  20210428  20210507  20210513  20210510\
-           CASH:0.22@USD                         NORMAL
+       CASH:0.22@USD                         NORMAL
     """
 
     @docstring(parameters=COMMON_SOURCE_DOC_PARAMS, add_self=True)
@@ -201,14 +201,14 @@ class DescriptiveFields(otp.Source):
 
     Examples
     --------
-    >>> src = otp.oqd.sources.DescriptiveFields()  # doctest: +SKIP
-    >>> otp.run(src,  # doctest: +SKIP
+    >>> src = otp.oqd.DescriptiveFields()
+    >>> otp.run(src,
     ...         symbols='1000001589',
     ...         start=otp.dt(2020, 3, 1),
     ...         end=otp.dt(2023, 3, 2),
     ...         timezone='GMT').iloc[:6]
             Time         OID    END_DATE COUNTRY  EXCH                NAME                   ISSUE_DESC\
-                 ISSUE_CLASS ISSUE_TYPE ISSUE_STATUS SIC_CODE    IDSYM TICKER CALENDAR
+         ISSUE_CLASS ISSUE_TYPE ISSUE_STATUS SIC_CODE    IDSYM TICKER CALENDAR
     0 2020-03-01  1000001589  2020-03-23     LUX  EL^X  INVESTEC GLOBAL ST   EUROPEAN HIGH YLD BD INC 2\
                 FUND                  NORMAL           B2PT4G9
     1 2020-03-23  1000001589  2020-04-01     LUX  EL^X  NINETY ONE LIMITED   EUROPEAN HIGH YLD BD INC 2\
@@ -288,8 +288,8 @@ class SharesOutstanding(otp.Source):
 
     Examples
     --------
-    >>> src = otp.oqd.sources.SharesOutstanding()  # doctest: +SKIP
-    >>> otp.run(src,  # doctest: +SKIP
+    >>> src = otp.oqd.SharesOutstanding()
+    >>> otp.run(src,
     ...         symbols='TDEQ::::AAPL',
     ...         start=otp.dt(2021, 1, 1),
     ...         end=otp.dt(2021, 8, 6),

@@ -1,12 +1,15 @@
 import sys
 import pytest
 import datetime
-import doctest
+
+import backoff
 import numpy as np
 import pandas as pd
+
 import onetick.py as otp
 from onetick.py.otq import otq
-import backoff
+
+from conftest import doctest_compare
 
 
 # global marker for the whole module
@@ -46,7 +49,7 @@ class TestOHLCV:
     @pytest.mark.parametrize('tz', ['GMT', 'EST5EDT', 'Pacific/Chatham'])
     @pytest.mark.parametrize('exch', ['all', 'main', 'USPRIM'])
     def test_types_and_schema(self, session, exch, tz):
-        src = otp.oqd.sources.OHLCV(exch=exch)
+        src = otp.oqd.OHLCV(exch=exch)
         src = src.first()
 
         schema_check = dict(OID=str,
@@ -76,7 +79,7 @@ class TestOHLCV:
     @pytest.mark.parametrize('tz', ['GMT', 'EST5EDT', 'Pacific/Chatham'])
     @pytest.mark.parametrize('exch', ['all', 'main', 'USPRIM', 'USCOMP', 'NOT_EXISTED'])
     def test_exch_selection(self, session, exch, tz):
-        src = otp.oqd.sources.OHLCV(exch=exch)
+        src = otp.oqd.OHLCV(exch=exch)
 
         df = otp.run(src,
                      symbols='BTKR::::GOOGL US',
@@ -96,17 +99,17 @@ class TestOHLCV:
 
     @our_backoff
     def test_from_doc(self, session):
-        src = otp.oqd.sources.OHLCV(exch="USPRIM")
+        src = otp.oqd.OHLCV(exch="USPRIM")
         df = otp.run(src,
                      symbols='BTKR::::GOOGL US',
                      start=otp.dt(2018, 8, 1),
                      end=otp.dt(2018, 8, 2),
                      symbol_date=otp.dt(2018, 8, 1))
-        assert doctest.OutputChecker().check_output("""
+        assert doctest_compare("""
                          Time    OID    EXCH CURRENCY     OPEN     HIGH      LOW    CLOSE    VOLUME
         0 2018-08-01 00:00:00  74143  USPRIM      USD  1242.73  1245.72  1225.00  1232.99  605680.0
         1 2018-08-01 20:00:00  74143  USPRIM      USD  1219.69  1244.25  1218.06  1241.13  596960.0
-        """, str(df), doctest.NORMALIZE_WHITESPACE)
+        """, str(df))
 
 
 class TestCorporateActions:
@@ -114,7 +117,7 @@ class TestCorporateActions:
     @our_backoff
     def test_doc_test_example(self, session):
         # test example from docs
-        src = otp.oqd.sources.CorporateActions()
+        src = otp.oqd.CorporateActions()
         df = otp.run(src,
                      symbols='TDEQ::::MKD',
                      start=otp.dt(2021, 5, 20, 9, 30),
@@ -126,7 +129,7 @@ class TestCorporateActions:
 
     @our_backoff
     def test_types_and_schemas(self, session):
-        src = otp.oqd.sources.CorporateActions()
+        src = otp.oqd.CorporateActions()
         src = src.first()
 
         schema_check = dict(OID=str,
@@ -161,28 +164,28 @@ class TestCorporateActions:
 
     @our_backoff
     def test_from_doc(self, session):
-        src = otp.oqd.sources.CorporateActions()
+        src = otp.oqd.CorporateActions()
         df = otp.run(src,
                      symbols='TDEQ::::AAPL',
                      start=otp.dt(2021, 1, 1),
                      end=otp.dt(2021, 8, 6),
                      symbol_date=otp.dt(2021, 2, 18),
                      timezone='GMT')
-        assert doctest.OutputChecker().check_output("""
+        assert doctest_compare("""
                 Time   OID  ACTION_ID    ACTION_TYPE  ACTION_ADJUST ACTION_CURRENCY  ANN_DATE   EX_DATE  PAY_DATE\
                       REC_DATE       TERM_NOTE TERM_RECORD_TYPE ACTION_STATUS
         0 2021-02-05  9706   16799540  CASH_DIVIDEND          0.205             USD  20210127  20210205  20210211\
                       20210208  CASH:0.205@USD                         NORMAL
         1 2021-05-07  9706   17098817  CASH_DIVIDEND          0.220             USD  20210428  20210507  20210513\
                       20210510   CASH:0.22@USD                         NORMAL
-        """, str(df), doctest.NORMALIZE_WHITESPACE)
+        """, str(df))
 
 
 class TestDescriptiveFields:
 
     @our_backoff
     def test_types_and_schemas(self, session):
-        src = otp.oqd.sources.DescriptiveFields()
+        src = otp.oqd.DescriptiveFields()
         src = src.first()
 
         schema_check = dict(OID=str,
@@ -217,7 +220,7 @@ class TestDescriptiveFields:
 
     @our_backoff
     def test_year_9999_in_enddate_field(self, session):
-        src = otp.oqd.sources.DescriptiveFields()
+        src = otp.oqd.DescriptiveFields()
         df = otp.run(src,
                      symbols='1000001589',
                      start=otp.dt(2020, 3, 1),
@@ -228,13 +231,13 @@ class TestDescriptiveFields:
 
     @our_backoff
     def test_from_doc(self, session):
-        src = otp.oqd.sources.DescriptiveFields()
+        src = otp.oqd.DescriptiveFields()
         df = otp.run(src,
                      symbols='1000001589',
                      start=otp.dt(2020, 3, 1),
                      end=otp.dt(2023, 3, 2),
                      timezone='GMT').iloc[:6]
-        assert doctest.OutputChecker().check_output("""
+        assert doctest_compare("""
                 Time         OID    END_DATE COUNTRY  EXCH                NAME                   ISSUE_DESC\
                       ISSUE_CLASS ISSUE_TYPE ISSUE_STATUS SIC_CODE    IDSYM TICKER CALENDAR
         0 2020-03-01  1000001589  2020-03-23     LUX  EL^X  INVESTEC GLOBAL ST   EUROPEAN HIGH YLD BD INC 2\
@@ -249,7 +252,7 @@ class TestDescriptiveFields:
                              FUND                  NORMAL           B2PT4G9
         5 2022-01-01  1000001589  2022-01-28     LUX  EL^X  NINETY ONE LUX S.A  GSF GBL HIGH YLD A2 EUR DIS\
                              FUND                  NORMAL           B2PT4G9
-        """, str(df), doctest.NORMALIZE_WHITESPACE)
+        """, str(df))
 
 
 class TestCorporateActionsFunc:
@@ -403,21 +406,21 @@ class TestCorporateActionsFunc:
 class TestSharesOutstanding:
     @our_backoff
     def test_from_doc(self, session):
-        src = otp.oqd.sources.SharesOutstanding()
+        src = otp.oqd.SharesOutstanding()
         df = otp.run(src,
                      symbols='TDEQ::::AAPL',
                      start=otp.dt(2021, 1, 1),
                      end=otp.dt(2021, 8, 6),
                      symbol_date=otp.dt(2021, 2, 18),
                      timezone='GMT')
-        assert doctest.OutputChecker().check_output("""
+        assert doctest_compare("""
                 Time   OID   END_DATE REPORT_MONTH        SHARES
         0 2021-01-01  9706 2021-01-06       202009  1.700180e+10
         1 2021-01-06  9706 2021-01-29       202009  1.682326e+10
         2 2021-01-29  9706 2021-05-03       202012  1.678810e+10
         3 2021-05-03  9706 2021-07-30       202103  1.668763e+10
         4 2021-07-30  9706 2021-10-29       202106  1.653017e+10
-        """, str(df), doctest.NORMALIZE_WHITESPACE)
+        """, str(df))
 
 
 @our_backoff
@@ -549,3 +552,26 @@ def test_corp_actions_with_mocked_refdb():
         df = otp.run(unadj, symbols='MKD', symbol_date=symbol_date, start=otp.dt(2022, 5, 20), end=otp.dt(2022, 5, 27))
         print(df.head())
         assert df["PRICE"][0] == 0.0911
+
+
+def test_oqd_event(session):
+    data = otp.DataSource('OQD_EVENT', tick_type='EVENT_D', schema_policy='manual')
+    data = otp.merge([data], symbols=otp.Symbols('OQD_EVENT', for_tick_type='EVENT_D'))
+    df = otp.run(data, date=otp.dt(2026, 6, 23), timezone='GMT')
+    assert doctest_compare(df, """
+             Time     OID               EVENT_TYPE EVENT_CONDITION      EVENT_DATETIME DELETED_TIME  TICK_STATUS  OMDSEQ
+    0  2026-06-23  207482             EARNING_DATE                 2026-06-23 20:05:00   1970-01-01            0       1
+    1  2026-06-23   22857  COMPANY_CONFERENCE_CALL                 2026-06-23 14:00:00   1970-01-01            0       1
+    2  2026-06-23   22857             EARNING_DATE                 2026-06-23 13:15:00   1970-01-01            0       1
+    3  2026-06-23   60963  COMPANY_CONFERENCE_CALL                 2026-06-23 21:00:00   1970-01-01            0       1
+    4  2026-06-23   60963             EARNING_DATE                 2026-06-23 20:02:00   1970-01-01            0       1
+    5  2026-06-23  681733  COMPANY_CONFERENCE_CALL                 2026-06-23 12:00:00   1970-01-01            0       1
+    6  2026-06-23  681733             EARNING_DATE                 2026-06-23 10:00:00   1970-01-01            0       0
+    7  2026-06-23  747325  COMPANY_CONFERENCE_CALL                 2026-06-23 21:00:00   1970-01-01            0       1
+    8  2026-06-23  747325             EARNING_DATE                 2026-06-23 20:43:00   1970-01-01            0       1
+    9  2026-06-23   81848             EARNING_DATE                 2026-06-23 20:15:00   1970-01-01            0       1
+    10 2026-06-23   91603  COMPANY_CONFERENCE_CALL                 2026-06-23 21:00:00   1970-01-01            0       1
+    11 2026-06-23   91603             EARNING_DATE                 2026-06-23 20:10:00   1970-01-01            0       1
+    12 2026-06-23   94601  COMPANY_CONFERENCE_CALL                 2026-06-23 16:00:00   1970-01-01            0       1
+    13 2026-06-23   94601             EARNING_DATE                 2026-06-23 10:45:00   1970-01-01            0       1
+    """)

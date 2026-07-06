@@ -1,4 +1,6 @@
 import os
+import doctest
+from textwrap import dedent
 from datetime import datetime
 
 import pytest
@@ -73,3 +75,15 @@ def cloud_server():
             "development-queryhost-2.preprod-solutions.parent.onetick.com:50015",
         )
     )
+
+
+def doctest_compare(want, got, do_dedent=True):
+    want = str(want)
+    got = str(got)
+    if do_dedent:
+        got = dedent(got).removeprefix('\n')
+    flags = doctest.NORMALIZE_WHITESPACE | doctest.DONT_ACCEPT_BLANKLINE | doctest.REPORT_NDIFF
+    if doctest.OutputChecker().check_output(want, got, flags):
+        return True
+    else:
+        assert False, doctest.OutputChecker().output_difference(doctest.Example('', want), got, flags)

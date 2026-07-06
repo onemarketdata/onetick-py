@@ -166,6 +166,9 @@ def dynamic_tick():
     Dynamic ticks can be used with some methods
     of all tick sequences.
 
+    .. warning::
+        Dynamic ticks should be declared at the beginning of the script, before any code.
+
     See also
     --------
     :py:class:`onetick.py.state.tick_list`
@@ -1470,9 +1473,13 @@ class StatementParser(CaseStatementParser):
                 if val.is_tick:
                     # recreating tick object here, because it doesn't have name yet
                     self.fun.emulator.STATIC_VARS[var_name] = val.dtype(var_name)
-                    return f'static {val.value._definition} {var};'
-                self.fun.emulator.STATIC_VARS[var_name] = val.value
-                return f'static {ott.type2str(val.dtype)} {var} = {val};'
+                    result = f'static {val.value._definition} {var};'
+                else:
+                    result = f'static {ott.type2str(val.dtype)} {var} = {val};'
+                    self.fun.emulator.STATIC_VARS[var_name] = val.value
+
+                self.fun.local_variables[var_name] = result
+                return ''
 
             variables = None
             if var_name in self.fun.emulator.STATIC_VARS:
@@ -1486,7 +1493,8 @@ class StatementParser(CaseStatementParser):
                 if self.fun.emulator.NEW_VALUES:
                     raise ValueError('Mixed definition of local variables and new columns is not supported')
                 self.fun.emulator.LOCAL_VARS[var_name] = val.value
-                return f'{ott.type2str(val.dtype)} {var} = {val};'
+                self.fun.local_variables[var_name] = f'{ott.type2str(val.dtype)} {var} = {val};'
+                return ''
 
             dtype = ott.get_type_by_objects([variables[var_name]])
             if val.dtype != dtype:
@@ -1950,6 +1958,8 @@ class FunctionParser:
         self._from_args_annotations = False
         # calling property here, so we can raise exception as early as possible
         _ = self.arg_name
+        # local variables
+        self.local_variables = {}
 
     @cached_property
     def is_method(self) -> bool:
@@ -2080,7 +2090,7 @@ class FunctionParser:
             #       changing that will break backward-compatibility
             lines.append(self.statement_parser.statement(ast.Return(ast.Constant(False))))
 
-        if self.emulator is not None and not self.inner_function:
+        if self.emulator is not None:
             # per tick script syntax demand that we declare variables before using them
             # so we get all new variables from emulator and declare them.
 
@@ -2089,12 +2099,32 @@ class FunctionParser:
                 return f'{ott.type2str(dtype)} {str(key)} = {ott.value2str(ott.default_by_type(dtype))};'
 
             new_columns = []
-            for key, values in self.emulator.NEW_VALUES.items():
-                new_columns.append(var_definition(key, values))
             new_local_vars = []
-            for key, values in self.emulator.LOCAL_VARS_NEW_VALUES.items():
-                new_local_vars.append(var_definition(LocalVariable(key), values))
-            lines = new_columns + new_local_vars + lines
+            new_other_vars = []
+            new_dynamic_ticks_fields = []
+
+            for value in self.local_variables.values():
+                new_other_vars.append(value)
+
+            if not self.inner_function:
+                for key, values in self.emulator.NEW_VALUES.items():
+                    new_columns.append(var_definition(key, values))
+
+                for key, values in self.emulator.LOCAL_VARS_NEW_VALUES.items():
+                    new_local_vars.append(var_definition(LocalVariable(key), values))
+
+                for var_name, var_val in self.emulator.STATIC_VARS.items():
+                    if not isinstance(var_val, _DynamicTick):
+                        continue
+
+                    if var_val.schema:
+                        new_dynamic_ticks_fields.append(var_val._init_fields())
+
+            declaration_lines = new_columns + new_local_vars + new_other_vars
+            if not new_dynamic_ticks_fields:
+                lines = declaration_lines + lines
+            else:
+                lines = declaration_lines + ['_ONCE {'] + new_dynamic_ticks_fields + ['}'] + lines
 
         if not lines:
             raise ValueError("The resulted body of PER TICK SCRIPT is empty")

@@ -1172,6 +1172,8 @@ def show_hidden_ticks(self: 'Source', inplace: bool = False) -> 'Source':
     See also
     --------
     **SHOW_HIDDEN_TICKS** OneTick event processor
+    :meth:`~onetick.py.Source.show_corrected_ticks`
+    :meth:`~onetick.py.Source.correct_tick_filter`
 
     Returns
     -------
@@ -1208,4 +1210,176 @@ def show_hidden_ticks(self: 'Source', inplace: bool = False) -> 'Source':
     17 2024-02-01 16:15:02.801559379  186.8700     1            7
     """
     self.sink(otq.ShowHiddenTicks())
+    return self
+
+
+@inplace_operation
+def show_corrected_ticks(self: 'Source', inplace: bool = False) -> 'Source':
+    """
+    Shows ticks which were corrected or canceled within the interval of the query.
+    Only corrected and correction ticks will be propagated.
+
+    A *TICK_STATUS* field is added to each tick.
+
+    For Corrections:
+
+    * Old tick TICK_STATUS = 5
+    * New tick TICK_STATUS = 6
+
+    For Cancellations:
+
+    * Old tick TICK_STATUS = 4
+    * New tick TICK_STATUS = 7
+
+    Parameters
+    ----------
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    **SHOW_CORRECTED_TICKS** OneTick event processor
+    :meth:`~onetick.py.Source.show_hidden_ticks`
+    :meth:`~onetick.py.Source.correct_tick_filter`
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Show corrected or canceled ticks:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data.show_corrected_ticks()
+    >>> data = data[['PRICE', 'SIZE', 'TICK_STATUS']]
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                                Time     PRICE  SIZE  TICK_STATUS
+    0  2024-02-01 14:43:17.690903111  185.6950     1            4
+    1  2024-02-01 14:43:17.690903111  185.6950     1            7
+    2  2024-02-01 15:46:38.890972031  186.6100    50            4
+    3  2024-02-01 15:46:38.890972031  186.6100    50            7
+    4  2024-02-01 15:49:02.043717846  186.6100    45            4
+    5  2024-02-01 15:49:02.043717846  186.6100    45            7
+    6  2024-02-01 16:06:23.115605520  186.7078   306            4
+    7  2024-02-01 16:06:23.115605520  186.7078   306            7
+    8  2024-02-01 16:15:02.784032763  186.8700     1            4
+    9  2024-02-01 16:15:02.784032763  186.8700     1            7
+    10 2024-02-01 16:15:02.801559379  186.8700     1            4
+    11 2024-02-01 16:15:02.801559379  186.8700     1            7
+    """
+    self.sink(otq.ShowCorrectedTicks())
+    if 'TICK_STATUS' not in self.schema:
+        self.schema['TICK_STATUS'] = int
+    return self
+
+
+@inplace_operation
+def correct_tick_filter(
+    self: 'Source',
+    discard_on_match: Optional[bool] = None,
+    as_of_time: otp.datetime | int | str | Literal['NOW'] | None = None,
+    inplace: bool = False,
+) -> 'Source':
+    """
+    This allows one to view data as it was as of any point in time.
+
+    Correction or cancellation ticks will be applied if they arrived before the time
+    specified by ``as_of_time``,
+    and if they were applied to the ticks that arrived after that ``as_of_time``.
+
+    Parameters
+    ----------
+    discard_on_match: bool
+        If this parameter is False (default), the output is a time series of ticks,
+        with correction and cancellations that arrived after the ``as_of_time`` not applied to the ticks
+        that arrived before or at the the ``as_of_time``.
+
+        If this parameter is True, the correct ticks, incorrect copies of which arrived before or at the ``as_of_time``,
+        which were corrected after ``as_of_time`` will be propagated.
+
+    as_of_time: :class:`otp.datetime <onetick.py.datetime>` or int or str
+
+        Datetime object or integer/string in the YYYYMMDDhhmmss format.
+
+        The cut-off time, in the timezone of the query, for the correction tick or cancellation to be applied
+        (the correction or cancellation must happen before or at this cut-off time,
+        or the original (corrected or canceled) tick must arrive after this cutoff time,
+        for this correction or cancellation to affect the output of this filter.
+
+        The special value NOW (stands for "as of now") ensures that only the corrected ticks
+        are being sent to the output stream.
+
+        Special value 0 (stands for "beginning of time") results in the propagation
+        of all uncorrected ticks and correction ticks as part of the stream.
+
+        Default value: NOW.
+
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    **CORRECT_TICK_FILTER** OneTick event processor
+    :meth:`~onetick.py.Source.show_hidden_ticks`
+    :meth:`~onetick.py.Source.show_corrected_ticks`
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Let's find some canceled ticks first and see the time they were deleted:
+
+    >>> start = otp.dt(2024, 2, 1, 11, 50, 15)
+    >>> end   = otp.dt(2024, 2, 1, 11, 50, 15, 900_000)
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data.show_hidden_ticks()
+    >>> data = data.where(data['TICK_STATUS'] == 1)
+    >>> data = data[['PRICE', 'SIZE', 'TICK_STATUS', 'DELETED_TIME']]
+    >>> otp.run(data, start=start, end=end)
+                               Time    PRICE  SIZE  TICK_STATUS            DELETED_TIME
+    0 2024-02-01 11:50:15.621123654  185.695     1            1 2024-02-01 14:43:17.690
+
+    Now let's use it as ``as_of_time`` parameter.
+    First let's set it to the time *before* the tick was deleted.
+    We will see the deleted tick along with regular ticks:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data.correct_tick_filter(as_of_time=otp.dt('2024-02-01 14:43:17'))
+    >>> data = data[['PRICE', 'SIZE', 'TICK_STATUS', 'DELETED_TIME']]
+    >>> otp.run(data, start=start, end=end)
+                               Time    PRICE  SIZE  TICK_STATUS            DELETED_TIME
+    0 2024-02-01 11:50:15.232051023  185.695     1            0 1969-12-31 19:00:00.000
+    1 2024-02-01 11:50:15.621123654  185.695     1            1 2024-02-01 14:43:17.690
+    2 2024-02-01 11:50:15.835322561  185.695    14            0 1969-12-31 19:00:00.000
+
+    Now let's set ``as_of_time`` parameter to the time *after* the tick was deleted.
+    The deleted tick has disappeared and we see the corrected data now.
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data.correct_tick_filter(as_of_time=otp.dt('2024-02-01 14:43:18'))
+    >>> data = data[['PRICE', 'SIZE', 'TICK_STATUS', 'DELETED_TIME']]
+    >>> otp.run(data, start=start, end=end)
+                               Time    PRICE  SIZE  TICK_STATUS        DELETED_TIME
+    0 2024-02-01 11:50:15.232051023  185.695     1            0 1969-12-31 19:00:00
+    1 2024-02-01 11:50:15.835322561  185.695    14            0 1969-12-31 19:00:00
+    """
+    ep_kwargs: dict[str, Any] = {}
+    if discard_on_match is not None:
+        ep_kwargs['discard_on_match'] = discard_on_match
+    if as_of_time is not None:
+        if hasattr(as_of_time, 'strftime'):
+            as_of_time = as_of_time.strftime('%Y%m%d%H%M%S')
+
+        ep_kwargs['as_of_time'] = as_of_time
+
+    self.sink(otq.CorrectTickFilter(**ep_kwargs))
     return self

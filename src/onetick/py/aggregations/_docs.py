@@ -542,6 +542,18 @@ _include_market_order_ticks_doc = param_doc(
     annotation=bool,
     default=None,
 )
+_show_num_orders_at_level_doc = param_doc(
+    name='show_num_orders_at_level',
+    desc="""
+    When set to True, additional *NUM_ORDERS* field[s] will be added to each output tick.
+    The values are computed by counting individual orders as they arrive and depart:
+    incremented when a new order appears at a price level and decremented when an order is removed.
+
+    Default is False.
+    """,
+    annotation=Optional[bool],
+    default=None,
+)
 _query_fun_doc = param_doc(
     name='query_fun',
     desc="""

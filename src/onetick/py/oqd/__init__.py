@@ -19,4 +19,4 @@ from .eps import (
     OqdSourceXsym,
     OqdTranslate,
 )
-from .sources import OHLCV, CorporateActions, DescriptiveFields
+from .sources import OHLCV, CorporateActions, DescriptiveFields, SharesOutstanding

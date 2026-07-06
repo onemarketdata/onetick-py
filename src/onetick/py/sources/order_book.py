@@ -58,9 +58,6 @@ class _ObSource(DataSource):
 
         self._ob_agg = self.__class__.OB_AGG_FUNC(**ob_agg_params)
 
-        if kwargs.get('schema_policy') in [DataSource.POLICY_MANUAL, DataSource.POLICY_MANUAL_STRICT]:
-            self._ob_agg.disable_ob_input_columns_validation()
-
         if use_bound_symbols:
             self._ob_agg.set_bound_symbols(symbols)
 
@@ -103,7 +100,7 @@ class ObSnapshot(_ObSource):
     ---------
 
     >>> data = otp.ObSnapshot(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24', max_levels=3)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10))                        # doctest: +SKIP
                      Time     PRICE  SIZE  LEVEL                   UPDATE_TIME  BUY_SELL_FLAG
     0 2024-02-01 10:00:00  17351.75     1      1 2024-02-01 09:59:59.701711193              1
     1 2024-02-01 10:00:00  17352.00     3      2 2024-02-01 09:59:59.582195881              1
@@ -134,8 +131,8 @@ class ObSnapshotWide(_ObSource):
     ---------
 
     >>> data = otp.ObSnapshotWide(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\\H24',
-    ...                           max_levels=3)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+    ...                           max_levels=3)                                  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10))  # doctest: +SKIP
                      Time  BID_PRICE  BID_SIZE               BID_UPDATE_TIME  ASK_PRICE  ASK_SIZE \
                                       ASK_UPDATE_TIME  LEVEL
     0 2024-02-01 10:00:00   17351.25         1 2024-02-01 09:59:59.867609851   17351.75         1 \
@@ -167,8 +164,8 @@ class ObSnapshotFlat(_ObSource):
     ---------
 
     >>> data = otp.ObSnapshotFlat(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24',
-    ...                           max_levels=3)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+    ...                           max_levels=3)                                  # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10))  # doctest: +SKIP
                      Time  BID_PRICE1  BID_SIZE1              BID_UPDATE_TIME1  ASK_PRICE1  ASK_SIZE1 ...
     0 2024-02-01 10:00:00    17351.25          1 2024-02-01 09:59:59.867609851    17351.75          1 ...
    """
@@ -194,7 +191,7 @@ class ObSummary(_ObSource):
     ---------
 
     >>> data = otp.ObSummary(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\\H24', max_levels=3)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10)) # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10))                        # doctest: +SKIP
                      Time  BID_SIZE      BID_VWAP  BEST_BID_PRICE  WORST_BID_PRICE  NUM_BID_LEVELS  ASK_SIZE \
                              ASK_VWAP  BEST_ASK_PRICE  WORST_ASK_PRICE  NUM_ASK_LEVELS
     0 2024-02-01 10:00:00         9  17350.972222        17351.25         17350.75               3         7 \
@@ -222,8 +219,8 @@ class ObSize(_ObSource):
     ---------
 
     >>> data = otp.ObSize(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24',
-    ...                   bucket_interval=otp.Minute(5), max_levels=3)  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+    ...                   bucket_interval=otp.Minute(5), max_levels=3)           # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11))  # doctest: +SKIP
                       Time  ASK_VALUE  BID_VALUE
     0  2024-02-01 10:05:00       12.0       10.0
     1  2024-02-01 10:10:00       12.0        5.0
@@ -253,8 +250,8 @@ class ObVwap(_ObSource):
     ---------
 
     >>> data = otp.ObVwap(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24',
-    ...                   bucket_interval=otp.Minute(5))  # doctest: +SKIP
-    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11)) # doctest: +SKIP
+    ...                   bucket_interval=otp.Minute(5))                         # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11))  # doctest: +SKIP
                       Time     ASK_VALUE     BID_VALUE
     0  2024-02-01 10:05:00  17493.087642  17013.839286
     1  2024-02-01 10:10:00  17486.863024  17006.515027
@@ -283,7 +280,7 @@ class ObNumLevels(_ObSource):
     ---------
 
     >>> data = otp.ObNumLevels(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24',
-    ...                        bucket_interval=otp.Second(300))  # doctest: +SKIP
+    ...                        bucket_interval=otp.Second(300))                  # doctest: +SKIP
     >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 11))  # doctest: +SKIP
                       Time  ASK_VALUE  BID_VALUE
     0  2024-02-01 10:05:00      743.0      830.0

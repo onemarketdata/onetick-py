@@ -36,7 +36,8 @@ from ._docs import (_running_doc,
                     _max_initialization_days_doc,
                     _state_key_max_inactivity_sec_doc,
                     _size_max_fractional_digits_doc,
-                    _include_market_order_ticks_doc)
+                    _include_market_order_ticks_doc,
+                    _show_num_orders_at_level_doc)
 
 
 OB_SNAPSHOT_DOC_PARAMS = [
@@ -49,6 +50,7 @@ OB_SNAPSHOT_DOC_PARAMS = [
     _max_initialization_days_doc, _state_key_max_inactivity_sec_doc,
     _size_max_fractional_digits_doc,
     _include_market_order_ticks_doc,
+    _show_num_orders_at_level_doc,
 ]
 OB_SNAPSHOT_WIDE_DOC_PARAMS = [
     _running_doc,
@@ -60,6 +62,7 @@ OB_SNAPSHOT_WIDE_DOC_PARAMS = [
     _max_initialization_days_doc, _state_key_max_inactivity_sec_doc,
     _size_max_fractional_digits_doc,
     _include_market_order_ticks_doc,
+    _show_num_orders_at_level_doc,
 ]
 OB_SNAPSHOT_FLAT_DOC_PARAMS = [
     _running_doc,
@@ -71,6 +74,7 @@ OB_SNAPSHOT_FLAT_DOC_PARAMS = [
     _max_initialization_days_doc, _state_key_max_inactivity_sec_doc,
     _size_max_fractional_digits_doc,
     _include_market_order_ticks_doc,
+    _show_num_orders_at_level_doc,
 ]
 OB_SUMMARY_DOC_PARAMS = [
     _running_doc,
@@ -150,7 +154,6 @@ class _OrderBookAggregation(_Aggregation, ABC):
         self.book_uncross_method = book_uncross_method
         self.dq_events_that_clear_book = ','.join(dq_events_that_clear_book) if dq_events_that_clear_book else None
         self.bound_symbols = None
-        self._validate_ob_input_columns = True
 
         super().__init__(_Column('TIMESTAMP'), *args, **kwargs)
 
@@ -173,22 +176,6 @@ class _OrderBookAggregation(_Aggregation, ABC):
 
             if not otp.compatibility._is_max_spread_supported():
                 raise RuntimeError('Parameter `max_spread` is not supported on this OneTick version')
-
-    def disable_ob_input_columns_validation(self):
-        self._validate_ob_input_columns = False
-
-    def validate_input_columns(self, src: 'Source'):
-        super().validate_input_columns(src)
-
-        if not self._validate_ob_input_columns:
-            return
-
-        if any([
-            not {'BUY_SELL_FLAG', 'PRICE', 'SIZE'}.issubset(src.schema),
-            'UPDATE_TIME' not in src.schema and 'DELETED_TIME' not in src.schema
-        ]):
-            raise TypeError(f"Aggregation `{self.NAME}` need these columns: "
-                            f"BUY_SELL_FLAG, PRICE, SIZE and (UPDATE_TIME or DELETED_TIME)")
 
     def to_ep(self, *args, **kwargs):
         ob_ep = super().to_ep(*args, **kwargs)
@@ -216,6 +203,7 @@ class ObSnapshot(_OrderBookAggregation):
         'state_key_max_inactivity_sec': 'STATE_KEY_MAX_INACTIVITY_SEC',
         'size_max_fractional_digits': 'SIZE_MAX_FRACTIONAL_DIGITS',
         'include_market_order_ticks': 'INCLUDE_MARKET_ORDER_TICKS',
+        'show_num_orders_at_level': 'SHOW_NUM_ORDERS_AT_LEVEL',
     })
     FIELDS_DEFAULT = dict(_OrderBookAggregation.FIELDS_DEFAULT, **{
         'identify_source': False,
@@ -225,6 +213,7 @@ class ObSnapshot(_OrderBookAggregation):
         'state_key_max_inactivity_sec': None,
         'size_max_fractional_digits': 0,
         'include_market_order_ticks': None,
+        'show_num_orders_at_level': None,
     })
 
     def __init__(self,
@@ -236,6 +225,7 @@ class ObSnapshot(_OrderBookAggregation):
                  state_key_max_inactivity_sec: Optional[int] = None,
                  size_max_fractional_digits: int = 0,
                  include_market_order_ticks: Optional[bool] = None,
+                 show_num_orders_at_level: Optional[bool] = None,
                  **kwargs):
         self.identify_source = identify_source
         self.show_full_detail = show_full_detail
@@ -244,6 +234,7 @@ class ObSnapshot(_OrderBookAggregation):
         self.state_key_max_inactivity_sec = state_key_max_inactivity_sec
         self.size_max_fractional_digits = size_max_fractional_digits
         self.include_market_order_ticks = include_market_order_ticks
+        self.show_num_orders_at_level = show_num_orders_at_level
         # we don't want to set hard limit on the output of order book aggregations
         if self.show_full_detail:
             kwargs['all_fields'] = True
@@ -268,6 +259,8 @@ class ObSnapshot(_OrderBookAggregation):
         }
         if self.book_delimiters:
             schema['DELIMITER'] = str
+        if self.show_num_orders_at_level:
+            schema['NUM_ORDERS'] = int
         return schema
 
 
@@ -291,6 +284,9 @@ class ObSnapshotWide(ObSnapshot):
         }
         if self.book_delimiters:
             schema['DELIMITER'] = str
+        if self.show_num_orders_at_level:
+            schema['ASK_NUM_ORDERS'] = int
+            schema['BID_NUM_ORDERS'] = int
         return schema
 
 
@@ -322,6 +318,9 @@ class ObSnapshotFlat(ObSnapshot):
                 f'ASK_SIZE{level}': self._size_type,
                 f'ASK_UPDATE_TIME{level}': otp.nsectime,
             })
+            if self.show_num_orders_at_level:
+                schema[f'ASK_NUM_ORDERS{level}'] = int
+                schema[f'BID_NUM_ORDERS{level}'] = int
         return schema
 
 

@@ -10,6 +10,28 @@
 
 ### Removed
 
+## [1.202.0] - 2026-07-06
+
+### Added
+
+- Add parameter `show_num_orders_at_level` to order book sources
+- Added `otp.Source.show_corrected_ticks`
+- Added `otp.Source.correct_tick_filter`
+- Add `include_memdb` parameter to database inspection functions
+- Add tests and docs for querying `OQD_EVENT` database
+
+### Changed
+
+- Remove schema validation in order book sources
+- Make Gitlab CI/CD more interruptible
+
+### Fixed
+
+- Fix `dynamic_tick` in loops in per-tick scripts
+- Fixed getting database loaded dates
+
+### Removed
+
 ## [1.201.0] - 2026-06-29
 
 ### Added

@@ -24,12 +24,6 @@ class TestObSnapshot:
             'X': ['A', 'B', 'B', 'A', 'B'],
         })
 
-    def test_ob_snapshot_check_input(self):
-        with pytest.raises(TypeError):
-            otp.agg.ob_snapshot().apply(
-                otp.Tick(WRONG='INPUT')
-            )
-
     def test_ob_snapshot(self, data):
         data = otp.agg.ob_snapshot().apply(data)
         assert 'X' not in data.schema
@@ -159,12 +153,6 @@ class TestObSnapshotWide:
             'X': ['A', 'B', 'B', 'A', 'B'],
         })
 
-    def test_ob_snapshot_wide_check_input(self):
-        with pytest.raises(TypeError):
-            otp.agg.ob_snapshot_wide().apply(
-                otp.Tick(WRONG='INPUT')
-            )
-
     def test_ob_snapshot_wide(self, data):
         data = otp.agg.ob_snapshot_wide().apply(data)
         assert 'X' not in data.schema
@@ -215,12 +203,6 @@ class TestObSnapshotFlat:
             otp.agg.ob_snapshot_flat(max_levels=-1).apply(data)
         with pytest.raises(ValueError):
             otp.agg.ob_snapshot_flat(max_levels=999999).apply(data)
-
-    def test_ob_snapshot_flat_check_input(self):
-        with pytest.raises(TypeError):
-            otp.agg.ob_snapshot_flat(max_levels=1).apply(
-                otp.Tick(WRONG='INPUT')
-            )
 
     def test_ob_snapshot_flat(self, data):
         data = otp.agg.ob_snapshot_flat(max_levels=2).apply(data)
@@ -273,12 +255,6 @@ class TestObSummary:
             'SIZE': [1, 2, 4, 3, 5],
             'X': ['A', 'B', 'B', 'A', 'B'],
         })
-
-    def test_ob_summary_check_input(self):
-        with pytest.raises(TypeError):
-            otp.agg.ob_summary().apply(
-                otp.Tick(WRONG='INPUT')
-            )
 
     def test_ob_summary(self, data):
         data = otp.agg.ob_summary().apply(data)

@@ -1767,6 +1767,8 @@ class Source:
         value_present,
         primary_exch,
         show_hidden_ticks,
+        show_corrected_ticks,
+        correct_tick_filter,
     )
     from ._source.source_methods.drops import (  # type: ignore[misc]
         drop,
