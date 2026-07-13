@@ -1,7 +1,7 @@
 import itertools
 import warnings
 from collections import defaultdict
-from typing import Union, Iterable, Optional, Literal
+from typing import Union, Optional, Literal
 from datetime import date as dt_date, datetime, timedelta, timezone as dt_timezone
 from functools import wraps
 
@@ -13,6 +13,10 @@ from onetick.py import configuration, utils
 from onetick.py import types as ott
 from onetick.py.core import db_constants
 from onetick.py.otq import otq
+from ..log import get_logger
+
+
+LOGGER = get_logger(__name__)
 
 
 def _datetime2date(dt: Union[dt_date, datetime]) -> dt_date:
@@ -150,6 +154,7 @@ class DB:
         0  US_COMP_SAMPLE            1             0            0             0            0  ... \
                                1               0            1                    ...     2024-01-01    2038-01-01
         """
+        LOGGER.info('access_info')
         # get parent name for derived databases, only parent databases will be listed by AccessInfo
         name, _, _ = self.name.partition('//')
         node = (
@@ -296,6 +301,7 @@ class DB:
 
     @_method_cache
     def _show_configured_time_ranges(self):
+        LOGGER.info('_show_configured_time_ranges')
         graph = otq.GraphQuery(otq.DbShowConfiguredTimeRanges(db_name=self.name).tick_type("ANY")
                                >> otq.Table(fields='long START_DATE, long END_DATE'))
         result = otp.run(graph,
@@ -307,6 +313,88 @@ class DB:
                          context=self.context,
                          **_get_params_to_ignore_acl_violation())
         return result
+
+    def _show_last_tick_descriptor(
+        self,
+        *,
+        tick_type: str,
+        date=None,
+        timezone: Optional[str] = None,
+        use_cache: bool = True,
+        include_memdb: bool = True,
+        show_inaccessible_data_start: Optional[bool] = None,
+        query_properties: Optional[dict] = None,
+    ) -> pd.DataFrame:
+        """
+        This event processor shows the last tick descriptor for the given ``tick_type``.
+
+        If multiple descriptors exist for the last day on which a matching descriptor for a tick type was found,
+        it will return the union of the fields of all descriptors.
+
+        Parameters
+        ----------
+        tick_type: str
+            Tick type name in the database to get the tick descriptor from.
+        date: :class:`otp.dt <onetick.py.datetime>`
+            Date to get tick descriptor from.
+            By default the last available tick descriptor is returned.
+        timezone: str
+            Timezone for ``date`` if it's specified.
+            By default :py:attr:`otp.config.tz <onetick.py.configuration.Config.tz>` is used.
+        use_cache:
+            If set to True, the event processor will use the cached results if available
+            (see the META_DATA_CACHE_FILE description in the OneTick Installation and Administration Guide).
+            If the cache is available only up to some point, the rest of the data will be calculated first.
+
+            If set to False, all the data will be re-calculated even if cache is available.
+
+            Under no circumstances will the cache be updated.
+
+            Default is True.
+        include_memdb: bool
+            Search memory databases or not.
+
+            Default is True.
+        show_inaccessible_data_start: bool
+            If set to True and the data is not accessible from any point within the requested range,
+            an additional tick will be displayed with the following special values
+            and with timestamp set to the start of inaccessible data start time:
+
+            ::
+
+                FIELD_NAME="INACCESSIBLE_DATA_START"
+                FIELD_SIZE=0
+                FIELD_TYPE_NAME="TYPE_INT32"
+                SCHEMA_INDEX=-1
+
+            Default is False.
+        query_properties: dict, optional
+            Query properties passed to :py:func:`otp.run <onetick.py.run>`,
+            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+        """
+        LOGGER.info('_show_last_tick_descriptor')
+
+        ep_kwargs = {}
+        if use_cache is not None:
+            ep_kwargs['use_cache'] = use_cache
+        if include_memdb is not None:
+            ep_kwargs['include_memdb'] = include_memdb
+        if show_inaccessible_data_start is not None:
+            ep_kwargs['show_inaccessible_data_start'] = show_inaccessible_data_start
+
+        # supported since OTDEV-37283
+        ep = otq.DbShowLastTickDescriptor(**ep_kwargs).tick_type(tick_type)
+        if date:
+            kwargs = {'date': date, 'timezone': timezone}
+        else:
+            # getting last locator interval to get the last available date range
+            start, end = self._get_last_locator_interval()
+            kwargs = {'start': start, 'end': end, 'timezone': 'GMT'}
+        return otp.run(otq.GraphQuery(ep),
+                       symbols=f'{self.name}::',
+                       **kwargs,
+                       context=self.context,
+                       query_properties=query_properties)
 
     def _set_intervals(self):
         """
@@ -357,6 +445,7 @@ class DB:
                 self._locator_date_ranges.append((start, end))
 
     def _show_loaded_time_ranges(self, start, end, only_last=False, prefer_speed_over_accuracy=False):
+        LOGGER.info('_show_loaded_time_ranges')
         kwargs = {}
         # PY-1421: we aim to make this query as fast as possible
         # There are two problems with this EP:
@@ -383,7 +472,8 @@ class DB:
                          end=end,
                          # self._locator_date_ranges are in GMT
                          timezone='GMT',
-                         context=self.context)
+                         context=self.context,
+                         **_get_params_to_ignore_acl_violation())
 
         dates = []
         # every record contains consequent intervals of data on disk
@@ -606,8 +696,8 @@ class DB:
             show_schema = True
 
         # PY-458: don't use cache, it can return different result in some cases
-        result = self._get_schema(use_cache=False, date=date, timezone=timezone, show_schema=show_schema,
-                                  query_properties=query_properties, include_memdb=include_memdb)
+        result = self._show_tick_types(use_cache=False, date=date, timezone=timezone, show_schema=show_schema,
+                                       query_properties=query_properties, include_memdb=include_memdb)
         if len(result) == 0:
             return []
 
@@ -622,8 +712,13 @@ class DB:
         self._set_intervals()
         return self._locator_date_ranges[0]
 
+    def _get_last_locator_interval(self) -> tuple:
+        self._set_intervals()
+        return self._locator_date_ranges[-1]
+
     @_method_cache
-    def _get_schema(self, date, timezone, use_cache, show_schema, query_properties=None, include_memdb=True):
+    def _show_tick_types(self, date, timezone, use_cache, show_schema, query_properties=None, include_memdb=True):
+        LOGGER.info('_show_tick_types')
         ep = otq.DbShowTickTypes(use_cache=use_cache,
                                  show_schema=show_schema,
                                  include_memdb=include_memdb)
@@ -696,6 +791,20 @@ class DB:
          'TRF_TIME': <class 'onetick.py.types.nsectime'>,
          'TTE': string[1]}
         """
+        # faster EP that can be used when tick type is known and it doesn't need a date (but may use it)
+        if tick_type:
+            try:
+                result = self._show_last_tick_descriptor(tick_type=tick_type,
+                                                         date=date,
+                                                         timezone=timezone,
+                                                         include_memdb=include_memdb)
+            except Exception:
+                # DbShowLastTickDescriptor is not supported on client or server
+                pass
+            else:
+                if not result.empty:
+                    return self._get_schema_dict_from_dataframe(result)
+
         orig_date = date
 
         if date is None:
@@ -726,12 +835,11 @@ class DB:
         )
         # PY-458, BEXRTS-1220, PY-1421
         # the results of the query may vary depending on using use_cache parameter, so we are trying both
-        result = self._get_schema(use_cache=False, **kwargs)
+        result = self._show_tick_types(use_cache=False, **kwargs)
         if result.empty:
-            result = self._get_schema(use_cache=True, **kwargs)
+            result = self._show_tick_types(use_cache=True, **kwargs)
 
-        fields: Iterable = []
-        if len(result):
+        if not result.empty:
             result = result[result['TICK_TYPE_NAME'] == tick_type]
             # filter schema by date
             date_to_filter = None
@@ -743,10 +851,18 @@ class DB:
                 date_to_filter = result['Time'].max()
 
             result = result[(result['Time'] >= pd.Timestamp(date_to_filter))]
+            return self._get_schema_dict_from_dataframe(result)
+        else:
+            return {}
 
-            fields = zip(result['FIELD_NAME'].tolist(),
-                         result['FIELD_TYPE_NAME'].tolist(),
-                         result['FIELD_SIZE'].tolist())
+    @staticmethod
+    def _get_schema_dict_from_dataframe(df: pd.DataFrame) -> dict:
+        if df.empty:
+            return {}
+
+        fields = zip(df['FIELD_NAME'].tolist(),
+                     df['FIELD_TYPE_NAME'].tolist(),
+                     df['FIELD_SIZE'].tolist())
 
         schema = {}
 
@@ -826,6 +942,7 @@ class DB:
         >>> db.symbols(date=otp.dt(2024, 2, 1), tick_type='TRD', pattern='^AA.*')
         ['AAL', 'AAPL']
         """
+        LOGGER.info('symbols')
         if date is None:
             date = self.get_last_date(timezone=timezone, include_memdb=include_memdb)
         if timezone is None:

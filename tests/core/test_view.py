@@ -56,8 +56,11 @@ def test_databases(session):
     # last_date is None, because otq.DbShowLoadedTimeRanges always return NUM_LOADED_PARTITIONS=0 for views
     assert db.last_date is None
     assert db.dates() == []
-    # schema is empty, because last date is None
-    assert db.schema(tick_type='TT') == {}
+    if tests.compatibility.is_show_last_tick_descriptor_supported():
+        assert db.schema(tick_type='TT') == {'A': int, 'B': int}
+    else:
+        # schema is empty, because last date is None
+        assert db.schema(tick_type='TT') == {}
     # schema is not empty, because there is a TABLE EP at the end of the view query
     assert db.schema(tick_type='TT', date=otp.config.default_start_time) == {'A': int, 'B': int}
 
@@ -65,8 +68,11 @@ def test_databases(session):
 def test_data_source_tolerant(session):
     assert 'DB_VIEW_WITH_TABLE' in otp.databases()
     data = otp.DataSource('DB_VIEW_WITH_TABLE', tick_type='TT', schema_policy='tolerant')
-    # schema is empty, because last_date is None
-    assert data.schema == {}
+    if tests.compatibility.is_show_last_tick_descriptor_supported():
+        assert data.schema == {'A': int, 'B': int}
+    else:
+        # schema is empty, because last_date is None
+        assert data.schema == {}
     data = otp.DataSource('DB_VIEW_WITH_TABLE', tick_type='TT', schema_policy='tolerant',
                           start=otp.config.default_start_time,
                           end=otp.config.default_end_time)

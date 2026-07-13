@@ -250,3 +250,7 @@ def is_compute_all_fields_fixed():
     # probably 20260104: Fixed OTDEV-37541: COMPUTE EP may cause certain fields to be dropped
     return _is_min_build_or_version(1.26, 20260114173411,
                                     20251218120000, min_update_number=1)
+
+
+def is_show_last_tick_descriptor_supported():
+    return hasattr(otq, 'DbShowLastTickDescriptor')

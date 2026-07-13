@@ -356,14 +356,13 @@ class TestSchemaTolerant:
 
     def test_decayed_data(self, decayed_data_db):
         ''' No data for a chosen date range, and therefore no schema there '''
-        with pytest.warns(match="Can't find not empty day"):
-            src = otp.DataSource(
-                decayed_data_db,
-                symbol="BLEP",
-                tick_type="TT",
-                date=decayed_date,
-                schema_policy=self.policy
-            )
+        src = otp.DataSource(
+            decayed_data_db,
+            symbol="BLEP",
+            tick_type="TT",
+            date=decayed_date,
+            schema_policy=self.policy
+        )
         validate_schema_is(src, {})
 
 
@@ -627,10 +626,9 @@ class TestDbTTSymbolsMix:
 
     def test_single_db_no_tick_type_for_date(self, mismatched_symbol_db):
         ''' Case of no data, but it shouldn't fail due the `tolerant` policy '''
-        with pytest.warns(match="Can't find not empty day"):
-            res = otp.DataSource(db=mismatched_symbol_db,
-                                 symbol='SYMB',
-                                 date=date + timedelta(days=1))
+        res = otp.DataSource(db=mismatched_symbol_db,
+                             symbol='SYMB',
+                             date=date + timedelta(days=1))
 
         assert otp.run(res).empty
 
@@ -895,7 +893,7 @@ class TestEmptyDay:
 
         data = otp.DataSource(default_db, symbol='BLEP', tick_type='TT',
                               schema_policy='tolerant', date=date + timedelta(days=3))
-        assert set(default_schema) == set(data.schema)
+        assert data.schema == {}
         df = otp.run(data)
         assert df.empty
 

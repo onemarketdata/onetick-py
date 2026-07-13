@@ -121,22 +121,46 @@ _date_doc = param_doc(
 _schema_policy_doc = param_doc(
     name='schema_policy',
     desc="""
-    Schema deduction policy:
+    Schema deduction policy.
 
-    - 'tolerant' (default)
-      The resulting schema is a combination of ``schema`` and database schema.
-      If the database schema can be deduced,
-      it's checked to be type-compatible with a ``schema``,
+    See :ref:`the schema concept guide <schema concept>` for more details about how data schema works in onetick-py.
+
+    Default schema policy is :py:class:`~onetick.py.adaptive`:
+
+    - If database is specified with ``db`` parameter, then default schema policy is set to 'tolerant'
+      and automatic schema deduction is enabled
+      (additional query will be called to get the schema from the database!).
+
+    - If only ``tick_type`` or ``symbols`` parameters are set, then default schema policy is set to 'manual'.
+
+    Default schema policy can be changed with
+    :py:attr:`otp.config.default_schema_policy<onetick.py.configuration.Config.default_schema_policy>`
+    configuration parameter.
+
+    If parameter ``schema`` is set, then ``schema_policy`` will be automatically set to ``manual``
+    (unless it's not set to other value).
+
+    If deprecated parameter ``guess_schema`` is set to True then default value is 'fail', if False then 'manual'.
+    If ``schema_policy`` is set to ``None`` then default value is 'tolerant'.
+
+    Supported parameter values:
+
+    - 'tolerant'
+      Additional query will be called to get the schema from the database.
+      The resulting :meth:`otp.Source.schema <onetick.py.Source.schema>` is a combination of parameter ``schema``
+      and the values from the database.
+      Database schema is checked to be type-compatible with parameter ``schema``,
       and ValueError is raised if checks are failed.
       Also, with this policy database is scanned 5 days back to find the schema.
       It is useful when database is misconfigured or in case of holidays.
 
     - 'tolerant_strict'
-      The resulting schema will be ``schema`` if it's not empty.
-      Otherwise, database schema is used.
-      If the database schema can be deduced,
-      it's checked if it lacks fields from the ``schema``
-      and it's checked to be type-compatible with a ``schema``
+      Additional query will be called to get the schema from the database.
+      The resulting :meth:`otp.Source.schema <onetick.py.Source.schema>`
+      will be set to parameter ``schema`` if it's not empty.
+      Otherwise, schema from the database is used.
+      Database schema is checked if it lacks fields from the parameter ``schema``
+      and it's checked to be type-compatible with parameter ``schema``
       and ValueError is raised if checks are failed.
       Also, with this policy database is scanned 5 days back to find the schema.
       It is useful when database is misconfigured or in case of holidays.
@@ -148,26 +172,20 @@ _schema_policy_doc = param_doc(
       The same as 'tolerant_strict', but if the database schema can't be deduced, raises an Exception.
 
     - 'manual'
-      The resulting schema is a combination of ``schema`` and database schema.
+      The resulting :meth:`otp.Source.schema <onetick.py.Source.schema>` will be set to parameter ``schema``.
       Compatibility with database schema will not be checked.
+      If some fields are not specified in ``schema``, but exist in the database, they will not be dropped
+      and will be available in the results of :func:`otp.run <onetick.py.run>` unless they are dropped with
+      other source methods.
 
     - 'manual_strict'
-      The resulting schema will be exactly ``schema``.
+      The resulting :meth:`otp.Source.schema <onetick.py.Source.schema>` will be exactly ``schema``,
+      other columns will be dropped from result if they exist in the database.
       Compatibility with database schema will not be checked.
-      If some fields specified in ``schema`` do not exist in the database,
-      their values will be set to some default value for a type
-      (0 for integers, NaNs for floats, empty string for strings, epoch for datetimes).
 
-    Default value is :py:class:`onetick.py.adaptive` (if deprecated parameter ``guess_schema`` is not set).
-    If ``guess_schema`` is set to True then value is 'fail', if False then 'manual'.
-    If ``schema_policy`` is set to ``None`` then default value is 'tolerant'.
-
-    Default value can be changed with
-    :py:attr:`otp.config.default_schema_policy<onetick.py.configuration.Config.default_schema_policy>`
-    configuration parameter.
-
-    If you set schema manually, while creating DataSource instance, and don't set ``schema_policy``,
-    it will be automatically set to ``manual``.
+    If some fields specified in ``schema`` do not exist in the database,
+    their values will be set to some default value for a type
+    (0 for integers, NaNs for floats, empty string for strings, epoch for datetimes).
     """,
     str_annotation="'tolerant', 'tolerant_strict', 'fail', 'fail_strict', 'manual', 'manual_strict'",
     default=utils.adaptive,
@@ -405,10 +423,6 @@ class DataSource(Source):
 
                 # PY-1555: setting include_memdb=False to not get schema from memory dbs, they can have limited schema
                 db_obj = _inspection.DB(_db)
-                if schema_policy == self.POLICY_TOLERANT and start:
-                    # repeating the same logic as in db_obj.last_date
-                    start = db_obj.last_not_empty_date(start, days_back=5, tick_type=_tt, include_memdb=False)
-
                 db_schema = {}
                 try:
                     db_schema = db_obj.schema(date=start, tick_type=_tt, include_memdb=False)
@@ -695,13 +709,62 @@ class DataSource(Source):
         1 2024-02-01 04:00:00.008290927  185.59
         2 2024-02-01 04:00:00.008291153  185.49
 
-        ``db`` can also be an :py:class:`~onetick.py.DB` object:
+        Note that default schema policy is **tolerant** and
+        *additional query will be called to get the schema from the database*:
 
-        .. code-block:: python
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+        >>> data.schema
+        {'COND': string[4],
+         'CORR': <class 'onetick.py.types._int'>,
+         'DELETED_TIME': <class 'onetick.py.types.msectime'>,
+         'EXCHANGE': string[1],
+         'OMDSEQ': <class 'onetick.py.types.uint'>,
+         'PARTICIPANT_TIME': <class 'onetick.py.types.nsectime'>,
+         'PRICE': <class 'float'>,
+         'SEQ_NUM': <class 'int'>,
+         'SIZE': <class 'int'>,
+         'SOURCE': string[1],
+         'STOP_STOCK': string[1],
+         'TICKER': string[16],
+         'TICK_STATUS': <class 'onetick.py.types._int'>,
+         'TRADE_ID': string[20],
+         'TRF': string[1],
+         'TRF_TIME': <class 'onetick.py.types.nsectime'>,
+         'TTE': string[1]}
 
-           db = otp.DB('US_COMP_SAMPLE')
-           data = otp.DataSource(db=db, tick_type='TRD', symbols='AAPL')
-           otp.run(data, date=otp.dt(2024, 2, 1))
+        **manual** schema policy allows setting ``schema`` manually and disables getting schema from the database:
+
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', schema_policy='manual')
+        >>> data.schema
+        {}
+
+        But the fields from the database will still be available in results:
+
+        >>> otp.run(data[:1], date=otp.dt(2024, 2, 1))  # doctest: +ELLIPSIS
+                                   Time EXCHANGE  COND STOP_STOCK SOURCE TRF TTE TICKER  PRICE        DELETED_TIME ...
+        0 2024-02-01 04:00:00.008283417        K  @ TI                 N       0   AAPL  186.5 1969-12-31 19:00:00 ...
+
+        If parameter ``schema`` is set, schema policy is set to **manual** automatically
+        and can be omitted from the previous example:
+
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', schema={})
+        >>> otp.run(data[:1], date=otp.dt(2024, 2, 1))  # doctest: +ELLIPSIS
+                                   Time EXCHANGE  COND STOP_STOCK SOURCE TRF TTE TICKER  PRICE        DELETED_TIME ...
+        0 2024-02-01 04:00:00.008283417        K  @ TI                 N       0   AAPL  186.5 1969-12-31 19:00:00 ...
+
+        Schema policy **manual_strict** uses exactly the provided ``schema``,
+        and only these fields will be available in results.
+        Fields that don't exist in the database get default values
+        (0 for ``int``, NaN for ``float``, empty string for ``str``):
+
+        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL',
+        ...                       schema_policy='manual_strict',
+        ...                       schema={'PRICE': float, 'CUSTOM_FLAG': int})
+        >>> data.schema
+        {'PRICE': <class 'float'>, 'CUSTOM_FLAG': <class 'int'>}
+        >>> otp.run(data[:1], date=otp.dt(2024, 2, 1))
+                                   Time  PRICE  CUSTOM_FLAG
+        0 2024-02-01 04:00:00.008283417  186.5            0
 
         ``db`` can be a list to merge data from multiple databases.
         Each entry can embed its tick type using ``'DB_NAME::TICK_TYPE'`` format:
@@ -818,14 +881,7 @@ class DataSource(Source):
            )
            # Use identify_input_ts=True to tell which tick type each row came from
 
-        Default schema policy is **tolerant** (unless you specified ``schema`` parameter and
-        left ``schema_policy`` with default value, when it will be set to **manual**).
-
-        >>> data = otp.DataSource(
-        ...     db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', date=otp.dt(2024, 2, 1),
-        ... )
-        >>> data.schema  # doctest: +ELLIPSIS
-        {..., 'PRICE': <class 'float'>, ..., 'SIZE': <class 'int'>, ...}
+        **tolerant** schema policy checks compatibility with parameter ``schema``:
 
         >>> data = otp.DataSource(
         ...     db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', schema={'PRICE': int},
@@ -835,13 +891,6 @@ class DataSource(Source):
           ...
         ValueError: Database(-s) US_COMP_SAMPLE::TRD schema field PRICE has type <class 'float'>,
         but <class 'int'> was requested
-
-        Schema policy **manual** uses exactly ``schema``:
-
-        >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', schema={'PRICE': float},
-        ...                       date=otp.dt(2024, 2, 1), schema_policy='manual')
-        >>> data.schema
-        {'PRICE': <class 'float'>}
 
         Schema policy **fail** raises an exception if the schema cannot be deduced:
 
@@ -859,19 +908,6 @@ class DataSource(Source):
         ...                       schema_policy='tolerant_strict')
         >>> data.schema
         {'PRICE': <class 'float'>}
-
-        Schema policy **manual_strict** uses exactly the provided ``schema``, no database
-        schema is consulted. Fields that don't exist in the database get default values
-        (0 for ``int``, NaN for ``float``, empty string for ``str``):
-
-        .. code-block:: python
-
-           data = otp.DataSource(
-               db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL',
-               schema={'PRICE': float, 'CUSTOM_FLAG': int},
-               schema_policy='manual_strict',
-           )
-           # CUSTOM_FLAG will be 0 for all ticks since it doesn't exist in the database
 
         Schema policy **fail_strict** is like ``tolerant_strict`` but raises an exception
         when the database schema cannot be determined.
@@ -1006,6 +1042,14 @@ class DataSource(Source):
                symbols=['AAPL', 'MSFT'],
                symbol_date=20240201,
            )
+
+        Parameter ``db`` can also be an :py:class:`~onetick.py.DB` object:
+
+        .. code-block:: python
+
+           db = otp.DB('US_COMP_SAMPLE')
+           data = otp.DataSource(db=db, tick_type='TRD', symbols='AAPL')
+           otp.run(data, date=otp.dt(2024, 2, 1))
         """
 
         self.logger = otp.get_logger(__name__, self.__class__.__name__)
@@ -1013,13 +1057,13 @@ class DataSource(Source):
         if self._try_default_constructor(schema=schema, **kwargs):
             return
 
-        schema = self._select_schema(schema, kwargs)
-
-        if schema and (not schema_policy or schema_policy is utils.adaptive):
-            schema_policy = self.POLICY_MANUAL
-
         if schema_policy is utils.adaptive:
             schema_policy = otp.config.default_schema_policy
+
+        if (schema is not None or kwargs) and not schema_policy:
+            schema_policy = self.POLICY_MANUAL
+
+        schema = self._select_schema(schema, kwargs)
 
         # for cases when we want to explicitly convert into string,
         # it might be symbol param or join_with_query parameter

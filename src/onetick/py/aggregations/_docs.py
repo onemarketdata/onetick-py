@@ -469,15 +469,16 @@ _bucket_interval_ob_num_levels_doc = param_doc(
 _identify_source_doc = param_doc(
     name='identify_source',
     desc="""
-    When this parameter is set to "true" and the input stream is fed through the VIRTUAL_OB event processor
-    (with the QUOTE_SOURCE_FIELDS parameter specified) and `group_by` is not set to be "SOURCE"
-    it will separate a tick with the same price from different sources into multiple ticks.
-    The parameter can also be used when merging ticks from multiple feeds.
-    Each feed going into the merge would need an ADD_FIELD EP source value set for the VALUE parameter,
-    where the value would be different for each leg.
+    When this parameter is set to True, input ticks must have field **SOURCE**,
+    and the EP will produce a separate output tick for each value of **SOURCE** field.
+
+    If **SOURCE** field doesn't exist,
+    it will be created automatically by setting it to *_SYMBOL_NAME* pseudo-field.
+
+    Default is False.
     """,
-    annotation=bool,
-    default=False,
+    annotation=Optional[bool],
+    default=None,
 )
 _show_full_detail_doc = param_doc(
     name='show_full_detail',

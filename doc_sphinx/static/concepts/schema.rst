@@ -93,12 +93,13 @@ It is possible to control this behaviour with the `schema_policy` parameter.
     data = otp.DataSource('US_COMP_SAMPLE',
                           tick_type='QTE',
                           symbol='AAPL',
-                          schema_policy='manual')
-    data.schema.set(ASK_PRICE=float, BID_PRICE=float, ASK_SIZE=int, BID_SIZE=int)
+                          schema_policy='manual',
+                          schema={'ASK_PRICE': float, 'ASK_SIZE': int})
+    data.schema.update(BID_PRICE=float, BID_SIZE=int)
 
-**schema_policy=manual** means that the source object has an empty schema
+**schema_policy='manual'** means that the source object has an empty schema
 and it is expected that the schema will be set manually by the user
-using the :attr:`onetick.py.Source.schema` methods.
+using `schema` parameter or the :attr:`onetick.py.Source.schema` methods.
 
 That is the recommended way for production code.
 

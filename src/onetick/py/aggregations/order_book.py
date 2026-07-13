@@ -206,7 +206,7 @@ class ObSnapshot(_OrderBookAggregation):
         'show_num_orders_at_level': 'SHOW_NUM_ORDERS_AT_LEVEL',
     })
     FIELDS_DEFAULT = dict(_OrderBookAggregation.FIELDS_DEFAULT, **{
-        'identify_source': False,
+        'identify_source': None,
         'show_full_detail': False,
         'show_only_changes': False,
         'book_delimiters': None,
@@ -218,7 +218,7 @@ class ObSnapshot(_OrderBookAggregation):
 
     def __init__(self,
                  *args,
-                 identify_source: bool = False,
+                 identify_source: Optional[bool] = None,
                  show_full_detail: bool = False,
                  show_only_changes: bool = False,
                  book_delimiters: Optional[Literal['D']] = None,
@@ -261,7 +261,16 @@ class ObSnapshot(_OrderBookAggregation):
             schema['DELIMITER'] = str
         if self.show_num_orders_at_level:
             schema['NUM_ORDERS'] = int
+        if self.show_full_detail or self.identify_source:
+            schema['SOURCE'] = str
         return schema
+
+    def _modify_source(self, res: 'Source', **kwargs):
+        # PY-1569: add field SOURCE automatically if needed
+        if self.show_full_detail or self.identify_source:
+            res.sink(otq.Table(fields='SOURCE string', keep_input_fields=True))
+            res.sink(otq.UpdateFields(set='SOURCE=_SYMBOL_NAME', where='SOURCE=""'))
+            res.schema['SOURCE'] = str
 
 
 class ObSnapshotWide(ObSnapshot):

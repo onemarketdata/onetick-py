@@ -43,9 +43,6 @@ function edit_file() {
     sed -i -E "s/^<div.*>$//g" $1
     sed -i -E "s/^<\/div>//g" $1
 
-    # remove fixed 21 lines footer
-    head -n -21 $1 > tmp.f && mv tmp.f $1
-
     # remove deprecation warnings that my occur
     sed -i -E "s/.*DeprecationWarning.*//g" $1
 }

@@ -116,7 +116,7 @@ class TestWithCallback(BaseData):
     )
     def test_const(self, db, symbols, tt, res):
         def callback():
-            schema = {}
+            schema = None
             if db is None or tt is None or isinstance(db, list):
                 schema = {'X': int}
             d = otp.DataSource(db=db, tick_type=tt, schema=schema)

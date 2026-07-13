@@ -60,7 +60,10 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
         encoding: Optional[str] = None,
         manual_dataframe_callback: bool = False,
         print_symbol_errors: Union[bool, type[utils.default]] = utils.default,
-        preserve_decimal_flag: Optional[bool] = None):
+        preserve_decimal_flag: Optional[bool] = None,
+        # WebAPI only parameters
+        bs_ticks: Optional[int] = None,
+        bs_time_msec: Optional[int] = None):
     """
     Executes a query and returns its result.
 
@@ -236,6 +239,36 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
         If set to False (default), they are returned as float values, with possible precision loss.
         If set to True, they are returned as :py:class:`decimal.Decimal` objects without precision loss.
         This parameter may not be supported on older OneTick versions.
+
+    bs_ticks: int
+        (Used only in WebAPI mode)
+
+        This parameter determines the maximum number of ticks in a batch.
+        It shows how often to send a chunk of response.
+        Default is 5000 ticks.
+
+        See callback mode example in :meth:`onetick.py.CallbackBase.process_ticks` method.
+
+        .. note::
+
+           Because each batch contains a copy of the schema and metadata, under some circumstances,
+           the duplicated memory can take up to 30-50% of overall used memory.
+
+           Usually smaller values of ``bs_ticks`` may negatively affect performance.
+           Larger values, especially for queries returning a large number of ticks,
+           are generally to be preferred,
+           however too large values can also lead to network overload and high memory usage.
+
+           We recommend a value between 100 and 10000. Default value is 5000.
+
+    bs_time_msec: int
+        (Used only in WebAPI mode)
+
+        Time latency in milliseconds that is used in CEP queries only.
+        If during CEP ``bs_ticks`` number of ticks gets accumulated sooner than the ``bs_time_msec`` expires,
+        they will be sent immediately.
+
+        By default this parameter is 0 which means propagate ticks immediately (i.e., on every tick)
 
     Returns
     -------
@@ -766,6 +799,12 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
         return_utc_times=return_utc_times, connection=connection,
         callback=callback, svg_path=svg_path, use_connection_pool=use_connection_pool, **kwargs
     )
+
+    if bs_ticks is not None:
+        run_params['bs_ticks'] = bs_ticks
+
+    if bs_time_msec is not None:
+        run_params['bs_time_msec'] = bs_time_msec
 
     # some parameters were saved in .otq file, we need to debug them too
     debug_params = dict(run_params, **params_saved_to_otq) if params_saved_to_otq else run_params

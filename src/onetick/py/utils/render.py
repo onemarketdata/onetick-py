@@ -2,7 +2,6 @@ import os
 import re
 import html
 import textwrap
-import graphviz as gv
 from collections import defaultdict, deque
 from datetime import datetime
 from dataclasses import dataclass, field
@@ -1387,6 +1386,14 @@ def render_otq(
     graph_kwargs["fontname"] = font_family
     node_kwargs["fontname"] = font_family
     edge_kwargs["fontname"] = font_family
+
+    try:
+        import graphviz as gv
+    except ModuleNotFoundError as e:
+        raise ImportError(
+            "'graphviz' python library is not installed. "
+            "It can be installed with onetick-py[render] extra or separately with a package manager."
+        ) from e
 
     gr = gv.Digraph(format=output_format, filename=image_path, engine="dot")
     gr.attr("graph", compound="true", **graph_kwargs)

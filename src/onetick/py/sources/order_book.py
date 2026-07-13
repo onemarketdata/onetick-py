@@ -1,4 +1,5 @@
-from typing import Iterable, Callable
+import itertools
+from typing import Iterable, Callable, Sequence
 
 import onetick.py as otp
 from onetick.py.docs.utils import docstring
@@ -26,7 +27,7 @@ class _ObSource(DataSource):
     _PROPERTIES = DataSource._PROPERTIES + ['_ob_agg']
 
     def __init__(self, db=None, schema=None, **kwargs):
-        if self._try_default_constructor(schema=schema, **kwargs):
+        if self._try_default_constructor(schema=schema, node=kwargs.pop('node', None)):
             return
 
         ob_agg_params = {
@@ -45,6 +46,20 @@ class _ObSource(DataSource):
 
         symbols = symbol_param if symbol_param else symbols_param
         tmp_otq = None
+
+        if isinstance(db, str):
+            db = [db]
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        # PY-1561: fix case for db=['ARCA', 'AMEX', 'NASDAQ', 'NYSE'], symbols='AA'
+        if (
+            isinstance(db, Sequence) and db and isinstance(symbols, Sequence) and symbols
+            and all('::' not in db_ for db_ in db)
+            and all('::' not in symbol_ for symbol_ in symbols)
+        ):
+            symbols = [f'{db_}::{symbol_}' for db_, symbol_ in itertools.product(db, symbols)]
+            db = None
 
         # Use bound symbols only in case, if db not passed
         use_bound_symbols = not db and symbols and symbols is not utils.adaptive
@@ -108,6 +123,37 @@ class ObSnapshot(_ObSource):
     3 2024-02-01 10:00:00  17351.25     1      1 2024-02-01 09:59:59.867609851              0
     4 2024-02-01 10:00:00  17351.00     6      2 2024-02-01 09:59:59.867226023              0
     5 2024-02-01 10:00:00  17350.75     2      3 2024-02-01 09:59:59.867226023              0
+
+    Consolidated book across multiple venues:
+
+    >>> data = otp.ObSnapshot(db=['ARCA', 'AMEX', 'NASDAQ', 'NYSE'], symbols='AA',      # doctest: +SKIP
+    ...                       tick_type='PRL_FULL', max_levels=3)                       # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2026, 6, 3, 12), end=otp.dt(2026, 6, 3, 12))         # doctest: +SKIP
+                     Time  PRICE  SIZE  LEVEL                   UPDATE_TIME  BUY_SELL_FLAG
+    0 2026-06-03 12:00:00  81.89   483      1 2026-06-03 11:59:51.603506070              1
+    1 2026-06-03 12:00:00  81.90   240      2 2026-06-03 11:59:56.917290352              1
+    2 2026-06-03 12:00:00  81.91     1      3 2026-06-03 11:01:12.711931330              1
+    3 2026-06-03 12:00:00  81.85   126      1 2026-06-03 11:59:54.366903930              0
+    4 2026-06-03 12:00:00  81.84    19      2 2026-06-03 11:59:51.594276182              0
+    5 2026-06-03 12:00:00  81.83    94      3 2026-06-03 11:59:56.124878028              0
+
+    Set parameter ``identify_source`` to get separate value for each venue in consolidated book:
+
+    >>> data = otp.ObSnapshot(db=['ARCA', 'AMEX', 'NASDAQ', 'NYSE'], symbols='AA',         # doctest: +SKIP
+    ...                       tick_type='PRL_FULL', max_levels=3, identify_source=True)    # doctest: +SKIP
+    >>> otp.run(data,start=otp.dt(2026, 6, 3, 12), end=otp.dt(2026, 6, 3, 12))             # doctest: +SKIP
+                      Time  PRICE  SIZE  LEVEL                   UPDATE_TIME  BUY_SELL_FLAG      SOURCE
+    0  2026-06-03 12:00:00  81.89   199      1 2026-06-03 11:59:51.719525779              1    ARCA::AA
+    1  2026-06-03 12:00:00  81.89   184      1 2026-06-03 11:59:52.904264766              1  NASDAQ::AA
+    2  2026-06-03 12:00:00  81.89   100      1 2026-06-03 11:59:51.603506070              1    NYSE::AA
+    3  2026-06-03 12:00:00  81.90   240      2 2026-06-03 11:59:56.917290352              1    NYSE::AA
+    4  2026-06-03 12:00:00  81.91     1      3 2026-06-03 11:59:51.719459239              1    NYSE::AA
+    5  2026-06-03 12:00:00  81.85   104      1 2026-06-03 11:59:54.366903930              0    NYSE::AA
+    6  2026-06-03 12:00:00  81.85    22      1 2026-06-03 11:59:56.012492880              0    ARCA::AA
+    7  2026-06-03 12:00:00  81.84    19      2 2026-06-03 11:59:51.594276182              0  NASDAQ::AA
+    8  2026-06-03 12:00:00  81.83    36      3 2026-06-03 11:59:56.124878028              0    NYSE::AA
+    9  2026-06-03 12:00:00  81.83    21      3 2026-06-03 11:58:16.147880170              0  NASDAQ::AA
+    10 2026-06-03 12:00:00  81.83    37      3 2026-06-03 11:59:51.831629802              0    ARCA::AA
     """
     OB_AGG_FUNC = ob_snapshot
     OB_AGG_PARAMS = OB_SNAPSHOT_DOC_PARAMS
@@ -141,6 +187,20 @@ class ObSnapshotWide(_ObSource):
                         2024-02-01 09:59:59.582195881      2
     2 2024-02-01 10:00:00   17350.75         2 2024-02-01 09:59:59.867226023   17352.25         3 \
                         2024-02-01 09:59:59.580457957      3
+
+    Consolidated book across multiple venues:
+
+    >>> data = otp.ObSnapshotWide(db=['ARCA', 'AMEX', 'NASDAQ', 'NYSE'], symbols='AA',      # doctest: +SKIP
+    ...                           tick_type='PRL_FULL', max_levels=3)                       # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2026, 6, 3, 12), end=otp.dt(2026, 6, 3, 12))             # doctest: +SKIP
+                     Time  BID_PRICE  BID_SIZE               BID_UPDATE_TIME  \
+        ASK_PRICE  ASK_SIZE               ASK_UPDATE_TIME  LEVEL
+    0 2026-06-03 12:00:00      81.85       126 2026-06-03 11:59:54.366903930  \
+            81.89       483 2026-06-03 11:59:51.603506070      1
+    1 2026-06-03 12:00:00      81.84        19 2026-06-03 11:59:51.594276182  \
+            81.90       240 2026-06-03 11:59:56.917290352      2
+    2 2026-06-03 12:00:00      81.83        94 2026-06-03 11:59:56.124878028  \
+            81.91         1 2026-06-03 11:01:12.711931330      3
     """
     OB_AGG_FUNC = ob_snapshot_wide
     OB_AGG_PARAMS = OB_SNAPSHOT_WIDE_DOC_PARAMS
@@ -168,6 +228,14 @@ class ObSnapshotFlat(_ObSource):
     >>> otp.run(data, start=otp.dt(2024, 2, 1, 10), end=otp.dt(2024, 2, 1, 10))  # doctest: +SKIP
                      Time  BID_PRICE1  BID_SIZE1              BID_UPDATE_TIME1  ASK_PRICE1  ASK_SIZE1 ...
     0 2024-02-01 10:00:00    17351.25          1 2024-02-01 09:59:59.867609851    17351.75          1 ...
+
+    Consolidated book across multiple venues:
+
+    >>> data = otp.ObSnapshotFlat(db=['ARCA', 'AMEX', 'NASDAQ', 'NYSE'], symbols='AA',      # doctest: +SKIP
+    ...                           tick_type='PRL_FULL', max_levels=3)                       # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2026, 6, 3, 12), end=otp.dt(2026, 6, 3, 12))             # doctest: +SKIP
+                     Time  BID_PRICE1  BID_SIZE1              BID_UPDATE_TIME1  ASK_PRICE1  ASK_SIZE1  ...
+    0 2026-06-03 12:00:00       81.85        126 2026-06-03 11:59:54.366903930       81.89        483  ...
    """
     OB_AGG_FUNC = ob_snapshot_flat
     OB_AGG_PARAMS = OB_SNAPSHOT_FLAT_DOC_PARAMS
@@ -196,6 +264,16 @@ class ObSummary(_ObSource):
                              ASK_VWAP  BEST_ASK_PRICE  WORST_ASK_PRICE  NUM_ASK_LEVELS
     0 2024-02-01 10:00:00         9  17350.972222        17351.25         17350.75               3         7 \
                          17352.071429        17351.75         17352.25               3
+
+    Consolidated book across multiple venues:
+
+    >>> data = otp.ObSummary(db=['ARCA', 'AMEX', 'NASDAQ', 'NYSE'], symbols='AA',      # doctest: +SKIP
+    ...                      tick_type='PRL_FULL', max_levels=3)                       # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2026, 6, 3, 12), end=otp.dt(2026, 6, 3, 12))        # doctest: +SKIP
+                     Time  BID_SIZE   BID_VWAP  BEST_BID_PRICE  WORST_BID_PRICE  NUM_BID_LEVELS  ASK_SIZE  \
+         ASK_VWAP  BEST_ASK_PRICE  WORST_ASK_PRICE  NUM_ASK_LEVELS
+    0 2026-06-03 12:00:00       239  81.841339           81.85            81.83               3       724  \
+        81.893343           81.89            81.91               3
     """
     OB_AGG_FUNC = ob_summary
     OB_AGG_PARAMS = OB_SUMMARY_DOC_PARAMS
@@ -226,6 +304,14 @@ class ObSize(_ObSource):
     1  2024-02-01 10:10:00       12.0        5.0
     2  2024-02-01 10:15:00       11.0       13.0
     ...
+
+    Consolidated book across multiple venues:
+
+    >>> data = otp.ObSize(db=['ARCA', 'AMEX', 'NASDAQ', 'NYSE'], symbols='AA',      # doctest: +SKIP
+    ...                   tick_type='PRL_FULL', max_levels=3)                       # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2026, 6, 3, 12), end=otp.dt(2026, 6, 3, 12))     # doctest: +SKIP
+                     Time  ASK_VALUE  BID_VALUE
+    0 2026-06-03 12:00:00      724.0      239.0
     """
     OB_AGG_FUNC = ob_size
     OB_AGG_PARAMS = OB_SIZE_DOC_PARAMS
@@ -257,6 +343,14 @@ class ObVwap(_ObSource):
     1  2024-02-01 10:10:00  17486.863024  17006.515027
     2  2024-02-01 10:15:00  17494.471485  17014.829879
     ...
+
+    Consolidated book across multiple venues:
+
+    >>> data = otp.ObVwap(db=['ARCA', 'AMEX', 'NASDAQ', 'NYSE'], symbols='AA',      # doctest: +SKIP
+    ...                   tick_type='PRL_FULL', max_levels=3)                       # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2026, 6, 3, 12), end=otp.dt(2026, 6, 3, 12))     # doctest: +SKIP
+                     Time  ASK_VALUE  BID_VALUE
+    0 2026-06-03 12:00:00  81.893343  81.841339
     """
     OB_AGG_FUNC = ob_vwap
     OB_AGG_PARAMS = OB_VWAP_DOC_PARAMS
@@ -287,6 +381,14 @@ class ObNumLevels(_ObSource):
     1  2024-02-01 10:10:00      753.0      820.0
     2  2024-02-01 10:15:00      741.0      831.0
     ...
+
+    Consolidated book across multiple venues:
+
+    >>> data = otp.ObNumLevels(db=['ARCA', 'AMEX', 'NASDAQ', 'NYSE'], symbols='AA',      # doctest: +SKIP
+    ...                        tick_type='PRL_FULL')                                     # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2026, 6, 3, 12), end=otp.dt(2026, 6, 3, 12))          # doctest: +SKIP
+                     Time  ASK_VALUE  BID_VALUE
+    0 2026-06-03 12:00:00      442.0      968.0
     """
     OB_AGG_FUNC = ob_num_levels
     OB_AGG_PARAMS = OB_NUM_LEVELS_DOC_PARAMS
