@@ -69,6 +69,7 @@ def _parse_release_string(release_string: str, build_number: int) -> OnetickVers
     #  BUILD_initial_20230831120000
     #  BUILD_update1_20230831120000
     #  BUILD_pre_candidate_20240501000000
+    #  BUILD_20260709120000
     #
     #  BUILD_rel_20241018_initial
     #  BUILD_rel_20241018_update3
@@ -81,7 +82,11 @@ def _parse_release_string(release_string: str, build_number: int) -> OnetickVers
     release_type, *release_info, release_suffix = release_string.split('_')
 
     if not release_info:
-        raise ValueError("No release info")
+        try:
+            _ = int(release_suffix)
+            return OnetickVersion(release_string, None, None, build_number)
+        except ValueError:
+            raise ValueError("No release info")
 
     try:
         update_number = _parse_update_info(release_suffix)

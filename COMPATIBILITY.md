@@ -9,7 +9,7 @@
 * 20260216-2:            ✅ stable
 * 20260420-3:            ✅ stable
 * 20260612-1:            ✅ stable
-* 20260623-release_1.26: 🆗 stable with minor issues (99.977% of tests passed)
+* 20260623-release_1.26: ✅ stable
 
 ## Python compatibility 
 

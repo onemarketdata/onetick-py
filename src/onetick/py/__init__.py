@@ -47,13 +47,6 @@ def __validate_onetick_query_integration():
     try:
         # this import will fail if onetick python directory is not in sys.path
         import onetick.query
-        try:
-            # this import will fail if numpy directory is not in sys.path on old OneTick versions
-            import NumPy_OneTickQuery
-        except ModuleNotFoundError as e:
-            _otq_import_ex = e
-        except Exception:
-            pass
     except ImportError as e:
         _otq_import_ex = e
 

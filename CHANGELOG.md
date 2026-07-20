@@ -10,6 +10,20 @@
 
 ### Removed
 
+## [1.204.0] - 2026-07-20
+
+### Added
+
+- Added support of new build string format for compatibility checks
+
+### Changed
+
+### Fixed
+
+- Do not import `NumPy_OneTickQuery` internal library
+
+### Removed
+
 ## [1.203.0] - 2026-07-13
 
 ### Added
