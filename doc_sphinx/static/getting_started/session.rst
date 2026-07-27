@@ -1,18 +1,69 @@
-Session: configuring OneTick databases and ACL
-**********************************************
+.. _session guide:
 
-``onetick-py`` provides flexible tools for managing sessions and importing both existing and temporary databases.
+otp.Session: set up OneTick configuration files
+***********************************************
+
+``onetick-py`` provides tools for managing OneTick configuration files and databases
+required to run OneTick locally (without WebAPI).
+
+.. note::
+
+    In WebAPI mode creating OneTick configuration files is not needed, because it's managed by WebAPI OneTick server.
+
+
+Existing OneTick configuration
+==============================
+
+OneTick uses **ONE_TICK_CONFIG** environment variable to get the path to the configuration file.
+
+If this variable is already set, then ``onetick-py`` can be used right away,
+even without creating :class:`otp.Session <onetick.py.Session>` object:
+
+.. doctest::
+
+    >>> import os                                                                                      # doctest: +SKIP
+    >>> from pathlib import Path                                                                       # doctest: +SKIP
+    >>> os.environ['ONE_TICK_CONFIG'] = 'one_tick_config.txt'                                          # doctest: +SKIP
+    >>> Path('one_tick_config.txt').write_text('DB_LOCATOR.DEFAULT=one_tick_locator.txt')              # doctest: +SKIP
+    >>> Path('one_tick_locator.txt').write_text('<VERSION_INFO VERSION="2"/><DATABASES></DATABASES>')  # doctest: +SKIP
+
+    >>> import onetick.py as otp                                # doctest: +SKIP
+    >>> t = otp.Tick(A=1)                                       # doctest: +SKIP
+    >>> otp.run(t, symbols='LOCAL::', date=otp.dt(2022, 1, 1))  # doctest: +SKIP
+            Time  A
+    0 2022-01-01  1
 
 Creating session
 ================
 
-Session could be created via :class:`otp.Session <onetick.py.Session>` class object.
+Session can be created with :class:`otp.Session <onetick.py.Session>` class:
 
-::
+.. doctest::
 
-    session = otp.Session()
-    # make required queries
-    session.close()
+    >>> import onetick.py as otp                                # doctest: +SKIP
+    >>> session = otp.Session()                                 # doctest: +SKIP
+    >>> # make required queries
+    >>> t = otp.Tick(A=1)                                       # doctest: +SKIP
+    >>> otp.run(t, symbols='LOCAL::', date=otp.dt(2022, 1, 1))  # doctest: +SKIP
+            Time  A
+    0 2022-01-01  1
+    >>> session.close()
+
+To avoid manually closing session, you can create it as a python context manager:
+
+.. doctest::
+
+    >>> import onetick.py as otp                                         # doctest: +SKIP
+    >>> with otp.Session() as session:                                   # doctest: +SKIP
+    ...     # make required queries
+    ...     t = otp.Tick(A=1)                                            # doctest: +SKIP
+    ...     df = otp.run(t, symbols='LOCAL::', date=otp.dt(2022, 1, 1))  # doctest: +SKIP
+    ...     print(df)                                                    # doctest: +SKIP
+            Time  A
+    0 2022-01-01  1
+
+Setting up custom OneTick configuration
+=======================================
 
 If you want override default temporary config, you can either pass path to config file or
 :class:`otp.Config <onetick.py.session.Config>` object as :class:`otp.Session <onetick.py.Session>` ``config``
@@ -20,38 +71,54 @@ constructor parameter.
 
 ::
 
-    config = otp.Config()
+    config = otp.Config('/path/to/config')
     session = otp.Session(config)
 
-To avoid manually closing session, you can create it using context manager.
+Setting up custom database locator
+==================================
+
+If you want to create default configuration files, but override the locator file,
+you can use :class:`otp.Locator <onetick.py.session.Locator>` object:
 
 ::
 
-    with otp.Session(config) as session:
-        # make required queries
+    config=otp.Config(
+        locator=otp.Locator('/path/to/locator')
+    )
+    session = otp.Session(config)
+
+The object :class:`otp.RemoteTS <onetick.py.servers.RemoteTS>` can also be used
+to automatically create locator file pointing to the remote server:
+
+::
+
+    config=otp.Config(
+        locator=otp.RemoteTS('path.to.the.server.com:50015')
+    )
+    session = otp.Session(config)
 
 
-Setting up ACL
-==============
+Setting up custom ACL
+=====================
 
-By default, a temporary generated :py:class:`otp.session.ACL` object is created for every
+By default, a temporary generated :class:`otp.ACL <onetick.py.session.ACL>` object is created for every
 :class:`otp.Config <onetick.py.session.Config>` and respectively for each session.
 
 However you could pass path to ACL configuration file if you need to load custom ACL.
 
 ::
 
-    acl = otp.session.ACL('path/to/acl/config')
+    acl = otp.ACL('/path/to/acl')
     config = otp.Config(acl=acl)
     session = otp.Session(config)
 
-You can also add entities to the ACL by using :meth:`otp.session.ACL.add <onetick.py.session.ACL.add>` method or
-remove entities using :meth:`otp.session.ACL.remove <onetick.py.session.ACL.remove>`.
+You can also add entities to the ACL by using :meth:`otp.ACL.add <onetick.py.session.ACL.add>` method or
+remove entities using :meth:`otp.ACL.remove <onetick.py.session.ACL.remove>`.
 
 ::
 
-    session.acl.add(otp.session.ACL.User('new_user'))
-    session.acl.remove(otp.session.ACL.User('old_user'))
+    session.acl.add(otp.ACL.User('new_user'))
+    session.acl.remove(otp.ACL.User('old_user'))
 
 
 Creating temporary database
@@ -72,15 +139,13 @@ To add data to temporary database use :meth:`otp.DB.add <onetick.py.DB.add>` met
    >>> db.add(otp.Ticks(A=[1, 2, 3]), date=otp.dt(2003, 1, 1), symbol='SYM', tick_type='TT')
 
 Alternatively, if you already have the data you want to add to the database, you could pass
-:py:class:`onetick.py.Source` object as :py:class:`onetick.py.DB` constructor second parameter:
+:class:`otp.Source <onetick.py.Source>` object as :class:`otp.DB <onetick.py.DB>` constructor second parameter:
 
 .. doctest::
 
    >>> data = otp.Ticks(A=[1, 2, 3])
    >>> db = otp.DB('DB_NAME', data)
    >>> session.use(db)  # doctest: +SKIP
-
-In fact, this is the only way to initialize temporary database with a raw ``Pandas`` dataframe.
 
 Working with existing databases
 ===============================
@@ -113,6 +178,46 @@ for ``location`` and ``db`` sections of database description in a locator config
    ... )
 
 See ``OneTick Locator Variables`` OneTick documentation for available locator configuration variables.
+
+Remote databases
+================
+
+Remote servers can be added to OneTick database locator too
+by passing :class:`otp.RemoteTS <onetick.py.servers.RemoteTS>` object
+to the :meth:`otp.Session.use <onetick.py.Session.use>` method:
+
+
+::
+
+    session.use(otp.RemoteTS('path.to.the.server.com:50015'))
+
+
+Or they can be added when creating :class:`otp.Session <onetick.py.Session>`:
+
+.. doctest::
+
+    >>> import onetick.py as otp                                      # doctest: +SKIP
+    >>> with otp.Session(                                             # doctest: +SKIP
+    ...     config=otp.Config(                                        # doctest: +SKIP
+    ...         locator=otp.RemoteTS('path.to.the.server.com:50015')  # doctest: +SKIP
+    ...     )                                                         # doctest: +SKIP
+    ... ):                                                            # doctest: +SKIP
+    ...     # get available databases
+    ...     print(otp.databases(as_table=True)['DB_NAME'])            # doctest: +SKIP
+    0                ABAXX
+    1          ABAXX_DAILY
+    2            ABU_DHABI
+    3       ABU_DHABI_BARS
+    4      ABU_DHABI_DAILY
+                ...
+    793        XETRA_DAILY
+    794          ZHENGZHOU
+    795     ZHENGZHOU_BARS
+    796    ZHENGZHOU_DAILY
+    797            __OQD__
+
+
+
 
 Derived databases
 =================

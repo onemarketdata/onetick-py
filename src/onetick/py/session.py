@@ -66,13 +66,13 @@ def _apply_to_entities(cfg, operations):
 
 
 class _FileHandler(ABC):
-    def __init__(self, file_h=None, clean_up=utils.default, copied=True, session_ref=None):
+    def __init__(self, file_h, clean_up=utils.default, copied=True, session_ref=None):
         self._file = file_h
         self._clean_up = clean_up
         # flag to understand whether we work with externally passed files;
         # it is set and affects logic, when copy=False
         self._copied = copied
-        self._session_ref: Session = session_ref
+        self._session_ref: Session | None = session_ref
 
     @property
     def path(self):
@@ -102,7 +102,7 @@ class _CommonBuilder(ABC):
         self.src = src
         self.clean_up = clean_up
         self.copy = copy
-        self.session_ref: Session = session_ref
+        self.session_ref: Session | None = session_ref
 
     @abstractmethod
     def build(self):
@@ -120,24 +120,48 @@ class ACL(_FileHandler):
     def __init__(self, path=None, clean_up=utils.default, copy=True, session_ref=None):
         """
         Class representing OneTick database access list file.
+
         ACL is the file that describes the list of the users
         that are allowed to access the database and what permissions do they have.
+
+        This object can be used when creating :class:`otp.Config <onetick.py.session.Config>` object.
+
+        See also
+        --------
+        :class:`otp.Session <onetick.py.Session>`
+        :class:`otp.Config <onetick.py.session.Config>`
+        :class:`otp.Locator <onetick.py.session.Locator>`
 
         Parameters
         ----------
         path: str
-            A path to custom acl file. Default is `None`, that means to generate a temporary acl file.
+            A path to custom acl file.
+
+            Default is `None`, which means to generate ACL file automatically.
+            It will include current user with permissions to execute EPs and read/write databases.
         clean_up: bool
-            If `True`, then temporary acl file will be removed when ACL object will be destroyed. It is
-            helpful for debug purpose.
+            If `True`, then temporary acl file will be removed when ACL object is destroyed. It is
+            helpful for debug purposes.
 
             By default,
-            :py:attr:`otp.config.clean_up_tmp_files<onetick.py.configuration.Config.clean_up_tmp_files>` is used.
+            :py:attr:`otp.config.clean_up_tmp_files <onetick.py.configuration.Config.clean_up_tmp_files>` is used.
         copy: bool
             If `True`, then the passed custom acl file by the ``path`` parameter will be copied first before
             usage. It might be used when you want to work with a custom acl file, but don't want to change
             the original file; in that case a custom acl file will be copied into a temporary file and
             every request for modification will be executed for that temporary file. Default is `True`.
+
+        Examples
+        --------
+        ACL object can be created with existing path:
+
+        >>> acl = otp.ACL('/path/to/the/acl')  # doctest: +SKIP
+
+        Or it can be created automatically with some default values:
+
+        >>> acl = otp.ACL()  # doctest: +SKIP
+        >>> acl.path         # doctest: +SKIP
+        '/tmp/test_username/run_20260722_145505_4775/feathered-dragon.acl'
         """
 
         copied = True
@@ -242,7 +266,7 @@ class ACL(_FileHandler):
 
         Parameters
         ----------
-        entities: DB or ACL.User
+        entities: :class:`otp.DB <onetick.py.DB>` or ACL.User
 
         Raises
         ------
@@ -284,7 +308,7 @@ class ACL(_FileHandler):
 
         Parameters
         ----------
-        entities: DB or ACL.User
+        entities: :class:`otp.DB <onetick.py.DB>` or ACL.User
 
         Raises
         ------
@@ -369,10 +393,20 @@ class Locator(_FileHandler):
         Class representing OneTick database locator.
         Locator is the file that describes database name, location and other options.
 
+        This object can be used when creating :class:`otp.Config <onetick.py.session.Config>` object.
+
+        See also
+        --------
+        :class:`otp.Session <onetick.py.Session>`
+        :class:`otp.Config <onetick.py.session.Config>`
+        :class:`otp.ACL <onetick.py.session.ACL>`
+
         Parameters
         ----------
         path: str
-            A path to custom locator file. Default is `None`, that means to generate a temporary locator.
+            A path to custom locator file.
+
+            Default is `None`, which means to generate locator file automatically.
         clean_up: bool
             If True, then temporary locator will be removed when Locator object will be destroyed. It is
             helpful for debug purpose.
@@ -385,8 +419,22 @@ class Locator(_FileHandler):
             the original file; in that case a custom locator will be copied into a temporary locator and
             every request for modification will be executed for that temporary locator. Default is `True`.
         empty: bool
-            If `True`, then a temporary locator will have no databases, otherwise it will have default
-            otp.config.default_db and COMMON databases. Default is `False`.
+            If `True`, then a temporary locator will have no databases.
+
+            Default is `False`, which means it will include some default databases like COMMON
+            and :py:attr:`otp.config.default_db<onetick.py.configuration.Config.default_db>`.
+
+        Examples
+        --------
+        Locator object can be created with existing path:
+
+        >>> locator = otp.Locator('/path/to/the/locator')  # doctest: +SKIP
+
+        Or it can be created automatically with some default values:
+
+        >>> locator = otp.Locator()  # doctest: +SKIP
+        >>> locator.path             # doctest: +SKIP
+        '/tmp/test_username/run_20260722_145505_4775/observant-jackrabbit.locator'
         """
         copied = True
         base_dir = session_ref._session_dir if session_ref else None
@@ -694,23 +742,46 @@ class Config(_FileHandler):
         variables=None,
     ):
         """
+        The object to create and modify OneTick main configuration file.
+
+        This object can be used when creating :class:`otp.Session <onetick.py.Session>` object.
+
+        See also
+        --------
+        :class:`otp.Session <onetick.py.Session>`
+        :class:`otp.Locator <onetick.py.session.Locator>`
+        :class:`otp.ACL <onetick.py.session.ACL>`
+
         Parameters
         ----------
-        config: path or Config
-            Allows to specify a custom config. None is to use temporary generated config. Default is None.
-        locator: Locator or dict[str, Locator]
-            Allows to specify a custom locator file. None is to use temporary generated locator.
+        config: str or Config
+            Allows to specify a custom config.
+
+            Default is `None`, which means to generate configuration file automatically.
+            It will include some default OneTick variables set.
+        locator: :class:`otp.Locator <onetick.py.session.Locator>` \
+                 or dict[str, :class:`otp.Locator <onetick.py.session.Locator>`] \
+                 or :class:`otp.RemoteTS <onetick.py.servers.RemoteTS>`
+            Allows to specify a custom locator file.
 
             If **dict** passed, adds locators passed as values to corresponding contexts from keys.
             For default context pass locator by **DEFAULT** dictionary key.
 
-            Default is None.
-        acl: ACL
-            Allows to specify a custom acl file. None is to use temporary generated acl. Default is None.
+            If :class:`otp.RemoteTS <onetick.py.servers.RemoteTS>`
+            then locator file pointing to the remote server will be created.
+
+            Default is `None`, which means to generate locator file automatically.
+            It will include some default databases like COMMON
+            and :py:attr:`otp.config.default_db<onetick.py.configuration.Config.default_db>`.
+        acl: :class:`otp.ACL <onetick.py.session.ACL>`
+            Allows to specify a custom ACL file.
+
+            Default is `None`, which means to generate ACL file automatically.
+            It will include current user with permissions to execute EPs and read/write databases.
         otq_path: list of paths to lookup queries
-            OTQ_PATH parameter in the OneTick config file. Default is None, that is equal to the empty list.
+            OTQ_PATH parameter in the OneTick config file. Default is `None`, that is equal to the empty list.
         csv_path: list of paths to lookup csv files
-            CSV_PATH parameter in the OneTick config file. Default is None, that is equal to the empty list.
+            CSV_PATH parameter in the OneTick config file. Default is `None`, that is equal to the empty list.
         clean_up: bool
             If True, then temporary config file will be removed when the Config instance will be destroyed.
             It is helpful for debug purpose.
@@ -727,6 +798,32 @@ class Config(_FileHandler):
             License to use. If it is not set, then onetick.py.license.Default is used.
         variables: dict
             Other values to pass to config.
+
+        Examples
+        --------
+
+        Configuration object can be created with existing path:
+
+        >>> config = otp.Config('/path/to/the/config')  # doctest: +SKIP
+
+        Or it can be created automatically with some default values:
+
+        >>> config = otp.Config()  # doctest: +SKIP
+        >>> config.path            # doctest: +SKIP
+        '/tmp/test_username/run_20260722_145505_4775/carrot-unicorn.cfg'
+
+        Custom locator and ACL files can be specified:
+
+        >>> config = otp.Config(           # doctest: +SKIP
+        ...     locator=otp.Locator(...),  # doctest: +SKIP
+        ...     acl=otp.ACL(...)           # doctest: +SKIP
+        ... )                              # doctest: +SKIP
+
+        :class:`otp.RemoteTS <onetick.py.servers.RemoteTS>` object can also be specified as ``locator``:
+
+        >>> config = otp.Config(                                       # doctest: +SKIP
+        ...     locator=otp.RemoteTS('path.to.the.server.com:50015'),  # doctest: +SKIP
+        ... )                                                          # doctest: +SKIP
         """
         if config and (locator or acl):
             raise ValueError("It is not allowed to use 'config' parameter along with 'locator' or 'acl'")
@@ -966,49 +1063,66 @@ class PerformanceMetricsParser:
 
 class Session:
     """
-    A class for setting up working OneTick session. It keeps configuration files during
-    the session and allows to manage them. When instance is out of scope, then instance
-    cleans up config files and configuration.
+    A class for setting up working OneTick configuration environment.
+
+    It keeps configuration files during the session and allows to manage them.
+
+    When instance is out of scope, then instance cleans up config files and configuration.
     You can leave the scope manually with method :py:meth:`close`.
     Also, session is closed automatically if this object is used as a context manager.
 
     .. note::
-        It is allowed to have only one alive session instance in the process.
+        This class is a singleton, so it's allowed to have only one alive session instance in the process.
 
     If you don't use Session's instance, then ``ONE_TICK_CONFIG`` environment variable
     should be set to be able to work with OneTick.
 
-    If config file is not set then temporary is generated.
-    Config includes locator and acl file, and if they are not set, then they are generated.
+    If ``config`` file is not set then temporary is generated.
+    Config includes OneTick locator and ACL files, and if they are not set, then they are generated.
+
+    .. seealso::
+
+        :ref:`Session Guide <session guide>`
+
+    See also
+    --------
+    :ref:`Session Guide <session guide>`
+    :class:`otp.Config <onetick.py.session.Config>`
+    :class:`otp.Locator <onetick.py.session.Locator>`
+    :class:`otp.ACL <onetick.py.session.ACL>`
 
     Parameters
     ----------
-    config : str, :py:class:`onetick.py.session.Config`, optional
-        Path to an existing OneTick config file; if it is not set, then config will be generated.
-        If config is not set, then temporary config is generated. Default is None.
+    config : str, :class:`otp.Config <onetick.py.session.Config>`, optional
+        Path to an existing OneTick configuration file or object.
+
+        If it's not set (default), then configuration will be generated automatically
+        (see :class:`otp.Config <onetick.py.session.Config>` for details).
     clean_up : bool, optional
         A flag to control cleaning up process: if it is True then all temporary generated files will
         be automatically removed. It is helpful for debugging. The flag affects only generated files, but
         does not externally passed.
 
         By default,
-        :py:attr:`otp.config.clean_up_tmp_files<onetick.py.configuration.Config.clean_up_tmp_files>` is used.
+        :py:attr:`otp.config.clean_up_tmp_files <onetick.py.configuration.Config.clean_up_tmp_files>` is used.
     copy : bool, optional
         A flag to control file copy process: if it is True then all externally passed files will be
         copied before usage, otherwise all modifications during an existing session happen directly with
         passed config files. NOTE: we suggest to set this flag only when you fully understand it's effect.
-        Default is True.
+        Default is `True`.
     override_env : bool, optional
         If flag is True, then unconditionally ``ONE_TICK_CONFIG`` environment variable will be overridden
-        with a config that belongs to a Session. Otherwise ``ONE_TICK_CONFIG``
-        will be defined in the scope of session only when it is not defined externally.
+        with a config that belongs to a Session.
+
+        Otherwise ``ONE_TICK_CONFIG`` variable
+        will be set in the scope of session only when it is not defined externally.
         For example, it is helpful when you test ascii_loader that uses 'ONE_TICK_CONFIG' only.
 
-        Default is False ( default is False, because overriding external environment variable
-        might be not obvious and desirable )
+        Default is `False` (because overriding external environment variable might be not obvious and desirable).
     redirect_logs: bool, optional
-        If flag is True, then OneTick logs  will be redirected into a temporary log file. Otherwise
-        logs will be mixed with output. Default is True.
+        If flag is True, then OneTick logs  will be redirected into a temporary log file.
+        Otherwise logs will be mixed with output.
+        Default is `True`.
     gather_performance_metrics: bool, optional
         If flag is True, then enables performance metrics gathering, by setting ``DUMP_PERF_METRICS`` config parameter.
         Sets ``redirect_logs`` flag to ``True``.
@@ -1029,7 +1143,7 @@ class Session:
     Examples
     --------
 
-    If session is defined with environment, OneTick can be used right away:
+    If OneTick configuration is defined with environment, onetick-py can be used right away:
 
     >>> 'ONE_TICK_CONFIG' in os.environ
     True
@@ -1042,6 +1156,28 @@ class Session:
     0 2024-02-01 04:00:00.008283417  186.50
     1 2024-02-01 04:00:00.008290927  185.59
     2 2024-02-01 04:00:00.008291153  185.49
+
+    Otherwise you need to create the :class:`otp.Session <onetick.py.Session>` object before making queries:
+
+    >>> session = otp.Session()                                  # doctest: +SKIP
+    >>> t = otp.Tick(A=1)                                        # doctest: +SKIP
+    >>> otp.run(t, symbols='LOCAL::', date=otp.dt(2022, 1, 1))   # doctest: +SKIP
+            Time  A
+    0 2022-01-01  1
+
+    Session must be closed before creating another session:
+
+    >>> session.close()   # doctest: +SKIP
+
+    Session can be created as a python context manager.
+    In this case it doesn't need to be closed manually:
+
+    >>> with otp.Session() as session:                                    # doctest: +SKIP
+    ...     t = otp.Tick(A=1)                                             # doctest: +SKIP
+    ...     df = otp.run(t, symbols='LOCAL::', date=otp.dt(2022, 1, 1))   # doctest: +SKIP
+    ...     print(df)                                                     # doctest: +SKIP
+            Time  A
+    0 2022-01-01  1
 
     Collecting performance metrics with ``gather_performance_metrics`` parameter:
 
@@ -1063,7 +1199,6 @@ class Session:
         'disk_write': {'name': 'Disk Write', 'value': 172906, 'units': 'bytes'}
     }
     """
-    # TODO: create article for Session in Guides or Concepts
 
     _instance = None
 
@@ -1229,7 +1364,7 @@ class Session:
 
     def close(self):
         """
-        Close session
+        Close session, allowing to create another :class:`otp.Session <onetick.py.Session>` object.
         """
         if Session._instance == self:
             try:
@@ -1320,7 +1455,7 @@ class Session:
 class TestSession(Session):
     def __init__(self, *args, **kwargs):
         """
-        This class does the same as :py:class:`onetick.py.session.Session`,
+        This class does the same as :py:class:`otp.Session <onetick.py.session.Session>`,
         but also defines default required :py:attr:`otp.config <onetick.py.configuration.Config>` values.
 
         Using this session object is the equivalent of defining these configuration values:
@@ -1330,8 +1465,8 @@ class TestSession(Session):
             otp.config['tz'] = 'EST5EDT'
             otp.config['default_db'] = 'DEMO_L1'
             otp.config['default_symbol'] = 'AAPL'
-            otp.config['default_start_time'] = datetime(2003, 12, 1, 0, 0, 0)
-            otp.config['default_end_time'] = datetime(2003, 12, 4, 0, 0, 0)
+            otp.config['default_start_time'] = otp.datetime(2003, 12, 1, 0, 0, 0)
+            otp.config['default_end_time'] = otp.datetime(2003, 12, 4, 0, 0, 0)
 
         ``DEMO_L1`` is the database defined in the default locator generated by onetick.py
         and it is also a name of the database commonly used in the OneTick ecosystem, academy courses, etc.

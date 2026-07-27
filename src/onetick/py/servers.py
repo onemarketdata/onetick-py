@@ -15,15 +15,16 @@ class RemoteTS:
         """
         Class representing remote tick-server.
         Can be :py:meth:`used <onetick.py.Session.use>`
-        in :py:class:`~onetick.py.Session` as well as the local databases.
+        in :py:class:`otp.Session <onetick.py.Session>` as well as the local databases.
 
         Parameters
         ----------
-        host: str, :py:class:`~onetick.py.servers.LoadBalancing`, :py:class:`~onetick.py.servers.FaultTolerance`
+        host: str, :class:`~onetick.py.servers.LoadBalancing`, :class:`~onetick.py.servers.FaultTolerance`
             In case of string: string with this format: ``[proto://]hostname:port[/resource]``.
             Parameters in square brackets are optional.
 
-            Otherwise, configuration of LoadBalancing and/or FaultTolerance (please, check corresponding classes)
+            Otherwise, configuration can be set with :class:`~onetick.py.servers.LoadBalancing`
+            and/or :class:`~onetick.py.servers.FaultTolerance` objects.
         port: int, str, optional
             The port number of the remote tick-server.
             If not specified here, can be specified in the ``host`` parameter.
@@ -47,10 +48,11 @@ class RemoteTS:
 
         >>> session.use(otp.RemoteTS('wss://data.onetick.com:443/omdwebapi/websocket'))  # doctest: +SKIP
 
-        Combination of LoadBalancing and FaultTolerance can be used for host parameter:
+        Combination of :class:`~onetick.py.servers.LoadBalancing`
+        and :class:`~onetick.py.servers.FaultTolerance` can be used for host parameter:
 
-        >>> RemoteTS(FaultTolerance(LoadBalancing('host1:4001', 'host2:4002'),
-        ...                         LoadBalancing('host3:4003', 'host3:4004')) # doctest: +SKIP
+        >>> otp.RemoteTS(otp.FaultTolerance(otp.LoadBalancing('host1:4001', 'host2:4002'),
+        ...                                 otp.LoadBalancing('host3:4003', 'host3:4004')) # doctest: +SKIP
         """
         self.cep = cep
 

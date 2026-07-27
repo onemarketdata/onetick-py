@@ -1,4 +1,4 @@
-otp.session.Locator
-===================
+otp.Locator
+===========
 
 .. autoclass:: onetick.py.session.Locator

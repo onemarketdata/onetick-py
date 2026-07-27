@@ -188,7 +188,7 @@ from onetick.py.sources import (Tick, TTicks, Ticks, Orders, Trades, NBBO, Quote
                                 ReadSnapshot, ShowSnapshotList, FindSnapshotSymbols,
                                 ReadFromDataFrame, LoadTicksFromDataFrame, ReadFromKdb)
 from onetick.py.utils import adaptive, range, perf
-from onetick.py.session import Session, TestSession, Config, Locator, HTTPSession
+from onetick.py.session import Session, TestSession, Config, Locator, HTTPSession, ACL
 from onetick.py.servers import RemoteTS, LoadBalancing, FaultTolerance
 from onetick.py.db import DB, RefDB
 from onetick.py.db._inspection import databases, derived_databases

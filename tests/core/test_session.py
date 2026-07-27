@@ -133,7 +133,7 @@ def test_session_config_4():
 
 def test_session_config_5():
     loc = otp.Locator()
-    acl = otp.session.ACL()
+    acl = otp.ACL()
 
     config = otp.Config(acl=acl, locator=loc, copy=False)
 
@@ -736,7 +736,7 @@ class TestACL:
     @pytest.mark.parametrize("value", [None, 3, -7.5, "dsds"])
     def test_add_wrong(self, value):
         """ add entity of unsupported type """
-        acl = otp.session.ACL()
+        acl = otp.ACL()
 
         with pytest.raises(TypeError):
             acl.add(value)
@@ -744,14 +744,14 @@ class TestACL:
     @pytest.mark.parametrize("value", [None, 3, -7.5, "dsds"])
     def test_remove_wrong(self, value):
         """ remove entity of unsupported type """
-        acl = otp.session.ACL()
+        acl = otp.ACL()
 
         with pytest.raises(TypeError):
             acl.remove(value)
 
     def test_add_db(self):
         """ add DB to an ACL using session.ACL """
-        acl = otp.session.ACL()
+        acl = otp.ACL()
 
         # empty
         assert not self.in_writer('<DB id="TEST_ACL"', self.get_all(_acl.DB, acl))
@@ -764,7 +764,7 @@ class TestACL:
         """ remove DB from an ACL """
         db = otp.DB("TEST_ACL")
 
-        acl = otp.session.ACL()
+        acl = otp.ACL()
         # add
         acl.add(db)
         assert self.in_writer('<DB id="TEST_ACL"', self.get_all(_acl.DB, acl))
@@ -777,7 +777,7 @@ class TestACL:
         """ test checks that remove database twice works fine """
         db = otp.DB("TEST_ACL")
 
-        acl = otp.session.ACL()
+        acl = otp.ACL()
 
         acl.add(db)
         acl.remove(db)
@@ -787,20 +787,20 @@ class TestACL:
     def test_add_user(self):
         """ add session.ACL.User to an ACL """
 
-        acl = otp.session.ACL()
+        acl = otp.ACL()
 
         # empty
         assert not self.in_writer('<USER name="test_user"', self.get_all(_acl.User, acl))
 
         # add
-        acl.add(otp.session.ACL.User("test_user"))
+        acl.add(otp.ACL.User("test_user"))
         assert self.in_writer('<USER name="test_user"', self.get_all(_acl.User, acl))
 
     def test_remove_user(self):
         """ check removing user from an ACL """
-        user = otp.session.ACL.User("test_user")
+        user = otp.ACL.User("test_user")
 
-        acl = otp.session.ACL()
+        acl = otp.ACL()
         # add
         acl.add(user)
         assert self.in_writer('<USER name="test_user"', self.get_all(_acl.User, acl))
@@ -811,9 +811,9 @@ class TestACL:
 
     def test_remove_user_twice(self):
         """ check logic when remove twice the same user """
-        user = otp.session.ACL.User("test_user")
+        user = otp.ACL.User("test_user")
 
-        acl = otp.session.ACL()
+        acl = otp.ACL()
 
         acl.add(user)
         acl.remove(user)
@@ -824,7 +824,7 @@ class TestACL:
     def test_roll_back_on_add(self):
         """ test roll back login on add """
         db = otp.DB("TEST_ACL")
-        acl = otp.session.ACL()
+        acl = otp.ACL()
 
         # validate empty
         assert len(acl.databases) == 0
@@ -847,7 +847,7 @@ class TestACL:
     def test_roll_back_on_remove(self):
         """ test roll back logic on remove """
         db = otp.DB("TEST_ACL")
-        acl = otp.session.ACL()
+        acl = otp.ACL()
 
         # add
         acl.add(db)
@@ -874,7 +874,7 @@ class TestACL:
         if users:
             monkeypatch.setenv("TEST_SESSION_ACL_USERS", users)
 
-        acl = otp.session.ACL()
+        acl = otp.ACL()
 
         expected = [getpass.getuser()]
         expected += users.split(",") if users else []
@@ -892,12 +892,12 @@ def test_get_users():
     with otp.Session() as session:
         assert "new_user" not in session.acl.users
 
-        session.acl.add(otp.session.ACL.User("new_user"))
+        session.acl.add(otp.ACL.User("new_user"))
 
         assert "new_user" in session.acl.users
         assert "new_user2" not in session.acl.users
 
-        session.acl.add(otp.session.ACL.User("new_user2"))
+        session.acl.add(otp.ACL.User("new_user2"))
 
         assert "new_user" in session.acl.users
         assert "new_user2" in session.acl.users

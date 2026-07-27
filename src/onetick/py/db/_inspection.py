@@ -390,11 +390,16 @@ class DB:
             # getting last locator interval to get the last available date range
             start, end = self._get_last_locator_interval()
             kwargs = {'start': start, 'end': end, 'timezone': 'GMT'}
+
+        safe_params = _get_params_to_ignore_acl_violation()
+        if query_properties:
+            safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
+
         return otp.run(otq.GraphQuery(ep),
                        symbols=f'{self.name}::',
                        **kwargs,
                        context=self.context,
-                       query_properties=query_properties)
+                       **safe_params)
 
     def _set_intervals(self):
         """
@@ -1208,7 +1213,7 @@ def _get_safe_params_for_running(db=None, context=utils.default):
     )
 
 
-def _get_params_to_ignore_acl_violation():
+def _get_params_to_ignore_acl_violation() -> dict:
     """
     This function returns parameters to use when running queries that may violate ACL rules.
     We ignore these errors and do not print them so we do not confuse the user.

@@ -1,5 +1,5 @@
 otp.RefDB
-============================
+=========
 
 .. autoclass:: onetick.py.RefDB
 .. automethod:: onetick.py.RefDB.put

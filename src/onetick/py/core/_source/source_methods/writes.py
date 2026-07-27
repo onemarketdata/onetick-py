@@ -19,7 +19,7 @@ def write(
     db: Union[str, 'otp.DB'],
     symbol: Union[str, 'otp.Column', None] = None,
     tick_type: Union[str, 'otp.Column', None] = None,
-    date: Union[otp.datetime, type[adaptive], None] = adaptive,
+    date: Union[otp.datetime, 'otp.expr', type[adaptive], None] = adaptive,
     start_date: Optional[otp.datetime] = None,
     end_date: Optional[otp.datetime] = None,
     append: bool = False,
@@ -65,10 +65,14 @@ def write(
         If this parameter is not set, the _TICK_TYPE pseudo-field is used.
         If it is empty, an attempt is made to retrieve
         the tick type from the field named TICK_TYPE.
-    date: :py:class:`otp.datetime <onetick.py.datetime>` or None
-        date where to save data.
+    date: :class:`otp.datetime <onetick.py.datetime>` \
+          or :class:`otp.expr <onetick.py.core.column_operations.base.Expr>` or None
+        Date where to save data.
         Should be set to `None` if writing to accelerator or memory database.
         By default, it is set to `otp.config.default_date`.
+
+        Can also be set to :class:`otp.expr <onetick.py.core.column_operations.base.Expr>`
+        to be able to set date dynamically (see examples).
     start_date: :py:class:`otp.datetime <onetick.py.datetime>` or None
         Start date for data to save. It is inclusive.
         Cannot be used with ``date`` parameter.
@@ -165,6 +169,21 @@ def write(
     0 2003-12-01 00:00:00.000  1
     1 2003-12-01 00:00:00.001  2
     2 2003-12-01 00:00:00.002  3
+
+    Optimized copying of one database to another day by day
+    using :class:`otp.expr <onetick.py.core.column_operations.base.Expr>` and parameter ``apply_times_daily``:
+
+    >>> read_db = otp.DB('READ_DB')                                                                # doctest: +SKIP
+    >>> symbols = otp.Symbols('READ_DB', for_tick_type='TT')                                       # doctest: +SKIP
+    >>> data = otp.DataSource('READ_DB', tick_type='TT', symbols=symbols, schema_policy='manual')  # doctest: +SKIP
+    >>> data = data.write('WRITE_DB', date=data['_START_TIME'].dt.strftime('%Y%m%d').expr)         # doctest: +SKIP
+    >>> otp.run(data,                                                                              # doctest: +SKIP
+    ...         start=otp.dt(2003, 12, 1),                                                         # doctest: +SKIP
+    ...         end=otp.dt(2003, 12, 3),                                                           # doctest: +SKIP
+    ...         timezone='EST5EDT',                                                                # doctest: +SKIP
+    ...         apply_times_daily=True,                                                            # doctest: +SKIP
+    ...         concurrency=16)                                                                    # doctest: +SKIP
+
     """
     if 'append_mode' in kwargs:
         warnings.warn("Parameter 'append_mode' is deprecated, use 'append'", FutureWarning)
@@ -351,9 +370,16 @@ def write(
             branches.append(branch)
         self = otp.merge(branches)
     else:
+        if isinstance(date, otp.expr):
+            str_date = str(date)
+        elif date:
+            str_date = date.strftime('%Y%m%d')  # type: ignore[union-attr]
+        else:
+            str_date = ''
+
         self.sink(
             otq.WriteToOnetickDb(
-                date=date.strftime('%Y%m%d') if date else '',  # type: ignore[union-attr]
+                date=str_date,
                 propagate_ticks=propagate,
                 out_of_range_tick_action=out_of_range_tick_action.upper(),
                 **kwargs,

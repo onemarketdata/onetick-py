@@ -250,7 +250,7 @@ Add databases
 
 In some cases a developer may want to use ticks from a OneTick database.
 
-We suggest using :class:`otp.DB <onetick.py.db.db.DB>` for this goal. A developer can
+We suggest using :class:`otp.DB <onetick.py.DB>` for this goal. A developer can
 create a new database, add ticks there under the specified tick type, symbol and date, and then
 use it the code.
 

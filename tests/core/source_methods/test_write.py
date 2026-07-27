@@ -1,5 +1,8 @@
+import datetime
 import pytest
 import onetick.py as otp
+
+from conftest import doctest_compare
 
 
 @pytest.fixture
@@ -401,7 +404,6 @@ def test_start_end_with_day_boundary_offset(session, set_date):
 
 
 def test_multiple_locations_case(session):
-    import datetime
     db_name = 'MULTI_LOC_DB'
     db = otp.DB(
         db_name,
@@ -434,3 +436,34 @@ def test_multiple_locations_case(session):
     df = otp.run(write_query, timezone="UTC")
 
     assert list(df['A']) == [0, 1, 2, 3, 4]
+
+
+def test_date_expr(session):
+    # PY-1578
+    read_db = otp.DB('READ_DB')
+    read_db.add(otp.Tick(A=1), tick_type='TT', symbol='S1', date=otp.dt(2022, 1, 1), timezone='EST5EDT')
+    read_db.add(otp.Tick(A=2), tick_type='TT', symbol='S2', date=otp.dt(2022, 1, 2), timezone='EST5EDT')
+    session.use(read_db)
+    session.use(otp.DB('WRITE_DB'))
+
+    symbols = otp.Symbols('READ_DB', for_tick_type='TT')
+    data = otp.DataSource('READ_DB', tick_type='TT', symbols=symbols, schema_policy='manual')
+    df_read = otp.run(data, start=otp.dt(2022, 1, 1), end=otp.dt(2022, 1, 3), timezone='EST5EDT')
+
+    data = data.write('WRITE_DB', date=data['_START_TIME'].dt.strftime('%Y%m%d').expr)
+    df = otp.run(data,
+                 start=otp.dt(2022, 1, 1), end=otp.dt(2022, 1, 3), timezone='EST5EDT',
+                 apply_times_daily=True, concurrency=16)
+
+    symbols = otp.Symbols('WRITE_DB', for_tick_type='TT')
+    data = otp.DataSource('WRITE_DB', tick_type='TT', symbols=symbols, schema_policy='manual')
+    df_write = otp.run(data, start=otp.dt(2022, 1, 1), end=otp.dt(2022, 1, 3), timezone='EST5EDT')
+
+    assert df_read.equals(df)
+    assert df.equals(df_write)
+
+    assert doctest_compare("""
+            Time  A
+    0 2022-01-01  1
+    1 2022-01-02  2
+    """, str(df))

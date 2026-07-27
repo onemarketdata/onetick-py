@@ -10,6 +10,23 @@
 
 ### Removed
 
+## [1.205.0] - 2026-07-27
+
+### Added
+
+- Add Kubernetes/EFS documentation publish job (DO-2201)
+- Added more documentation about `otp.Session`
+- Add `otp.ACL` to public API
+- Allow setting `date` parameter in `otp.Source.write` to `otp.expr`
+
+### Changed
+
+### Fixed
+
+- Don't show entitlement warnings when getting database schema (again)
+
+### Removed
+
 ## [1.204.0] - 2026-07-20
 
 ### Added
