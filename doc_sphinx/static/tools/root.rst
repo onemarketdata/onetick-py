@@ -1,0 +1,4 @@
+CLI tools
+=========
+
+.. tableofcontents::

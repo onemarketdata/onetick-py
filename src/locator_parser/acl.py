@@ -45,7 +45,9 @@ class EPs(Entity):
     CHILDREN = [EP]
 
 
-def parse_acl(reader, writer, action=DoNothing()):
+def parse_acl(reader, writer, action=None):
+    if action is None:
+        action = DoNothing()
     writer.refresh()
     reader.set_writer(writer)
 
@@ -69,5 +71,5 @@ for _, cls in list(globals().items()):
 
                 if not cls.HAS_PROPERTIES and not cls.SINGLE:
                     child.PARENT = cls
-    except Exception:
+    except Exception:  # ruff: ignore[S112]
         continue

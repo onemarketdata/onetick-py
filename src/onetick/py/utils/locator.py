@@ -14,7 +14,7 @@ def get_dbs_locations_from_locator(locator):
 
     apply_actions(parse_locator, FileReader(locator), PrintWriter(), [action])
 
-    return map(lambda x: x.location, action.result)
+    return (x.location for x in action.result)
 
 
 def tmp_locator(clean_up=default, empty=False, base_dir=default):

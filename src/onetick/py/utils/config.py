@@ -69,8 +69,7 @@ def _read_config_params(path, _included_paths=None):
 
 def _write_config_params(path, params):
     with open(path, "w") as fout:
-        for key, value in params.items():
-            fout.write(f"{key}={value}\n")
+        fout.writelines(f"{key}={value}\n" for key, value in params.items())
 
 
 def _check_param_in_params(param, params, throw_exception=True):

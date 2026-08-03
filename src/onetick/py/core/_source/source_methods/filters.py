@@ -2,7 +2,8 @@ import re
 import warnings
 from contextlib import suppress
 from datetime import time
-from typing import TYPE_CHECKING, Any, Optional, Union, Literal, Sequence
+from typing import TYPE_CHECKING, Any, Optional, Union, Literal
+from collections.abc import Sequence
 
 from onetick import py as otp
 from onetick.py import types as ott
@@ -522,7 +523,7 @@ def __getitem__(self: 'Source', item):
         elif isinstance(item, list):
             if not item:
                 return self.copy()
-            item_type = list(set([type(x) for x in item]))
+            item_type = list(set(type(x) for x in item))
 
             if len(item_type) > 1:
                 raise AttributeError(f"Different types {item_type} in slice list is not supported")

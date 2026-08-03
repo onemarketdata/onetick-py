@@ -6,7 +6,8 @@ import datetime as dt
 from collections import defaultdict, Counter
 from functools import singledispatch
 from itertools import chain, zip_longest, repeat
-from typing import Union, Optional, Sequence, Literal
+from typing import Union, Optional, Literal
+from collections.abc import Sequence
 from enum import Enum
 
 import onetick.py as otp
@@ -23,7 +24,7 @@ from onetick.py.core.column_operations.base import Operation
 from onetick.py.core.cut_builder import _QCutBuilder, _CutBuilder
 
 
-__all__ = ['merge', 'join', 'join_by_time', 'apply_query', 'apply', 'cut', 'qcut', 'coalesce', 'corp_actions', 'format']
+__all__ = ['apply', 'apply_query', 'coalesce', 'corp_actions', 'cut', 'format', 'join', 'join_by_time', 'merge', 'qcut']
 
 
 def output_type_by_index(sources, index):
@@ -416,8 +417,8 @@ def __copy_sources_on_merge_or_join(result,
     names = __copy_and_rename_nodes_on_merge_join(result, names, sources, symbols)
 
     if drop_meta:
-        to_drop = list(map(lambda x: x + ".TIMESTAMP", names))
-        to_drop += list(map(lambda x: x + ".OMDSEQ", names))
+        to_drop = [x + ".TIMESTAMP" for x in names]
+        to_drop += [x + ".OMDSEQ" for x in names]
         __rename_leading_omdseq(leading, names, result, sources, use_rename_ep=use_rename_ep)
         result.sink(otq.Passthrough(fields=",".join(to_drop), drop_fields=True))
 
@@ -498,7 +499,7 @@ def __copy_and_rename_nodes_on_merge_join(result, names, sources, symbols):
 
 def _is_table_after_merge_needed(need_table, used_columns):
     if not need_table:
-        for key, value in used_columns.items():
+        for value in used_columns.values():
             if not value:
                 need_table = True
                 break
@@ -1207,9 +1208,7 @@ def join_by_time(sources, how="outer", on=None, policy=None, check_schema=True, 
         if isinstance(on, list):
             # okay
             pass
-        elif isinstance(on, Column):
-            on = [on]
-        elif isinstance(on, str):
+        elif isinstance(on, (Column, str)):
             on = [on]
         else:
             raise TypeError(f"It is not supported to have '{type(on)}' type as a key")

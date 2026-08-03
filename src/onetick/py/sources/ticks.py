@@ -4,7 +4,8 @@ import sys
 import warnings
 import math
 
-from typing import Optional, Union, Sequence
+from typing import Optional, Union
+from collections.abc import Sequence
 
 import onetick.py as otp
 from onetick.py.otq import otq

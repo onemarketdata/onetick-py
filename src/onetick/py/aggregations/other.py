@@ -53,7 +53,7 @@ class FirstTime(_AggregationTSType):
     FIELDS_TO_SKIP = ["column_name"]
 
     def __init__(self, *args, **kwargs):
-        super().__init__(column=_Column("TIMESTAMP"), *args, **kwargs)
+        super().__init__(_Column("TIMESTAMP"), *args, **kwargs)
 
 
 class LastTime(_AggregationTSType):
@@ -62,7 +62,7 @@ class LastTime(_AggregationTSType):
     FIELDS_TO_SKIP = ["column_name"]
 
     def __init__(self, *args, **kwargs):
-        super().__init__(column=_Column("TIMESTAMP"), *args, **kwargs)
+        super().__init__(_Column("TIMESTAMP"), *args, **kwargs)
 
 
 class Last(First):
@@ -82,10 +82,10 @@ class Count(_Aggregation):
     output_field_type = int
 
     def __init__(self, *args, **kwargs):
-        super().__init__(column=_Column("TIMESTAMP"), *args, **kwargs)
+        super().__init__(_Column("TIMESTAMP"), *args, **kwargs)
 
     def apply(self, src, name: str = 'VALUE', *args, **kwargs):
-        return super().apply(src=src, name=name, *args, **kwargs)
+        return super().apply(src, name, *args, **kwargs)
 
 
 class Vwap(_Aggregation):
@@ -109,7 +109,7 @@ class Vwap(_Aggregation):
                  price_column: str,
                  size_column: str,
                  *args, **kwargs):
-        super().__init__(column=_Column('TIMESTAMP'), *args, **kwargs)  # type: ignore
+        super().__init__(_Column('TIMESTAMP'), *args, **kwargs)  # type: ignore
         self.price_column = str(price_column)
         self.size_column = str(size_column)
 
@@ -123,7 +123,7 @@ class Vwap(_Aggregation):
                                 f"got {src.schema[column]}")
 
     def apply(self, src: 'Source', name: str = 'VWAP', *args, **kwargs) -> 'Source':
-        return super().apply(src=src, name=name, *args, **kwargs)
+        return super().apply(src, name, *args, **kwargs)
 
 
 class Correlation(_Aggregation):
@@ -144,7 +144,7 @@ class Correlation(_Aggregation):
                  column_name_1: str,
                  column_name_2: str,
                  *args, **kwargs):
-        super().__init__(column=_Column('TIMESTAMP'), *args, **kwargs)  # type: ignore
+        super().__init__(_Column('TIMESTAMP'), *args, **kwargs)  # type: ignore
         self.column_name_1 = str(column_name_1)
         self.column_name_2 = str(column_name_2)
 
@@ -158,7 +158,7 @@ class Correlation(_Aggregation):
                                 f"got {src.schema[column]}")
 
     def apply(self, src: 'Source', name: str = 'CORRELATION', *args, **kwargs) -> 'Source':
-        return super().apply(src=src, name=name, *args, **kwargs)
+        return super().apply(src, name, *args, **kwargs)
 
 
 class FirstTick(_AggregationTSType, _KeepTs, _AllColumnsAggregation):
@@ -231,13 +231,13 @@ class Distinct(_AggregationTSSelection):
                  key_attrs_only: bool = True,
                  *args, **kwargs):
         keys = keys if isinstance(keys, list) else [keys]   # type: ignore
-        super().__init__(column=keys, *args, **kwargs)  # type: ignore
+        super().__init__(keys, *args, **kwargs)  # type: ignore
         self.key_attrs_only = key_attrs_only
 
     @validate
     def _get_common_schema(self, src: 'Source', *args, **kwargs) -> dict:
         if self.key_attrs_only:
-            return super()._get_common_schema(src=src, *args, **kwargs)
+            return super()._get_common_schema(src, *args, **kwargs)
         return src.schema.copy()
 
     @staticmethod
@@ -367,7 +367,7 @@ class OptionPrice(_Aggregation):
         if self.all_fields_for_running:
             # all_fields parameter is not available for this aggregation, but it's used to set the schema correctly
             kwargs['all_fields'] = True
-        super().__init__(column=_Column('PRICE'), *args, **kwargs)  # type: ignore
+        super().__init__(_Column('PRICE'), *args, **kwargs)  # type: ignore
         self.volatility = volatility
         self.interest_rate = interest_rate
         self.compute_model = compute_model
@@ -386,7 +386,7 @@ class OptionPrice(_Aggregation):
         self.expiration_date_field_name = expiration_date_field_name
 
     def apply(self, src: 'Source', name: str = 'VALUE', *args, **kwargs) -> 'Source':
-        return super().apply(src=src, name=name, *args, **kwargs)
+        return super().apply(src, name, *args, **kwargs)
 
     def _get_output_schema(self, src: 'Source', name: Optional[str] = None) -> dict:
         output_schema = super()._get_output_schema(src, name=name)
@@ -416,7 +416,7 @@ class Ranking(_KeepTs):
     _ALLOWED_SHOW_RANK_AS = {'order', 'percentile_standard', 'percent_le_values', 'percent_lt_values'}
 
     def __init__(self, rank_by, *args, show_rank_as='ORDER', include_tick=False, **kwargs):
-        super().__init__(column=_Column('TIMESTAMP'), *args, **kwargs)
+        super().__init__(_Column('TIMESTAMP'), *args, **kwargs)
 
         if isinstance(rank_by, str):
             rank_by = [rank_by]
@@ -477,7 +477,7 @@ class Variance(_Aggregation):
         self.biased = biased
 
     def apply(self, src: 'Source', name: str = 'VARIANCE', *args, **kwargs) -> 'Source':
-        return super().apply(src=src, name=name, *args, **kwargs)
+        return super().apply(src, name, *args, **kwargs)
 
 
 class Percentile(_Aggregation):
@@ -593,7 +593,7 @@ class ExpWAverage(_FloatAggregation, _AggregationTSType):
     output_field_type = float
 
     def __init__(self, column, decay, decay_value_type='lambda', time_series_type='state_ts', *args, **kwargs):
-        super().__init__(column, time_series_type=time_series_type, *args, **kwargs)
+        super().__init__(column, time_series_type, *args, **kwargs)
 
         if decay_value_type not in ['lambda', 'half_life_index']:
             raise ValueError(f"Parameter 'decay_value_type' has incorrect value: {decay_value_type}, "
@@ -688,7 +688,7 @@ class PortfolioPrice(_Aggregation, _MultiColumnAggregation):
         self.weight_type = weight_type.upper()
         self.symbols = symbols
 
-        super().__init__(column=column, *args, **kwargs)
+        super().__init__(column, *args, **kwargs)
 
     def apply(self, src, name='VALUE', inplace=False):
         if inplace:
@@ -827,7 +827,7 @@ class MultiPortfolioPrice(PortfolioPrice):
             raise RuntimeError('The number of the field names must match the number of the field names '
                                'listed in the `columns` parameter')
 
-        super().__init__(column=columns, *args, **kwargs)
+        super().__init__(columns, *args, **kwargs)
 
     def validate_input_columns(self, src: 'Source'):
         super().validate_input_columns(src)
@@ -981,7 +981,7 @@ class ImpliedVol(_Aggregation):
                 )
 
     def apply(self, src: 'Source', name: str = 'VALUE', *args, **kwargs) -> 'Source':
-        return super().apply(src=src, name=name, *args, **kwargs)
+        return super().apply(src, name, *args, **kwargs)
 
 
 class LinearRegression(_Aggregation, _MultiColumnAggregation):

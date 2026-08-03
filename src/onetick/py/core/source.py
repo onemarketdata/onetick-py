@@ -45,6 +45,7 @@ def _is_dict_required(symbols):
         return True
     if isinstance(symbols, otq.Symbol):
         symbols = symbols.name
+    # ruff: ignore[SIM103]
     if isinstance(symbols, str) and 'eval' in symbols:
         return True
     return False
@@ -349,6 +350,7 @@ class Source:
             return True
         if key.replace('_' + Source.__name__.lstrip('_'), "") in self.__class__._PROPERTIES:
             return True
+        # ruff: ignore[SIM103]
         if key.replace(self.__class__.__name__, "") in self.__class__._PROPERTIES:
             return True
         return False

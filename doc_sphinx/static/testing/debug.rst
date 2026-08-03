@@ -61,7 +61,6 @@ as a separate python package.
 
 .. only:: Internal
 
-
     ``onetick view`` is located in the
     `onetick-ext-view <https://gitlab.sol.onetick.com/solutions/py-onetick/onetick-ext-view>`_ project
     on our Gitlab server.
@@ -69,21 +68,11 @@ as a separate python package.
     `README.md <https://gitlab.sol.onetick.com/solutions/py-onetick/onetick-ext-view/-/blob/master/README.md>`_ file.
 
 
-The ``onetick view`` python package currently is only available on the internal OneTick pip-servers.
-
-First option (available with OneTick VPN):
+The ``onetick-ext-view`` python package is available on PyPI `<https://pypi.org/project/onetick-ext-view>`_:
 
 ::
 
-    pip install -U --index-url https://pip.sol.onetick.com onetick-ext-view
-
-
-Second option (public server, ask your OneMarketData rep for a USERNAME and PASSWORD):
-
-::
-
-    pip install -U --index-url https://USERNAME:PASSWORD@pip.distribution.sol.onetick.com/simple/ onetick-ext-view
-
+    pip install onetick-ext-view
 
 After installation a developer just needs to go to a folder with OneTick databases
 and execute the ``onetick view`` command in terminal -- it automatically discovers
@@ -95,6 +84,13 @@ Usually it's convenient to use this tool along with the ``--keep-generated`` :re
 because this flag provides all databases are used in tests with their content.
 
 .. image:: images/onetick-view.png
+
+onetick read
+------------
+
+``onetick read`` is a CLI tool to read OneTick databases.
+
+See the full documentation in ``onetick read`` :ref:`Guide <onetick read>`.
 
 Save .otq file
 --------------

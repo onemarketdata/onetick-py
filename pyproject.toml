@@ -45,6 +45,7 @@ jupyter-onetick_snippets = "onetick.doc_utilities.snippets:main"
 
 [project.entry-points."onetick.py.cli.plugins"]
 render = "onetick.py.cli.render"
+read = "onetick.py.cli.read"
 
 [project.urls]
 Documentation = "https://docs.pip.distribution.sol.onetick.com"
@@ -115,7 +116,7 @@ dev = [
 ]
 lint = [
     "pylint>=3.3.9",
-    "ruff>=0.15.5",
+    "ruff>=0.16.0",
     {include-group = "mypy"},
 ]
 mypy = [

@@ -1,3 +1,5 @@
+# ruff: noqa: UP031
+
 import ast
 import inspect
 import textwrap
@@ -5,7 +7,8 @@ import types
 import operator
 import tokenize
 import warnings
-from typing import Callable, Union, Any, Optional, Iterable, TypeVar
+from typing import Union, Any, Optional, TypeVar
+from collections.abc import Callable, Iterable
 from copy import deepcopy
 from functools import wraps, cached_property
 from collections import deque
@@ -1108,7 +1111,7 @@ class CaseExpressionParser(ExpressionParser):
         except Exception as err:
             if orig_err is not None:
                 raise err from orig_err
-            raise err
+            raise
 
     @property
     def _expression(self) -> dict:
@@ -2100,11 +2103,9 @@ class FunctionParser:
 
             new_columns = []
             new_local_vars = []
-            new_other_vars = []
             new_dynamic_ticks_fields = []
 
-            for value in self.local_variables.values():
-                new_other_vars.append(value)
+            new_other_vars = list(self.local_variables.values())
 
             if not self.inner_function:
                 for key, values in self.emulator.NEW_VALUES.items():
@@ -2113,7 +2114,7 @@ class FunctionParser:
                 for key, values in self.emulator.LOCAL_VARS_NEW_VALUES.items():
                     new_local_vars.append(var_definition(LocalVariable(key), values))
 
-                for var_name, var_val in self.emulator.STATIC_VARS.items():
+                for var_val in self.emulator.STATIC_VARS.values():
                     if not isinstance(var_val, _DynamicTick):
                         continue
 

@@ -15,17 +15,13 @@ You can see example of code implementation in `onetick.py.cli.render` and
 definition of command in `entry_points` in `pyproject.toml`.
 """
 
-import sys
 import argparse
 import warnings
-from typing import Callable, Optional
+from typing import Optional
+from collections.abc import Callable
 from dataclasses import dataclass
 from importlib import metadata
-
-if sys.version_info < (3, 10):
-    from importlib_metadata import entry_points
-else:
-    from importlib.metadata import entry_points
+from importlib.metadata import entry_points
 
 
 @dataclass
@@ -96,7 +92,8 @@ def otp_cli():
     commands = load_commands()
 
     if len(commands):
-        epilog = 'List of available subcommands : %s' % ', '.join(commands)
+        str_commands = ', '.join(commands)
+        epilog = f'List of available subcommands : {str_commands}'
     else:
         epilog = 'There is no available subcommands, because no compatible plugins are installed.'
 

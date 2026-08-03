@@ -41,7 +41,7 @@ class NumDistinct(_Aggregation):
         else:
             self.EP = otq.NumDistinct
 
-        super().__init__(column=_Column('TIMESTAMP'), *args, **kwargs)
+        super().__init__(_Column('TIMESTAMP'), *args, **kwargs)
         if isinstance(keys, str):
             keys = [keys]
         self._keys = keys

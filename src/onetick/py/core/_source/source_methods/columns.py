@@ -1,13 +1,10 @@
 import functools
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from onetick import py as otp
+import onetick.py as otp
 from onetick.py import types as ott
 from onetick.py.core.column_operations._methods.op_types import are_numerics, are_time
 from onetick.py.core.column_operations._methods.op_types import are_strings
-
-if TYPE_CHECKING:
-    import onetick.py as otp
 
 
 def mean(self: 'otp.Source', *columns) -> 'otp.Operation':

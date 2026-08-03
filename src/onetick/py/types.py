@@ -517,7 +517,7 @@ class _inner_string(type):
     # and _inner_str for the same item is different for every call,
     # but we want to make str[1024] be equal to another str[1024]
     # pylint: disable-next=method-cache-max-size-none
-    @functools.lru_cache(maxsize=None)
+    @functools.cache  # ruff: ignore[B019]
     def __getitem__(cls, item):
 
         if (not isinstance(item, int) or item < 1) and item is not Ellipsis:
@@ -837,7 +837,7 @@ class decimal:
     def __repr__(self):
         return f"{self.__class__.__name__}({value2str(self.__value)})"
 
-    def __format__(self, __format_spec: str) -> str:
+    def __format__(self, __format_spec: str) -> str:  # ruff: ignore[PYI063]
         return _decimal.Decimal(self.__value).__format__(__format_spec)
 
 # --------------------------------------------------------------- #
@@ -1908,13 +1908,9 @@ def type2np(t):
         return 'uint64'
     elif issubclass(t, _int):
         return 'int32'
-    elif issubclass(t, long):
+    elif issubclass(t, long) or issubclass(t, int):
         return 'int64'
-    elif issubclass(t, int):
-        return 'int64'
-    elif issubclass(t, float):
-        return 'float64'
-    elif issubclass(t, decimal):
+    elif issubclass(t, float) or issubclass(t, decimal):
         return 'float64'
     else:
         return np.dtype(t)
@@ -1940,15 +1936,11 @@ def np2type(t):
         return float
     elif t.name == 'boolean':
         return bool
-    elif t.name.startswith('datetime64[ns'):
-        return nsectime
-    elif t.name.startswith('datetime64[us'):
+    elif t.name.startswith('datetime64[ns') or t.name.startswith('datetime64[us'):
         return nsectime
     elif t.name.startswith('datetime64[ms'):
         return msectime
-    elif t.name == 'object':
-        return str
-    elif t.name == 'str':
+    elif t.name in ('object', 'str'):
         return str
     elif t.str.startswith('<U'):
         length = t.name[2:]

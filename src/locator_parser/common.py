@@ -56,7 +56,7 @@ class Action(ABC):
         obj = self.__class__(*args, **kwargs)
         obj.conditions = dict(self.conditions)
 
-        for key, _ in obj.conditions.items():
+        for key in obj.conditions:
             obj.conditions[key] = False
 
         return obj
@@ -114,7 +114,8 @@ class Action(ABC):
         if len(kwargs) == 0:
             self.conditions[(tag.lower(), None, None)] = False
         else:
-            self.conditions[(tag.lower(), list(kwargs.keys())[0].lower(), list(kwargs.values())[0])] = False
+            key, value = next(iter(kwargs.items()))
+            self.conditions[(tag.lower(), key.lower(), value)] = False
 
 
 def apply_actions(func, reader, writer, actions=None, flush=False):
@@ -130,7 +131,7 @@ def apply_actions(func, reader, writer, actions=None, flush=False):
     func(reader, writer, actions[0])
 
     for action in actions[1:]:
-        lines = "\n".join(map(lambda x: x.replace("\n", ""), writer.lines))
+        lines = "\n".join(x.replace("\n", "") for x in writer.lines)
         new_reader = LinesReader(lines)
 
         func(new_reader, writer, action)

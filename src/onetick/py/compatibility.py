@@ -225,11 +225,11 @@ def get_onetick_version(db=None, context=None) -> OnetickVersionFromServer:
                 try:
                     result_data = _get_onetick_version(db_name, context, start, end)
                     break
-                except Exception as e:
+                except Exception:
                     if i < len(locator_intervals) - 1:
                         continue
                     else:
-                        raise e
+                        raise
     finally:
         if s:
             s.close()
@@ -488,15 +488,6 @@ def _is_save_snapshot_database_parameter_supported():
 def _is_join_with_snapshot_snapshot_fields_parameter_supported():
     # 20240422: Implemented 0032910: add parameter SNAPSHOT_FIELDS to JOIN_WITH_SNAPSHOT EP
     return 'snapshot_fields' in otq.JoinWithSnapshot.Parameters.list_parameters()
-
-
-# TODO: code and tests
-def is_max_concurrency_with_webapi_supported():
-    # 0036758: in onetick.query_webapi: max_concurrency is not being saved in otq file when set on otq.Query
-    # 0036759: in onetick.query_webapi:
-    # it's not possible to pass max_concurrency 0 in method otq.run when using otq file
-    return _is_min_build_or_version(None, None,
-                                    20250727120000, min_update_number=3)
 
 
 def _is_include_market_order_ticks_supported(ep_class):

@@ -50,7 +50,7 @@ class TmpOtq:
         def __num_to_str(self):
             s = ""
             r = self.LAST_CODE - self.FIRST_CODE + 1
-            for i in range(0, self.__length):
+            for i in range(self.__length):
                 s = chr(self.FIRST_CODE + (self.__n // r ** i) % r) + s
             return s
 

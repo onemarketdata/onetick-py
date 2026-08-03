@@ -47,7 +47,7 @@ class OneTickLib:
 
     def __new__(cls, *args, **kwargs):
         if cls.__otl_instance is None:
-            cls.__otl_instance = super(OneTickLib, cls).__new__(cls)
+            cls.__otl_instance = super().__new__(cls)
 
             def proxy_wrap(attr, static=False):
 
@@ -78,7 +78,7 @@ class OneTickLib:
                 self.set_log_file(log_file)
         elif args != OneTickLib.__args and args:
             raise ValueError("OneTickLib was already initialized with different "
-                             "parameters: Was: {} Now: {}".format(OneTickLib.__args, args))
+                             f"parameters: Was: {OneTickLib.__args} Now: {args}")
 
     def __eq__(self, otl):
         return self.__dict__ == otl.__dict__
@@ -87,7 +87,7 @@ class OneTickLib:
         return self.__dict__ != otl.__dict__
 
     def __str__(self):
-        return "Instance: {}".format(self.__instance.get_one_tick_lib())
+        return f"Instance: {self.__instance.get_one_tick_lib()}"
 
     def cleanup(self):
         """

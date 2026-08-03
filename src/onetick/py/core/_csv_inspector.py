@@ -79,7 +79,7 @@ def inspect_by_pandas(path_to_csv, first_line_is_title=True, names=None, field_d
         df.rename(columns=rename, inplace=True)
 
     # convert pandas types to otp
-    columns = dict(map(lambda x: (x[0], _convert_pandas_types(x[1])), dict(df.dtypes).items()))
+    columns = {x[0]: _convert_pandas_types(x[1]) for x in dict(df.dtypes).items()}
 
     # explicitly set types for columns having format "type COLUMNNAME"
     for column_name, dtype in default_types.items():

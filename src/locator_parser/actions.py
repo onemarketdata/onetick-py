@@ -70,7 +70,7 @@ class Modify(Action):
                     if line.find("/>") != -1 and line.find("/>") < end_pos:
                         end_pos = line.find("/>")
 
-                    line = line[:end_pos] + " %s=%s" % (self.field, self.value) + line[end_pos:]
+                    line = line[:end_pos] + f" {self.field}={self.value}" + line[end_pos:]
                     new_properties[-1] = line
                     break
         else:
@@ -161,10 +161,9 @@ class Get(Action):
 
             key, value = t_list[0], t_list[1]
 
-            if value.endswith("/>"):
-                value = value[:-2]
+            value = value.removesuffix("/>")
 
-            if value.endswith(">") or value.endswith("/"):
+            if value.endswith((">", "/")):
                 value = value[:-1]
 
             properties_dict[key.lower()] = value.replace('"', "")

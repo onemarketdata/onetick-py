@@ -2,7 +2,8 @@ import datetime as dt
 import inspect
 import warnings
 
-from typing import Iterable, Optional, Sequence
+from typing import Optional
+from collections.abc import Iterable, Sequence
 
 import onetick.py as otp
 from onetick.py.otq import otq
@@ -528,7 +529,7 @@ class DataSource(Source):
                     return _db
 
             db = [db_converter(_db) for _db in db]
-            res = all(('::' in _db and _db[-1] != ':' for _db in db))
+            res = all('::' in _db and _db[-1] != ':' for _db in db)
             if res:
                 if tick_type is utils.adaptive or tick_type is None:
                     tick_type = None  # tick types is specified for all databases

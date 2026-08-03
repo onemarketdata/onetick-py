@@ -1,5 +1,5 @@
 import itertools
-from typing import Iterable, Callable, Sequence
+from collections.abc import Iterable, Callable, Sequence
 
 import onetick.py as otp
 from onetick.py.docs.utils import docstring

@@ -61,8 +61,8 @@ class _EmulateInputObject:
         # they will not be used before object initialization anyway
 
         # collects new columns with appeared values
-        self.__class__.NEW_VALUES = defaultdict(lambda: [])
-        self.__class__.LOCAL_VARS_NEW_VALUES = defaultdict(lambda: [])
+        self.__class__.NEW_VALUES = defaultdict(list)
+        self.__class__.LOCAL_VARS_NEW_VALUES = defaultdict(list)
         # collects local variables in the per-tick-script
         self.__class__.LOCAL_VARS = {}
         self.__class__.STATIC_VARS = {}

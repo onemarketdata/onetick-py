@@ -217,7 +217,7 @@ class _NodesHistory:
 
     def build(self, eps, root_key, print_out=False):
         if print_out:
-            print("")
+            print()
             print("[[API OUTPUT STARTS]]")
 
         if print_out:

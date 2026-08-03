@@ -2,7 +2,8 @@ import asyncio
 import inspect
 import datetime
 import warnings
-from typing import Union, Optional, Any, Callable
+from typing import Union, Optional, Any
+from collections.abc import Callable
 from collections import defaultdict
 
 import numpy as np
@@ -815,7 +816,7 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
     except Exception as e:
         e = _add_stack_info_to_exception(e)
         e = _add_version_info_to_exception(e)
-        raise e
+        raise e  # ruff: ignore[TRY201]
     else:
         # PY-1516: remove temporary file right away after calling the query (only if query didn't raise an exception)
         if tmp_file is not None and otp.config.clean_up_tmp_files:
@@ -966,7 +967,7 @@ def _form_dict_from_list(data_list, output_structure, print_symbol_errors):
             if len(node_list) == 1:
                 d[node] = node_list[0]
         if len(d) == 1:
-            d = list(d.values())[0]
+            d = next(iter(d.values()))
         else:  # converting defaultdict to regular dict
             d = dict(d)
         return d
@@ -1042,7 +1043,7 @@ def _format_call_output(result, output_structure, node_names, require_dict, prin
     result_dict = _form_dict_from_list(result_list, output_structure, print_symbol_errors)
 
     if len(result_dict) == 1 and not require_dict:
-        return list(result_dict.values())[0]
+        return next(iter(result_dict.values()))
     else:
         return result_dict
 
@@ -1150,9 +1151,7 @@ def _process_output_structure(output_structure):
     elif output_structure == "polars":
         output_structure = "polars"
         output_structure_for_otq = "symbol_result_list"
-    elif output_structure == "pandas":
-        output_structure_for_otq = "symbol_result_list"
-    elif output_structure == "pyarrow":
+    elif output_structure in ("pandas", "pyarrow"):
         output_structure_for_otq = "symbol_result_list"
     else:
         raise ValueError("output_structure support only the following values: df, list, map, polars, pandas, pyarrow")

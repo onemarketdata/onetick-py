@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Collection, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
+from collections.abc import Collection
 
 from onetick.py.core.column import _Column
 from onetick.py.otq import otq
@@ -157,9 +158,7 @@ def sort(
         else:
             asc_obj = asc_objs[inx]
 
-        if isinstance(asc_obj, bool):
-            asc_items[inx] = asc_convert(asc_obj)
-        elif isinstance(asc_obj, int):
+        if isinstance(asc_obj, (bool, int)):
             asc_items[inx] = asc_convert(asc_obj)
         else:
             raise TypeError(f"asc can not be '{asc_obj}' of type '{type(asc_obj)}'")

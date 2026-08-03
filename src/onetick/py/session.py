@@ -206,7 +206,7 @@ class ACL(_FileHandler):
 
     def _apply_actions(self, actions, print_writer=False):
         writer = PrintWriter() if print_writer else FileWriter(self.path)
-        flush = False if print_writer else True
+        flush = not print_writer
         return apply_actions(_acl.parse_acl, FileReader(self.path), writer, actions, flush=flush)
 
     def _add_db(self, dbs):
@@ -347,20 +347,20 @@ class ACL(_FileHandler):
         get_db = GetAll()
         get_db.add_where(_acl.DB)
         self._apply_actions([get_db], print_writer=True)
-        return list(map(lambda x: x.id, get_db.result))
+        return [x.id for x in get_db.result]
 
     def _dbs(self):
         action = GetAll()
         action.add_where(_acl.DB)
         self._apply_actions([action], print_writer=True)
-        return list(map(lambda x: x.id, action.result))
+        return [x.id for x in action.result]
 
     def _users(self):
         action = GetAll()
         action.add_where(_acl.Role, name="Admin")
         action.add_where(_acl.User)
         self._apply_actions([action], print_writer=True)
-        return list(map(lambda x: x.name, action.result))
+        return [x.name for x in action.result]
 
     @property
     def databases(self):
@@ -479,14 +479,14 @@ class Locator(_FileHandler):
 
     def _apply_actions(self, actions, print_writer=False):
         writer = PrintWriter() if print_writer else FileWriter(self.path)
-        flush = False if print_writer else True
+        flush = not print_writer
         return apply_actions(_locator.parse_locator, FileReader(self.path), writer, actions, flush=flush)
 
     def _dbs(self):
         action = GetAll()
         action.add_where(_locator.DB)
         self._apply_actions([action], print_writer=True)
-        return list(map(lambda x: x.id, action.result))
+        return [x.id for x in action.result]
 
     def _ts(self):
         get_ts = GetAll()
@@ -692,9 +692,7 @@ class Locator(_FileHandler):
             self._added_ts.remove(server)
 
     def __contains__(self, item):
-        if str(item) in self.databases:
-            return True
-        return False
+        return str(item) in self.databases
 
 
 class LocatorBuilder(_CommonBuilder):

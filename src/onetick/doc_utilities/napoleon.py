@@ -29,10 +29,10 @@ class OTNumpyDocstring(NumpyDocstring):
         # OneTick custom logic end
 
         if use_admonition:
-            header = '.. admonition:: %s' % section
+            header = f'.. admonition:: {section}'
             lines = self._indent(lines, 3)
         else:
-            header = '.. rubric:: %s' % section
+            header = f'.. rubric:: {section}'
         if lines:
             return [header, ''] + lines + ['']
         else:

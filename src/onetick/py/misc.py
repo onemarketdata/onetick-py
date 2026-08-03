@@ -443,7 +443,7 @@ def get_username():
     )
 
 
-def get_query_property(name: str, show_values_set_via_dedicated_setters: bool = None, dtype=varstring):
+def get_query_property(name: str, show_values_set_via_dedicated_setters: bool | None = None, dtype=varstring):
     """
     Returns the value for the specified OneTick query property.
 

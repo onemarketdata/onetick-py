@@ -27,7 +27,7 @@ class Generic(_Aggregation, _MultiColumnAggregation):
                  query_fun,
                  bucket_delimiter: bool = False,
                  **kwargs):
-        self._query: Optional['Source'] = None
+        self._query: Optional[Source] = None
         self._query_fun = query_fun
         self._query_params: Optional[dict] = None
         self.bucket_delimiter = 'D' if bucket_delimiter else None

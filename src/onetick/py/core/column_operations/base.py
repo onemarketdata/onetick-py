@@ -1,6 +1,6 @@
 import copy
 import warnings
-from typing import Sequence
+from collections.abc import Sequence
 
 from onetick.py import types as ott
 from onetick.py.core.column_operations import _methods

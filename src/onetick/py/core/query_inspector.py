@@ -169,7 +169,7 @@ def get_query_info(otq_path, query_name="", inspected_graphs=None):
 
                         if param == "PARAMETER":
                             if not hasattr(graph[num], "PARAMETERS"):
-                                setattr(graph[num], "PARAMETERS", {})
+                                graph[num].PARAMETERS = {}
                             bits = value.split(" ")
                             inner_param_name = bits[0]
                             inner_param_value = " ".join(bits[1:])
@@ -203,8 +203,8 @@ def get_query_info(otq_path, query_name="", inspected_graphs=None):
             raise QueryNotFoundError(f'Query "{query_name}" is not found in the {otq_path}')
 
     for num, node in graph.items():
-        setattr(node, "NUM", num)
-        setattr(node, "IS_NESTED", False)
+        node.NUM = num
+        node.IS_NESTED = False
 
         if hasattr(node, "NESTED_INPUT"):
             node.NESTED_INPUT = node.NESTED_INPUT.split()[0]
@@ -223,7 +223,7 @@ def get_query_info(otq_path, query_name="", inspected_graphs=None):
         if not is_commented_out(node):
             # Commented nodes can affect sources and sinks, but cannot anything else
             if node.EP.startswith("NESTED_OTQ"):
-                setattr(node, "IS_NESTED", True)
+                node.IS_NESTED = True
                 if node.EP.strip() == "NESTED_OTQ":
                     if "OTQ_PATH" in node.PARAMETERS:
                         address = node.PARAMETERS["OTQ_PATH"]
@@ -236,7 +236,7 @@ def get_query_info(otq_path, query_name="", inspected_graphs=None):
 
                     node.EP = "NESTED_OTQ " + address
 
-                setattr(node, "NESTED_GRAPH", _load_nested_query(otq_path, node.EP, inspected_graphs))
+                node.NESTED_GRAPH = _load_nested_query(otq_path, node.EP, inspected_graphs)
 
     class Graph:
         def __init__(self, nodes):

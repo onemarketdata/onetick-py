@@ -1,7 +1,34 @@
 [lint]
+
+# default rules
+# https://docs.astral.sh/ruff/default-rules/
+
 ignore = [
-    "F401", # unused-import
-    "E402"  # module-import-not-at-top-of-file
+    "F401",   # unused-import
+    "E402",   # module-import-not-at-top-of-file
+    "UP007",  # allow Union[]
+    "UP028",  # allow for ... yield
+    "UP045",  # allow Optional[]
+    "I001",   # allow unsorted imports
+    "C401",   # allow set() generator
+    "C408",   # allow collection calls like dict(), tuple(), etc.
+    "RUF010", # allow using str() and repr() in f-strings
+    "RUF012", # allow mutable class variables
+    "TRY004", # allow not using TypeError
+    "BLE001", # allow except Exception
+    "PIE790", # allow unnecessary pass statement
+    "PIE804", # allow **{}
+    "SIM102", # allow collapsible if
+    "SIM118", # allow key in dict.keys()
+    "SIM210", # allow True if ... else False
+    "PYI041", # allow int | float
+    "S110",   # allow try except pass
+    "B009",   # allow getattr
+    "DTZ001", # call-datetime-without-tzinfo
+    "DTZ006", # call-datetime-fromtimestamp
+    "DTZ007", # call-datetime-strptime-without-zone
+    "DTZ005", # call-datetime-now-without-tzinfo
+    "DTZ901", # datetime-min-max
 ]
 
 [lint.per-file-ignores]

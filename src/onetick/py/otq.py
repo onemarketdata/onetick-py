@@ -61,13 +61,13 @@ if os.getenv("OTP_SKIP_OTQ_VALIDATION"):
 
     for key, value in otq.query.__dict__.items():
         setattr(otq, key, value)
-    setattr(otq, 'webapi', False)
-    setattr(otq, 'config', ConfigStub)
-    setattr(otq, 'graph_components', otq)
+    otq.webapi = False
+    otq.config = ConfigStub
+    otq.graph_components = otq
 
 elif otp.__webapi__:
     import onetick.query_webapi as otq
-    setattr(otq, 'webapi', True)
+    otq.webapi = True
 
     from onetick.py.pyomd_mock import pyomd
 
@@ -75,9 +75,6 @@ elif otp.__webapi__:
 
     def run(*args, **kwargs):
         from onetick.py import config
-        from onetick.py.compatibility import (
-            is_max_concurrency_with_webapi_supported,
-        )
 
         if not config.http_address and 'http_address' not in kwargs:
             raise ValueError('otp.run() http_address keyword param, '
@@ -160,8 +157,7 @@ elif otp.__webapi__:
 
             kwargs['access_token'] = get_access_token_cached(access_token_url, client_id, client_secret, **token_kwargs)
 
-            if 'access_token_url' in kwargs:
-                del kwargs['access_token_url']
+            kwargs.pop('access_token_url', None)
 
         kwargs.setdefault('http_proxy', config.http_proxy)
         kwargs.setdefault('https_proxy', config.https_proxy)
@@ -182,14 +178,11 @@ elif otp.__webapi__:
                     "Parameter `trusted_certificates_file` was set,"
                     " however current version of OneTick doesn't support it."
                 )
-            trusted_certificates_supported_param = list(trusted_certificates_supported)[0]
+            trusted_certificates_supported_param = next(iter(trusted_certificates_supported))
             kwargs[trusted_certificates_supported_param] = trusted_certificate_file_value
 
         if 'callback' in kwargs and kwargs['callback'] is not None:
             kwargs['output_mode'] = otq.QueryOutputMode.callback
-
-        if 'max_concurrency' in kwargs and not is_max_concurrency_with_webapi_supported():
-            kwargs['max_concurrency'] = None
 
         try:
             return __original_run(*args, **kwargs)
@@ -215,7 +208,7 @@ else:
     import onetick.query as otq  # type: ignore
     import pyomd  # type: ignore
     import onetick.lib.instance as otli  # type: ignore
-    setattr(otq, 'webapi', False)
+    otq.webapi = False
 
 
 def _tmp_otq_path():
@@ -230,4 +223,4 @@ def _tmp_otq_path():
     return res.replace("%", "_").replace("+", "_")
 
 
-__all__ = ['otq', 'pyomd', 'otli', '_tmp_otq_path']
+__all__ = ['_tmp_otq_path', 'otli', 'otq', 'pyomd']

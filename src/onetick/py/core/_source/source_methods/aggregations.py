@@ -793,8 +793,7 @@ def process_by_group(
         if inplace:
             raise ValueError("Cannot use inplace=True with multi-source processing function!")
 
-    num_source = 0
-    for process_source in process_sources:
+    for num_source, process_source in enumerate(process_sources):
         output_schema = process_source.columns(skip_meta_fields=True)
 
         if process_source.get_name():
@@ -813,7 +812,6 @@ def process_by_group(
         process_source.sink(otq.Passthrough().node_name(f"OUT_{num_source}"))
         process_source_root.node().add_rules(process_source.node().copy_rules())
         main_source._merge_tmp_otq(process_source)
-        num_source += 1
 
     query_name = process_source_root._store_in_tmp_otq(
         main_source._tmp_otq, operation_suffix="group_by", add_passthrough=False,
@@ -827,7 +825,7 @@ def process_by_group(
     if num_outputs == 1:
         outputs = ""
     else:
-        outputs = ",".join([f"OUT_{i}" for i in range(0, num_outputs)])
+        outputs = ",".join([f"OUT_{i}" for i in range(num_outputs)])
 
     kwargs = {}
     if num_threads is not None:
@@ -850,7 +848,7 @@ def process_by_group(
     main_source.sink(otq.GroupBy(key_fields=",".join(group_by), query_name=process_path, outputs=outputs, **kwargs))
 
     output_sources = []
-    for num_output in range(0, num_outputs):
+    for num_output in range(num_outputs):
         if num_outputs == 1 and inplace:
             output_source = main_source
         else:

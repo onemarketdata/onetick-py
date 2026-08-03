@@ -81,7 +81,7 @@ class Docstring:
             self.docstring[key] += self.indentation + line + '\n'
 
     def _apply_order(self):
-        key_map = dict((k.lower(), k) for k in self.docstring.keys())
+        key_map = {k.lower(): k for k in self.docstring.keys()}
         for k in self.order[::-1]:
             if k.lower() in key_map:
                 self.docstring.move_to_end(key_map[k.lower()], last=False)
@@ -89,7 +89,7 @@ class Docstring:
     def build(self):
         self._apply_order()
         res = ''
-        for k, value in self.docstring.items():
+        for value in self.docstring.values():
             res += value + '\n'
 
         return res

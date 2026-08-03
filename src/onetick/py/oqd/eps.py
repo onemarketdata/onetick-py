@@ -24,7 +24,7 @@ class BaseOqdEp(_graph_components.EpBase):  # type: ignore[name-defined]
             list_val = ["shared_state_variables"]
             return list_val
 
-    __slots__ = ["shared_state_variables", "_default_shared_state_variables", "stack_info", "_used_strings"]
+    __slots__ = ["_default_shared_state_variables", "_used_strings", "shared_state_variables", "stack_info"]
 
     def __init__(self, shared_state_variables=""):
         _graph_components.EpBase.__init__(self, self._get_name())
@@ -215,7 +215,7 @@ class OqdCorpAction(BaseOqdEp):
             list_val = ["adjust_types", "shared_state_variables"]
             return list_val
 
-    __slots__ = ["adjust_types", "_default_adjust_types"]
+    __slots__ = ["_default_adjust_types", "adjust_types"]
 
     def __init__(self, adjust_types="SPLIT,STOCK_DIVIDEND,RIGHTS,SPINOFF", shared_state_variables=""):
         BaseOqdEp.__init__(self, shared_state_variables)
@@ -311,7 +311,7 @@ class OqdCorpDailyFactor(BaseOqdEp):
             list_val = ["action_type", "shared_state_variables"]
             return list_val
 
-    __slots__ = ["action_type", "_default_action_type"]
+    __slots__ = ["_default_action_type", "action_type"]
 
     def __init__(self, action_type="SPLIT,STOCK_DIVIDEND,RIGHTS,SPINOFF", shared_state_variables=""):
         BaseOqdEp.__init__(self, shared_state_variables)
@@ -806,7 +806,7 @@ class OqdSourceDprcExch(BaseOqdEp):
             list_val = ["exch", "shared_state_variables"]
             return list_val
 
-    __slots__ = ["exch", "_default_exch"]
+    __slots__ = ["_default_exch", "exch"]
 
     def __init__(self, exch="USCOMP", shared_state_variables=""):
         BaseOqdEp.__init__(self, shared_state_variables)
@@ -937,7 +937,7 @@ class OqdSourceXoid(BaseOqdEp):
             list_val = ["figi_composite_filter", "shared_state_variables"]
             return list_val
 
-    __slots__ = ["figi_composite_filter", "_default_figi_composite_filter"]
+    __slots__ = ["_default_figi_composite_filter", "figi_composite_filter"]
 
     def __init__(self, figi_composite_filter=False, shared_state_variables=""):
         BaseOqdEp.__init__(self, shared_state_variables)
@@ -1134,7 +1134,7 @@ class OqdTranslate(BaseOqdEp):
             list_val = ["asof_date", "to_id", "exch", "shared_state_variables"]
             return list_val
 
-    __slots__ = ["asof_date", "_default_asof_date", "to_id", "_default_to_id", "exch", "_default_exch"]
+    __slots__ = ["_default_asof_date", "_default_exch", "_default_to_id", "asof_date", "exch", "to_id"]
 
     def __init__(self, asof_date="", to_id="OID", exch="USCOMP", shared_state_variables=""):
         BaseOqdEp.__init__(self, shared_state_variables)

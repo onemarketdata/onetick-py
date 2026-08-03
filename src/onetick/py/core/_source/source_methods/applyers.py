@@ -1,7 +1,8 @@
 import os
 import re
 import warnings
-from typing import TYPE_CHECKING, Callable, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
+from collections.abc import Callable
 
 from onetick import py as otp
 from onetick.py import types as ott

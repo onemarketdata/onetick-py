@@ -1,4 +1,5 @@
-from typing import Union, Optional, Callable, TYPE_CHECKING, Literal
+from typing import Union, Optional, TYPE_CHECKING, Literal
+from collections.abc import Callable
 
 from functools import wraps
 from inspect import Signature, Parameter
@@ -1006,10 +1007,10 @@ def copy_signature(obj, add_self=False, drop_parameters=None, return_annotation=
     Decorator that copies signature of the callable ``obj`` to the decorated function.
     """
     drop_parameters = drop_parameters or []
-    obj_parameters = list(
+    obj_parameters = [
         param for param_name, param in Signature.from_callable(obj).parameters.items()
         if param_name not in drop_parameters
-    )
+    ]
     params = []
     if add_self:
         params.append(

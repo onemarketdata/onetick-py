@@ -28,7 +28,7 @@ class FileReader(Reader):
 
     def __init__(self, file_path):
         # pylint: disable-next=consider-using-with
-        self.iterable_object = open(file_path.replace('"', ""), "r")
+        self.iterable_object = open(file_path.replace('"', ""), "r")  # ruff: ignore[SIM115]
         # pylint: disable-next=unused-private-member
         self.__finalizer = weakref.finalize(self, lambda x: x.close(), self.iterable_object)
 

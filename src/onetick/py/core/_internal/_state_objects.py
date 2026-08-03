@@ -3,7 +3,8 @@ import warnings
 from string import Template
 from os import path
 from abc import ABC, abstractmethod
-from typing import Iterable, Optional, Union
+from typing import Optional, Union
+from collections.abc import Iterable
 from functools import wraps
 
 import onetick.py as otp

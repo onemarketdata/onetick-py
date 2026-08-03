@@ -178,7 +178,7 @@ class Server(_LicenseBase):
 
         subprocess.run(
             [lic_generator, "-features", "COLL,QUERY,LOAD"],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            capture_output=True,
             check=True,
         )
 

@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
-from typing import Iterable, Union, Optional
+from typing import Union, Optional
+from collections.abc import Iterable
 from contextlib import suppress, contextmanager
 from textwrap import dedent
 
@@ -18,7 +19,7 @@ DATETIME_FORMATS = (
 )
 DATETIME_DESCRIPTION = (
     "Format of the env variable: "
-    f"{', '.join(':code:`{}`'.format(fmt) for fmt in DATETIME_FORMATS)}."
+    f"{', '.join(f':code:`{fmt}`' for fmt in DATETIME_FORMATS)}."
 )
 
 
@@ -328,7 +329,7 @@ class Config:
         if self.__default_config is None:
             default_config = dotenv.dotenv_values(default_config_path)
             available_option_names = []
-            for name, option in self.get_changeable_config_options().items():
+            for option in self.get_changeable_config_options().values():
                 if option._env_var_name:
                     available_option_names.append(option._env_var_name)
             diff = set(default_config).difference(available_option_names)
@@ -371,7 +372,7 @@ class Config:
             self[name] = old_value
 
     @classmethod
-    def get_changeable_config_options(cls):
+    def get_changeable_config_options(cls) -> dict:
         """
         useful for tests where you may want to memorize all existing configuration options before changing them
         """

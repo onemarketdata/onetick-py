@@ -76,6 +76,9 @@ chapters:
         - file: static/testing/features.rst
         - file: static/testing/debug.rst
         - file: static/testing/performance.rst
+    - file: static/tools/root
+      sections:
+        - file: static/tools/read.rst
     - file: static/configuration/root.rst
       sections:
         - file: static/configuration/configuration.rst

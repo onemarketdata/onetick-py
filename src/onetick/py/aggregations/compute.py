@@ -43,7 +43,7 @@ class Compute(_Aggregation):
     def __init__(self,
                  *args,
                  **kwargs):
-        super().__init__(column=Column('Time'), *args, **kwargs)
+        super().__init__(Column('Time'), *args, **kwargs)
 
         self.aggrs = {}
         self.has_multi_column_aggregations = False
@@ -120,7 +120,7 @@ class Compute(_Aggregation):
         self._validate_aggregation_with_source(src)
 
     def _validate_aggregation_with_source(self, src: 'Source'):
-        for name, aggr in self.aggrs.items():
+        for aggr in self.aggrs.values():
             aggr.validate_input_columns(src)
 
     @property
@@ -151,7 +151,7 @@ class Compute(_Aggregation):
         return params
 
     def to_ep(self, *args, **kwargs) -> otq.EpBase:
-        params = dict((k.lower(), v) for k, v in self.ep_params.items())
+        params = {k.lower(): v for k, v in self.ep_params.items()}
         return self.EP(**params)
 
     @operation_gb

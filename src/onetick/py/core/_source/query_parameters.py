@@ -1,4 +1,5 @@
 # mypy: disable-error-code="assignment"
+# ruff: noqa: RUF009
 
 import dataclasses
 from abc import ABC, abstractmethod

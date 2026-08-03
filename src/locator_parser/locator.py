@@ -18,7 +18,7 @@ class Include(Entity):
         # env variable found in the path
         if matched:
             if matched.group(0)[2:-1] not in os.environ:
-                raise RuntimeError("Includes use not defined environment variable: % s" % matched.group(0))
+                raise RuntimeError(f"Includes use not defined environment variable: {matched.group(0)}")
 
             path = path.replace(matched.group(0), os.environ[matched.group(0)[2:-1]])
 
@@ -117,7 +117,9 @@ class VirtualDBs(Entity):
     CHILDREN = [VirtualDB]
 
 
-def parse_locator(reader, writer, action=DoNothing(), recursively=False):
+def parse_locator(reader, writer, action=None, recursively=False):
+    if action is None:
+        action = DoNothing()
     Include.RECURSIVELY = recursively
     writer.refresh()
     reader.set_writer(writer)
@@ -151,5 +153,5 @@ for _, cls in list(globals().items()):
 
                 if not cls.HAS_PROPERTIES and not cls.SINGLE:
                     child.PARENT = cls
-    except Exception:
+    except Exception:  # ruff: ignore[S112]
         continue

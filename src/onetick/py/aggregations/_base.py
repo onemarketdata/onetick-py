@@ -357,7 +357,7 @@ class _Aggregation(ABC):
         return self.NAME + "(" + ",".join(params) + ")"
 
     def to_ep(self, name: Optional[str]) -> otq.EpBase:
-        params = dict((k.lower(), v) for k, v in self.ep_params.items())
+        params = {k.lower(): v for k, v in self.ep_params.items()}
         if 'output_field_name' not in self.FIELDS_TO_SKIP:
             params['output_field_name'] = name
         return self.EP(**params)
@@ -568,7 +568,7 @@ class _KeepTs(_Aggregation):
         return schema
 
     def apply(self, src: 'Source', *args, **kwargs) -> 'Source':
-        res = super().apply(src=src, *args, **kwargs)
+        res = super().apply(src, *args, **kwargs)
         if self.keep_timestamp:
             # TICK_TIME can be empty if it's a tick from default_tick aggregation parameter
             res['TICK_TIME'] = res.if_else(res['TICK_TIME'], res['TICK_TIME'], res['TIMESTAMP'])

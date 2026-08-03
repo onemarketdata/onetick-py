@@ -790,7 +790,7 @@ class RefDB(DB):
             destroy_access=destroy_access,
         )
 
-    class Section():
+    class Section:
         """ Specification of a reference database section. Section content can be specified as a string or source.
         The format of string and output columns of source must correspond with the section documentation.
 
@@ -1305,8 +1305,7 @@ class RefDB(DB):
                 'ONE_TICK_CONFIG': session.Session._instance.config.path,
                 'TZ': os.environ.get('TZ', otp.config['tz']),
             },
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             check=False,
         )
         return p.stdout, p.stderr

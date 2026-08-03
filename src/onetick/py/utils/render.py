@@ -31,7 +31,7 @@ IF_ELSE_EPS = {
 
 def _parse_table_fields(line: str) -> list:
     result = line.strip().split(',')
-    for idx in range(0, len(result) - 1):
+    for idx in range(len(result) - 1):
         result[idx] = result[idx] + ','
 
     return result
