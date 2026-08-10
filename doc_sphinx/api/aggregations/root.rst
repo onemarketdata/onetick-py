@@ -275,3 +275,8 @@ Aggregate over :py:class:`~onetick.py.Operation` instead of :py:class:`~onetick.
    >>> otp.run(data)
            Time  SUM
    0 2003-12-04   32
+
+Table Of Contents
+-----------------
+
+.. tableofcontents::

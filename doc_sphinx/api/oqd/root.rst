@@ -83,3 +83,8 @@ For example, let's get some events from `OQD_EVENT` database, like earnings anno
    11 2026-06-23   91603             EARNING_DATE                 2026-06-23 20:10:00   1970-01-01            0       1
    12 2026-06-23   94601  COMPANY_CONFERENCE_CALL                 2026-06-23 16:00:00   1970-01-01            0       1
    13 2026-06-23   94601             EARNING_DATE                 2026-06-23 10:45:00   1970-01-01            0       1
+
+Table Of Contents
+-----------------
+
+.. tableofcontents::

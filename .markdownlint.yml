@@ -1,9 +1,16 @@
+# MD013/line-length
 MD013:
   line_length: 120
+  tables: false
+  code_blocks: false
 
 # do not raise error when there are headers with the same name
 MD024:
   siblings_only: true
+
+
+# MD058/blanks-around-tables
+MD058: "warning"
 
 # MD059/descriptive-link-text : Link text should be descriptive : https://github.com/DavidAnson/markdownlint/blob/v0.40.0/doc/md059.md
 MD059: "warning"

@@ -120,44 +120,30 @@ elif otp.__webapi__:
         # PY-1486 (slash at the end makes the query run slow if the REST API endpoint is not specified)
         kwargs['http_address'] = kwargs['http_address'].rstrip('/')
 
-        if 'access_token' not in kwargs:
-            if config.access_token:
-                kwargs['access_token'] = config.access_token
-        elif not kwargs['access_token']:
-            del kwargs['access_token']
-
-        access_token_url = kwargs.get('access_token_url', config.access_token_url)
-        if access_token_url:
-            if kwargs.get('access_token'):
-                raise ValueError('Both `access_token` and `access_token_url` set, instead of only one of them.')
-
-            if 'client_id' in kwargs:
-                client_id = kwargs.pop('client_id')
-            else:
-                client_id = config.client_id
-
-            if 'client_secret' in kwargs:
-                client_secret = kwargs.pop('client_secret')
-            else:
-                client_secret = config.client_secret
-
-            for param_name, param_value in zip(['client_id', 'client_secret'], [client_id, client_secret]):
-                if not param_value:
-                    raise ValueError(f'`access_token_url` parameter set, however `{param_name}` parameter missing.')
+        access_token = kwargs.pop('access_token', config.access_token)
+        access_token_url = kwargs.pop('access_token_url', config.access_token_url)
+        client_id = kwargs.pop('client_id', config.client_id)
+        client_secret = kwargs.pop('client_secret', config.client_secret)
+        if access_token_url or client_id or client_secret:
+            if not (access_token_url and client_id and client_secret):
+                raise ValueError(
+                    f"Parameters {config.desc('access_token_url')},"
+                    f" {config.desc('client_id')}"
+                    f" and {config.desc('client_secret')} must be set together."
+                )
+            if access_token:
+                raise ValueError(
+                    f"Both {config.desc('access_token')} and {config.desc('access_token_url')} set,"
+                    " instead of only one of them."
+                )
 
             token_kwargs = {}
 
-            if 'scope' in kwargs:
-                scope = kwargs.pop('scope')
-            else:
-                scope = config.access_token_scope
-
+            scope = kwargs.pop('scope', config.access_token_scope)
             if scope:
                 token_kwargs['scope'] = scope
 
             kwargs['access_token'] = get_access_token_cached(access_token_url, client_id, client_secret, **token_kwargs)
-
-            kwargs.pop('access_token_url', None)
 
         kwargs.setdefault('http_proxy', config.http_proxy)
         kwargs.setdefault('https_proxy', config.https_proxy)

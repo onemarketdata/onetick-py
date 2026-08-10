@@ -4,11 +4,16 @@
 Remote OTP with Ray
 ===================
 
+.. attention::
+
+    **DEPRECATED** - this section is deprecated and will be removed in the future.
+    Please, consider using the WebAPI instead, details :ref:`here <default installation>`.
+
 Ray is a distributed execution framework for Python, and you can run ``onetick.py`` code remotely on your dedicated Ray instance,
 without need to installing OneTick binaries locally.
 
 Remote OTP Concepts
-:::::::::::::::::::
+-------------------
 
 Although, it isn't possible to use ``onetick.py`` without OneTick installation and its binaries,
 but it is still possible to run ``onetick.py`` code remotely on Ray instance, while developing locally in your preferable IDE or Jupyter.
@@ -44,3 +49,8 @@ When you finish, it is **necessary to shutdown your Ray connection** (don't forg
 ::
 
     ray.shutdown()
+
+Table Of Contents
+-----------------
+
+.. tableofcontents::

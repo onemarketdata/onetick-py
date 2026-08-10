@@ -20,6 +20,9 @@ export PYTHONPATH=${FILE_DIR}/../src:${PYTHONPATH:-""}
 export RESOURCES_DIR=${FILE_DIR}/notebooks_resources
 export ONE_TICK_CONFIG=${FILE_DIR}/notebooks_resources/config/main
 
+# apply pandas display options (see profile_default/startup) to every executed notebook
+export IPYTHONDIR=${FILE_DIR}/notebooks_resources/ipython
+
 # we assume that cloud server has this database
 # we need to set it to process the queries on cloud server, not proxy
 export OTP_DEFAULT_DB="US_COMP_SAMPLE"
@@ -29,6 +32,11 @@ export OTP_DEFAULT_END_TIME="2024/02/02 00:00:00"
 export OTP_DEFAULT_TZ="EST5EDT"
 export OTP_DEFAULT_LICENSE_DIR="${OTP_DEFAULT_LICENSE_DIR:-/license/}"
 export OTP_DEFAULT_LICENSE_FILE="${OTP_DEFAULT_LICENSE_FILE:-/license/license.dat}"
+
+if [ "$TARGET" == "overwrite_notebooks" ]; then
+    jupyter execute --inplace --timeout 60 ./static/getting_started/*.ipynb
+    exit 0
+fi
 
 echo "generate js/switcher.json for multiple versions of docs (works only when serving to root URL)"
 python make_switcher_js.py
@@ -52,13 +60,13 @@ if [ "$TARGET" == "html" ]; then
     find -type f -name '*.md' -exec sh -c 'file_path="${1#./}";\
                                            echo;\
                                            echo ----------------------------------------------------------------------------------;\
-                                           echo source: \"https://docs.pip.distribution.sol.onetick.com/${file_path%.md}.html.md\";\
+                                           echo source: \"https://docs.pip.distribution.sol.onetick.com/${file_path}\";\
                                            echo ----------------------------------------------------------------------------------;\
                                            echo;\
                                            cat $1' sh {} \; > ../../_build/html/llms-full.txt
     # move all markdown files to _build/html directory, we want to publish them too
     # also rename them so they have .html.md extension so we can add .md suffix for each html page
-    find -type f -name '*.md' -exec sh -c 'mv -v $1 ../../_build/html/${1%.md}.html.md' sh {} \;
+    find -type f -name '*.md' -exec sh -c 'mv -v $1 ../../_build/html/${1}' sh {} \;
     cd -
 fi
 

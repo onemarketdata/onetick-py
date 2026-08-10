@@ -36,6 +36,20 @@ def session(session):
     yield session
 
 
+@pytest.mark.skipif(not os.getenv('OTP_WEBAPI_TEST_MODE'), reason='WebAPI only test')
+def test_run_access_token(monkeypatch):
+    t = otp.Tick(A=1)
+    monkeypatch.setattr(otp.config, 'access_token_url', 'a')
+    with pytest.raises(ValueError, match='must be set together'):
+        otp.run(t)
+    monkeypatch.setattr(otp.config, 'client_id', 'b')
+    with pytest.raises(ValueError, match='must be set together'):
+        otp.run(t)
+    monkeypatch.setattr(otp.config, 'client_secret', 'c')
+    with pytest.raises(Exception, match='Invalid URL'):
+        otp.run(t)
+
+
 # this test is using f_session, so run it first
 @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason='test mode fails this test, not necessary to run')
 def test_main_query_generated_filename(f_session, monkeypatch):
@@ -1269,3 +1283,28 @@ def test_preserve_decimal_flag(session):
     assert isinstance(x, decimal.Decimal)
     assert x == decimal.Decimal('0.1')
     assert f'{x:.50f}' == '0.10000000000000000000000000000000000000000000000000'
+
+
+def test_symbols_dataframe(session):
+
+    start = pd.Timestamp(2022, 1, 2, 13, 14, 15, 666666, nanosecond=777)
+    end = pd.Timestamp(2022, 2, 3, 23, 24, 25, 888888, nanosecond=999)
+
+    symbols_df = pd.DataFrame({
+        'SYMBOL_NAME': ['LOCAL::AAPL'],
+        'PARAM': ['hello'],
+        '_PARAM_START_TIME': [start],
+        '_PARAM_END_TIME': [end],
+    })
+
+    t = otp.Tick(
+        PARAM=otp.Tick.Symbol['PARAM', str],
+        X=otp.meta_fields['_START_TIME'],
+        Y=otp.meta_fields['_END_TIME'],
+        db=None,
+    )
+    df = otp.run(t, date=otp.dt(2022, 1, 2), symbols=symbols_df, timezone='America/New_York')
+    assert df['PARAM'][0] == 'hello'
+    assert df['Time'][0] == start
+    assert df['X'][0] == start
+    assert df['Y'][0] == end

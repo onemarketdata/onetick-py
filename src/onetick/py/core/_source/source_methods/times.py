@@ -495,7 +495,7 @@ def time_interval_shift(self: 'Source', shift, inplace=False) -> Optional['Sourc
     --------
 
     --> Also see use-case using :py:meth:`time_interval_shift` for calculating
-    `Markouts <../../static/getting_started/use_cases.html#point-in-time-benchmarks-bbo-at-different-markouts>`_
+    `Markouts <../../static/use_cases/markouts.html#point-in-time-benchmarks-bbo-at-different-markouts>`_
 
 
     >>> start = otp.dt(2024, 2, 1, 4) + otp.Milli(9)

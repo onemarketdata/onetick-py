@@ -694,7 +694,7 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
     if isinstance(symbols, str):
         symbols = [symbols]
     if isinstance(symbols, pd.DataFrame):
-        symbols = utils.get_symbol_list_from_df(symbols)
+        symbols = utils.get_symbol_list_from_df(symbols, timezone=timezone)
 
     if isinstance(query, dict):
         # we assume it's a dictionary of sources for the MultiOutputSource object

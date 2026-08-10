@@ -1,5 +1,7 @@
 format: jb-book
 root: intro
+defaults:
+  maxdepth: 1
 chapters:
 - file: static/root
   sections:
@@ -9,6 +11,13 @@ chapters:
         - file: static/installation/onprem
         - file: static/installation/webapi_onprem
         - file: static/installation/pip
+        - file: static/installation/ray/ray_remote
+          sections:
+            - file: static/installation/ray/ray_installation
+            - file: static/installation/ray/ray_server_guide
+            - file: static/installation/ray/ray_examples
+            - file: static/installation/ray/ray_troubleshooting
+    - file: static/ai_integration
     - file: static/getting_started/root
       sections:
         - file: static/getting_started/data_retrieval
@@ -25,38 +34,38 @@ chapters:
         - file: static/getting_started/data_inspection
         - file: static/getting_started/session
         - file: static/getting_started/rendering_graphs
-        - file: static/getting_started/use_cases/root
+    - file: static/use_cases/root
+      sections:
+        - file: static/use_cases/basics
+        - file: static/use_cases/filtering
+        - file: static/use_cases/corporate_actions
+        - file: static/use_cases/creating_bars
+        - file: static/use_cases/data_retrieval_bars
+        - file: static/use_cases/data_retrieval_book_depth
+        - file: static/use_cases/data_retrieval_tick
+        - file: static/use_cases/data_retrieval_with_continuous_contracts
+        - file: static/use_cases/data_retrieval_with_symbology
+        - file: static/use_cases/composites
+        - file: static/use_cases/etf
+        - file: static/use_cases/futures
+        - file: static/use_cases/options
+        - file: static/use_cases/rates
+        - file: static/use_cases/markouts
+        - file: static/use_cases/meta_data
+        - file: static/use_cases/real_time
+        - file: static/use_cases/real_time_and_intraday
+        - file: static/use_cases/real_time_streaming
+        - file: static/use_cases/reference_retrieval
+        - file: static/use_cases/symbol_selection
+        - file: static/use_cases/symbol_universe
+        - file: static/use_cases/technical_analysis
+        - file: static/use_cases/time_series
+        - file: static/use_cases/tca
+        - file: static/use_cases/bestex/root
           sections:
-            - file: static/getting_started/use_cases/retrieving_tick_data
-            - file: static/getting_started/use_cases/creating_bars
-            - file: static/getting_started/use_cases/prevailing_quote
-            - file: static/getting_started/use_cases/markouts
-            - file: static/getting_started/use_cases/market_vwap
-            - file: static/getting_started/use_cases/real_time
-            - file: static/getting_started/use_cases/up_down_ticks
-            - file: static/getting_started/use_cases/realized_profit
-            - file: static/getting_started/use_cases/bestex/root
-              sections:
-                - file: static/getting_started/use_cases/bestex/arrival_prices
-                - file: static/getting_started/use_cases/bestex/effective_spread
-                - file: static/getting_started/use_cases/bestex/etq
-                - file: static/getting_started/use_cases/bestex/exit_ask_bid_prices
-                - file: static/getting_started/use_cases/bestex/far_near_touch
-                - file: static/getting_started/use_cases/bestex/implementation_shortfall
-                - file: static/getting_started/use_cases/bestex/market_impact
-                - file: static/getting_started/use_cases/bestex/notional_spread
-                - file: static/getting_started/use_cases/bestex/num_spreads
-                - file: static/getting_started/use_cases/bestex/offside_value
-                - file: static/getting_started/use_cases/bestex/opportunity_cost
-                - file: static/getting_started/use_cases/bestex/price_imrpovements
-                - file: static/getting_started/use_cases/bestex/pwp
-                - file: static/getting_started/use_cases/bestex/relative_performance_measure
-                - file: static/getting_started/use_cases/bestex/reversion
-                - file: static/getting_started/use_cases/bestex/right_way
-                - file: static/getting_started/use_cases/bestex/takeout_success
-                - file: static/getting_started/use_cases/bestex/volatility
-                - file: static/getting_started/use_cases/bestex/window_ask_bid
-                - file: static/getting_started/use_cases/bestex/windowed_nt_ft
+            - glob: static/use_cases/bestex/*
+        - file: static/use_cases/realized_profit
+        - file: static/use_cases/up_down_ticks
     - file: static/concepts/root
       sections:
         - file: static/concepts/data_model
@@ -83,12 +92,6 @@ chapters:
       sections:
         - file: static/configuration/configuration.rst
         - file: static/configuration/logging.rst
-    - file: static/ray/ray_remote
-      sections:
-        - file: static/ray/ray_installation
-        - file: static/ray/ray_server_guide
-        - file: static/ray/ray_examples
-        - file: static/ray/ray_troubleshooting
     - file: static/changelog
     - file: static/compatibility
 - file: api/root

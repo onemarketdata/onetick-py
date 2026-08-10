@@ -1,21 +1,42 @@
 import json
-
-from onetick.py.otq import otq, pyomd
+from contextlib import suppress
 from datetime import datetime
 
+from onetick.py.otq import otq, pyomd
+from .tz import get_local_timezone_name
 
-def get_symbol_list_from_df(df, symbol_name_column='SYMBOL_NAME'):
+
+def get_symbol_list_from_df(df, symbol_name_column='SYMBOL_NAME', timezone=None):
     """
     Creates a onetick.query.Symbol object that may be passed as a symbol list from the dataframe
     with query results. SYMBOL_NAME column is interpreted as symbol names, while other columns are
     interpreted as symbol params.
+
+    Some known OneTick columns are treated specially
+    and converted from datetime to number of nanoseconds
+    localized in specified ``timezone`` (None means local timezone):
+        * _PARAM_START_TIME
+        * _PARAM_END_TIME
+        * _PARAM_START_TIME_NANOS
+        * _PARAM_END_TIME_NANOS
     """
     if symbol_name_column not in df.columns:
         raise ValueError(f'Dataframe used as symbol list does not contain a {symbol_name_column} column')
 
+    df = df.copy()
+
     # BDS-511: adding Time column to the query may result in problems with otq.run
     if 'Time' in df.columns:
         df = df.drop(columns=['Time'])
+
+    if timezone is None:
+        timezone = get_local_timezone_name()
+
+    # convert special symbol parameters from datetime to number of nanoseconds
+    for column in ('_PARAM_START_TIME', '_PARAM_END_TIME', '_PARAM_START_TIME_NANOS', '_PARAM_END_TIME_NANOS'):
+        if column in df.columns:
+            with suppress(AttributeError):
+                df[column] = df[column].apply(lambda x: x.tz_localize(timezone).value)
 
     def symbol_from_dict(params):
         name = params[symbol_name_column]

@@ -6,11 +6,11 @@ Getting Started
 The guides in this section take you through the typical uses of ``onetick-py`` and are structured
 in the order that facilitates learning ``onetick-py`` from scratch.
 
+Basic configuration
+-------------------
+
 ``onetick-py`` requires some configuration to be set up before running the queries.
 Note that for readability reasons the code for configurating ``onetick-py`` was omitted in the examples.
-
-Basic configuration
-:::::::::::::::::::
 
 This code can be used to set some basic configuration on Linux:
 
@@ -49,7 +49,7 @@ See details about ``onetick-py`` configuration in :ref:`static/configuration/roo
 
 
 Authentication with OneTick Cloud
-:::::::::::::::::::::::::::::::::
+---------------------------------
 
 If you are using ``onetick-py`` to connect to OneTick cloud, you will need to authenticate.
 
@@ -69,7 +69,7 @@ Run this code to set up authentication for ``onetick-py``:
 
 
 Quick examples
-::::::::::::::
+--------------
 
 Runnable code for US equities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -124,3 +124,8 @@ Runnable code for futures
                   end=еnd)
 
     print(res)
+
+Table Of Contents
+-----------------
+
+.. tableofcontents::

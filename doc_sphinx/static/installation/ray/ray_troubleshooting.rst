@@ -54,7 +54,7 @@ This will print your environment variables, seen as from Python interpreter, and
     /path/to/your/ca-cert.pem
     1
 
-If you don't see your paths (empty lines) or there is no ``1`` at the last line of output, then set your environment variables as described in :ref:`Ray client installation <static/ray/ray_installation:Ray client installation>` guide.
+If you don't see your paths (empty lines) or there is no ``1`` at the last line of output, then set your environment variables as described in :ref:`Ray client installation <static/installation/ray/ray_installation:Ray client installation>` guide.
 Check your paths to certificates by running following command in terminal:
 ::
 

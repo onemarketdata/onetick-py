@@ -341,12 +341,12 @@ class Config:
         return self.__default_config or {}
 
     def __getitem__(self, item):
-        if item not in self.__class__.__dict__.keys():
+        if item not in self.__class__.__dict__:
             raise AttributeError(f'"{item}" is not in the list of onetick.py config options!')
         return self.__class__.__dict__[item].__get__(self)
 
     def __setitem__(self, item, value):
-        if item not in self.__class__.__dict__.keys():
+        if item not in self.__class__.__dict__:
             raise AttributeError(f'"{item}" is not in the list of onetick.py config options!')
         self.__class__.__dict__[item].__set__(self, value)
 
@@ -355,6 +355,15 @@ class Config:
             return self.__getitem__(key)
         except ValueError:
             return default
+
+    def desc(self, item):
+        if item not in self.__class__.__dict__:
+            raise AttributeError(f'"{item}" is not in the list of onetick.py config options!')
+        property: OtpProperty = self.__class__.__dict__[item]
+        desc = f'otp.config.{item}'
+        if property._env_var_name:
+            desc += f' [{property._env_var_name}]'
+        return desc
 
     def __setattr__(self, item, value):
         """

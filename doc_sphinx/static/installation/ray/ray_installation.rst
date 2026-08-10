@@ -3,7 +3,10 @@
 Ray client installation
 :::::::::::::::::::::::
 
-**DEPRECATED** - this section is deprecated and will be removed in the future. Please, consider using the WebAPI instead, details :ref:`here <default installation>`.
+.. attention::
+
+    **DEPRECATED** - this section is deprecated and will be removed in the future.
+    Please, consider using the WebAPI instead, details :ref:`here <default installation>`.
 
 This section describes installation and configuration of Ray client, which is necessary to run ``onetick.py`` code remotely on a Ray instance.
 You don't need it, if you use ``onetick.py`` locally with fully installed OneTick, as mentioned above.
@@ -31,7 +34,7 @@ To simplify Ray initialization in the future, add a new environment variable wit
 Now you can start coding in your IDE and you could do ``import onetick.py`` as well.
 But you can't run your code locally, because you don't have OneTick installed.
 
-To run your code remotely on Ray, proceed to :ref:`static/ray/ray_remote:Remote OTP with Ray` for details.
+To run your code remotely on Ray, proceed to :ref:`static/installation/ray/ray_remote:Remote OTP with Ray` for details.
 
 .. _connection to Ray from outer network:
 

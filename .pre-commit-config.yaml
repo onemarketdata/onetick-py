@@ -6,6 +6,7 @@ repos:
         args: ["--profile", "black"]
     -   id: black
     -   id: trailing-whitespace
+        args: ["--markdown-linebreak-ext", ".md"]
     -   id: check-yaml
         args: ["--unsafe"]
     -   id: end-of-file-fixer

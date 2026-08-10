@@ -11,3 +11,8 @@ It can be used in the query development cycle to:
 - make changes to queries without introducing bugs to existing functionality
 - provide fully self-contained (with data) reproducible cases for unexpected / wrong query behavior
 - illustrate how a query works using simple runnable examples.
+
+Table Of Contents
+-----------------
+
+.. tableofcontents::

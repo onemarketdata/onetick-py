@@ -1,0 +1,32 @@
+/* Right-align cell values in pandas DataFrame output tables rendered by myst-nb */
+table.dataframe th,
+table.dataframe td {
+    text-align: right !important;
+    white-space: nowrap;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    padding-top: 1px;
+    padding-bottom: 1px;
+}
+
+/* Left-align the table itself on the page (theme centers tables by default),
+   and let wide tables scroll horizontally instead of wrapping or overflowing the page */
+table.dataframe {
+    display: block;
+    overflow-x: auto;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+}
+
+
+/*
+ * https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/layout.html#horizontal-spacing
+ * make article content section in the docs wider
+ * */
+.bd-main .bd-content .bd-article-container {
+  max-width: 100%;  /* default is 60em */
+}
+
+.bd-page-width {
+  max-width: 75%;  /* default is 88rem */
+}

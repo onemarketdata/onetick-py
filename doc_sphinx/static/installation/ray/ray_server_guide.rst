@@ -10,7 +10,7 @@ It is useful for deployed clients having their own infrastructure, but you can a
 Prerequisites for OTP and Ray
 :::::::::::::::::::::::::::::
 
-- Installed and configured OneTick, as well as OneTick.Py and all its dependencies. See :ref:`Ray client installation <static/ray/ray_installation:Ray client installation>` for details.
+- Installed and configured OneTick, as well as OneTick.Py and all its dependencies. See :ref:`Ray client installation <static/installation/ray/ray_installation:Ray client installation>` for details.
 - IP address of the machine where you want to install Ray server (<your_server_ip> below).
 - You need to have open 10001 port on the machine where you want to install Ray server. If you are using a firewall, you need to open this port.
 - If you want to access Ray dashboard, you need to have open 8265 port on the machine where you want to install Ray server. If you are using a firewall, you need to open this port.
@@ -39,7 +39,7 @@ To run Ray server, execute the following command (substitute <your_server_ip> wi
 This command starts Ray server on the machine. It will print the address of the server, which you will need to configure you Ray connection from client machines.
 Argument `--dashboard-host` will expose Ray dashboard on port 8265. You can access it from your browser to monitor Ray server dashboard: ``http://<your_server_ip>:8265``.
 
-6379, 8265, 10001 ports are used by Ray server. If you are using a firewall, you need to open these port. 
+6379, 8265, 10001 ports are used by Ray server. If you are using a firewall, you need to open these port.
 If you want to customize these ports, you can use ``--port``, ``--dashboard-port`` and ``--ray-client-server-port`` arguments respectively to specify desired ports.
 or see `Ray documentation <https://docs.ray.io/en/latest/cluster/cli.html#ray-start>`_ for details.
 
@@ -53,7 +53,7 @@ Later, when you want to stop Ray server, execute the following command:
 Ray client configuration
 ::::::::::::::::::::::::
 
-First, you need to install ``onetick-query-stubs`` package on your client machines. See :ref:`Ray client installation <static/ray/ray_installation:Ray client installation>` for details (but skip ``Connection to Ray from outer network`` chapter).
+First, you need to install ``onetick-query-stubs`` package on your client machines. See :ref:`Ray client installation <static/installation/ray/ray_installation:Ray client installation>` for details (but skip ``Connection to Ray from outer network`` chapter).
 
 Use following code to initialize connection to the Ray server:
 

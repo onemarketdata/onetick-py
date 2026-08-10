@@ -2,3 +2,8 @@
 
 Types
 =====
+
+Table Of Contents
+-----------------
+
+.. tableofcontents::

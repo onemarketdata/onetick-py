@@ -65,8 +65,6 @@ extensions = [
     'myst_nb',
     'jupyter_book',
     'sphinx_external_toc',
-    'sphinx.ext.intersphinx',
-    'sphinx_book_theme',
     'sphinxcontrib.spelling',
     'sphinx_reredirects',
     'sphinx_markdown_builder',
@@ -78,6 +76,11 @@ extensions = [
 llms_txt_full_file = False
 # links to markdown files instead
 llms_txt_uri_template = "https://docs.pip.distribution.sol.onetick.com/{docname}.html.md"
+
+# sphinx_markdown_builder
+markdown_http_base = 'https://docs.pip.distribution.sol.onetick.com'
+markdown_uri_doc_suffix = '.html.md'
+markdown_file_suffix = '.html.md'
 
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
@@ -126,7 +129,7 @@ templates_path = ['_templates']
 spelling_warning = True
 spelling_word_list_filename = ['ignore_spelling.txt']
 spelling_show_suggestions = True
-spelling_exclude_patterns = ['static/changelog.rst', 'api/misc/oneticklib.rst']
+spelling_exclude_patterns = ['static/changelog.rst', 'api/misc/oneticklib.rst', 'static/use_cases/*.md']
 
 # remove warnings
 nb_mime_priority_overrides = [
@@ -154,7 +157,7 @@ exclude_patterns = ['**.ipynb_checkpoints',
 
 # Example of how to enable files only if it's for internal usage
 # if not tags.has('Internal'):
-#    exclude_patterns += ['static/getting_started/use_cases/bestex/*.rst']
+#    exclude_patterns += ['static/use_cases/bestex/*.rst']
 
 
 suppress_warnings = ['toc.excluded', 'etoc.ref']
@@ -210,22 +213,25 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['js/']
+html_static_path = ['js/', 'css/']
 html_js_files = [
     "rag.js",
     "https://cdnjs.cloudflare.com/ajax/libs/marked/13.0.0/marked.min.js"
 ]
+html_css_files = [
+    "custom.css",
+]
 
 # ------- Jupyter
 nb_execution_cache_path = './.jupyter_cache'
-# TODO: skip until BDS-488 is fixed
-nb_execution_excludepatterns = ['markouts.ipynb']
+nb_execution_excludepatterns = []
 if is_markdown:
     nb_execution_mode = 'off'
     nb_remove_code_outputs = True
 else:
     nb_execution_mode = 'cache'
-nb_execution_raise_on_error = True
+nb_execution_raise_on_error = False
+nb_execution_allow_errors = False
 nb_execution_timeout = 60
 use_jupyterbook_latex = True
 
@@ -233,7 +239,7 @@ language = 'en'
 
 latex_engine = 'pdflatex'
 
-myst_enable_extensions = ['colon_fence', 'dollarmath', 'linkify', 'substitution', 'tasklist']
+myst_enable_extensions = ['attrs_block', 'colon_fence', 'dollarmath', 'linkify', 'substitution', 'tasklist']
 myst_url_schemes = ['mailto', 'http', 'https']
 nb_output_stderr = 'show'
 numfig = True

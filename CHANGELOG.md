@@ -10,6 +10,31 @@
 
 ### Removed
 
+## [1.207.0] - 2026-08-10
+
+### Added
+
+- Add OneTick Cloud examples to the documentation
+- Add `Table Of Contents` section for each documentation tree
+- Add `OneTick AI integration` page to the documentation
+
+### Changed
+
+- Move and refactor `Use Cases` section
+- Improved tables rendering in the documentation
+- Changed layout of the documentation
+- Move `Remote OTP with Ray` section in the documentation
+
+### Fixed
+
+- Fixed scroll bar in the documentation
+- Fixed processing DataFrame with datetime `_PARAM_START_TIME/_PARAM_END_TIME` columns as symbols in `otp.run`
+- Fix `github_release.sh` script when releasing patch versions
+- Raise exception if WebAPI authentication parameters are not set together
+- Fix wrong links in Markdown documentation
+
+### Removed
+
 ## [1.206.0] - 2026-08-03
 
 ### Added

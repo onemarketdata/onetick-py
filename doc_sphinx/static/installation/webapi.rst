@@ -15,7 +15,7 @@ In this case, the package does not require OneTick binaries to be installed on t
   see :ref:`Other installation options <pip installation>`.
 
 Prerequisites
-:::::::::::::
+-------------
 
 - You installed `python 3.10 or newer <https://www.python.org/downloads/>`_.
 - You installed `pip <https://pip.pypa.io/en/stable/installing/>`_.
@@ -27,7 +27,7 @@ Prerequisites
     - Windows (cmd): ``python -m venv venv && venv\Scripts\activate``
 
 Installation from PyPI
-::::::::::::::::::::::
+----------------------
 
 The latest version of `onetick-py` is available on PyPI: `<https://pypi.org/project/onetick-py/>`_.
 
@@ -40,6 +40,11 @@ The latest version of `onetick-py` is available on PyPI: `<https://pypi.org/proj
 over either HTTP or HTTPS using Arrow as a transport format.
 
 Getting started
-:::::::::::::::
+---------------
 
 Go to the :ref:`Getting Started <getting started>` page.
+
+Table Of Contents
+-----------------
+
+.. tableofcontents::
