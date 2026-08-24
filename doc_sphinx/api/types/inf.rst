@@ -1,4 +1,4 @@
 otp.inf
 =======
 
-.. autoclass:: onetick.py.inf
+.. autoclass:: onetick.py.inf()

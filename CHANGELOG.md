@@ -10,6 +10,21 @@
 
 ### Removed
 
+## [1.208.0] - 2026-08-17
+
+### Added
+
+### Changed
+
+- Remove `jupyter-book` from dependencies
+- Update dependencies with security issues in `uv.lock`
+
+### Fixed
+
+- Do not upload Gitlab job's artifacts to Github
+
+### Removed
+
 ## [1.207.0] - 2026-08-10
 
 ### Added

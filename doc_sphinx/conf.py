@@ -63,7 +63,6 @@ extensions = [
     'sphinx_togglebutton',
     'sphinx_copybutton',
     'myst_nb',
-    'jupyter_book',
     'sphinx_external_toc',
     'sphinxcontrib.spelling',
     'sphinx_reredirects',
@@ -239,13 +238,13 @@ language = 'en'
 
 latex_engine = 'pdflatex'
 
-myst_enable_extensions = ['attrs_block', 'colon_fence', 'dollarmath', 'linkify', 'substitution', 'tasklist']
+myst_enable_extensions = ['attrs_block', 'colon_fence', 'dollarmath', 'substitution', 'tasklist']
 myst_url_schemes = ['mailto', 'http', 'https']
 nb_output_stderr = 'show'
 numfig = True
 panels_add_bootstrap_css = False
 pygments_style = 'sphinx'
-suppress_warnings += ['myst.domains']
+suppress_warnings += ['myst.domains', 'app.add_directive']
 use_multitoc_numbering = True
 external_toc_exclude_missing = False
 external_toc_path = '_toc.yml'
