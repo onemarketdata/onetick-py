@@ -10,6 +10,18 @@
 
 ### Removed
 
+## [1.209.0] - 2026-08-24
+
+### Added
+
+### Changed
+
+### Fixed
+
+- Fix building documentation on the latest `Sphinx`
+
+### Removed
+
 ## [1.208.0] - 2026-08-17
 
 ### Added

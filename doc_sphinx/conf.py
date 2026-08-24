@@ -227,6 +227,8 @@ nb_execution_excludepatterns = []
 if is_markdown:
     nb_execution_mode = 'off'
     nb_remove_code_outputs = True
+    # for some reason these warnings appear in this case
+    suppress_warnings += ['myst-nb.lexer']
 else:
     nb_execution_mode = 'cache'
 nb_execution_raise_on_error = False
