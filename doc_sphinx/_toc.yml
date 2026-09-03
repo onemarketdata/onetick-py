@@ -45,7 +45,9 @@ chapters:
         - file: static/use_cases/data_retrieval_tick
         - file: static/use_cases/data_retrieval_with_continuous_contracts
         - file: static/use_cases/data_retrieval_with_symbology
+        - file: static/use_cases/corrections_and_time_travel
         - file: static/use_cases/composites
+        - file: static/use_cases/crypto
         - file: static/use_cases/etf
         - file: static/use_cases/futures
         - file: static/use_cases/options

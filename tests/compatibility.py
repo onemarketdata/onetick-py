@@ -254,3 +254,10 @@ def is_compute_all_fields_fixed():
 
 def is_show_last_tick_descriptor_supported():
     return hasattr(otq, 'DbShowLastTickDescriptor')
+
+
+def is_query_auto_termination_time_limit_fixed():
+    # OTDEV-38939: set_query_auto_termination_time_limit() does not work for onetick.query
+    # OTDEV-38967: Query auto termination time limit query property should have a string value
+    return _is_min_build_or_version(None, None,
+                                    20260814120000)

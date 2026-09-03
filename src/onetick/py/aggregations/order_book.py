@@ -481,7 +481,7 @@ class ObNumLevels(_OrderBookAggregation):
             raise ValueError('Unsupported value type for `bucket_interval` parameter')
 
         if isinstance(bucket_interval, ott.OTPBaseTimeOffset):
-            _, datepart = bucket_interval.get_offset()
+            _, datepart = bucket_interval._get_offset()
             if datepart not in {'second', 'minute', 'hour', 'day'}:
                 raise ValueError(f"Unsupported DatePart passed to bucket_interval: {datepart}")
 

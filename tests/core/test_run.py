@@ -1,4 +1,5 @@
 import os
+import time
 import datetime
 import decimal
 from pathlib import Path
@@ -1308,3 +1309,15 @@ def test_symbols_dataframe(session):
     assert df['Time'][0] == start
     assert df['X'][0] == start
     assert df['Y'][0] == end
+
+
+@pytest.mark.skipif(not tests.compatibility.is_query_auto_termination_time_limit_fixed(),
+                    reason="Query auto termination did not work before")
+def test_query_auto_termination_time_limit(session, monkeypatch):
+    monkeypatch.setattr(otp.config, 'query_auto_termination_time_limit', 1)
+    t = otp.Tick(A=1)
+    t = t.pause(10_000)
+    start = time.time()
+    with pytest.raises(Exception, match='Terminated by user'):
+        otp.run(t)
+    assert time.time() - start < 10

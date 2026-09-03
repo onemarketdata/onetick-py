@@ -163,7 +163,7 @@ def _process_timestamp(dataframe: pd.DataFrame, timestamp_column: Optional[str])
 
 
 def _process_common_params(
-    dataframe, timestamp_column, symbol_name_field, symbol,
+    dataframe, timestamp_column, symbol_name_field, symbol, ignore_default_symbol=False,
 ) -> tuple[pd.DataFrame, dict, Optional[str], Optional[str], Union[str, type[utils.adaptive], None], Optional[str]]:
     dataframe = _process_dataframe(dataframe)
     timestamp_column = _process_timestamp(dataframe, timestamp_column)
@@ -177,7 +177,7 @@ def _process_common_params(
 
         columns[column] = dtype
 
-    if not symbol_name_field and symbol is utils.adaptive:
+    if not ignore_default_symbol and not symbol_name_field and symbol is utils.adaptive:
         symbol = otp.config.get('default_symbol')
 
     symbol_value = None
@@ -418,12 +418,13 @@ def LoadTicksFromDataFrame(
         symbol_name_field = 'SYMBOL_NAME'
 
     dataframe, _, timestamp_column, symbol_name_field, _, symbol_value = _process_common_params(
-        dataframe, timestamp_column, symbol_name_field, symbol,
+        dataframe, timestamp_column, symbol_name_field, symbol, ignore_default_symbol=True,
     )
 
     rows_num = len(dataframe)
     if symbol_value:
         dataframe['SYMBOL_NAME'] = symbol_value
+        symbol_name_field = 'SYMBOL_NAME'
 
     if symbol_name_field:
         dataframe['SYMBOL_NAME'] = dataframe[symbol_name_field]
@@ -456,7 +457,12 @@ def LoadTicksFromDataFrame(
 
     src = otp.Ticks(data=data, db=db, tick_type=tick_type, query_parameters=query_parameters, **ticks_kwargs)
 
-    if symbol_name_field and symbol_name_field != 'SYMBOL_NAME':
+    if 'SYMBOL_NAME' in src.schema and (
+        symbol_name_field and symbol_name_field != 'SYMBOL_NAME' or symbol_name_field is None
+    ):
+        # Symbol name field either set explicitly or by `symbol` param or existed in dataframe as `SYMBOL_NAME`
+        # So if `symbol_name_field` is None -> 'SYMBOL_NAME' field either wasn't in dataframe
+        # or was overridden by `symbol_name_field` and not needed anymore
         src.drop(['SYMBOL_NAME'], inplace=True)
 
     if not timestamp_column:

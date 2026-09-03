@@ -10,6 +10,29 @@
 
 ### Removed
 
+## [1.210.0] - 2026-09-02
+
+### Added
+
+- Add `otp.config.query_auto_termination_time_limit`
+- Add more examples from OneTick Cloud
+- Add `otp.Source.write_iceberg`
+
+### Changed
+
+- Delete `ds-framework` testing from CI/CD
+
+### Fixed
+
+- Fix exception when creating session in WebAPI testing
+- Fix `otp.timedelta` not working with `otp.Operation`
+- Fix disabling compatibility checks when running doctests
+- Fixed `otp.LoadTicksFromDataFrame` returned `SYMBOL_NAME` field if `symbol` or `symbol_field_name` wasn't set
+
+### Removed
+
+- Remove parameter `num_tick_per_row_group` in `write_parquet`
+
 ## [1.209.0] - 2026-08-24
 
 ### Added

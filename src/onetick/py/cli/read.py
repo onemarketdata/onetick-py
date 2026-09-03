@@ -10,11 +10,6 @@ import onetick.py as otp
 from onetick.py.otq import otq
 
 
-otq.API_CONFIG['SHOW_STACK_WARNING'] = 0
-# disable running all additional queries with compatibility checks
-otp.config.disable_compatibility_checks = True
-
-
 def parser_impl(parser: argparse.ArgumentParser):
     parser.formatter_class = argparse.RawDescriptionHelpFormatter
     parser.description = dedent("""
@@ -138,6 +133,10 @@ def run(args: argparse.Namespace):
 
 
 def __run_impl(args: argparse.Namespace):
+
+    otq.API_CONFIG['SHOW_STACK_WARNING'] = 0
+    # disable running all additional queries with compatibility checks
+    otp.config.disable_compatibility_checks = True
 
     if args.verbose >= 3:
         print(args)

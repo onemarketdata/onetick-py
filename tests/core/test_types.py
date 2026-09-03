@@ -577,3 +577,12 @@ def test_timedelta(session):
         x_date + otp.Day(7) + otp.Day(1) + otp.Hour(1) + otp.Minute(1) +
         otp.Second(1) + otp.Milli(1) + otp.Nano(1000) + otp.Nano(1)
     )
+
+
+def test_now_timedelta(session):
+    t = otp.Tick(A=otp.meta_fields.start, B=otp.meta_fields.end)
+    delta = otp.timedelta(days=1, hours=2, minutes=3, seconds=4, milliseconds=5, microseconds=6, nanoseconds=7)
+    df = otp.run(t, start=otp.now() - delta, end=otp.now())
+    assert df['B'][0] - df['A'][0] == pd.Timedelta(
+        days=1, hours=2, minutes=3, seconds=4, milliseconds=5, microseconds=6, nanoseconds=7
+    )

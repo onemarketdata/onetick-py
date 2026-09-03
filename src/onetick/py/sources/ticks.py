@@ -208,7 +208,7 @@ class Tick(Source):
             raise ValueError("It is not allowed to have a tick without fields")
 
         if isinstance(offset, ott.OTPBaseTimeOffset):
-            offset, offset_part = offset.get_offset()
+            offset, offset_part = offset._get_offset()
 
             if offset < 0:
                 raise ValueError("Negative offset not allowed")

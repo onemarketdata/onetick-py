@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Symbol Selection
 
-This section contains 9 examples for Symbol Selection using the `onetick-py`.  
+This section contains 12 examples for Symbol Selection using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -149,7 +149,7 @@ result = otp.run(data,
 result
 ```
 
-## Data Retrieval with New Symbol
+### Data Retrieval with New Symbol
 
 Ceridian HCM Holding rerbanded as Dayforce, Inc on 1st Feb 2024, changing its symbol from ``CDAY`` to ``DAY``.  
 Full History can be retrieved by specifying a single symbol and selecting the ``SYMBOL_DATE`` to when it is active.  
@@ -169,7 +169,7 @@ result = otp.run(data,
 result
 ```
 
-## Data Retrieval with Old Symbol
+### Data Retrieval with Old Symbol
 
 Ceridian HCM Holding rebanded as Dayforce, Inc on 1st Feb 2024, changing its symbol from ``CDAY`` to ``DAY``.  
 Full History can be retrieved by specifying a single symbol and selecting the ``SYMBOL_DATE`` to when it is active.  
@@ -186,5 +186,82 @@ result = otp.run(data,
                  timezone='America/New_York',
                  symbols='CDAY',
                  symbol_date=otp.dt(2024, 1, 1))
+result
+```
+
+## Data Retrieval across Instruments with the same Reallocated Symbol
+
+Symbols get reallocated across a relatively small time period.  
+SPCX has represented two instruments in 2026:
+
+* January 2026 to mid June 2026 - The SPAC and New Issue ETF
+* Mid June 2026 onwards - SpaceX
+
+A simple retrieval by symbol will combine the history across both.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_DAILY', tick_type='DAY')
+data = data.where(data['EXCHANGE'] == '')
+data = data.limit(1000)
+result = otp.run(data,
+                 start=otp.dt(2026, 1, 1),
+                 end=otp.dt(2026, 7, 1),
+                 timezone='UTC',
+                 symbols='SPCX')
+result
+```
+
+### Data Retrieval across Instruments with the same Reallocated Symbol, specifying the ETF
+
+Symbols get reallocated across a relatively small time period.  
+SPCX has represented two instruments in 2026:
+
+* January 2026 to mid June 2026 - The SPAC and New Issue ETF
+* Mid June 2026 onwards - SpaceX
+
+Specifying the symbol date as January, when the ETF was active, ensures just the ETF history is retrieved.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_DAILY', tick_type='DAY')
+data = data.where(data['EXCHANGE'] == '')
+data = data.limit(1000)
+result = otp.run(data,
+                 start=otp.dt(2026, 1, 1),
+                 end=otp.dt(2026, 7, 1),
+                 timezone='UTC',
+                 symbols='SPCX',
+                 symbol_date=otp.dt(2026, 1, 1))
+result
+```
+
+### Data Retrieval across Instruments with the same Reallocated Symbol, specifying the Latest Instrument
+
+Symbols get reallocated across a relatively small time period.  
+SPCX has represented two instruments in 2026:
+
+* January 2026 to mid June 2026 - The SPAC and New Issue ETF
+* Mid June 2026 onwards - SpaceX
+
+Specifying the symbol date as July, when SpaceX is active, ensures just the SpaceX history is retrieved.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_DAILY', tick_type='DAY')
+data = data.where(data['EXCHANGE'] == '')
+data = data.limit(1000)
+result = otp.run(data,
+                 start=otp.dt(2026, 1, 1),
+                 end=otp.dt(2026, 7, 1),
+                 timezone='UTC',
+                 symbols='SPCX',
+                 symbol_date=otp.dt(2026, 7, 1))
 result
 ```

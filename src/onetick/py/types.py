@@ -93,7 +93,7 @@ class OTPBaseTimeOffset:
     n = 0
     delta = pd.Timedelta(seconds=0)
 
-    def get_offset(self):
+    def _get_offset(self):
         return self.n, self.datepart[1:-1]
 
 
@@ -2225,6 +2225,14 @@ class timedelta(pd.Timedelta):
 
     >>> otp.date(2022, 1, 1) + otp.timedelta(weeks=1, nanoseconds=1)
     2022-01-08 00:00:00.000000001
+
+    Adding :py:class:`otp.timedelta <onetick.py.timedelta>` object to :py:class:`otp.Operation <onetick.py.Operation>`:
+
+    >>> t = otp.Tick(A=1)
+    >>> t['X'] = t['_START_TIME'] + otp.timedelta(hours=5)
+    >>> otp.run(t, date=otp.dt(2022, 1, 1))
+            Time  A                   X
+    0 2022-01-01  1 2022-01-01 05:00:00
     """
 
     def __repr__(self):

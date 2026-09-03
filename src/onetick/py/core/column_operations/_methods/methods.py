@@ -63,15 +63,16 @@ def sub(prev_op, other):
 
 
 def _return_dateadd_command(prev_op, other, left, right, left_t, right_t, op_sign):
-    if issubclass(left_t, ott.OTPBaseTimeOffset) and are_time(right_t):
+    if issubclass(left_t, (ott.OTPBaseTimeOffset, ott.timedelta)) and are_time(right_t):
         return _form_method_result_for_dateadd(right, right_t, op_sign, prev_op)
-    elif issubclass(right_t, ott.OTPBaseTimeOffset) and are_time(left_t):
+    elif issubclass(right_t, (ott.OTPBaseTimeOffset, ott.timedelta)) and are_time(left_t):
         return _form_method_result_for_dateadd(left, left_t, op_sign, other)
     return None
 
 
 def _form_method_result_for_dateadd(op_str, dtype, op_sign, datepart):
-    op_str = f"DATEADD({datepart.datepart}, {op_sign}({str(datepart.n)}), {op_str}, _TIMEZONE)"
+    n, datepart_str = datepart._get_offset()
+    op_str = f"DATEADD('{datepart_str}', {op_sign}({str(n)}), {op_str}, _TIMEZONE)"
     return MethodResult(op_str, dtype)
 
 

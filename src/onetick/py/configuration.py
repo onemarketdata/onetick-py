@@ -803,6 +803,16 @@ class Config:
         env_var_func=parse_true,
     )
 
+    query_auto_termination_time_limit = OtpProperty(
+        description='Maximum number of seconds after which the query is terminated (exception will be raised). '
+                    'By default the value is not set, '
+                    'meaning waiting any amount of time until the query finishes normally.',
+        base_default=None,
+        env_var_name='OTP_QUERY_AUTO_TERMINATION_TIME_LIMIT',
+        allowed_types=int,
+        env_var_func=int,
+    )
+
 
 def get_options_table(cls):
     options_table = ('\n'

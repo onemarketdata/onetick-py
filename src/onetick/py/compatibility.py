@@ -252,7 +252,7 @@ def _is_min_build_or_version(min_release_version=None,
                              throw_warning=False,
                              feature_name=None,
                              db=None,
-                             context=None):
+                             context=None) -> bool:
     """
     Check if current OneTick version is at least min_release_version.
     When using not released version, check if build number is at least min_build_number.

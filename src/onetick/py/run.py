@@ -570,6 +570,17 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
             query_properties.set_property_value('IGNORE_TICKS_IN_UNENTITLED_TIME_RANGE',  # type: ignore[union-attr]
                                                 str(otp.config.ignore_ticks_in_unentitled_time_range).upper())
 
+    if 'QUERY_AUTO_TERMINATION_TIME_LIMIT' not in qp_dict:
+        if otp.config.query_auto_termination_time_limit is not None:
+            try:
+                # first trying onetick.query special method, it may cover more client/server versions
+                query_properties.set_query_auto_termination_time_limit(  # type: ignore[union-attr]
+                    otp.config.query_auto_termination_time_limit
+                )
+            except AttributeError:
+                query_properties.set_property_value('QUERY_AUTO_TERMINATION_TIME_LIMIT',  # type: ignore[union-attr]
+                                                    otp.config.query_auto_termination_time_limit)
+
     if date is not None:
         for v in (start, end, start_time_expression, end_time_expression):
             if v is not None and v is not utils.adaptive:

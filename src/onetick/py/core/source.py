@@ -1781,6 +1781,7 @@ class Source:
         write_parquet,
         save_snapshot,
         write_text,
+        write_iceberg,
     )
     from ._source.source_methods.renames import (  # type: ignore[misc]
         _add_prefix_and_suffix,

@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Composites
 
-This section contains 6 examples for Composites using the `onetick-py`.  
+This section contains 11 examples for Composites using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -272,5 +272,205 @@ result = otp.run(
     end=otp.dt(2024, 1, 4),
     timezone='America/New_York'
 )
+result
+```
+
+## US Odd Lot NBBO Retrieval
+
+Retrieving the US NBBO including Odd Lots.  
+The US Composite provides data from the US Consolidated Tape, known as the SIP.  
+Historically Quotes and NBBO have been provided based on round lots, and Odd lot quotes have not been distributed.  
+Regulation has since been updated so that Odd lot quotes are additionally distributed,
+adding the Best Odd Lot Order (BOLO).  
+OneTick combines the BOLO with the NBBO to create `NBBO_COMP`, which is available from June 2026 onwards.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP', tick_type='NBBO_COMP')
+data = data.limit(1000)
+result = otp.run(data,
+                 start=otp.dt(2026, 7, 23, 9, 30),
+                 end=otp.dt(2026, 7, 23, 16, 0),
+                 timezone='America/New_York',
+                 symbols='CSCO')
+result
+```
+
+## US Odd Lot Quote Retrieval
+
+Retrieving the US Exchange Quotes including Odd Lots.  
+The US Composite provides data from the US Consolidated Tape, known as the SIP.  
+Historically Quotes and NBBO have been provided based on round lots, and Odd lot quotes have not been distributed.  
+Regulation has since been updated so that Odd lot quotes are additionally distributed,
+adding the Best Odd Lot Order (BOLO).  
+OneTick combines the BOLO with the exchange quotes to create `QTE_COMP`, which is available from June 2026 onwards.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP', tick_type='QTE_COMP')
+data = data.limit(1000)
+result = otp.run(data,
+                 start=otp.dt(2026, 7, 23, 9, 30),
+                 end=otp.dt(2026, 7, 23, 16, 0),
+                 timezone='America/New_York',
+                 symbols='CSCO')
+result
+```
+
+## Joining NBBOs with and without Odd Lots
+
+Retrieving the US Exchange NBBO with and without Odd Lots (BOLO).  
+The NBBO with Odd Lots (`NBBO_COMP`) is joined to the NBBO without Odd Lots.  
+This returns the two sets of quotes: the wider spread without odd lots and the narrower spread with odd lots.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+# NBBO without Odd Lots
+nbbo = otp.DataSource(db='US_COMP', tick_type='NBBO')
+nbbo = nbbo[['BID_PRICE', 'ASK_PRICE', 'BID_SIZE_TOTAL', 'ASK_SIZE_TOTAL']]
+
+# NBBO with Odd Lots (BOLO) - renamed with a _COMP suffix
+comp = otp.DataSource(db='US_COMP', tick_type='NBBO_COMP')
+comp = comp[['BID_PRICE', 'ASK_PRICE', 'BID_SIZE_TOTAL', 'ASK_SIZE_TOTAL']]
+comp = comp.rename(columns={'BID_PRICE': 'BID_PRICE_COMP',
+                            'ASK_PRICE': 'ASK_PRICE_COMP',
+                            'BID_SIZE_TOTAL': 'BID_SIZE_TOTAL_COMP',
+                            'ASK_SIZE_TOTAL': 'ASK_SIZE_TOTAL_COMP'})
+
+# As-of join: keep every NBBO tick, attaching the prevailing NBBO_COMP quote
+data = otp.join_by_time([nbbo, comp])
+data = data.limit(1000)
+result = otp.run(data,
+                 start=otp.dt(2026, 7, 23, 9, 30),
+                 end=otp.dt(2026, 7, 23, 16, 0),
+                 timezone='America/New_York',
+                 symbols='CSCO')
+result
+```
+
+### Joining NBBOs with and without Odd Lots and Calculating Skews and Liquidity
+
+Retrieving the US Exchange NBBO with and without Odd Lots, calculating Skews and Liquidity.  
+The NBBO with Odd Lots (`NBBO_COMP`) is joined to the NBBO without Odd Lots, returning the two sets of
+quotes: the wider spread without odd lots and the narrower spread with odd lots.  
+These are compared to produce the Bid and Ask Skews (`BID_SKEW`, `ASK_SKEW`) and Percentage Skew
+(`PCNT_BID_SKEW`, `PCNT_ASK_SKEW`).  
+Additional liquidity visible in the odd lot quote is also calculated by comparing the Bid and Ask Sizes
+between the two sets of quotes.  
+This is not the full additional liquidity, as there may be price levels between the two sets of quotes.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+# NBBO without Odd Lots
+nbbo = otp.DataSource(db='US_COMP', tick_type='NBBO')
+nbbo = nbbo[['BID_PRICE', 'ASK_PRICE', 'BID_SIZE_TOTAL', 'ASK_SIZE_TOTAL']]
+
+# NBBO with Odd Lots (BOLO) - renamed with a _COMP suffix
+comp = otp.DataSource(db='US_COMP', tick_type='NBBO_COMP')
+comp = comp[['BID_PRICE', 'ASK_PRICE', 'BID_SIZE_TOTAL', 'ASK_SIZE_TOTAL']]
+comp = comp.rename(columns={'BID_PRICE': 'BID_PRICE_COMP',
+                            'ASK_PRICE': 'ASK_PRICE_COMP',
+                            'BID_SIZE_TOTAL': 'BID_SIZE_TOTAL_COMP',
+                            'ASK_SIZE_TOTAL': 'ASK_SIZE_TOTAL_COMP'})
+
+# As-of join: keep every NBBO tick, attaching the prevailing NBBO_COMP quote
+data = otp.join_by_time([nbbo, comp])
+
+# Skews - odd lot book is narrower, so compare against the round lot NBBO
+data['BID_SKEW'] = data['BID_PRICE_COMP'] - data['BID_PRICE']
+data['ASK_SKEW'] = data['ASK_PRICE'] - data['ASK_PRICE_COMP']
+data['PCNT_BID_SKEW'] = 100 * (data['BID_PRICE_COMP'] - data['BID_PRICE']) / data['BID_PRICE']
+data['PCNT_ASK_SKEW'] = 100 * (data['ASK_PRICE'] - data['ASK_PRICE_COMP']) / data['ASK_PRICE']
+
+# Additional visible liquidity from the odd lot quote.
+# If the price levels match, the addition is the size difference, otherwise it is the full odd lot size.
+data['BID_SIZE_ADDITION'] = data.apply(
+    lambda r: r['BID_SIZE_TOTAL_COMP'] - r['BID_SIZE_TOTAL']
+    if r['BID_PRICE_COMP'] == r['BID_PRICE']
+    else r['BID_SIZE_TOTAL_COMP']
+)
+data['ASK_SIZE_ADDITION'] = data.apply(
+    lambda r: r['ASK_SIZE_TOTAL_COMP'] - r['ASK_SIZE_TOTAL']
+    if r['ASK_PRICE_COMP'] == r['ASK_PRICE']
+    else r['ASK_SIZE_TOTAL_COMP']
+)
+
+data = data.limit(1000)
+result = otp.run(data,
+                 start=otp.dt(2026, 7, 23, 9, 30),
+                 end=otp.dt(2026, 7, 23, 16, 0),
+                 timezone='America/New_York',
+                 symbols='CSCO')
+result
+```
+
+## TWAP Bars for Spreads, Skews and Added Liquidity Comparing NBBOs with and without Odd Lots
+
+Calculating 1 Minute TWAP Bars for Spreads, Skews and added liquidity comparing NBBOs with and without Odd Lots.  
+The NBBO with Odd Lots (`NBBO_COMP`) is joined to the NBBO without Odd Lots.  
+Spreads, Skews and added visible Liquidity are calculated.  
+These are then calculated as 1 minute Time weighted averages using {func}`~onetick.py.agg.tw_average` across the period.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+# NBBO without Odd Lots
+nbbo = otp.DataSource(db='US_COMP', tick_type='NBBO')
+nbbo = nbbo[['BID_PRICE', 'ASK_PRICE', 'BID_SIZE_TOTAL', 'ASK_SIZE_TOTAL']]
+
+# NBBO with Odd Lots (BOLO) - renamed with a _COMP suffix
+comp = otp.DataSource(db='US_COMP', tick_type='NBBO_COMP')
+comp = comp[['BID_PRICE', 'ASK_PRICE', 'BID_SIZE_TOTAL', 'ASK_SIZE_TOTAL']]
+comp = comp.rename(columns={'BID_PRICE': 'BID_PRICE_COMP',
+                            'ASK_PRICE': 'ASK_PRICE_COMP',
+                            'BID_SIZE_TOTAL': 'BID_SIZE_TOTAL_COMP',
+                            'ASK_SIZE_TOTAL': 'ASK_SIZE_TOTAL_COMP'})
+
+# As-of join: keep every NBBO tick, attaching the prevailing NBBO_COMP quote
+data = otp.join_by_time([nbbo, comp])
+
+# Spreads with and without odd lots
+data['SPREAD'] = data['ASK_PRICE'] - data['BID_PRICE']
+data['SPREAD_COMP'] = data['ASK_PRICE_COMP'] - data['BID_PRICE_COMP']
+
+# Percentage skews
+data['PCNT_BID_SKEW'] = 100 * (data['BID_PRICE_COMP'] - data['BID_PRICE']) / data['BID_PRICE']
+data['PCNT_ASK_SKEW'] = 100 * (data['ASK_PRICE'] - data['ASK_PRICE_COMP']) / data['ASK_PRICE']
+
+# Additional visible liquidity from the odd lot quote
+data['BID_SIZE_ADDITION'] = data.apply(
+    lambda r: r['BID_SIZE_TOTAL_COMP'] - r['BID_SIZE_TOTAL']
+    if r['BID_PRICE_COMP'] == r['BID_PRICE']
+    else r['BID_SIZE_TOTAL_COMP']
+)
+data['ASK_SIZE_ADDITION'] = data.apply(
+    lambda r: r['ASK_SIZE_TOTAL_COMP'] - r['ASK_SIZE_TOTAL']
+    if r['ASK_PRICE_COMP'] == r['ASK_PRICE']
+    else r['ASK_SIZE_TOTAL_COMP']
+)
+
+# 1 minute time weighted averages
+data = data.agg({'TWA_SPREAD': otp.agg.tw_average('SPREAD'),
+                 'TWA_SPREAD_COMP': otp.agg.tw_average('SPREAD_COMP'),
+                 'TWA_PCNT_BID_SKEW': otp.agg.tw_average('PCNT_BID_SKEW'),
+                 'TWA_PCNT_ASK_SKEW': otp.agg.tw_average('PCNT_ASK_SKEW'),
+                 'TWA_BID_SIZE_ADDITION': otp.agg.tw_average('BID_SIZE_ADDITION'),
+                 'TWA_ASK_SIZE_ADDITION': otp.agg.tw_average('ASK_SIZE_ADDITION')},
+                bucket_interval=otp.Minute(1))
+
+result = otp.run(data,
+                 start=otp.dt(2026, 7, 23, 9, 30),
+                 end=otp.dt(2026, 7, 23, 16, 0),
+                 timezone='America/New_York',
+                 symbols='CSCO')
 result
 ```

@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Filtering
 
-This section contains 8 examples for Filtering using the `onetick-py`.  
+This section contains 13 examples for Filtering using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -203,3 +203,151 @@ result
 | 999 | 2026-08-04 07:34:13.952417322 | 117.7800 |   34 | @ TI |
 
 1000 rows x 4 columns
+
+## Filtering Trades on Continuous Trading
+
+Filtering trades to the Continuous Trading session using the `TRADE_PERIOD` field of the `CA_COMP_SAMPLE` database.  
+The `TRADE_PERIOD` field identifies the session each trade belongs to:
+
+* `O` - Opening Auction
+* `-` - Continuous Trading
+* `C` - Closing Auction
+* `L` - Late Session
+
+Continuous Trading is filtered with `TRADE_PERIOD = '-'`.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='CA_COMP_SAMPLE', tick_type='TRD')
+
+# Filter to Continuous Trading trades only.
+data = data.where(data['TRADE_PERIOD'] == '-')
+
+data = data.limit(1000)
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='America/Toronto',
+                 symbols='TD')
+result
+```
+
+## Filtering Trades on Opening Auction
+
+Filtering trades to the Opening Auction using the `TRADE_PERIOD` field of the `CA_COMP_SAMPLE` database.  
+The `TRADE_PERIOD` field identifies the session each trade belongs to:
+
+* `O` - Opening Auction
+* `-` - Continuous Trading
+* `C` - Closing Auction
+* `L` - Late Session
+
+The Opening Auction is filtered with `TRADE_PERIOD = 'O'`.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='CA_COMP_SAMPLE', tick_type='TRD')
+
+# Filter to Opening Auction trades only.
+data = data.where(data['TRADE_PERIOD'] == 'O')
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='America/Toronto',
+                 symbols='TD')
+result
+```
+
+## Filtering Trades on Closing Auction
+
+Filtering trades to the Closing Auction using the `TRADE_PERIOD` field of the `CA_COMP_SAMPLE` database.  
+The `TRADE_PERIOD` field identifies the session each trade belongs to:
+
+* `O` - Opening Auction
+* `-` - Continuous Trading
+* `C` - Closing Auction
+* `L` - Late Session
+
+The Closing Auction is filtered with `TRADE_PERIOD = 'C'`.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='CA_COMP_SAMPLE', tick_type='TRD')
+
+# Filter to Closing Auction trades only.
+data = data.where(data['TRADE_PERIOD'] == 'C')
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='America/Toronto',
+                 symbols='TD')
+result
+```
+
+## Filtering Indicative Prices on Opening Auction
+
+Filtering the indicative (theoretical) auction prices to the Opening Auction using the `AUCTION_TYPE`
+field of the `IND` table in the `LSE_SAMPLE` database.  
+The `IND` table holds the Auction Values, including the Indicative Price and Indicative Size across the
+Opening and Closing Auctions.  
+The `AUCTION_TYPE` field identifies the auction:
+
+* `O` - Opening Auction
+* `C` - Closing Auction
+
+The Opening Auction is filtered with `AUCTION_TYPE = 'O'`.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='LSE_SAMPLE', tick_type='IND')
+
+# Filter to the Opening Auction.
+data = data.where(data['AUCTION_TYPE'] == 'O')
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='Europe/London',
+                 symbols='VOD')
+result
+```
+
+## Filtering Indicative Prices on Closing Auction
+
+Filtering the indicative (theoretical) auction prices to the Closing Auction using the `AUCTION_TYPE`
+field of the `IND` table in the `LSE_SAMPLE` database.  
+The `IND` table holds the Auction Values, including the Indicative Price and Indicative Size across the
+Opening and Closing Auctions.  
+The `AUCTION_TYPE` field identifies the auction:
+
+* `O` - Opening Auction
+* `C` - Closing Auction
+
+The Closing Auction is filtered with `AUCTION_TYPE = 'C'`.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='LSE_SAMPLE', tick_type='IND')
+
+# Filter to the Closing Auction.
+data = data.where(data['AUCTION_TYPE'] == 'C')
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='Europe/London',
+                 symbols='VOD')
+result
+```

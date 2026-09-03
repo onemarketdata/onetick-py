@@ -163,7 +163,7 @@ def get_bucket_interval_from_datepart(bucket_interval):
     # otp.Milli, otp.Second, otp.Minute, otp.Hour, otp.Day, otp.Month
     # bucket_interval will be converted and corresponding bucket_units value will be set
 
-    offset, datepart = bucket_interval.get_offset()
+    offset, datepart = bucket_interval._get_offset()
     if datepart not in {'millisecond', 'second', 'minute', 'hour', 'day', 'month'}:
         raise ValueError(f"Unsupported DatePart passed to bucket_interval: {datepart}")
 
@@ -178,7 +178,7 @@ def get_bucket_interval_from_datepart(bucket_interval):
         if datepart == 'millisecond':
             offset, datepart = offset / 1000, 'second'
         else:
-            offset, datepart = ott.Second(get_seconds_from_time_offset(bucket_interval)).get_offset()
+            offset, datepart = ott.Second(get_seconds_from_time_offset(bucket_interval))._get_offset()
 
     return offset, f"{datepart}s"  # type: ignore[union-attr]
 

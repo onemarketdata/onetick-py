@@ -1274,16 +1274,17 @@ class Session:
                 log_file = self._log_file.path
 
             self._lib = otli.OneTickLib(self._config.path, log_file=log_file)
+
+            # force reload cfg/locator/acl, because it is not reloaded after each time session if re-created
+            if os.getenv('OTP_WEBAPI_TEST_MODE'):
+                utils.reload_config(None, config_type='MAIN_CONFIG')
+                self.locator.reload()
+                self.acl.reload()
+
         except Exception:
             self._env_rollback()
             # TODO: rollback, but need to wait BDS-91
             raise
-
-        # force reload cfg/locator/acl, because it is not reloaded after each time session if re-created
-        if os.getenv('OTP_WEBAPI_TEST_MODE'):
-            utils.reload_config(None, config_type='MAIN_CONFIG')
-            self.locator.reload()
-            self.acl.reload()
 
         self._ts_dbs = {}
 

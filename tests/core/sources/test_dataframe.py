@@ -44,6 +44,9 @@ class TestReadFromDataFrame:
         if schema is None:
             schema = {}
 
+        if drop_compare_for is None:
+            drop_compare_for = []
+
         native_result = None
         if otp.compatibility._is_read_from_dataframe_supported():
             src = otp.ReadFromDataFrame(dataframe.copy(), **kwargs)
@@ -51,7 +54,14 @@ class TestReadFromDataFrame:
             native_result = otp.run(src, date=otp.date(2024, 1, 1))
 
         src = otp.LoadTicksFromDataFrame(dataframe.copy(), **kwargs)
-        assert src.schema == schema
+        expected_schema = schema.copy()
+        if 'SYMBOL_NAME' in expected_schema and (
+            kwargs.get('symbol_name_field', '') != 'SYMBOL_NAME' and not kwargs.get('symbol')
+        ):
+            del expected_schema['SYMBOL_NAME']
+            drop_compare_for.append('SYMBOL_NAME')
+
+        assert src.schema == expected_schema
         compat_result = otp.run(src, date=otp.date(2024, 1, 1))
 
         if native_result is not None:
@@ -59,8 +69,10 @@ class TestReadFromDataFrame:
             compat_dict = compat_result.to_dict(orient='list')
             if drop_compare_for:
                 for col in drop_compare_for:
-                    del native_dict[col]
-                    del compat_dict[col]
+                    if col in native_dict:
+                        del native_dict[col]
+                    if col in compat_dict:
+                        del compat_dict[col]
 
             assert native_dict == compat_dict
 
@@ -87,9 +99,10 @@ class TestReadFromDataFrame:
             result_with_ts = self.make_queries(dataframe, schema=src_schema, kwargs={
                 'symbol': 'AAPL', 'timestamp_column': timestamp_column,
             })
+            result_with_ts = result_with_ts.drop(columns=['SYMBOL_NAME'])
             assert result.to_dict(orient='list') == result_with_ts.to_dict(orient='list')
 
-        result_schema = {'Time', 'ID', 'SIDE', 'PRICE', 'FLOAT', 'SYMBOL_NAME'}
+        result_schema = {'Time', 'ID', 'SIDE', 'PRICE', 'FLOAT'}
 
         assert len(result) == 5
         assert set(result.columns) == result_schema
@@ -360,3 +373,23 @@ def test_load_ticks_from_dataframe(session):
     df = otp.run(data)
     assert df.equals(df_ticks)
     assert list(df['SYMBOL_NAME']) == ['AAPL', 'NVDA']
+
+
+def test_load_ticks_from_dataframe_without_symbol_name(session):
+    symbols_df = pd.DataFrame({
+        'Time': [pd.Timestamp('2003-12-04'), pd.Timestamp('2003-12-04')],
+        '_PARAM_START_TIME': [
+            pd.Timestamp('2024-02-01 09:30:00'),
+            pd.Timestamp('2024-02-01 10:00:00'),
+        ],
+        '_PARAM_END_TIME': [
+            pd.Timestamp('2024-02-01 09:31:00'),
+            pd.Timestamp('2024-02-01 10:01:00'),
+        ],
+    })
+    with pytest.warns(FutureWarning):
+        df_ticks = otp.run(otp.Ticks(symbols_df))
+
+    data = otp.LoadTicksFromDataFrame(symbols_df.drop(columns=['Time']))
+    df = otp.run(data)
+    assert df.equals(df_ticks)
