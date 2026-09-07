@@ -10,6 +10,21 @@
 
 ### Removed
 
+## [1.211.0] - 2026-09-07
+
+### Added
+
+- Add new value `num_lookback_periods` for parameter `decay_value_type` in `otp.agg.exp_w_average`
+
+### Changed
+
+### Fixed
+
+- Fix parameter `decay_value_type` in `otp.agg.exp_tw_average`
+- Raise exception when setting empty key fields in tick sets
+
+### Removed
+
 ## [1.210.0] - 2026-09-02
 
 ### Added

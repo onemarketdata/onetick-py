@@ -1224,6 +1224,16 @@ class TestTickSet:
         with pytest.raises(ValueError, match='You should specify `schema`'):
             data['B'] = data.state_vars['SET'].find('B', 999, A=1)
 
+    def test_empty_key_fields(self, session):
+        # PY-1606
+        t = otp.Ticks(A=[1, 2, 3])
+        with pytest.raises(ValueError, match='At least one key field must be specified'):
+            t.state_vars['VARS'] = otp.state.tick_set(
+                insertion_policy="latest",
+                key_fields=[],
+                schema={"A": int, "V": int},
+            )
+
 
 class TestTickSetUnordered:
 

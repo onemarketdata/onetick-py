@@ -42,9 +42,10 @@ from ._docs import (_column_doc,
                     _expect_decimals_doc,
                     _skip_tick_if_doc,
                     _default_tick_doc,
-                    _decay_doc,
-                    _decay_value_type_doc,
-                    _decay_value_type_hl_doc,
+                    _decay_w_doc,
+                    _decay_value_type_w_doc,
+                    _decay_tw_doc,
+                    _decay_value_type_tw_doc,
                     _degree_doc,
                     _weight_field_name_doc,
                     _weight_multiplier_field_name_doc,
@@ -1799,8 +1800,8 @@ def find_value_for_percentile(*args, **kwargs):
 
 
 @docstring(parameters=[
-    _decay_doc,
-    _decay_value_type_doc,
+    _decay_w_doc,
+    _decay_value_type_w_doc,
     _running_doc,
     _bucket_interval_doc,
     _bucket_units_doc,
@@ -1815,9 +1816,10 @@ def find_value_for_percentile(*args, **kwargs):
 ])
 def exp_w_average(*args, **kwargs):
     """
-    ``EXP_W_AVERAGE`` aggregation.
+    Exponentially Weighted Average aggregation.
 
     For each bucket, computes the **exponentially weighted average** value of the specified numeric attribute.
+
     Weights of data points in a bucket decrease exponentially in the direction from the most recent tick
     to the most aged one, being equal to ``exp(-Lambda * N)`` for a fixed weight decay value **Lambda**,
     where **N** ranges over **0, 1, 2, …** as ticks in reverse order of their arrival are treated.
@@ -1857,8 +1859,8 @@ def exp_w_average(*args, **kwargs):
 
 
 @docstring(parameters=[
-    _decay_doc,
-    _decay_value_type_hl_doc,
+    _decay_tw_doc,
+    _decay_value_type_tw_doc,
     _running_doc,
     _bucket_interval_doc,
     _bucket_units_doc,
@@ -1872,14 +1874,15 @@ def exp_w_average(*args, **kwargs):
 ])
 def exp_tw_average(*args, **kwargs):
     """
-    ``EXP_TW_AVERAGE`` aggregation.
+    Exponentially Time-Weighted Average aggregation.
 
     For each bucket, computes the **exponentially time-weighted average** value of a specified numeric field.
+
     The weight of each point in the time series is computed relative to the end time of the bucket,
-    so that the value which is in effect during some infinitely small time interval `delta t`
-    has weight **(delta t)*exp(-Lambda*(end_time - t))**,
-    where `Lambda` is a constant, `end_time` represents end time of the bucket,
-    and `t` represents the timestamp of that infinitely small time interval.
+    so that the value which is in effect during some infinitely small time interval **delta t**
+    has weight ``(delta t)*exp(-Lambda*(end_time - t))``,
+    where **Lambda** is a constant, **end_time** represents end time of the bucket,
+    and **t** represents the timestamp of that infinitely small time interval.
 
     See also
     --------

@@ -595,9 +595,9 @@ class ExpWAverage(_FloatAggregation, _AggregationTSType):
     def __init__(self, column, decay, decay_value_type='lambda', time_series_type='state_ts', *args, **kwargs):
         super().__init__(column, time_series_type, *args, **kwargs)
 
-        if decay_value_type not in ['lambda', 'half_life_index']:
+        if decay_value_type not in ['lambda', 'half_life_index', 'num_lookback_periods']:
             raise ValueError(f"Parameter 'decay_value_type' has incorrect value: {decay_value_type}, "
-                             f"should be one of next: 'lambda', 'half_life_index'")
+                             f"should be one of next: 'lambda', 'half_life_index', 'num_lookback_periods'")
 
         self.decay = decay
         self.decay_value_type = decay_value_type.upper()
@@ -611,14 +611,14 @@ class ExpTwAverage(_FloatAggregation):
     FIELDS_MAPPING['decay'] = 'DECAY'
     FIELDS_MAPPING['decay_value_type'] = 'DECAY_VALUE_TYPE'
     FIELDS_DEFAULT = deepcopy(_Aggregation.FIELDS_DEFAULT)
-    FIELDS_DEFAULT['decay_value_type'] = 'half_life_index'
+    FIELDS_DEFAULT['decay_value_type'] = 'half_life_seconds'
 
     output_field_type = float
 
-    def __init__(self, column, decay, decay_value_type='half_life_index', *args, **kwargs):
-        if decay_value_type not in ['lambda', 'half_life_index']:
+    def __init__(self, column, decay, decay_value_type='half_life_seconds', *args, **kwargs):
+        if decay_value_type not in ['lambda', 'half_life_seconds']:
             raise ValueError(f"Parameter 'decay_value_type' has incorrect value: {decay_value_type}, "
-                             f"should be one of next: 'lambda', 'half_life_index'")
+                             f"should be one of next: 'lambda', 'half_life_seconds'")
 
         self.decay = decay
         self.decay_value_type = decay_value_type.upper()

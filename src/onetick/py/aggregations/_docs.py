@@ -662,32 +662,60 @@ _default_tick_doc = param_doc(
     annotation=Optional[dict],
     default=None,
 )
-_decay_doc = param_doc(
+_decay_w_doc = param_doc(
     name='decay',
     desc="""
-    Weight decay. If **decay_value_type** is set to ``lambda``,
-    **decay** provides the value of the **Lambda** variable in the aforementioned formula.
-    Otherwise, if **decay_value_type** is set to ``half_life_index``, **decay** specifies the necessary number
-    of consecutive ticks, the first one of which would have twice less the weight of the last one.
-    The **Lambda** value is then calculated using this number.
+    Weight decay:
+
+    * If ``decay_value_type`` is set to ``lambda``,
+      ``decay`` provides the value of the **Lambda** variable in the aforementioned formula.
+    * If ``decay_value_type`` is set to ``half_life_index``, ``decay`` specifies the necessary number
+      of consecutive ticks, the first one of which would have twice less the weight of the last one.
+      The **Lambda** value is then calculated using this number.
+    * If ``decay_value_type`` is set to ``num_lookback_periods``, ``decay`` specifies the EMA period N,
+      matching the conventional smoothing-factor formula ``alpha = 2/(N+1)`` used by common EMA implementations
+      (e.g. pandas ``ewm(span=N, adjust=False)``, QuestDB ``avg(value,'period',N))``.
     """,
     annotation=float,
 )
-_decay_value_type_common = dict(
+_decay_value_type_w_doc = param_doc(
     name='decay_value_type',
+    default='lambda',
     desc="""
     The decay value can specified either directly or indirectly, controlled respectively by
-    **lambda** and **half_life_index** values of this parameter.
+    ``lambda``, ``half_life_index`` and ``num_lookback_periods`` values of this parameter:
+
+    * ``lambda`` and ``half_life_index`` are two equivalent ways of specifying
+      the same normalized weighted-average computation (``sum(weight*value)/sum(weight)``, as described above).
+    * ``num_lookback_periods`` selects a different, unnormalized accumulation instead:
+      a plain recursive exponential moving average, ``value = alpha*price + (1-alpha)*value``,
+      matching the ``adjust=False`` behavior of pandas' ``ewm`` and of QuestDB's EMA window function.
+      This is not just a different unit for **Lambda** - unlike ``lambda``/``half_life_index``,
+      which always agree bit-for-bit with each other, ``num_lookback_periods`` can produce different values
+      during the "warm-up" period right after a bucket reset, converging to the same values only asymptotically.
     """,
-    annotation=Literal['lambda', 'half_life_index'],
+    annotation=Literal['lambda', 'half_life_index', 'num_lookback_periods'],
 )
-_decay_value_type_doc = param_doc(
-    default='lambda',
-    **_decay_value_type_common,
+_decay_tw_doc = param_doc(
+    name='decay',
+    desc="""
+    Weight decay:
+
+    * If ``decay_value_type`` is ``half_life_seconds``,
+      ``decay`` specifies the duration of time interval between ``T(N-1)`` and ``T(N)``,
+      where the weight of data point ``T(N-1)`` is two times less than the weight of data point ``T(N)``.
+    * If ``decay_value_type`` is ``lambda``,
+      ``decay`` provides the value of the **Lambda** variable in the above-mentioned formula for weight decay.
+    """,
+    annotation=float,
 )
-_decay_value_type_hl_doc = param_doc(
-    default='half_life_index',
-    **_decay_value_type_common,
+_decay_value_type_tw_doc = param_doc(
+    name='decay_value_type',
+    default='half_life_seconds',
+    desc="""
+    Possible values are ``lambda`` and ``half_life_seconds``.
+    """,
+    annotation=Literal['lambda', 'half_life_seconds'],
 )
 _degree_doc = param_doc(
     name='degree',

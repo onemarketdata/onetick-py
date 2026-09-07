@@ -805,6 +805,8 @@ class TickSet(_TickSequence):
         if isinstance(key_fields, str) or not isinstance(key_fields, Iterable):
             key_fields = [key_fields]
         self._key_fields = list(key_fields)
+        if not self._key_fields:
+            raise ValueError(f'At least one key field must be specified when creating {self.__class__.__name__}')
         super().__init__(*args, **kwargs)
 
     @property
