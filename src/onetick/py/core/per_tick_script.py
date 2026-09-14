@@ -1856,9 +1856,7 @@ class LambdaBlockFinder:
         elif token in self.OPENING_BRACKETS:
             self.brackets.append(token)
         elif token in self.CLOSING_BRACKETS:
-            try:
-                assert self.brackets.pop() == self.CLOSING_BRACKETS[token]
-            except (IndexError, AssertionError):
+            if not self.brackets or self.brackets.pop() != self.CLOSING_BRACKETS[token]:
                 self.end = self.prev.end
                 raise EndOfBlock
 

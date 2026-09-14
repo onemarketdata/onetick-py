@@ -45,3 +45,4 @@ TODO.md
 .sonarlint/
 .DS_Store
 public/
+/reports

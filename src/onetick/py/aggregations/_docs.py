@@ -556,6 +556,20 @@ _show_num_orders_at_level_doc = param_doc(
     annotation=Optional[bool],
     default=None,
 )
+_max_notional_value_doc = param_doc(
+    name='max_notional_value',
+    desc="""
+    The maximum total notional value (i.e., the combined ``PRICE × SIZE`` across top several levels of the book)
+    that determines the number of order book levels that need to be part of the order book computation.
+
+    If that number of levels exceeds ``max_levels``, only ``max_levels`` levels of the book will be computed.
+    The notional in excess of ``max_notional_value``, from the last included level, is not taken into account.
+
+    By default is not set.
+    """,
+    annotation=Optional[float],
+    default=None,
+)
 _query_fun_doc = param_doc(
     name='query_fun',
     desc="""

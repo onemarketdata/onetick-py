@@ -10,6 +10,22 @@
 
 ### Removed
 
+## [1.212.0] - 2026-09-14
+
+### Added
+
+- Add more code coverage reports
+- Add parameter `max_notional_value` to some Order Book aggregations and sources
+
+### Changed
+
+### Fixed
+
+- Fix `SonarQube` issues
+- Fix `DB.dates()` returning duplicate dates
+
+### Removed
+
 ## [1.211.0] - 2026-09-07
 
 ### Added

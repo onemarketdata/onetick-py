@@ -488,7 +488,10 @@ class DB:
             if only_last:
                 return [_datetime2date(end)]
             while start <= end:
-                dates.append(_datetime2date(start))
+                dt_start = _datetime2date(start)
+                # PY-1575: in case of memory db partitions this EP returns overlapping dates
+                if not dates or dt_start > dates[-1]:
+                    dates.append(dt_start)
                 start += timedelta(days=1)
 
         return dates

@@ -37,7 +37,8 @@ from ._docs import (_running_doc,
                     _state_key_max_inactivity_sec_doc,
                     _size_max_fractional_digits_doc,
                     _include_market_order_ticks_doc,
-                    _show_num_orders_at_level_doc)
+                    _show_num_orders_at_level_doc,
+                    _max_notional_value_doc)
 
 
 OB_SNAPSHOT_DOC_PARAMS = [
@@ -51,6 +52,7 @@ OB_SNAPSHOT_DOC_PARAMS = [
     _size_max_fractional_digits_doc,
     _include_market_order_ticks_doc,
     _show_num_orders_at_level_doc,
+    _max_notional_value_doc,
 ]
 OB_SNAPSHOT_WIDE_DOC_PARAMS = [
     _running_doc,
@@ -63,6 +65,7 @@ OB_SNAPSHOT_WIDE_DOC_PARAMS = [
     _size_max_fractional_digits_doc,
     _include_market_order_ticks_doc,
     _show_num_orders_at_level_doc,
+    _max_notional_value_doc,
 ]
 OB_SNAPSHOT_FLAT_DOC_PARAMS = [
     _running_doc,
@@ -84,6 +87,7 @@ OB_SUMMARY_DOC_PARAMS = [
     _book_uncross_method_doc, _dq_events_that_clear_book_doc, _max_initialization_days_doc,
     _state_key_max_inactivity_sec_doc, _size_max_fractional_digits_doc,
     _include_market_order_ticks_doc,
+    _max_notional_value_doc,
 ]
 
 OB_SIZE_DOC_PARAMS = [
@@ -101,6 +105,7 @@ OB_VWAP_DOC_PARAMS = [
     _bucket_end_condition_doc, _end_condition_per_group_doc, _group_by_doc, _groups_to_display_doc,
     _side_doc, _max_levels_doc, _max_depth_shares_doc,
     _book_uncross_method_doc, _dq_events_that_clear_book_doc, _max_initialization_days_doc,
+    _max_notional_value_doc,
 ]
 
 OB_NUM_LEVELS_DOC_PARAMS = [
@@ -204,6 +209,7 @@ class ObSnapshot(_OrderBookAggregation):
         'size_max_fractional_digits': 'SIZE_MAX_FRACTIONAL_DIGITS',
         'include_market_order_ticks': 'INCLUDE_MARKET_ORDER_TICKS',
         'show_num_orders_at_level': 'SHOW_NUM_ORDERS_AT_LEVEL',
+        'max_notional_value': 'MAX_NOTIONAL_VALUE',
     })
     FIELDS_DEFAULT = dict(_OrderBookAggregation.FIELDS_DEFAULT, **{
         'identify_source': None,
@@ -214,6 +220,7 @@ class ObSnapshot(_OrderBookAggregation):
         'size_max_fractional_digits': 0,
         'include_market_order_ticks': None,
         'show_num_orders_at_level': None,
+        'max_notional_value': None,
     })
 
     def __init__(self,
@@ -226,6 +233,7 @@ class ObSnapshot(_OrderBookAggregation):
                  size_max_fractional_digits: int = 0,
                  include_market_order_ticks: Optional[bool] = None,
                  show_num_orders_at_level: Optional[bool] = None,
+                 max_notional_value: Optional[float] = None,
                  **kwargs):
         self.identify_source = identify_source
         self.show_full_detail = show_full_detail
@@ -235,6 +243,7 @@ class ObSnapshot(_OrderBookAggregation):
         self.size_max_fractional_digits = size_max_fractional_digits
         self.include_market_order_ticks = include_market_order_ticks
         self.show_num_orders_at_level = show_num_orders_at_level
+        self.max_notional_value = max_notional_value
         # we don't want to set hard limit on the output of order book aggregations
         if self.show_full_detail:
             kwargs['all_fields'] = True
@@ -307,6 +316,7 @@ class ObSnapshotFlat(ObSnapshot):
         *ObSnapshot.FIELDS_TO_SKIP,
         'side', 'identify_source', 'show_only_changes',
         'book_delimiters', 'max_depth_shares', 'max_depth_for_price', 'max_spread',
+        'max_notional_value',
     ]
 
     def validate_input_columns(self, src: 'Source'):
@@ -344,12 +354,14 @@ class ObSummary(_OrderBookAggregation):
         'state_key_max_inactivity_sec': 'STATE_KEY_MAX_INACTIVITY_SEC',
         'size_max_fractional_digits': 'SIZE_MAX_FRACTIONAL_DIGITS',
         'include_market_order_ticks': 'INCLUDE_MARKET_ORDER_TICKS',
+        'max_notional_value': 'MAX_NOTIONAL_VALUE',
     })
     FIELDS_DEFAULT = dict(_OrderBookAggregation.FIELDS_DEFAULT, **{
         'min_levels': None,
         'state_key_max_inactivity_sec': None,
         'size_max_fractional_digits': 0,
         'include_market_order_ticks': None,
+        'max_notional_value': None,
     })
 
     def __init__(self,
@@ -358,6 +370,7 @@ class ObSummary(_OrderBookAggregation):
                  state_key_max_inactivity_sec: Optional[int] = None,
                  size_max_fractional_digits: int = 0,
                  include_market_order_ticks: Optional[bool] = None,
+                 max_notional_value: Optional[float] = None,
                  **kwargs):
         if otp.compatibility._is_supported_otq_ob_summary():
             self.EP = otq.ObSummary
@@ -368,6 +381,7 @@ class ObSummary(_OrderBookAggregation):
         self.state_key_max_inactivity_sec = state_key_max_inactivity_sec
         self.size_max_fractional_digits = size_max_fractional_digits
         self.include_market_order_ticks = include_market_order_ticks
+        self.max_notional_value = max_notional_value
         self._size_type = int
         if self.size_max_fractional_digits > 0:
             self._size_type = float   # type: ignore[assignment]
@@ -461,6 +475,20 @@ class ObSize(_OrderBookAggregation):
 class ObVwap(_OrderBookAggregation):
     NAME = 'OB_VWAP'
     EP = otq.ObVwap
+
+    FIELDS_MAPPING = dict(_OrderBookAggregation.FIELDS_MAPPING, **{
+        'max_notional_value': 'MAX_NOTIONAL_VALUE',
+    })
+    FIELDS_DEFAULT = dict(_OrderBookAggregation.FIELDS_DEFAULT, **{
+        'max_notional_value': None,
+    })
+
+    def __init__(self,
+                 *args,
+                 max_notional_value: Optional[float] = None,
+                 **kwargs):
+        self.max_notional_value = max_notional_value
+        super().__init__(*args, **kwargs)
 
     def _get_output_schema(self, src: 'Source', name: Optional[str] = None) -> dict:
         if self.side:
