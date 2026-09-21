@@ -46,6 +46,7 @@ def max(*objs):
 def min(*objs):
     """
     Returns minimum value from list of ``objs``.
+
     The objects must be of the same type.
 
     Parameters
@@ -87,6 +88,7 @@ def min(*objs):
 def rand(min_value, max_value, seed=None):
     """
     Returns a pseudo-random value in the range between ``min_value`` and ``max_value`` (both inclusive).
+
     If ``seed`` is not specified, the function produces different values each time a query is invoked.
     If ``seed`` is specified, for this seed the function produces the same sequence of values
     each time a query is invoked.
@@ -175,7 +177,7 @@ def frand(min_value=0, max_value=1, *, seed=None):
 # TODO: this is not math, let's move it somewhere else
 def now():
     """
-    Returns the current time expressed as the number of milliseconds since the UNIX epoch in a GMT timezone.
+    Returns the current datetime in the timezone of the query.
 
     Returns
     -------

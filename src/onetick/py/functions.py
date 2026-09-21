@@ -173,28 +173,41 @@ def merge(sources, align_schema=True, symbols=None, identify_input_ts=False,
 
     Use ``identify_input_ts`` and other parameters to add information about symbol to each tick:
 
-    >>> symbols = otp.Ticks(SYMBOL_NAME=['COMMON::S1', 'DEMO_L1::S2'])
-    >>> data = otp.Tick(A=1, db=None, tick_type='TT')
+    >>> symbols = otp.Ticks(SYMBOL_NAME=['US_COMP_SAMPLE::AAPL', 'US_COMP_SAMPLE::MSFT'])
+    >>> data = otp.DataSource(tick_type='TRD', schema={'PRICE': float, 'SIZE': float})
+    >>> data = data.limit(5)
     >>> data = otp.merge([data], symbols=symbols, identify_input_ts=True,
     ...                  separate_db_name=True, add_symbol_index=True, added_field_name_suffix='__')
-    >>> otp.run(data)
-            Time  A SYMBOL_NAME__ DB_NAME__ TICK_TYPE__  SYMBOL_INDEX__
-    0 2003-12-01  1            S1    COMMON          TT               1
-    1 2003-12-01  1            S2   DEMO_L1          TT               2
+    >>> otp.run(data,  # doctest: +ELLIPSIS
+    ...         start=otp.dt(2024, 2, 1, 9, 30),
+    ...         end=otp.dt(2024, 2, 1, 16),
+    ...         timezone='America/New_York')
+                               Time   PRICE   SIZE ... SYMBOL_NAME__       DB_NAME__ TICK_TYPE__ SYMBOL_INDEX__
+    0 2024-02-01 09:30:00.000961260  184.01  302.0 ...          AAPL  US_COMP_SAMPLE         TRD              1
+    1 2024-02-01 09:30:00.000961491  184.00  100.0 ...          AAPL  US_COMP_SAMPLE         TRD              1
+    2 2024-02-01 09:30:00.000961701  184.00    1.0 ...          AAPL  US_COMP_SAMPLE         TRD              1
+    3 2024-02-01 09:30:00.000973163  184.00    1.0 ...          AAPL  US_COMP_SAMPLE         TRD              1
+    4 2024-02-01 09:30:00.000973355  184.00    5.0 ...          AAPL  US_COMP_SAMPLE         TRD              1
+    5 2024-02-01 09:30:00.001821667  401.90   25.0 ...          MSFT  US_COMP_SAMPLE         TRD              2
+    6 2024-02-01 09:30:00.001825700  401.89   50.0 ...          MSFT  US_COMP_SAMPLE         TRD              2
+    7 2024-02-01 09:30:00.001849062  401.88   25.0 ...          MSFT  US_COMP_SAMPLE         TRD              2
+    8 2024-02-01 09:30:00.002566542  401.98    7.0 ...          MSFT  US_COMP_SAMPLE         TRD              2
+    9 2024-02-01 09:30:00.002826318  401.88    1.0 ...          MSFT  US_COMP_SAMPLE         TRD              2
 
     Adding symbol parameters before merge:
 
     >>> symbols = otp.Ticks(SYMBOL_NAME=['S1', 'S2'], param=[1, -1])
     >>> def func(symbol):
     ...     pre = otp.Ticks(X=[1])
-    ...     pre["SYMBOL_NAME"] = symbol.name
-    ...     pre["PARAM"] = symbol.param
+    ...     pre['SYMBOL_NAME'] = symbol.name
+    ...     pre['PARAM'] = symbol.param
+    ...     pre = pre.drop('X')
     ...     return pre
     >>> data = otp.merge([func], symbols=symbols)
-    >>> otp.run(data)[['PARAM', 'SYMBOL_NAME']]
-       PARAM SYMBOL_NAME
-    0      1          S1
-    1     -1          S2
+    >>> otp.run(data)
+            Time  SYMBOL_NAME  PARAM
+    0 2003-12-01           S1      1
+    1 2003-12-01           S2     -1
 
     Use parameter ``output_type_index`` to specify which input class to use to create output object.
     It may be useful in case some custom user class was used as input:
@@ -1492,17 +1505,16 @@ def cut(column: 'Column', bins: Union[int, list[float]], labels: Optional[list[s
     Examples
     --------
     >>> # OTdirective: snippet-name: Source.functions.cut;
-    >>> data = otp.Ticks({"X": [9, 8, 5, 6, 7, 0, ]})
-    >>> data['bin'] = otp.cut(data['X'], bins=3, labels=['a', 'b', 'c'])
-    >>> otp.run(data)[['X', 'bin']]
-       X bin
-    0  9   c
-    1  8   c
-    2  5   b
-    3  6   b
-    4  7   c
-    5  0   a
-
+    >>> data = otp.Ticks({'X': [9, 8, 5, 6, 7, 0, ]})
+    >>> data['BIN'] = otp.cut(data['X'], bins=3, labels=['a', 'b', 'c'])
+    >>> otp.run(data)
+                         Time  X BIN
+    0 2003-12-01 00:00:00.000  9   c
+    1 2003-12-01 00:00:00.001  8   c
+    2 2003-12-01 00:00:00.002  5   b
+    3 2003-12-01 00:00:00.003  6   b
+    4 2003-12-01 00:00:00.004  7   c
+    5 2003-12-01 00:00:00.005  0   a
     """
     src = column.obj_ref
     return _CutBuilder(src, column, bins, labels=labels)
@@ -1532,16 +1544,16 @@ def qcut(column: 'Column', q: Union[int, list[float]], labels: Optional[list[str
     Examples
     --------
     >>> # OTdirective: snippet-name: Source.functions.qcut;
-    >>> data = otp.Ticks({"X": [10, 3, 5, 6, 7, 1]})
-    >>> data['bin'] = otp.qcut(data['X'], q=3, labels=['a', 'b', 'c'])
-    >>> otp.run(data)[['X', 'bin']]
-        X bin
-    0  10   c
-    1   3   a
-    2   5   b
-    3   6   b
-    4   7   c
-    5   1   a
+    >>> data = otp.Ticks({'X': [10, 3, 5, 6, 7, 1]})
+    >>> data['BIN'] = otp.qcut(data['X'], q=3, labels=['a', 'b', 'c'])
+    >>> otp.run(data)
+                         Time   X BIN
+    0 2003-12-01 00:00:00.000  10   c
+    1 2003-12-01 00:00:00.001   3   a
+    2 2003-12-01 00:00:00.002   5   b
+    3 2003-12-01 00:00:00.003   6   b
+    4 2003-12-01 00:00:00.004   7   c
+    5 2003-12-01 00:00:00.005   1   a
     """
     # TODO when q is a list[float] like [0, .25, .5, .75, 1.]
     src = column.obj_ref

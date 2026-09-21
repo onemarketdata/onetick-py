@@ -26,7 +26,7 @@ class _DtAccessor(_Accessor):
     Accessor for datetime functions
 
     >>> data = otp.Ticks(X=[otp.dt(2019, 1, 1, 1, 1, 1), otp.dt(2019, 2, 2, 2, 2, 2)])
-    >>> data["Y"] = data["X"].dt.<function_name>()  # doctest: +SKIP
+    >>> data["Y"] = data['X'].dt.<function_name>()  # doctest: +SKIP
     """
 
     @docstring(parameters=[_timezone_doc], add_self=True)
@@ -67,9 +67,10 @@ class _DtAccessor(_Accessor):
 
         Examples
         --------
-        >>> t = otp.Ticks(A=[otp.dt(2019, 1, 1, 1, 1, 1), otp.dt(2019, 2, 2, 2, 2, 2)])
-        >>> t['B'] = t['A'].dt.strftime('%d.%m.%Y')
-        >>> otp.run(t)[['A', 'B']]
+        >>> data = otp.Ticks(A=[otp.dt(2019, 1, 1, 1, 1, 1),
+        ...                     otp.dt(2019, 2, 2, 2, 2, 2)])
+        >>> data['B'] = data['A'].dt.strftime('%d.%m.%Y')
+        >>> otp.run(data)[['A', 'B']]
                             A           B
         0 2019-01-01 01:01:01  01.01.2019
         1 2019-02-02 02:02:02  02.02.2019
@@ -94,13 +95,14 @@ class _DtAccessor(_Accessor):
 
         Examples
         --------
-        >>> data = otp.Ticks(X=[otp.dt(2019, 1, 1, 1, 1, 1), otp.dt(2019, 2, 2, 2, 2, 2)])
-        >>> data["X"] = data["X"].dt.date()     # OTdirective: snippet-name: timestamp operations.date;
-        >>> df = otp.run(data, timezone="GMT")
-        >>> df["X"]
-        0   2019-01-01
-        1   2019-02-02
-        Name: X, dtype: datetime64[ns]
+        >>> data = otp.Ticks(X=[otp.dt(2019, 1, 1, 1, 1, 1),
+        ...                     otp.dt(2019, 2, 2, 2, 2, 2)])
+        >>> data['Y'] = data['X'].dt.date()     # OTdirective: snippet-name: timestamp operations.date;
+        >>> df = otp.run(data)
+        >>> df[['X', 'Y']]
+                            X          Y
+        0 2019-01-01 01:01:01 2019-01-01
+        1 2019-02-02 02:02:02 2019-02-02
         """
         format_str = "%Y%m%d"
         return self.strftime(format_str, None).str.to_datetime(format_str, None)
@@ -118,23 +120,23 @@ class _DtAccessor(_Accessor):
         Parameters
         ----------
         start_index: int or Operation
-            Sunday index.
+            The index of the ``start_day``.
         start_day: 'monday' or 'sunday'
             Day that will be denoted with ``start_index``
 
         Examples
         --------
-        >>> data = otp.Ticks(X=[otp.dt(2022, 5, i) for i in range(10, 17)])
+        >>> data = otp.Ticks(X=[otp.dt(2022, 5, i) for i in range(9, 16)])
         >>> data['DAY_OF_WEEK'] = data['X'].dt.day_of_week()
         >>> otp.run(data)[['X', 'DAY_OF_WEEK']]
                    X  DAY_OF_WEEK
-        0 2022-05-10            2
-        1 2022-05-11            3
-        2 2022-05-12            4
-        3 2022-05-13            5
-        4 2022-05-14            6
-        5 2022-05-15            7
-        6 2022-05-16            1
+        0 2022-05-09            1
+        1 2022-05-10            2
+        2 2022-05-11            3
+        3 2022-05-12            4
+        4 2022-05-13            5
+        5 2022-05-14            6
+        6 2022-05-15            7
         """
 
         if start_day not in ['monday', 'sunday']:
@@ -282,7 +284,6 @@ class _DtAccessor(_Accessor):
         """
         Return the minute.
 
-
         Examples
         --------
         >>> data = otp.Ticks(X=[otp.dt(2022, 5, 1, 15, i, 6) for i in range(10, 17)])
@@ -341,22 +342,26 @@ class _DtAccessor(_Accessor):
     @docstring(parameters=[_timezone_doc], add_self=True)
     def month(self, timezone=None):
         """
-        Return the month.
+        Return the month number.
 
         Examples
         --------
-        >>> data = otp.Ticks(X=[otp.dt(2022, i, 1) for i in range(3, 11)])
+        >>> data = otp.Ticks(X=[otp.dt(2022, i, 1) for i in range(1, 13)])
         >>> data['MONTH'] = data['X'].dt.month()
         >>> otp.run(data)[['X', 'MONTH']]
-                   X  MONTH
-        0 2022-03-01      3
-        1 2022-04-01      4
-        2 2022-05-01      5
-        3 2022-06-01      6
-        4 2022-07-01      7
-        5 2022-08-01      8
-        6 2022-09-01      9
-        7 2022-10-01     10
+                    X  MONTH
+        0  2022-01-01      1
+        1  2022-02-01      2
+        2  2022-03-01      3
+        3  2022-04-01      4
+        4  2022-05-01      5
+        5  2022-06-01      6
+        6  2022-07-01      7
+        7  2022-08-01      8
+        8  2022-09-01      9
+        9  2022-10-01     10
+        10 2022-11-01     11
+        11 2022-12-01     12
         """
         def formatter(column, _timezone):
             column = ott.value2str(column)
@@ -372,22 +377,26 @@ class _DtAccessor(_Accessor):
     @docstring(parameters=[_timezone_doc], add_self=True)
     def month_name(self, timezone=None):
         """
-        Return name of the month.
+        Return the name of the month.
 
         Examples
         --------
-        >>> data = otp.Ticks(X=[otp.dt(2022, i, 1) for i in range(3, 11)])
+        >>> data = otp.Ticks(X=[otp.dt(2022, i, 1) for i in range(1, 13)])
         >>> data['MONTH_NAME'] = data['X'].dt.month_name()
         >>> otp.run(data)[['X', 'MONTH_NAME']]
-                   X MONTH_NAME
-        0 2022-03-01        Mar
-        1 2022-04-01        Apr
-        2 2022-05-01        May
-        3 2022-06-01        Jun
-        4 2022-07-01        Jul
-        5 2022-08-01        Aug
-        6 2022-09-01        Sep
-        7 2022-10-01        Oct
+                    X MONTH_NAME
+        0  2022-01-01        Jan
+        1  2022-02-01        Feb
+        2  2022-03-01        Mar
+        3  2022-04-01        Apr
+        4  2022-05-01        May
+        5  2022-06-01        Jun
+        6  2022-07-01        Jul
+        7  2022-08-01        Aug
+        8  2022-09-01        Sep
+        9  2022-10-01        Oct
+        10 2022-11-01        Nov
+        11 2022-12-01        Dec
         """
         def formatter(column, _timezone):
             column = ott.value2str(column)
@@ -403,22 +412,26 @@ class _DtAccessor(_Accessor):
     @docstring(parameters=[_timezone_doc], add_self=True)
     def quarter(self, timezone=None):
         """
-        Return the quarter.
+        Return the quarter number.
 
         Examples
         --------
-        >>> data = otp.Ticks(X=[otp.dt(2022, i, 1) for i in range(3, 11)])
+        >>> data = otp.Ticks(X=[otp.dt(2022, i, 1) for i in range(1, 13)])
         >>> data['QUARTER'] = data['X'].dt.quarter()
         >>> otp.run(data)[['X', 'QUARTER']]
-                   X  QUARTER
-        0 2022-03-01        1
-        1 2022-04-01        2
-        2 2022-05-01        2
-        3 2022-06-01        2
-        4 2022-07-01        3
-        5 2022-08-01        3
-        6 2022-09-01        3
-        7 2022-10-01        4
+                    X  QUARTER
+        0  2022-01-01        1
+        1  2022-02-01        1
+        2  2022-03-01        1
+        3  2022-04-01        2
+        4  2022-05-01        2
+        5  2022-06-01        2
+        6  2022-07-01        3
+        7  2022-08-01        3
+        8  2022-09-01        3
+        9  2022-10-01        4
+        10 2022-11-01        4
+        11 2022-12-01        4
         """
         def formatter(column, _timezone):
             column = ott.value2str(column)
@@ -434,7 +447,7 @@ class _DtAccessor(_Accessor):
     @docstring(parameters=[_timezone_doc], add_self=True)
     def year(self, timezone=None):
         """
-        Return the year.
+        Return the year number.
 
         Examples
         --------
@@ -500,14 +513,14 @@ class _DtAccessor(_Accessor):
 
         return _DtAccessor.Formatter(
             op_params=[self._base_column, date_part, timezone],
-            dtype=datetime,
+            dtype=ott.nsectime,
             formatter=formatter,
         )
 
     @docstring(parameters=[_timezone_doc], add_self=True)
     def week(self, timezone=None):
         """
-        Returns the week.
+        Returns the week number.
 
         Examples
         --------

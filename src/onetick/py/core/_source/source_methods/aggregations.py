@@ -113,8 +113,8 @@ def agg(self: 'Source', aggs, *args, **kwargs) -> 'Source':
     ticks for 4 input ticks):
 
     >>> data = otp.Ticks(X=[1, 2, 3, 4], offset=[0, 1000, 1500, 3600])
-    >>> data = data.agg(dict(X_MEAN=otp.agg.average("X"),
-    ...                      X_STD=otp.agg.stddev("X")),
+    >>> data = data.agg(dict(X_MEAN=otp.agg.average('X'),
+    ...                      X_STD=otp.agg.stddev('X')),
     ...                 running=True, bucket_interval=2)
     >>> otp.run(data)
                          Time  X_MEAN     X_STD
@@ -130,19 +130,15 @@ def agg(self: 'Source', aggs, *args, **kwargs) -> 'Source':
     By default, if you run aggregation with buckets and group_by, then a bucket will be taken first, and after that
     grouping and aggregation will be performed:
 
-    >>> ticks = otp.Ticks(
-    ...     {
-    ...         'QTY': [10, 2, 30, 4, 50],
-    ...         'TRADER': ['A', 'B', 'A', 'B', 'A']
-    ...     }
-    ... )
-    >>>
+    >>> ticks = otp.Ticks({
+    ...     'QTY': [10, 2, 30, 4, 50],
+    ...     'TRADER': ['A', 'B', 'A', 'B', 'A']
+    ... })
     >>> ticks = ticks.agg(
     ...     {'SUM_QTY': otp.agg.sum('QTY')}, group_by='TRADER',
     ...     bucket_interval=3, bucket_units='ticks',
     ...     running=True, all_fields=True,
     ... )
-    >>>
     >>> otp.run(ticks)
                          Time  TRADER  QTY  SUM_QTY
     0 2003-12-01 00:00:00.000       A   10       10
@@ -156,12 +152,10 @@ def agg(self: 'Source', aggs, *args, **kwargs) -> 'Source':
     added up the volumes.
     To prevent this behaviour, and group ticks first, set parameter ``end_condition_per_group`` to True:
 
-    >>> ticks = otp.Ticks(
-    ...     {
-    ...         'QTY': [10, 2, 30, 4, 50],
-    ...         'TRADER': ['A', 'B', 'A', 'B', 'A']
-    ...     }
-    ... )
+    >>> ticks = otp.Ticks({
+    ...     'QTY': [10, 2, 30, 4, 50],
+    ...     'TRADER': ['A', 'B', 'A', 'B', 'A']
+    ... })
     >>>
     >>> ticks = ticks.agg(
     ...     {'SUM_QTY': otp.agg.sum('QTY')}, group_by='TRADER',
@@ -204,8 +198,8 @@ def agg(self: 'Source', aggs, *args, **kwargs) -> 'Source':
     causing an arrival event are copied over to the output tick and the aggregation is added as another attribute:
 
     >>> data = otp.Ticks(X=[1, 2, 3, 4], offset=[0, 1000, 1500, 3600])
-    >>> data = data.agg(dict(X_MEAN=otp.agg.average("X"),
-    ...                      X_STD=otp.agg.stddev("X")),
+    >>> data = data.agg(dict(X_MEAN=otp.agg.average('X'),
+    ...                      X_STD=otp.agg.stddev('X')),
     ...                 all_fields=True, running=True)
     >>> otp.run(data)
                          Time  X  X_MEAN     X_STD
@@ -217,8 +211,8 @@ def agg(self: 'Source', aggs, *args, **kwargs) -> 'Source':
     ``all_fields`` parameter can be used when there is need to have all original fields in the output:
 
     >>> ticks = otp.Ticks(X=[3, 4, 1, 2])
-    >>> data = ticks.agg(dict(X_MEAN=otp.agg.average("X"),
-    ...                       X_STD=otp.agg.stddev("X")),
+    >>> data = ticks.agg(dict(X_MEAN=otp.agg.average('X'),
+    ...                       X_STD=otp.agg.stddev('X')),
     ...                  all_fields=True)
     >>> otp.run(data)
             Time  X  X_MEAN     X_STD
@@ -226,18 +220,18 @@ def agg(self: 'Source', aggs, *args, **kwargs) -> 'Source':
 
     There are different politics for ``all_fields`` parameter:
 
-    >>> data = ticks.agg(dict(X_MEAN=otp.agg.average("X"),
-    ...                       X_STD=otp.agg.stddev("X")),
-    ...                  all_fields="last")
+    >>> data = ticks.agg(dict(X_MEAN=otp.agg.average('X'),
+    ...                       X_STD=otp.agg.stddev('X')),
+    ...                  all_fields='last')
     >>> otp.run(data)
             Time  X  X_MEAN     X_STD
     0 2003-12-04  2     2.5  1.118034
 
     For low/high policies the field selected as input is set this way:
 
-    >>> data = ticks.agg(dict(X_MEAN=otp.agg.average("X"),
-    ...                       X_STD=otp.agg.stddev("X")),
-    ...                  all_fields=otp.agg.low_tick(data["X"]))
+    >>> data = ticks.agg(dict(X_MEAN=otp.agg.average('X'),
+    ...                       X_STD=otp.agg.stddev('X')),
+    ...                  all_fields=otp.agg.low_tick(data['X']))
     >>> otp.run(data)
             Time  X  X_MEAN     X_STD
     0 2003-12-04  1     2.5  1.118034
@@ -387,10 +381,10 @@ def distinct(self: 'Source', *args, **kwargs):
     """
     Examples
     --------
-    >>> data = otp.Ticks(dict(x=[1, 3, 1, 5, 3]))
-    >>> data = data.distinct('x')   # OTdirective: snippet-name: Aggregations.distinct;
+    >>> data = otp.Ticks(X=[1, 3, 1, 5, 3])
+    >>> data = data.distinct('X')   # OTdirective: snippet-name: Aggregations.distinct;
     >>> otp.run(data)
-            Time  x
+            Time  X
     0 2003-12-04  1
     1 2003-12-04  3
     2 2003-12-04  5
@@ -711,51 +705,50 @@ def process_by_group(
     --------
 
     >>> # OTdirective: snippet-name: Arrange.group.single output;
-    >>> d = otp.Ticks(X=[1, 1, 2, 2],
+    >>> t = otp.Ticks(X=[1, 1, 2, 2],
     ...               Y=[1, 2, 3, 4])
     >>>
     >>> def func(source):
     ...     return source.first()
     >>>
-    >>> res = d.process_by_group(func, group_by=['X'])
-    >>> otp.run(res)[["X", "Y"]]
-       X  Y
-    0  1  1
-    1  2  3
+    >>> data = t.process_by_group(func, group_by=['X'])
+    >>> otp.run(data)
+                         Time  Y  X
+    0 2003-12-01 00:00:00.000  1  1
+    1 2003-12-01 00:00:00.002  3  2
 
     Set asynchronous processing:
 
-    >>> res = d.process_by_group(func, group_by=['X'], num_threads=2)
-    >>> otp.run(res)[['X', 'Y']]
-       X  Y
-    0  1  1
-    1  2  3
+    >>> data = t.process_by_group(func, group_by=['X'], num_threads=2)
+    >>> otp.run(data)
+                         Time  Y  X
+    0 2003-12-01 00:00:00.000  1  1
+    1 2003-12-01 00:00:00.002  3  2
 
     Return multiple outputs, each with unique grouping logic:
 
-    >>> d = otp.Ticks(X=[1, 1, 2, 2],
+    >>> t = otp.Ticks(X=[1, 1, 2, 2],
     ...               Y=[1, 2, 1, 3])
     >>>
     >>> def func(source):
-    ...     source['Z'] = source['X']
     ...     source2 = source.copy()
-    ...     source = source.first()
+    ...     source2['LAST_X'] = source['X']
     ...     source2 = source2.last()
+    ...     source = source.first()
+    ...     source['FIRST_X'] = source['X']
     ...     return source, source2
     >>> # OTdirective: snippet-name: Arrange.group.multiple output;
-    >>> res1, res2 = d.process_by_group(func, group_by=['Y'])
-    >>> df1 = otp.run(res1)
-    >>> df2 = otp.run(res2)
-    >>> df1[['X', 'Y', 'Z']]
-       X  Y  Z
-    0  1  1  1
-    1  1  2  1
-    2  2  3  2
-    >>> df2[['X', 'Y', 'Z']]    # OTdirective: skip-snippet:;
-       X  Y  Z
-    0  1  2  1
-    1  2  1  2
-    2  2  3  2
+    >>> group_1, group_2 = t.process_by_group(func, group_by=['Y'])
+    >>> otp.run(group_1)
+                         Time  X  FIRST_X  Y
+    0 2003-12-01 00:00:00.000  1        1  1
+    1 2003-12-01 00:00:00.001  1        1  2
+    2 2003-12-01 00:00:00.003  2        2  3
+    >>> otp.run(group_2)    # OTdirective: skip-snippet:;
+                         Time  X  LAST_X  Y
+    0 2003-12-01 00:00:00.001  1       1  2
+    1 2003-12-01 00:00:00.002  2       2  1
+    2 2003-12-01 00:00:00.003  2       2  3
     """
 
     if group_by is None:

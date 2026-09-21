@@ -16,7 +16,7 @@ from onetick.py.otq import otq
 from onetick.py.utils.temp import WEBAPI_TEST_MODE_SHARED_CONFIG
 
 # PY-394: set defaults to previous values to be backward-compatible with old tests
-otp.config['tz'] = 'EST5EDT'
+otp.config['tz'] = 'America/New_York'
 otp.config['default_db'] = 'DEMO_L1'
 otp.config['default_symbol'] = 'AAPL'
 otp.config['default_start_time'] = datetime(2003, 12, 1, 0, 0, 0)

@@ -10,6 +10,27 @@
 
 ### Removed
 
+## [1.213.0] - 2026-09-21
+
+### Added
+
+- Add parameter `underlying_price_field_name` to `OptionPrice` aggregation
+
+### Changed
+
+- Improve Filtering sections in the docs
+- Split `otp.Source` methods in API reference into different sections
+- Simplify and correct examples in the documentation
+
+### Fixed
+
+- Make `CEP` tests more stable
+- Fix wrong query property name used in the documentation
+- Fix the order of fields after updating field type
+- Fix unstable test `test_now_timedelta`
+
+### Removed
+
 ## [1.212.0] - 2026-09-14
 
 ### Added

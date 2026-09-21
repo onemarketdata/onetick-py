@@ -180,7 +180,7 @@ def write(
     >>> otp.run(data,                                                                              # doctest: +SKIP
     ...         start=otp.dt(2003, 12, 1),                                                         # doctest: +SKIP
     ...         end=otp.dt(2003, 12, 3),                                                           # doctest: +SKIP
-    ...         timezone='EST5EDT',                                                                # doctest: +SKIP
+    ...         timezone='America/New_York',                                                       # doctest: +SKIP
     ...         apply_times_daily=True,                                                            # doctest: +SKIP
     ...         concurrency=16)                                                                    # doctest: +SKIP
 

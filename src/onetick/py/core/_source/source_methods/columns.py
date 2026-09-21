@@ -49,7 +49,7 @@ def mean(self: 'otp.Source', *columns) -> 'otp.Operation':
 
     >>> t = otp.Tick(START_TIME=otp.dt(2022, 1, 1), END_TIME=otp.dt(2023, 1, 1))
     >>> t['MID_TIME'] = t.mean('START_TIME', 'END_TIME')
-    >>> otp.run(t, timezone='EST5EDT')
+    >>> otp.run(t, timezone='America/New_York')
             Time  START_TIME    END_TIME             MID_TIME
     0 2003-12-01  2022-01-01  2023-01-01  2022-07-02 13:00:00
     """
@@ -115,14 +115,14 @@ def unite_columns(self: 'otp.Source', sep="", *, apply_str=False) -> 'otp.Operat
     --------
 
     >>> # OTdirective: snippet-name: Arrange.join columns as strings;
-    >>> data = otp.Ticks(X=[1, 2, 3], A=["A", "A", "A"], B=["A", "B", "C"])
+    >>> data = otp.Ticks(X=[1, 2, 3], A=['A', 'A', 'A'], B=['A', 'B', 'C'])
     >>> data["S_ALL"] = data.unite_columns(sep=",", apply_str=True)
-    >>> data["S"] = data[["A", "B"]].unite_columns()
-    >>> otp.run(data)[["S", "S_ALL"]]
-        S  S_ALL
-    0  AA  1,A,A
-    1  AB  2,A,B
-    2  AC  3,A,C
+    >>> data["S"] = data[['A', 'B']].unite_columns()
+    >>> otp.run(data)
+                         Time  X  A  B  S_ALL   S
+    0 2003-12-01 00:00:00.000  1  A  A  1,A,A  AA
+    1 2003-12-01 00:00:00.001  2  A  B  2,A,B  AB
+    2 2003-12-01 00:00:00.002  3  A  C  3,A,C  AC
     """
     if apply_str:
         cols = (self[col].apply(str) for col in self.schema)

@@ -334,6 +334,7 @@ class OptionPrice(_Aggregation):
     FIELDS_MAPPING['days_in_year'] = 'DAYS_IN_YEAR'
     FIELDS_MAPPING['days_till_expiration_field_name'] = 'DAYS_TILL_EXPIRATION_FIELD_NAME'
     FIELDS_MAPPING['expiration_date_field_name'] = 'EXPIRATION_DATE_FIELD_NAME'
+    FIELDS_MAPPING['underlying_price_field_name'] = 'UNDERLYING_PRICE_FIELD_NAME'
     FIELDS_MAPPING['all_fields_for_running'] = 'ALL_FIELDS_FOR_RUNNING'
 
     FIELDS_DEFAULT = deepcopy(_Aggregation.FIELDS_DEFAULT)
@@ -361,6 +362,7 @@ class OptionPrice(_Aggregation):
                  days_in_year: int = 365,
                  days_till_expiration_field_name: str = '',
                  expiration_date_field_name: str = '',
+                 underlying_price_field_name: str = '',
                  all_fields_for_running: bool = False,
                  *args, **kwargs):
         self.all_fields_for_running = all_fields_for_running
@@ -384,6 +386,7 @@ class OptionPrice(_Aggregation):
         self.days_in_year = days_in_year
         self.days_till_expiration_field_name = days_till_expiration_field_name
         self.expiration_date_field_name = expiration_date_field_name
+        self.underlying_price_field_name = underlying_price_field_name
 
     def apply(self, src: 'Source', name: str = 'VALUE', *args, **kwargs) -> 'Source':
         return super().apply(src, name, *args, **kwargs)

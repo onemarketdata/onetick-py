@@ -38,15 +38,15 @@ def var(default_value, scope="query"):
 
     Examples
     --------
-    >>> data = otp.Ticks(dict(X=[0, 1, 2]))
+    >>> data = otp.Ticks(X=[0, 1, 2])
     >>> data.state_vars['SUM'] = otp.state.var(0)
     >>> data.state_vars['SUM'] += data['X']
     >>> data['SUM'] = data.state_vars['SUM']
-    >>> otp.run(data)[['X', 'SUM']]
-       X  SUM
-    0  0    0
-    1  1    1
-    2  2    3
+    >>> otp.run(data)
+                         Time  X  SUM
+    0 2003-12-01 00:00:00.000  0    0
+    1 2003-12-01 00:00:00.001  1    1
+    2 2003-12-01 00:00:00.002  2    3
     """
     scope = _validate_and_preprocess_scope(scope)
 
@@ -92,11 +92,11 @@ def tick_list(default_value=None, scope='query', schema=None) -> TickList:
     >>> data = otp.Tick(A=1)
     >>> data.state_vars['LIST'] = otp.state.tick_list(otp.Ticks(B=[1, 2, 3]))
     >>> data = data.state_vars['LIST'].dump()
-    >>> otp.run(data)[['B']]
-       B
-    0  1
-    1  2
-    2  3
+    >>> otp.run(data)
+                         Time  B
+    0 2003-12-01 00:00:00.000  1
+    1 2003-12-01 00:00:00.001  2
+    2 2003-12-01 00:00:00.002  3
     """
     scope = _validate_and_preprocess_scope(scope)
     return TickList('', obj_ref=None, default_value=default_value, scope=scope, schema=schema)
@@ -130,11 +130,11 @@ def tick_set(insertion_policy, key_fields, default_value=None, scope='query', sc
     >>> data = otp.Tick(A=1)
     >>> data.state_vars['SET'] = otp.state.tick_set('oldest', 'B', otp.Ticks(B=[1, 1, 2, 2, 3, 3]))
     >>> data = data.state_vars['SET'].dump()
-    >>> otp.run(data)[['B']]
-       B
-    0  1
-    1  2
-    2  3
+    >>> otp.run(data)
+            Time  B
+    0 2003-12-01  1
+    1 2003-12-01  2
+    2 2003-12-01  3
     """
     scope = _validate_and_preprocess_scope(scope)
     return TickSet('',
@@ -191,11 +191,11 @@ def tick_set_unordered(insertion_policy,
     ...                                                       otp.Ticks(B=[1, 1, 2, 2, 3, 3]),
     ...                                                       max_distinct_keys=5)
     >>> data = data.state_vars['SET'].dump()
-    >>> otp.run(data)[['B']]
-       B
-    0  1
-    1  2
-    2  3
+    >>> otp.run(data)
+            Time  B
+    0 2003-12-01  1
+    1 2003-12-01  2
+    2 2003-12-01  3
     """
     scope = _validate_and_preprocess_scope(scope)
     if max_distinct_keys == -1:
@@ -231,11 +231,11 @@ def tick_deque(default_value=None, scope='query', schema=None) -> TickDeque:
     >>> data = otp.Tick(A=1)
     >>> data.state_vars['DEQUE'] = otp.state.tick_deque(otp.Ticks(B=[1, 2, 3]))
     >>> data = data.state_vars['DEQUE'].dump()
-    >>> otp.run(data)[['B']]
-       B
-    0  1
-    1  2
-    2  3
+    >>> otp.run(data)
+                         Time  B
+    0 2003-12-01 00:00:00.000  1
+    1 2003-12-01 00:00:00.001  2
+    2 2003-12-01 00:00:00.002  3
     """
     scope = _validate_and_preprocess_scope(scope)
     return TickDeque('', obj_ref=None, default_value=default_value, scope=scope, schema=schema)

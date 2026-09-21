@@ -75,20 +75,26 @@ class CallbackBase(otq.CallbackBase):
 
         Examples
         --------
-        >>> t = otp.Tick(A=1)
+        >>> t = otp.Tick(A=1, db='US_COMP_SAMPLE')
         >>> class SymbolNameCallback(otp.CallbackBase):
         ...     def process_symbol_name(self, symbol_name):
         ...         self.symbol_name = symbol_name
         >>> callback = SymbolNameCallback()
-        >>> otp.run(t, callback=callback, symbols='DEMO_L1::X')
+        >>> otp.run(t, callback=callback,
+        ...         date=otp.dt(2024, 2, 1),
+        ...         symbols='US_COMP_SAMPLE::AAPL')
         >>> callback.symbol_name
-        'DEMO_L1::X'
+        'US_COMP_SAMPLE::AAPL'
         """
         pass
 
     def process_symbol_group_name(self, symbol_group_name):
         """
         Called when a named group of securities, i.e. portfolio, is processed.
+
+        Note
+        ----
+        Not supported in WebAPI mode.
 
         Parameters
         ----------
@@ -103,6 +109,10 @@ class CallbackBase(otq.CallbackBase):
         This method is called before any call to
         :meth:`process_tick_descriptor` or :meth:`process_tick`.
         It is called immediately after :meth:`process_symbol_name`.
+
+        Note
+        ----
+        Not supported in WebAPI mode.
 
         Parameters
         ----------
@@ -126,6 +136,10 @@ class CallbackBase(otq.CallbackBase):
         """
         This method is invoked before the first call to :meth:`process_tick`
         and every time before tick structure changes.
+
+        Note
+        ----
+        Not supported in WebAPI mode.
 
         Parameters
         ----------
@@ -152,7 +166,7 @@ class CallbackBase(otq.CallbackBase):
 
         Note
         ----
-        If you are making query through WebAPI mode, use ``process_ticks`` callback method instead.
+        Not supported in WebAPI mode, use :meth:`process_ticks` callback method instead.
 
         Parameters
         ----------
@@ -176,7 +190,7 @@ class CallbackBase(otq.CallbackBase):
 
     def process_ticks(self, ticks):
         """
-        This method is used in WebAPI mode instead of ``process_tick``.
+        This method is used in WebAPI mode instead of :meth:`process_tick`.
 
         It is called after getting one batch of ticks.
         The size of batch can be changed with parameters
@@ -245,6 +259,10 @@ class CallbackBase(otq.CallbackBase):
         """
         Informs whether the ticks that will be submitted to this callback object
         will be ordered by time.
+
+        Note
+        ----
+        Not supported in WebAPI mode.
 
         Parameters
         ----------

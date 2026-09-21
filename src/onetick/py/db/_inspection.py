@@ -112,7 +112,7 @@ class DB:
             By default the query is executed for the current user.
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
-            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+            see OneTick server documentation for available options.
 
         See also
         --------
@@ -189,7 +189,7 @@ class DB:
             LOCATION, ARCHIVE_DURATION, DAY_BOUNDARY_TZ, DAY_BOUNDARY_OFFSET, ALTERNATIVE_LOCATIONS, etc.
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
-            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+            see OneTick server documentation for available options.
 
         See also
         --------
@@ -200,7 +200,7 @@ class DB:
 
         >>> db = otp.databases()['US_COMP_SAMPLE']
         >>> print(db.show_config()['LOCATOR_STRING'])  # doctest: +SKIP
-        <DB ARCHIVE_COMPRESSION_TYPE="NATIVE_PLUS_GZIP" ... DAY_BOUNDARY_TZ="EST5EDT" ... ID="US_COMP_SAMPLE" ...>
+        <DB ARCHIVE_COMPRESSION_TYPE="NATIVE_PLUS_GZIP" DAY_BOUNDARY_TZ="America/New_York" ... ID="US_COMP_SAMPLE" ...>
         <LOCATIONS >
             <LOCATION ACCESS_METHOD="file" END_TIME="20380101000000" LOCATION="..." ... />
         </LOCATIONS>
@@ -370,7 +370,7 @@ class DB:
             Default is False.
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
-            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+            see OneTick server documentation for available options.
         """
         LOGGER.info('_show_last_tick_descriptor')
 
@@ -671,7 +671,7 @@ class DB:
             Timezone for the look up. ``None`` means the default timezone.
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
-            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+            see OneTick server documentation for available options.
         include_memdb: bool
             Setting this parameter to True will return result from memory databases too.
             Otherwise only the archive databases will be used.
@@ -767,7 +767,7 @@ class DB:
             otherwise it is set to True.
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
-            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+            see OneTick server documentation for available options.
         include_memdb: bool
             Setting this parameter to True will return result from memory databases too.
             Otherwise only the archive databases will be used.
@@ -938,7 +938,7 @@ class DB:
             Regular expression to select symbols.
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
-            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+            see OneTick server documentation for available options.
         include_memdb: bool
             Setting this parameter to True will return result from memory databases too.
             Otherwise only the archive databases will be used.
@@ -1025,7 +1025,7 @@ class DB:
             Timezone for the query. Default is GMT.
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
-            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+            see OneTick server documentation for available options.
 
         Note
         ----
@@ -1104,7 +1104,7 @@ class DB:
             Symbol name for the query (may be useful for some ``ref_data_type``).
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
-            such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+            see OneTick server documentation for available options.
 
         See also
         --------
@@ -1119,7 +1119,7 @@ class DB:
         >>> db.ref_data('all_calendars',
         ...             date=otp.dt(2024, 1, 1),
         ...             symbol='AAPL',
-        ...             timezone='EST5EDT',
+        ...             timezone='America/New_York',
         ...             symbol_date=otp.dt(2024, 1, 1))  # doctest: +ELLIPSIS
                   Time END_DATETIME       CALENDAR_NAME SESSION_NAME SESSION_FLAGS DAY_PATTERN  START_HHMMSS  \
             END_HHMMSS          TIMEZONE  PRIORITY                    DESCRIPTION
@@ -1268,7 +1268,7 @@ def databases(
         If True, returns a :pandas:`pandas.DataFrame` table where each row contains the info for each database.
     query_properties: dict, optional
         Query properties passed to :py:func:`otp.run <onetick.py.run>`,
-        such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+        see OneTick server documentation for available options.
 
     See also
     --------
@@ -1424,7 +1424,7 @@ def derived_databases(
         If True, returns a :pandas:`pandas.DataFrame` table where each row contains the info for each database.
     query_properties: dict, optional
         Query properties passed to :py:func:`otp.run <onetick.py.run>`,
-        such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+        see OneTick server documentation for available options.
 
     See also
     --------

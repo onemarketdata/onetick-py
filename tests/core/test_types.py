@@ -583,6 +583,12 @@ def test_now_timedelta(session):
     t = otp.Tick(A=otp.meta_fields.start, B=otp.meta_fields.end)
     delta = otp.timedelta(days=1, hours=2, minutes=3, seconds=4, milliseconds=5, microseconds=6, nanoseconds=7)
     df = otp.run(t, start=otp.now() - delta, end=otp.now())
-    assert df['B'][0] - df['A'][0] == pd.Timedelta(
+    delta_result = df['B'][0] - df['A'][0]
+    # this delta is not stable, because otp.now() in start and end parameters is calculated at different moments
+    assert delta_result.days == 1
+    assert delta_result.seconds == 4 + 60 * 3 + 60 * 60 * 2
+    assert pd.Timedelta(
         days=1, hours=2, minutes=3, seconds=4, milliseconds=5, microseconds=6, nanoseconds=7
+    ) <= delta_result <= pd.Timedelta(
+        days=1, hours=2, minutes=3, seconds=4, milliseconds=7
     )

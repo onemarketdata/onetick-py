@@ -111,7 +111,63 @@ chapters:
             - glob: api/sources/snapshot/*
     - file: api/source/root
       sections:
-        - glob: api/source/*
+        - file: api/source/fields/root
+          sections:
+            - glob: api/source/fields/*
+        - file: api/source/filters/root
+          sections:
+            - glob: api/source/filters/*
+        - file: api/source/aggregations/root
+          sections:
+            - glob: api/source/aggregations/*
+        - file: api/source/transformers/root
+          sections:
+            - glob: api/source/transformers/*
+        - file: api/source/times/root
+          sections:
+            - glob: api/source/times/*
+        - file: api/source/inserts/root
+          sections:
+            - glob: api/source/inserts/*
+        - file: api/source/self/root
+          sections:
+            - glob: api/source/self/*
+        - file: api/source/joins/root
+          sections:
+            - glob: api/source/joins/*
+        - file: api/source/merges/root
+          sections:
+            - glob: api/source/merges/*
+        - file: api/source/writes/root
+          sections:
+            - glob: api/source/writes/*
+        - file: api/source/data_quality/root
+          sections:
+            - glob: api/source/data_quality/*
+        - file: api/source/hidden/root
+          sections:
+            - glob: api/source/hidden/*
+        - file: api/source/snapshots/root
+          sections:
+            - glob: api/source/snapshots/*
+        - file: api/source/splitters/root
+          sections:
+            - glob: api/source/splitters/*
+        - file: api/source/state_vars/root
+          sections:
+            - glob: api/source/state_vars/*
+        - file: api/source/symbols/root
+          sections:
+            - glob: api/source/symbols/*
+        - file: api/source/debugs/root
+          sections:
+            - glob: api/source/debugs/*
+        - file: api/source/runners/root
+          sections:
+            - glob: api/source/runners/*
+        - file: api/source/other/root
+          sections:
+            - glob: api/source/other/*
     - file: api/operation/root
       sections:
         - glob: api/operation/*

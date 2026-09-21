@@ -234,6 +234,7 @@ else:
 nb_execution_raise_on_error = False
 nb_execution_allow_errors = False
 nb_execution_timeout = 60
+nb_execution_show_tb = True
 use_jupyterbook_latex = True
 
 language = 'en'

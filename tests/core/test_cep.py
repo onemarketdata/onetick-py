@@ -7,9 +7,10 @@ import os
 import re
 import psutil
 from datetime import datetime, timezone, timedelta
-from dateutil import tz
 
 import onetick.py as otp
+
+import pandas as pd
 
 
 @pytest.fixture
@@ -63,7 +64,7 @@ class TestAcceleratorDbWrite(BaseRunning):
             yield s
 
     def check_loop(self):
-        time.sleep(1)
+        time.sleep(0.5)
 
         # count the ticks in the database
         now = otp.dt.now(tz='GMT')
@@ -73,35 +74,37 @@ class TestAcceleratorDbWrite(BaseRunning):
                          timezone='GMT')
         num_ticks = len(result)
         if self.prev_num_ticks is not None:
-            # store the number of ticks that were added each second
+            # store the number of ticks that were added
             diff = num_ticks - self.prev_num_ticks
-            self.diffs.append(diff)
+            if diff != 0:
+                self.diffs.append(diff)
         self.prev_num_ticks = num_ticks
 
     def running_query(self):
         data = otp.Tick(X=1, bucket_interval=1)
         data = data.write('TEST_DB', symbol='S', tick_type='TT')
-
         otp.run(data,
                 running=True,
                 start=otp.now(),
-                end=otp.now() + otp.Second(10),
+                end=otp.now() + otp.Second(5),
                 timezone='GMT')
-        assert self.prev_num_ticks == 10
-        # let's check if there are at least 2 times when number of ticks was changed
-        # ideally, it would always be 10 (1 new tick each second),
-        # but in reality the test and its threads may run slower
-        assert len([x for x in self.diffs if x > 0]) >= 2
 
     def test_tick(self, session):
         self.run()
+        assert self.prev_num_ticks == 5
+        # let's check if there are at least 2 times when number of ticks was changed
+        # ideally, it would always be 5 (1 new tick each second),
+        # but in reality the test and its threads may run slower
+        assert len(self.diffs) >= 2
 
 
 @pytest.mark.skipif(os.name == "nt", reason="It is not stable for windows")
 def test_dump():
-    ''' A case that allows to check in real time that running query works and generates
+    """
+    A case that allows to check in real time that running query works and generates
     outut in stdout every one second. Illustrates also how the `start` works when it is
-    set to the past '''
+    set to the past
+    """
     with otp.Session():
         data = otp.Tick(X=otp.rand(min_value=1, max_value=5), bucket_interval=1)
 
@@ -257,60 +260,57 @@ def test_default_db_tick_generator():
 
 class TestSubqueries:
 
-    TIMEZONE = 'America/New_York'
+    @pytest.fixture(scope='function')
+    def main_query(session):
+        data = otp.Tick(DUMMY=1, bucket_interval=1)
+        data['SN'] = data['_SYMBOL_NAME']
+        data['ST'] = data['_START_TIME']
+        data['ET'] = data['_END_TIME']
+        return data
 
-    def test_fsq(self, session):
+    def _check_result(self, df):
+        # we are running queries using otp.now(), which is calculated on OneTick side
+        # in rare cases different calls of otp.now() in start and end time expression can return different results
+        # because they are calculated sequentially and not fast enough
+        assert len(df) in [2, 3]
+        if len(df) == 2:
+            assert df['ET'][0] - df['ST'][0] == pd.Timedelta(seconds=2)
+        else:
+            assert df['ET'][0] - df['ST'][0] > pd.Timedelta(seconds=2)
+        assert df['Time'][0] == df['ST'][0]
+        assert df['Time'][1] - df['Time'][0] == pd.Timedelta(seconds=1)
+
+    def test_fsq(self, session, main_query):
         fsq = otp.Tick(SYMBOL_NAME='AAPL')
-        main_query = otp.Tick(DUMMY=1, bucket_interval=1)
-        main_query['SN'] = main_query['_SYMBOL_NAME']
-        tzinfo = tz.gettz(self.TIMEZONE)
-        current_time = datetime.now(tz=tzinfo)
-        start_time = current_time + timedelta(seconds=2)
-        end_time = start_time + timedelta(seconds=4)
         res = otp.run(main_query,
                       symbols=fsq,
                       running=True,
-                      start=start_time,
-                      end=end_time,
-                      timezone=self.TIMEZONE)['AAPL']
-        assert len(res) == 4
+                      start=otp.now(),
+                      end=otp.now() + otp.Second(2),
+                      timezone='America/New_York')['AAPL']
+        self._check_result(res)
 
-    def test_fsq_continuous(self, session):
+    def test_fsq_continuous(self, session, main_query):
         fsq = otp.Tick(SYMBOL_NAME='AAPL', query_parameters=otp.QueryParameters(running=True))
-        main_query = otp.Tick(DUMMY=1, bucket_interval=1)
-        main_query['SN'] = main_query['_SYMBOL_NAME']
-        tzinfo = tz.gettz(self.TIMEZONE)
-        current_time = datetime.now(tz=tzinfo)
-        start_time = current_time + timedelta(seconds=2)
-        end_time = start_time + timedelta(seconds=4)
         res = otp.run(main_query,
                       symbols=fsq,
                       running=True,
-                      start=start_time,
-                      end=end_time,
-                      timezone=self.TIMEZONE)['DEMO_L1::AAPL']
-        assert len(res) == 4
+                      start=otp.now(),
+                      end=otp.now() + otp.Second(2),
+                      timezone='America/New_York')['DEMO_L1::AAPL']
+        self._check_result(res)
 
-    def test_fsq_continuous_eval(self, session):
+    def test_fsq_continuous_eval(self, session, main_query):
         fsq = otp.Tick(SYMBOL_NAME='AAPL')
-        main_query = otp.Tick(DUMMY=1, bucket_interval=1)
-        main_query['SN'] = main_query['_SYMBOL_NAME']
-        tzinfo = tz.gettz(self.TIMEZONE)
-        current_time = datetime.now(tz=tzinfo)
-        start_time = current_time + timedelta(seconds=2)
-        end_time = start_time + timedelta(seconds=4)
         res = otp.run(main_query,
                       symbols=otp.eval(fsq, continuous=True),
                       running=True,
-                      start=start_time,
-                      end=end_time,
-                      timezone=self.TIMEZONE)['DEMO_L1::AAPL']
-        assert len(res) == 4
+                      start=otp.now(),
+                      end=otp.now() + otp.Second(2),
+                      timezone='America/New_York')['DEMO_L1::AAPL']
+        self._check_result(res)
 
-    def test_jwq(self, session):
-        main_query = otp.Tick(DUMMY=1, bucket_interval=1)
-        main_query['SN'] = main_query['_SYMBOL_NAME']
-
+    def test_jwq(self, session, main_query):
         jwq_query = otp.Tick(JWQ_DUMMY=2)
         jwq_query['JWQ_ST'] = jwq_query['_START_TIME']
 
@@ -320,39 +320,38 @@ class TestSubqueries:
             end=main_query['_START_TIME'] - otp.Hour(1) + otp.Minute(1),
         )
 
-        tzinfo = tz.gettz(self.TIMEZONE)
-        current_time = datetime.now(tz=tzinfo)
-        start_time = current_time + timedelta(seconds=2)
-        end_time = start_time + timedelta(seconds=4)
-        res = otp.run(main_query, symbols='AAPL', running=True, start=start_time, end=end_time, timezone=self.TIMEZONE)
-        assert len(res) == 4
-        for i in range(0, 4):
-            assert res['JWQ_ST'][i] == (start_time - otp.timedelta(hours=1)).replace(tzinfo=None)
+        res = otp.run(main_query,
+                      symbols='AAPL',
+                      running=True,
+                      start=otp.now(),
+                      end=otp.now() + otp.Second(2),
+                      timezone='America/New_York')
+        self._check_result(res)
+        for i in range(0, 2):
+            assert res['JWQ_ST'][i] == (res['ST'][i] - pd.Timedelta(hours=1)).replace(tzinfo=None)
 
     def test_symbol(self, session):
-        tzinfo = tz.gettz(self.TIMEZONE)
-        current_time = datetime.now(tz=tzinfo)
-        start_time = current_time + timedelta(seconds=2)
-        end_time = start_time + timedelta(seconds=4)
-
-        s = otp.Tick(SYMBOL_NAME="DEMO_L1::AAPL")
+        s = otp.Tick(SYMBOL_NAME="DEMO_L1::AAPL", db='DEMO_L1', symbol='AAPL')
         s = otp.eval(s, continuous=True)
-        q = otp.Tick(DUMMY=1)
+        q = otp.Tick(DUMMY=1, bucket_interval=1)
 
         res = otp.run(
-            q, symbols=s,
+            q,
+            symbols=s,
             running=True,
-            start = start_time,
-            end = end_time,
-            timezone = self.TIMEZONE,
+            start=otp.now(),
+            end=otp.now() + otp.Second(2),
+            timezone='America/New_York',
         )
 
         assert 'DEMO_L1::AAPL' in res
         res_dict = res['DEMO_L1::AAPL'].to_dict(orient='list')
         del res_dict['Time']
-        assert res_dict == {'DUMMY': [1]}
+        assert res_dict == {'DUMMY': [1, 1]}
 
-        query_path = q.to_otq(symbols=s, running=True)
+        query_path = q.to_otq(symbols=s, running=True,
+                              start=otp.now(),
+                              end=otp.now() + otp.Second(2))
         path = query_path.split('::')[0]
         with open(path) as f:
             text = f.read()
@@ -361,10 +360,10 @@ class TestSubqueries:
         res = otp.run(
             otp.query(query_path),
             running=True,
-            start = start_time,
-            end = end_time,
-            timezone = self.TIMEZONE,
+            start=otp.now(),
+            end=otp.now() + otp.Second(2),
+            timezone='America/New_York',
         )
         res_dict = res.to_dict(orient='list')
         del res_dict['Time']
-        assert res_dict == {'DUMMY': [1]}
+        assert res_dict == {'DUMMY': [1, 1]}

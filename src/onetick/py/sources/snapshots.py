@@ -200,7 +200,7 @@ class ShowSnapshotList(Source):
         List snapshots from all snapshot storage types:
 
         >>> src = otp.ShowSnapshotList(snapshot_storage='all')  # doctest: +SKIP
-        >>> otp.run(src)  # doctest: +SKIP
+        >>> otp.run(src)                                        # doctest: +SKIP
                 Time SNAPSHOT_NAME        STORAGE_TYPE        DB_NAME
         0 2003-12-01    snapshot_1              MEMORY        DEMO_L1
         1 2003-12-01    snapshot_2              MEMORY        DEMO_L1
@@ -209,7 +209,7 @@ class ShowSnapshotList(Source):
         List snapshots from memory:
 
         >>> src = otp.ShowSnapshotList(snapshot_storage='memory')  # doctest: +SKIP
-        >>> otp.run(src)  # doctest: +SKIP
+        >>> otp.run(src)                                           # doctest: +SKIP
                 Time SNAPSHOT_NAME        STORAGE_TYPE        DB_NAME
         0 2003-12-01    snapshot_1              MEMORY        DEMO_L1
         1 2003-12-01    snapshot_2              MEMORY        DEMO_L1
@@ -217,7 +217,7 @@ class ShowSnapshotList(Source):
         List snapshots from memory mapped files:
 
         >>> src = otp.ShowSnapshotList(snapshot_storage='memory_mapped_file')  # doctest: +SKIP
-        >>> otp.run(src)  # doctest: +SKIP
+        >>> otp.run(src)                                                       # doctest: +SKIP
                 Time SNAPSHOT_NAME        STORAGE_TYPE        DB_NAME
         0 2003-12-01    snapshot_3  MEMORY_MAPPED_FILE  SNAPSHOT_DEMO
         """

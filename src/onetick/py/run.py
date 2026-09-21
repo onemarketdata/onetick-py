@@ -142,7 +142,7 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
         Set to True for CEP (Complex Event Processing) real-time streaming queries.
         Default is False.
     query_properties: dict, optional
-       Query properties, such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc.
+       Query properties, see OneTick server documentation for available options.
     concurrency: int, optional
         The maximum number of CPU cores to use to process the query.
         By default, the value from
@@ -411,7 +411,7 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
     When ``start``/``end`` are timezone-naive, it also defines their timezone:
 
     >>> data = otp.Tick(A=1)
-    >>> otp.run(data, start=otp.dt(2003, 12, 1), end=otp.dt(2003, 12, 2), timezone='EST5EDT')
+    >>> otp.run(data, start=otp.dt(2003, 12, 1), end=otp.dt(2003, 12, 2), timezone='America/New_York')
             Time  A
     0 2003-12-01  1
 

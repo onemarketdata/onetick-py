@@ -328,7 +328,9 @@ def _update_field(self: 'Source', field, value):
         self.drop(list(names_mapping), inplace=True)
     if convert_to_type:
         # manual type conversion after update fields for some cases
-        self.table(**{key: convert_to_type}, inplace=True, strict=False)
+        # specify all fields from the old schema too, so the order of fields doesn't change
+        new_schema = dict(self.schema) | {key: convert_to_type}
+        self.table(**new_schema, inplace=True, strict=False)
 
 
 def _validate_before_setting(key, value):

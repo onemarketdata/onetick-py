@@ -132,7 +132,7 @@ In this file you will see the OneTick graph query representation and its paramet
     ...
     end_expression = PARSE_NSECTIME("%Y-%m-%d %H:%M:%S.%J", "2003-12-04 00:00:00.000000000", _TIMEZONE)
     start_expression = PARSE_NSECTIME("%Y-%m-%d %H:%M:%S.%J", "2003-12-01 00:00:00.000000000", _TIMEZONE)
-    TZ = EST5EDT
+    TZ = America/New_York
     USER_NAME = user
     ...
 

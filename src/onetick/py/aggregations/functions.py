@@ -84,7 +84,7 @@ from onetick.py.docs.utils import docstring, param_doc
                        _group_by_doc, _groups_to_display_doc])
 def compute(*args, **kwargs):
     """
-    Generate object that collects aggregations
+    Generate object that collects aggregations.
 
     See also
     --------
@@ -94,8 +94,8 @@ def compute(*args, **kwargs):
     --------
     >>> data = otp.Ticks(X=[1, 2, 3, 4], offset=[0, 1000, 1500, 3000])
     >>> c = otp.agg.compute(running=True, bucket_interval=2)
-    >>> c.add('X_MEAN', otp.agg.average("X"))
-    >>> c.add('X_STD', otp.agg.stddev("X"))
+    >>> c.add('X_MEAN', otp.agg.average('X'))
+    >>> c.add('X_STD', otp.agg.stddev('X'))
     >>> data = c.apply(data)
     >>> otp.run(data)
                          Time  X_MEAN     X_STD
@@ -140,7 +140,7 @@ def max(*args, **kwargs):
                        _time_series_type_doc, _large_ints_doc, _null_int_val_doc, _expect_decimals_doc])
 def min(*args, **kwargs):
     """
-    Return minimum value of input ``column``
+    Return minimum value of input ``column``.
 
     See also
     --------
@@ -165,7 +165,7 @@ def min(*args, **kwargs):
                        _time_series_type_doc])
 def high_tick(*args, **kwargs):
     """
-    Select ``n`` ticks with the highest values in the ``column`` field
+    Select ``n`` ticks with the highest values in the ``column`` field.
 
     See also
     --------
@@ -191,7 +191,7 @@ def high_tick(*args, **kwargs):
                        _time_series_type_doc])
 def low_tick(*args, **kwargs):
     """
-    Select ``n`` ticks with the lowest values in the ``column`` field
+    Select ``n`` ticks with the lowest values in the ``column`` field.
 
     See also
     --------
@@ -216,7 +216,7 @@ def low_tick(*args, **kwargs):
                        _selection_doc, _time_series_type_doc])
 def high_time(*args, **kwargs):
     """
-    Returns timestamp of tick with highest value of input field
+    Returns timestamp of tick with highest value of input field.
 
     See also
     --------
@@ -240,7 +240,7 @@ def high_time(*args, **kwargs):
                        _selection_doc, _time_series_type_doc])
 def low_time(*args, **kwargs):
     """
-    Returns timestamp of tick with lowest value of input field
+    Returns timestamp of tick with lowest value of input field.
 
     See also
     --------
@@ -265,7 +265,7 @@ def low_time(*args, **kwargs):
                        _skip_tick_if_doc, _time_series_type_doc])
 def first(*args, **kwargs):
     """
-    Return first value of input field
+    Return first value of input field.
 
     See also
     --------
@@ -291,7 +291,7 @@ def first(*args, **kwargs):
                        _skip_tick_if_doc, _time_series_type_doc])
 def last(*args, **kwargs):
     """
-    Return last value of input field
+    Return last value of input field.
 
     See also
     --------
@@ -315,7 +315,7 @@ def last(*args, **kwargs):
                        _time_series_type_doc])
 def first_time(*args, **kwargs):
     """
-    Return timestamp of first tick
+    Return timestamp of first tick.
 
     See also
     --------
@@ -339,7 +339,7 @@ def first_time(*args, **kwargs):
                        _time_series_type_doc])
 def last_time(*args, **kwargs):
     """
-    Return timestamp of last tick
+    Return timestamp of last tick.
 
     See also
     --------
@@ -361,7 +361,7 @@ def last_time(*args, **kwargs):
                        _group_by_doc, _groups_to_display_doc])
 def count(*args, **kwargs):
     """
-    Returns number of ticks
+    Returns number of ticks.
 
     See also
     --------
@@ -394,7 +394,7 @@ _size_doc = param_doc(name='size_column',
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc])
 def vwap(*args, **kwargs):
     """
-    Returns volume weighted average price
+    Returns volume weighted average price.
 
     See also
     --------
@@ -404,7 +404,7 @@ def vwap(*args, **kwargs):
     --------
     >>> # OTdirective: snippet-name: Aggregations.vwap;
     >>> data = otp.Ticks(P=[1, 2, 3, 4], S=[10, 20, 30, 40])
-    >>> data = data.agg({'RESULT': otp.agg.vwap('P','S')})
+    >>> data = data.agg({'RESULT': otp.agg.vwap('P', 'S')})
     >>> otp.run(data)
             Time  RESULT
     0 2003-12-04     3.0
@@ -434,7 +434,7 @@ def correlation(*args, **kwargs):
     --------
     >>> # OTdirective: snippet-name: Aggregations.correlation;
     >>> data = otp.Ticks(P=[1, 2, 3, 4], S=[10, 20, 30, 40])
-    >>> data = data.agg({'RESULT': otp.agg.correlation('P','S')})
+    >>> data = data.agg({'RESULT': otp.agg.correlation('P', 'S')})
     >>> otp.run(data)
             Time  RESULT
     0 2003-12-04     1.0
@@ -460,7 +460,7 @@ def correlation(*args, **kwargs):
                        _group_by_doc, _groups_to_display_doc, _keep_timestamp_doc, _default_tick_doc])
 def first_tick(*args, **kwargs):
     """
-    Select the first **n** ticks
+    Select the first ``n`` ticks.
 
     See also
     --------
@@ -483,7 +483,7 @@ def first_tick(*args, **kwargs):
                        _group_by_doc, _groups_to_display_doc, _keep_timestamp_doc, _time_series_type_doc])
 def last_tick(*args, **kwargs):
     """
-    Select the last ``n`` ticks
+    Select the last ``n`` ticks.
 
     See also
     --------
@@ -522,11 +522,11 @@ def distinct(*args, **kwargs):
 
     Examples
     --------
-    >>> data = otp.Ticks(dict(x=[1, 3, 1, 5, 3]))
-    >>> d = otp.agg.distinct('x')
-    >>> data = d.apply(data)
+    >>> data = otp.Ticks(X=[1, 3, 1, 5, 3])
+    >>> agg = otp.agg.distinct('X')
+    >>> data = agg.apply(data)
     >>> otp.run(data)
-            Time  x
+            Time  X
     0 2003-12-04  1
     1 2003-12-04  3
     2 2003-12-04  5
@@ -539,7 +539,7 @@ def distinct(*args, **kwargs):
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _expect_decimals_doc])
 def sum(*args, **kwargs):
     r"""
-    Implement sum aggregation
+    Implement sum aggregation.
 
     See also
     --------
@@ -557,27 +557,25 @@ def sum(*args, **kwargs):
     Note that **seconds** bucket unit doesn't take into account daylight-saving time of the timezone,
     so you may not get expected results when using, for example, 24 * 60 * 60 seconds as bucket interval.
 
-    >>> data = otp.DataSource('CME', symbols=r'NQ\H23', tick_type='TRD')  # doctest: +SKIP
-    >>> data = data.agg({'VOLUME': otp.agg.sum('SIZE')},  # doctest: +SKIP
-    ...                 bucket_interval=24*60*60, bucket_units='seconds', bucket_time='start')
-    >>> otp.run(data, start=otp.dt(2023, 3, 11), end=otp.dt(2023, 3, 15), timezone='EST5EDT')  # doctest: +SKIP
+    >>> data = otp.DataSource('CME', symbols=r'NQ\H23', tick_type='TRD')                               # doctest: +SKIP
+    >>> data = data.agg({'VOLUME': otp.agg.sum('SIZE')},                                               # doctest: +SKIP
+    ...                 bucket_interval=otp.Second(24*60*60), bucket_time='start')                     # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2023, 3, 12), end=otp.dt(2023, 3, 15), timezone='America/Chicago')  # doctest: +SKIP
                      Time  VOLUME
-    0 2023-03-11 00:00:00       0
-    1 2023-03-12 00:00:00   66190
-    2 2023-03-13 01:00:00  631750
-    3 2023-03-14 01:00:00  345952
+    0 2023-03-12 00:00:00   70321
+    1 2023-03-13 01:00:00  629688
+    2 2023-03-14 01:00:00  344988
 
     In such case use **days** bucket unit instead:
 
-    >>> data = otp.DataSource('CME', symbols=r'NQ\H23', tick_type='TRD')  # doctest: +SKIP
-    >>> data = data.agg({'VOLUME': otp.agg.sum('SIZE')},  # doctest: +SKIP
-    ...                 bucket_interval=1, bucket_units='days', bucket_time='start')
-    >>> otp.run(data, start=otp.dt(2023, 3, 11), end=otp.dt(2023, 3, 15), timezone='EST5EDT')  # doctest: +SKIP
+    >>> data = otp.DataSource('CME', symbols=r'NQ\H23', tick_type='TRD')                               # doctest: +SKIP
+    >>> data = data.agg({'VOLUME': otp.agg.sum('SIZE')},                                               # doctest: +SKIP
+    ...                 bucket_interval=otp.Day(1), bucket_time='start')                               # doctest: +SKIP
+    >>> otp.run(data, start=otp.dt(2023, 3, 12), end=otp.dt(2023, 3, 15), timezone='America/Chicago')  # doctest: +SKIP
             Time  VOLUME
-    0 2023-03-11       0
-    1 2023-03-12   62940
-    2 2023-03-13  634172
-    3 2023-03-14  346780
+    0 2023-03-12   66190
+    1 2023-03-13  631750
+    2 2023-03-14  347057
     """
     return Sum(*args, **kwargs)
 
@@ -587,7 +585,7 @@ def sum(*args, **kwargs):
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc])
 def average(*args, **kwargs):
     """
-    Implement average aggregation
+    Implement average aggregation.
 
     See also
     --------
@@ -631,7 +629,7 @@ def mean(*args, **kwargs):
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _biased_doc])
 def stddev(*args, **kwargs):
     """
-    Implement standard deviation aggregation
+    Implement standard deviation aggregation.
 
     See also
     --------
@@ -654,7 +652,7 @@ def stddev(*args, **kwargs):
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _time_series_type_w_doc])
 def tw_average(*args, **kwargs):
     """
-    Returns time weighted average of input field
+    Returns time weighted average of input field.
 
     See also
     --------
@@ -663,7 +661,7 @@ def tw_average(*args, **kwargs):
     Examples
     --------
     >>> data = otp.Ticks(X=[1, 2, 3, 4], offset=[0, 1000, 1500, 3000])
-    >>> otp.run(data, start=otp.dt(2023, 4, 25), end=otp.dt(2023, 4, 25)+otp.Second(4))
+    >>> otp.run(data, start=otp.dt(2023, 4, 25), end=otp.dt(2023, 4, 25) + otp.Second(4))
                          Time  X
     0 2023-04-25 00:00:00.000  1
     1 2023-04-25 00:00:01.000  2
@@ -673,9 +671,9 @@ def tw_average(*args, **kwargs):
     >>> # OTdirective: snippet-name: Aggregations.time weighted average;
     >>> data = otp.Ticks(X=[1, 2, 3, 4], offset=[0, 1000, 1500, 3000])
     >>> data = data.agg({'RESULT': otp.agg.tw_average('X')})
-    >>> otp.run(data, start=otp.dt(2023, 4, 25), end=otp.dt(2023, 4, 25)+otp.Second(4))
-            Time  RESULT
-    0 2023-04-25 00:00:04  2.625
+    >>> otp.run(data, start=otp.dt(2023, 4, 25), end=otp.dt(2023, 4, 25) + otp.Second(4))
+                     Time  RESULT
+    0 2023-04-25 00:00:04   2.625
     """
     return TimeWeightedAvg(*args, **kwargs)
 
@@ -685,7 +683,7 @@ def tw_average(*args, **kwargs):
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _expect_decimals_doc])
 def median(*args, **kwargs):
     """
-    Implement median aggregation
+    Implement median aggregation.
 
     See also
     --------
@@ -925,6 +923,7 @@ def ob_num_levels(*args, **kwargs):
 def generic(*args, **kwargs):
     """
     Generic aggregation.
+
     Aggregation logic is provided in ``query_fun`` parameter
     and this logic is applied for ticks in each bucket.
     Currently, this aggregation can be used only with ``.apply()`` method.
@@ -969,11 +968,11 @@ def generic(*args, **kwargs):
     >>> data = otp.Ticks({'A': [1, 2, 1]})
     >>> def count_values(source, value):
     ...     values = source.where(source['A'] == value)
-    ...     return values.agg({'count': otp.agg.count()})
+    ...     return values.agg({'COUNT': otp.agg.count()})
     >>> data = otp.agg.generic(count_values).apply(data, value=1)
     >>> otp.run(data)
-            Time  count
-    0 2003-12-04  2
+            Time  COUNT
+    0 2003-12-04      2
 
     Getting first 3 ticks from 5 milliseconds buckets:
 
@@ -1010,15 +1009,21 @@ def generic(*args, **kwargs):
 def option_price(*args, **kwargs):
     """
     This aggregation requires several parameters to compute the option price.
-    Those are, OPTION_TYPE, STRIKE_PRICE, EXPIRATION_DATE or DAYS_TILL_EXPIRATION, VOLATILITY, and INTEREST_RATE.
+
+    Those are, *OPTION_TYPE*, *STRIKE_PRICE*,
+    *EXPIRATION_DATE* or *DAYS_TILL_EXPIRATION*, *VOLATILITY*, and *INTEREST_RATE*.
+
     Each parameter can be specified, either via a symbol parameter with the same name or via a tick field,
     by specifying the name of that field as an EP parameter, as follows.
-    Besides, VOLATILITY and INTEREST_RATE can also be specified as parameters. If they are also specified as fields,
-    the parameters value are ignored.
-    In either case, the OPTION_TYPE value must be set to either CALL or PUT (case insensitive).
-    EXPIRATION_DATE is in YYYYMMDD format, a string in case of a symbol parameter and
+
+    Besides, ``volatility`` and ``interest_rate`` can also be specified as parameters.
+    If they are also specified as fields, the parameters value are ignored.
+
+    In either case, the *OPTION_TYPE* value must be set to either CALL or PUT (case insensitive).
+    *EXPIRATION_DATE* is in YYYYMMDD format, a string in case of a symbol parameter and
     an integer in case of a tick attribute.
-    Additionally, NUMBER_OF_STEPS should be specified in case of Cox-Ross-Rubinstein method.
+
+    Additionally, *NUMBER_OF_STEPS* should be specified in case of Cox-Ross-Rubinstein method.
 
     Note
     ----
@@ -1074,6 +1079,9 @@ def option_price(*args, **kwargs):
     expiration_date_field_name: str
         Specifies name of the field, which carries the expiration date of the option, in YYYYMMDD format.
         Default: empty
+    underlying_price_field_name: str
+        Specifies name of the field, which carries the underlying price of the option.
+        Default: PRICE
     all_fields_for_running: bool
         Specifies whether all input tick fields should be present in the output ticks when ``running`` is set to True.
         Default: False.
@@ -1524,7 +1532,7 @@ def ranking(*args, **kwargs):
 
     Sorts a series of ticks over a bucket interval
     using a specified set of tick fields specified in ``rank_by``
-    and adds a new field ``RANKING``
+    and adds a new field **RANKING**
     with the position of the tick in the sort order
     or the percentage of ticks with values less than (or equal) to the value of the tick.
 
@@ -1544,10 +1552,10 @@ def ranking(*args, **kwargs):
     show_rank_as: str
 
         - ``order``: calculate number that represents the position of the tick in the sort order
-        - ``percent_le_values``: calculate the percentage of ticks that have higher or equal value\
-           of the position in the sort order, relative to the tick
-        - ``percent_lt_values``: calculate the percentage of ticks that have higher value\
-           of the position in the sort order, relative to the tick
+        - ``percent_le_values``: calculate the percentage of ticks that have higher or equal value
+          of the position in the sort order, relative to the tick
+        - ``percent_lt_values``: calculate the percentage of ticks that have higher value
+          of the position in the sort order, relative to the tick
         - ``percentile_standard``: calculate Percentile Rank of the tick in the sort order.
     include_tick: bool, default=False
         Specifies whether the current tick should be included in calculations
@@ -1598,7 +1606,7 @@ def ranking(*args, **kwargs):
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc])
 def variance(*args, **kwargs):
     """
-    Implement variance aggregation
+    Implement variance aggregation.
 
     Parameters
     ----------
@@ -1622,7 +1630,7 @@ def variance(*args, **kwargs):
     >>> data = data.agg({'RESULT': otp.agg.variance('X', biased=True)})
     >>> otp.run(data)
             Time  RESULT
-    0 2003-12-04     1.04
+    0 2003-12-04    1.04
     """
     return Variance(*args, **kwargs)
 
@@ -1643,7 +1651,9 @@ def percentile(*args, **kwargs):
     Percentile **running** aggregation.
 
     For each bucket, propagates its ``n-1`` ``n-quantiles`` where a comparison between ticks is done
-    using a specified set of tick fields. A new field (``QUANTILE``) with the quantile number is added.
+    using a specified set of tick fields.
+
+    A new field **QUANTILE** with the quantile number is added.
 
     See also
     --------
@@ -2030,9 +2040,7 @@ def multi_portfolio_price(*args, **kwargs):
 
     Basic example, by default this EP takes ``PRICE`` column as input
 
-    >>> data = otp.DataSource(
-    ...     'US_COMP', tick_type='TRD', date=otp.dt(2022, 3, 1)
-    ... )
+    >>> data = otp.DataSource('US_COMP', tick_type='TRD', date=otp.dt(2022, 3, 1))
     >>> data = data.multi_portfolio_price(
     ...     portfolios_query='some_query.otq::portfolios_query',
     ...     symbols=['US_COMP::AAPL', 'US_COMP::MSFT', 'US_COMP::ORCL'],
@@ -2045,9 +2053,7 @@ def multi_portfolio_price(*args, **kwargs):
 
     Override ``weight`` returned by ``portfolios_query`` with ``weight_field_name``
 
-    >>> data = otp.DataSource(
-    ...     'US_COMP', tick_type='TRD', date=otp.dt(2022, 3, 1)
-    ... )
+    >>> data = otp.DataSource('US_COMP', tick_type='TRD', date=otp.dt(2022, 3, 1))
     >>> data['WEIGHT'] = 2
     >>> data = data.multi_portfolio_price(
     ...     portfolios_query='some_query.otq::portfolios_query',
@@ -2071,10 +2077,10 @@ def multi_portfolio_price(*args, **kwargs):
     ...     portfolios_query_params={'PORTFOLIO_1_NAME': 'CUSTOM_NAME'}
     ... )
     >>> otp.run(data)  # doctest: +SKIP
-            Time  VALUE  NUM_SYMBOLS PORTFOLIO_NAME
-    0 2003-12-01   95.0            3    CUSTOM_NAME
-    1 2003-12-01   47.5            1    PORTFOLIO_2
-    2 2003-12-01   32.5            2    PORTFOLIO_3
+            Time  VALUE  NUM_SYMBOLS  PORTFOLIO_NAME
+    0 2003-12-01   95.0            3     CUSTOM_NAME
+    1 2003-12-01   47.5            1     PORTFOLIO_2
+    2 2003-12-01   32.5            2     PORTFOLIO_3
 
     Use ``otp.Source`` object as ``portfolios_query`` (only for local queries)
 
@@ -2083,17 +2089,15 @@ def multi_portfolio_price(*args, **kwargs):
     ...     PORTFOLIO_NAME=['PORTFOLIO_1', 'PORTFOLIO_1', 'PORTFOLIO_2'],
     ...     WEIGHT=[1, 1, 2],
     ... )
-    >>> data = otp.DataSource(
-    ...     'US_COMP', tick_type='TRD', date=otp.dt(2022, 3, 1)
-    ... )
+    >>> data = otp.DataSource('US_COMP', tick_type='TRD', date=otp.dt(2022, 3, 1))
     >>> data = data.multi_portfolio_price(
     ...     portfolios_query=portfolios,
     ...     symbols=['US_COMP::AAPL', 'US_COMP::MSFT'],
     ... )
     >>> otp.run(data)  # doctest: +SKIP
-            Time  VALUE  NUM_SYMBOLS PORTFOLIO_NAME
-    0 2003-12-01   47.5            2    PORTFOLIO_1
-    1 2003-12-01   46.0            1    PORTFOLIO_2
+            Time  VALUE  NUM_SYMBOLS  PORTFOLIO_NAME
+    0 2003-12-01   47.5            2     PORTFOLIO_1
+    1 2003-12-01   46.0            1     PORTFOLIO_2
     """
     return MultiPortfolioPrice(*args, **kwargs)
 
@@ -2175,12 +2179,15 @@ def implied_vol(*args, **kwargs):
     This EP requires a time series of ticks, having the ``PRICE`` and ``OPTION_PRICE`` attributes.
 
     It also requires several parameters to compute the implied volatility.
-    Those are, ``OPTION_TYPE``, ``STRIKE_PRICE``, ``EXPIRATION_DATE`` or ``DAYS_TILL_EXPIRATION`` and ``INTEREST_RATE``.
+
+    Those are, *OPTION_TYPE*, *STRIKE_PRICE*, *EXPIRATION_DATE* or *DAYS_TILL_EXPIRATION* and *INTEREST_RATE*.
     Each parameter can be specified either via a symbol parameter with the same name, or via a tick field,
     by specifying name of that field as an EP parameter.
+
     Besides, ``interest_rate`` can also be specified as aggregation parameter.
-    In either case ``OPTION_TYPE`` must have either ``CALL`` value, or ``PUT``.
-    ``EXPIRATION_DATE`` is in ``YYYYMMDD`` format, a string in case of a symbol parameter and an integer
+
+    In either case *OPTION_TYPE* must have either ``CALL`` value, or ``PUT``.
+    *EXPIRATION_DATE* is in ``YYYYMMDD`` format, a string in case of a symbol parameter and an integer
     in case of a tick attribute.
 
     See also
@@ -2190,31 +2197,50 @@ def implied_vol(*args, **kwargs):
     Examples
     --------
 
-    Basic example:
+    Calculating implied volume for US_OPTIONS database:
 
-    >>> data = otp.DataSource('SOME_DB', symbol='AAA', tick_type='TT')  # doctest: +SKIP
-    >>> data = data.implied_vol(
-    ...     interest_rate=0.05, option_type_field=data['OPTION_TYPE'],
-    ...     strike_price_field=data['STRIKE_PRICE'], days_till_expiration_field=data['DAYS_TILL_EXPIRATION'],
-    ... )  # doctest: +SKIP
-    >>> otp.run(data)  # doctest: +SKIP
-            Time     VALUE
-    0 2003-12-04  0.889491
-
-    Specifying ``interest_rate`` and ``strike_price`` as symbol parameters:
-
-    >>> sym = otp.Ticks({
-    ...     'SYMBOL_NAME': ['TEST'],
-    ...     'INTEREST_RATE': [0.05],
-    ...     'STRIKE_PRICE': [100.0],
-    ... })  # doctest: +SKIP
-    >>> data = otp.DataSource('SOME_DB', symbol='AAA', tick_type='TT')  # doctest: +SKIP
-    >>> data = data.implied_vol(
-    ...     option_type_field=data['OPTION_TYPE'], days_till_expiration_field=data['DAYS_TILL_EXPIRATION'],
-    ... )  # doctest: +SKIP
-    >>> otp.run(data)  # doctest: +SKIP
-            Time     VALUE
-    0 2003-12-04  0.889491
+    >>> trd = otp.DataSource('US_OPTIONS', tick_type='TRD')                                             # doctest: +SKIP
+    >>> trd = trd[['PRICE']]                                                                            # doctest: +SKIP
+    >>> trd = trd.rename({'PRICE': 'OPTION_PRICE'})                                                     # doctest: +SKIP
+    >>> stat = otp.DataSource('US_OPTIONS', tick_type='STAT', back_to_first_tick=86400)                 # doctest: +SKIP
+    >>> stat = stat[['STRIKE_PRICE', 'EXPIRATION_DATE', 'CALL_PUT_IND']]                                # doctest: +SKIP
+    >>> underlying = otp.DataSource('US_COMP', tick_type='TRD', symbols='AAPL')                         # doctest: +SKIP
+    >>> underlying = underlying[['PRICE']]                                                              # doctest: +SKIP
+    >>> data = otp.join_by_time([trd, stat, underlying])                                                # doctest: +SKIP
+    >>> data['OPTION_TYPE'] = data.if_else(data['CALL_PUT_IND'] == 'C', 'CALL', 'PUT')                  # doctest: +SKIP
+    >>> data['DAYS_LEFT'] = otp.Day(                                                                    # doctest: +SKIP
+    ...     data['EXPIRATION_DATE'].str.to_datetime('%Y%m%d') - data['TIMESTAMP'].dt.date_trunc('day')  # doctest: +SKIP
+    ... )                                                                                               # doctest: +SKIP
+    >>> data = data.drop(['CALL_PUT_IND'])                                                              # doctest: +SKIP
+    >>> data = data.implied_vol(                                                                        # doctest: +SKIP
+    ...     running=True,                                                                               # doctest: +SKIP
+    ...     all_fields=True,                                                                            # doctest: +SKIP
+    ...     interest_rate=0.0425,                                                                       # doctest: +SKIP
+    ...     price_field='PRICE',                                                                        # doctest: +SKIP
+    ...     option_price_field='OPTION_PRICE',                                                          # doctest: +SKIP
+    ...     option_type_field='OPTION_TYPE',                                                            # doctest: +SKIP
+    ...     strike_price_field='STRIKE_PRICE',                                                          # doctest: +SKIP
+    ...     days_till_expiration_field='DAYS_LEFT',                                                     # doctest: +SKIP
+    ...     days_in_year=366,                                                                           # doctest: +SKIP
+    ...     method='bisections',                                                                        # doctest: +SKIP
+    ... )                                                                                               # doctest: +SKIP
+    >>> otp.run(data,                                                                                   # doctest: +SKIP
+    ...         start=otp.dt(2025, 2, 4, 9, 30, 0),                                                     # doctest: +SKIP
+    ...         end=otp.dt(2025, 2, 4, 16, 0, 0),                                                       # doctest: +SKIP
+    ...         timezone='America/New_York',                                                            # doctest: +SKIP
+    ...         symbols='AAPL  250207C00220000')                                                        # doctest: +SKIP
+                           Time  OPTION_PRICE  STRIKE_PRICE EXPIRATION_DATE     PRICE OPTION_TYPE  DAYS_LEFT     VALUE
+    0   2025-02-04 09:30:02.259          8.11         220.0        20250207  227.0000        CALL          3  0.432166
+    1   2025-02-04 09:30:06.167          8.40         220.0        20250207  227.0388        CALL          3  0.475541
+    2   2025-02-04 09:31:05.692          8.67         220.0        20250207  227.7500        CALL          3  0.423598
+    3   2025-02-04 09:31:05.692          8.67         220.0        20250207  227.7500        CALL          3  0.423598
+    4   2025-02-04 09:31:07.080          8.55         220.0        20250207  227.6600        CALL          3  0.414989
+    ..                      ...           ...           ...             ...       ...         ...        ...       ...
+    202 2025-02-04 15:26:07.186         12.70         220.0        20250207  232.3800        CALL          3  0.405716
+    203 2025-02-04 15:44:25.863         12.54         220.0        20250207  232.2052        CALL          3  0.406920
+    204 2025-02-04 15:57:41.427         13.30         220.0        20250207  232.9999        CALL          3  0.412861
+    205 2025-02-04 15:58:12.969         13.24         220.0        20250207  232.9700        CALL          3  0.399551
+    206 2025-02-04 15:58:41.955         13.32         220.0        20250207  233.0508        CALL          3  0.401080
     """
     return ImpliedVol(*args, **kwargs)
 
@@ -2230,9 +2256,11 @@ def linear_regression(*args, **kwargs):
 
     For each bucket, computes the linear regression parameters slope and intercept of specified input fields
     ``dependent_variable_field_name`` and ``independent_variable_field_name``.
-    Adds computed parameters as `SLOPE` and `INTERCEPT` fields in output time series.
+
+    Adds computed parameters as **SLOPE** and **INTERCEPT** fields in output time series.
     The relationship between the dependent variable (``Y``) and the independent variable (``X``) is defined
-    by the formula: Y = SLOPE * X + INTERCEPT, where `SLOPE` and `INTERCEPT` are the calculated output parameters.
+    by the formula: ``Y = SLOPE * X + INTERCEPT``,
+    where ``SLOPE`` and ``INTERCEPT`` are the calculated output parameters.
 
     See also
     --------
@@ -2245,7 +2273,7 @@ def linear_regression(*args, **kwargs):
     >>> data = data.linear_regression(
     ...     dependent_variable_field_name=data['Y'],
     ...     independent_variable_field_name=data['X'],
-    ... )  # doctest: +SKIP
+    ... )
     >>> otp.run(data)  # doctest: +SKIP
             Time  SLOPE  INTERCEPT
     0 2003-12-04   -0.3        6.7

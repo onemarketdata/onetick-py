@@ -227,12 +227,11 @@ Year.__doc__ = _add_examples_to_docs('year', """
 
     Use offset in columns:
 
-    >>> t = otp.Tick(A=1)
-    >>> t['T'] = otp.datetime(2012, 12, 12, 12)
-    >>> t['T'] += otp.Year(t['A'])
+    >>> t = otp.Tick(T=otp.datetime(2012, 12, 12, 12))
+    >>> t['T'] += otp.Year(1)
     >>> otp.run(t)
-            Time                   T  A
-    0 2003-12-01 2013-12-12 12:00:00  1
+            Time                    T
+    0 2003-12-01  2013-12-12 12:00:00
 
     Use it to calculate difference between two dates:
 
@@ -254,12 +253,11 @@ Quarter.__doc__ = _add_examples_to_docs('quarter', """
 
     Use offset in columns:
 
-    >>> t = otp.Tick(A=1)
-    >>> t['T'] = otp.datetime(2012, 12, 12, 12, tz='GMT')
-    >>> t['T'] += otp.Quarter(t['A'])
+    >>> t = otp.Tick(T=otp.datetime(2012, 12, 12, 12, tz='GMT'))
+    >>> t['T'] += otp.Quarter(1)
     >>> otp.run(t, start=otp.datetime(2003, 12, 2), end=otp.datetime(2003, 12, 3), timezone='GMT')
-            Time                   T  A
-    0 2003-12-02 2013-03-12 12:00:00  1
+            Time                    T
+    0 2003-12-02  2013-03-12 12:00:00
 
     Use it to calculate difference between two dates:
 
@@ -281,12 +279,11 @@ Month.__doc__ = _add_examples_to_docs('month', """
 
     Use offset in columns:
 
-    >>> t = otp.Tick(A=1)
-    >>> t['T'] = otp.datetime(2012, 12, 12, 12)
-    >>> t['T'] += otp.Month(t['A'])
+    >>> t = otp.Tick(T=otp.datetime(2012, 12, 12, 12))
+    >>> t['T'] += otp.Month(1)
     >>> otp.run(t)
-            Time                   T  A
-    0 2003-12-01 2013-01-12 12:00:00  1
+            Time                    T
+    0 2003-12-01  2013-01-12 12:00:00
 
     Use it to calculate difference between two dates:
 
@@ -308,12 +305,11 @@ Week.__doc__ = _add_examples_to_docs('week', """
 
     Use offset in columns:
 
-    >>> t = otp.Tick(A=1)
-    >>> t['T'] = otp.datetime(2012, 12, 12, 12)
-    >>> t['T'] += otp.Week(t['A'])
+    >>> t = otp.Tick(T=otp.datetime(2012, 12, 12, 12))
+    >>> t['T'] += otp.Week(1)
     >>> otp.run(t)
-            Time                   T  A
-    0 2003-12-01 2012-12-19 12:00:00  1
+            Time                    T
+    0 2003-12-01  2012-12-19 12:00:00
 
     Use it to calculate difference between two dates:
 
@@ -335,12 +331,11 @@ Day.__doc__ = _add_examples_to_docs('day', """
 
     Use offset in columns:
 
-    >>> t = otp.Tick(A=1)
-    >>> t['T'] = otp.datetime(2012, 12, 12, 12)
-    >>> t['T'] += otp.Day(t['A'])
+    >>> t = otp.Tick(T=otp.datetime(2012, 12, 12, 12))
+    >>> t['T'] += otp.Day(1)
     >>> otp.run(t)
-            Time                   T  A
-    0 2003-12-01 2012-12-13 12:00:00  1
+            Time                    T
+    0 2003-12-01  2012-12-13 12:00:00
 
     Use it to calculate difference between two dates:
 
@@ -362,12 +357,11 @@ Hour.__doc__ = _add_examples_to_docs('hour', """
 
     Use offset in columns:
 
-    >>> t = otp.Tick(A=1)
-    >>> t['T'] = otp.datetime(2012, 12, 12, 12)
-    >>> t['T'] += otp.Hour(t['A'])
+    >>> t = otp.Tick(T=otp.datetime(2012, 12, 12, 12))
+    >>> t['T'] += otp.Hour(1)
     >>> otp.run(t)
-            Time                   T  A
-    0 2003-12-01 2012-12-12 13:00:00  1
+            Time                    T
+    0 2003-12-01  2012-12-12 13:00:00
 
     Use it to calculate difference between two dates:
 
@@ -389,12 +383,11 @@ Minute.__doc__ = _add_examples_to_docs('minute', """
 
     Use offset in columns:
 
-    >>> t = otp.Tick(A=1)
-    >>> t['T'] = otp.datetime(2012, 12, 12, 12)
-    >>> t['T'] += otp.Minute(t['A'])
+    >>> t = otp.Tick(T=otp.datetime(2012, 12, 12, 12))
+    >>> t['T'] += otp.Minute(1)
     >>> otp.run(t)
-            Time                   T  A
-    0 2003-12-01 2012-12-12 12:01:00  1
+            Time                    T
+    0 2003-12-01  2012-12-12 12:01:00
 
     Use it to calculate difference between two dates:
 
@@ -421,12 +414,11 @@ Second.__doc__ = _add_examples_to_docs('second', """
 
     Use offset in columns:
 
-    >>> t = otp.Tick(A=1)
-    >>> t['T'] = otp.datetime(2012, 12, 12, 12)
-    >>> t['T'] += otp.Second(t['A'])
+    >>> t = otp.Tick(T=otp.datetime(2012, 12, 12, 12))
+    >>> t['T'] += otp.Second(1)
     >>> otp.run(t)
-            Time                   T  A
-    0 2003-12-01 2012-12-12 12:00:01  1
+            Time                    T
+    0 2003-12-01  2012-12-12 12:00:01
 
     Use it to calculate difference between two dates:
 
@@ -453,12 +445,11 @@ Milli.__doc__ = _add_examples_to_docs('millisecond', """
 
     Use offset in columns:
 
-    >>> t = otp.Tick(A=1)
-    >>> t['T'] = otp.datetime(2012, 12, 12, 12)
-    >>> t['T'] += otp.Milli(t['A'])
+    >>> t = otp.Tick(T=otp.datetime(2012, 12, 12, 12))
+    >>> t['T'] += otp.Milli(1)
     >>> otp.run(t)
-            Time                       T  A
-    0 2003-12-01 2012-12-12 12:00:00.001  1
+            Time                        T
+    0 2003-12-01  2012-12-12 12:00:00.001
 
     Use it to calculate difference between two dates:
 
@@ -482,12 +473,11 @@ Nano.__doc__ = _add_examples_to_docs('nanosecond', """
 
     Use offset in columns:
 
-    >>> t = otp.Tick(A=1)
-    >>> t['T'] = otp.datetime(2012, 12, 12, 12)
-    >>> t['T'] += otp.Nano(t['A'])
+    >>> t = otp.Tick(T=otp.datetime(2012, 12, 12, 12))
+    >>> t['T'] += otp.Nano(1)
     >>> otp.run(t)
-            Time                             T  A
-    0 2003-12-01 2012-12-12 12:00:00.000000001  1
+            Time                              T
+    0 2003-12-01  2012-12-12 12:00:00.000000001
 
     Use it to calculate difference between two dates:
 
@@ -740,8 +730,8 @@ class decimal:
     >>> t = otp.Tick(A=1)
     >>> t['X'] = otp.decimal(1) / 0
     >>> otp.run(t)
-            Time    A    X
-    0 2003-12-01    1  inf
+            Time  A    X
+    0 2003-12-01  1  inf
 
     Note that converting from float (first row) may result in losing precision.
     :py:class:`~onetick.py.types.decimal` objects are created from strings or integers, so they don't lose precision:
@@ -1443,7 +1433,7 @@ class datetime(AbstractTime):
         Examples
         --------
         >>> d = otp.datetime(2021, 6, 3)
-        >>> d.tz_localize("EST5EDT")
+        >>> d.tz_localize('America/New_York')
         2021-06-03 00:00:00-04:00
         """
         return datetime(self.ts.tz_localize(tz))
@@ -1464,8 +1454,8 @@ class datetime(AbstractTime):
 
         Examples
         --------
-        >>> d = otp.datetime(2021, 6, 3, tz="EST5EDT")
-        >>> d.tz_convert("Europe/Moscow")
+        >>> d = otp.datetime(2021, 6, 3, tz='America/New_York')
+        >>> d.tz_convert('Europe/Moscow')
         2021-06-03 07:00:00+03:00
         """
         return datetime(self.ts.tz_convert(tz))
@@ -1482,12 +1472,13 @@ class datetime(AbstractTime):
 
         Examples
         --------
-        >>> t = otp.Ticks(TZ=['EST5EDT', 'GMT'])
+        >>> t = otp.Ticks(TZ=['America/New_York', 'GMT'])
         >>> t['DT'] = otp.dt(2022, 1, 1).to_operation(timezone=t['TZ'])
-        >>> otp.run(t, timezone='GMT')[['TZ', 'DT']]
-                TZ                  DT
-        0  EST5EDT 2022-01-01 05:00:00
-        1      GMT 2022-01-01 00:00:00
+        >>> df = otp.run(t, timezone='GMT')
+        >>> df[['TZ', 'DT']]
+                         TZ                   DT
+        0  America/New_York  2022-01-01 05:00:00
+        1               GMT  2022-01-01 00:00:00
         """
         return otp.Operation(op_str=otp.types.datetime2expr(self, timezone=timezone), dtype=otp.nsectime)
 

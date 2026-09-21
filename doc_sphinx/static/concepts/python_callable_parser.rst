@@ -332,11 +332,11 @@ Tick sequences
 You can iterate over tick sequences inside per-tick script.
 These sequences should be created outside of the per-tick script.
 
-- :func:`otp.state.tick_sequence_tick`
-- :func:`otp.state.tick_list`
-- :func:`otp.state.tick_set`
-- :func:`otp.state.tick_set_unordered`
-- :func:`otp.state.tick_deque`
+- :class:`onetick.py.core._internal._state_objects.TickSequenceTick`
+- :func:`onetick.py.state.tick_list`
+- :func:`onetick.py.state.tick_set`
+- :func:`onetick.py.state.tick_set_unordered`
+- :func:`onetick.py.state.tick_deque`
 
 .. doctest::
 

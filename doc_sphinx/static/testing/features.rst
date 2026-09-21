@@ -139,7 +139,7 @@ Default values fixtures
 ======================  =======================================  =============  ===================
 Name                    Description                              Expected type  Default
 ======================  =======================================  =============  ===================
-``default_tz``          Allows to override the default           str            EST5EDT
+``default_tz``          Allows to override the default           str            America/New_York
                         timezone.
 ----------------------  ---------------------------------------  -------------  -------------------
 ``default_start_time``  Start time for any query interval        str            2003/12/01 00:00:00

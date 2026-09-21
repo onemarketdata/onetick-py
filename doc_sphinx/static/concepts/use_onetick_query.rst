@@ -23,10 +23,11 @@ Implementing EP that is the source of ticks
 -------------------------------------------
 
 Some OneTick event processors are the source of ticks and they have a special interface in ``onetick.py``:
-:py:class:`onetick.py.Source`.
+:class:`otp.Source <onetick.py.Source>`.
 
 Let's use the simplest source of ticks ``otq.TickGenerator`` as an example.
-For already implemented and more powerful version see class :py:class:`onetick.py.Tick`.
+
+(For already implemented and more powerful version see class :class:`otp.Tick <onetick.py.Tick>`)
 
 .. doctest::
 
@@ -57,9 +58,12 @@ Implementing EP that can be sinked
 
 If OneTick's event processor is not a source of ticks then it can be sinked.
 
-We can use method :meth:`onetick.py.Source.sink` to do this.
+We can use method :meth:`otp.Source.sink <onetick.py.Source.sink>` to do this.
+
 Let's use event processor ``otq.AddField`` as an example.
-For already implemented and more powerful version see method :py:meth:`onetick.py.Source.__setitem__`.
+
+(For already implemented and more powerful version
+see method :meth:`otp.Source.__setitem__ <onetick.py.Source.__setitem__>`)
 
 Do not forget to update :ref:`the schema <schema concept>` if needed.
 
@@ -77,12 +81,14 @@ Implementing OneTick built-in functions
 ---------------------------------------
 
 Another thing that can be inserted directly is OneTick built-in functions.
+
 These functions are used in expressions when adding or updating fields.
 These functions do not have special representation in ``onetick.query``, so we can just use strings.
 
 Let's use OneTick's function ``REPLACE`` that replaces some substring in a string.
-For already implemented and more powerful version see method
-:py:meth:`onetick.py.Operation.str.replace <onetick.py.core.column_operations.accessors.str_accessor.replace>`.
+
+(For already implemented and more powerful version see method
+:py:meth:`onetick.py.Operation.str.replace <onetick.py.core.column_operations.accessors.str_accessor._StrAccessor.replace>`)
 
 Special class :py:class:`otp.raw <onetick.py.core.column_operations.base.Raw>`
 can be used to represent arbitrary OneTick expression.

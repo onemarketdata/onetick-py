@@ -15,6 +15,7 @@ query, then `MODIFY_QUERY_TIMES` EP will be applied to each data source with the
 
 Query interval on query execution
 ---------------------------------
+
 Query interval can be set when the query is executed:
 
 ::
@@ -38,6 +39,7 @@ The query interval specified when executing the query applies to every source th
 
 Query interval on a source
 --------------------------
+
 Query interval can be specified when a source is defined:
 
 ::
@@ -48,8 +50,11 @@ Query interval can be specified when a source is defined:
 
 
 Every source can specify its own interval and different sources can have different intervals.
+
 For example, below we specify the intervals to compute the volume on March 1
-in one source and the volume on March 2 in another source. We then merge the two sources and the user does not need to worry
+in one source and the volume on March 2 in another source.
+
+We then merge the two sources and the user does not need to worry
 about setting the interval for the resulting query.
 
 
@@ -93,9 +98,9 @@ The :class:`otp.dt <onetick.py.datetime>` class
 ================================================
 .. _datetime_guide:
 
-The ``start`` and ``end`` parameters take the standard `datetime.datetime` values as well as
+The ``start`` and ``end`` parameters take the standard :py:class:`datetime.datetime` values as well as
 :class:`otp.dt <onetick.py.datetime>` values. The :class:`otp.dt <onetick.py.datetime>` class is introduced to support
-nanoseconds and DST as the standard python ``datetime.datetime`` class does not support them.
+nanoseconds and DST as the standard python :py:class:`datetime.datetime` class does not support them.
 
 :class:`otp.dt <onetick.py.datetime>` could be used in any ``onetick.py`` api call that allows date or time as an input:
 

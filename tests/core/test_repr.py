@@ -9,26 +9,16 @@ import onetick.py as otp
 OTQS = os.path.join(os.path.dirname(__file__), "otqs")
 
 
-def test_to_dataframe(session):
+def test_to_df(session):
     data = otp.Ticks(dict(x=[1, 2, 3]))
 
-    df = otp.run(data)
+    with pytest.warns(FutureWarning):
+        df = data.to_df()
 
     assert len(df) == 3
     assert df.x[0] == 1
     assert df.x[1] == 2
     assert df.x[2] == 3
-
-
-def test_to_df(session):
-    data = otp.Ticks(dict(x=[1, 2, 4]))
-
-    df = otp.run(data)
-
-    assert len(df) == 3
-    assert df.x[0] == 1
-    assert df.x[1] == 2
-    assert df.x[2] == 4
 
 
 @pytest.mark.xfail(reason="it might there is no necessary xdg packages")

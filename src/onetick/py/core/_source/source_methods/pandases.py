@@ -28,8 +28,10 @@ def plot(self: 'Source', y, x='Time', kind='line', **kwargs):
     >>> data = otp.Ticks(X=[1, 2, 3])
     >>> data.plot(y='X', kind='bar')  # doctest: +SKIP
     """
-    result = self.copy()
-    return result[[y, x]]().plot(x=x, y=y, kind=kind, **kwargs)
+    data = self.copy()
+    data = data[[y, x]]
+    df = otp.run(data)
+    return df.plot(x=x, y=y, kind=kind, **kwargs)
 
 
 def count(self: 'Source', **kwargs) -> int:
@@ -67,8 +69,8 @@ def count(self: 'Source', **kwargs) -> int:
     >>> data.count()
     0
     """
-    result = self.copy()
-    df = otp.run(result.agg({'__num_rows': otp.agg.count()}), **kwargs)
+    data = self.copy()
+    df = otp.run(data.agg({'__num_rows': otp.agg.count()}), **kwargs)
     if df.empty:
         return 0
     return int(df['__num_rows'][0])
@@ -102,17 +104,17 @@ def head(self: 'Source', n=5, **kwargs) -> 'pandas.DataFrame':
     --------
 
     >>> data = otp.Ticks(X=list('abcdefgik'))
-    >>> data.head()[['X']]
-        X
-    0 a
-    1 b
-    2 c
-    3 d
-    4 e
+    >>> data.head()
+                         Time  X
+    0 2003-12-01 00:00:00.000  a
+    1 2003-12-01 00:00:00.001  b
+    2 2003-12-01 00:00:00.002  c
+    3 2003-12-01 00:00:00.003  d
+    4 2003-12-01 00:00:00.004  e
     """
-    result = self.copy()
-    result = result.first(n=n)  # pylint: disable=E1123
-    return otp.run(result, **kwargs)
+    data = self.copy()
+    data = data.first(n=n)  # pylint: disable=E1123
+    return otp.run(data, **kwargs)
 
 
 def tail(self: 'Source', n=5, **kwargs) -> 'pandas.DataFrame':
@@ -142,14 +144,14 @@ def tail(self: 'Source', n=5, **kwargs) -> 'pandas.DataFrame':
     Examples
     --------
     >>> data = otp.Ticks(X=list('abcdefgik'))
-    >>> data.tail()[['X']]
-        X
-    0 e
-    1 f
-    2 g
-    3 i
-    4 k
+    >>> data.tail()
+                         Time  X
+    0 2003-12-01 00:00:00.004  e
+    1 2003-12-01 00:00:00.005  f
+    2 2003-12-01 00:00:00.006  g
+    3 2003-12-01 00:00:00.007  i
+    4 2003-12-01 00:00:00.008  k
     """
-    result = self.copy()
-    result = result.last(n=n)  # pylint: disable=E1123
-    return otp.run(result, **kwargs)
+    data = self.copy()
+    data = data.last(n=n)  # pylint: disable=E1123
+    return otp.run(data, **kwargs)

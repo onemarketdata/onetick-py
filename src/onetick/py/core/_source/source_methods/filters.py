@@ -618,7 +618,7 @@ def dropna(
     Examples
     --------
 
-    Drop ticks where **at least one** field has ``nan`` value.
+    Drop ticks where **at least one** field has NaN value.
 
     >>> data = otp.Ticks([[     'X',     'Y'],
     ...                   [     0.0,     1.0],
@@ -627,12 +627,12 @@ def dropna(
     ...                   [ otp.nan, otp.nan],
     ...                   [     6.0,    7.0]])
     >>> data = data.dropna()
-    >>> otp.run(data)[['X', 'Y']]
-        X   Y
-    0 0.0 1.0
-    1 6.0 7.0
+    >>> otp.run(data)
+                         Time    X    Y
+    0 2003-12-01 00:00:00.000  0.0  1.0
+    1 2003-12-01 00:00:00.004  6.0  7.0
 
-    Drop ticks where **all** fields have ``nan`` values.
+    Drop ticks where **all** fields have NaN values.
 
     >>> data = otp.Ticks([[     'X',     'Y'],
     ...                   [     0.0,     1.0],
@@ -641,14 +641,14 @@ def dropna(
     ...                   [ otp.nan, otp.nan],
     ...                   [     6.0,    7.0]])
     >>> data = data.dropna(how='all')
-    >>> otp.run(data)[['X', 'Y']]
-        X   Y
-    0 0.0 1.0
-    1 NaN 2.0
-    2 4.0 NaN
-    3 6.0 7.0
+    >>> otp.run(data)
+                         Time    X    Y
+    0 2003-12-01 00:00:00.000  0.0  1.0
+    1 2003-12-01 00:00:00.001  NaN  2.0
+    2 2003-12-01 00:00:00.002  4.0  NaN
+    3 2003-12-01 00:00:00.004  6.0  7.0
 
-    Drop ticks where **all** fields in **subset** of columns have ``nan`` values.
+    Drop ticks where **all** fields in ``subset`` of columns have NaN values.
 
     >>> data = otp.Ticks([[     'X',     'Y',    'Z'],
     ...                   [     0.0,     1.0, otp.nan],
@@ -657,13 +657,12 @@ def dropna(
     ...                   [ otp.nan, otp.nan, otp.nan],
     ...                   [     6.0,     7.0, otp.nan]])
     >>> data = data.dropna(how='all', subset=['X', 'Y'])
-    >>> otp.run(data)[['X', 'Y', 'Z']]
-        X   Y   Z
-    0 0.0 1.0 NaN
-    1 NaN 2.0 NaN
-    2 4.0 NaN NaN
-    3 6.0 7.0 NaN
-
+    >>> otp.run(data)
+                         Time    X    Y   Z
+    0 2003-12-01 00:00:00.000  0.0  1.0 NaN
+    1 2003-12-01 00:00:00.001  NaN  2.0 NaN
+    2 2003-12-01 00:00:00.002  4.0  NaN NaN
+    3 2003-12-01 00:00:00.004  6.0  7.0 NaN
     """
     if how not in ["any", "all"]:
         raise ValueError(f"It is expected to see 'any' or 'all' values for 'how' parameter, but got '{how}'")
@@ -809,7 +808,6 @@ def skip_bad_tick(
     """
     Discards ticks based on whether the value of the attribute specified by ``field`` differs from the value
     of the same attribute in the surrounding ticks more times than a given threshold.
-    Uses SKIP_BAD_TICK EP.
 
     Parameters
     ----------
@@ -1094,8 +1092,11 @@ def value_present(
 
 def primary_exch(self: 'Source', discard_on_match: bool = False) -> tuple['Source', 'Source']:
     """
-    Propagates the tick if its exchange is the PRIMARY exchange of the security. The primary exchange information
-    is supplied through the Reference Database. It expects the security level symbol (IBM, not IBM.N) and works
+    Propagates the tick if its exchange is the PRIMARY exchange of the security.
+
+    The primary exchange information is supplied through the Reference Database.
+
+    It expects the security level symbol (IBM, not IBM.N) and works
     by looking for a field called ``EXCHANGE`` and filtering out ticks where the field does not match
     the primary exchange for the security.
 
@@ -1122,9 +1123,9 @@ def primary_exch(self: 'Source', discard_on_match: bool = False) -> tuple['Sourc
 
     Get ticks from primary exchange:
 
-    >>> src = otp.DataSource('SOME_DB', tick_type='TRD', symbols='AAA', date=otp.date(2003, 12, 1))  # doctest: +SKIP
-    >>> src, _ = src.primary_exch()  # doctest: +SKIP
-    >>> otp.run(src, symbol_date=otp.date(2003, 12, 1))  # doctest: +SKIP
+    >>> src = otp.DataSource('SOME_DB', tick_type='TRD', symbols='AAA')              # doctest: +SKIP
+    >>> src, _ = src.primary_exch()                                                  # doctest: +SKIP
+    >>> otp.run(src, date=otp.date(2003, 12, 1), symbol_date=otp.date(2003, 12, 1))  # doctest: +SKIP
                          Time  PRICE  SIZE EXCHANGE
     0 2003-12-01 00:00:00.001   26.5   150        B
     1 2003-12-01 00:00:00.002   25.7    20        B
@@ -1132,11 +1133,11 @@ def primary_exch(self: 'Source', discard_on_match: bool = False) -> tuple['Sourc
     Get all ticks, but mark ticks from primary exchange in column ``T``:
 
     >>> src = otp.DataSource('SOME_DB', tick_type='TRD', symbols='AAA', date=otp.date(2003, 12, 1))  # doctest: +SKIP
-    >>> primary, other = src.primary_exch()  # doctest: +SKIP
-    >>> primary['T'] = 1  # doctest: +SKIP
-    >>> other['T'] = 0  # doctest: +SKIP
-    >>> data = otp.merge([primary, other])  # doctest: +SKIP
-    >>> otp.run(src, symbol_date=otp.date(2003, 12, 1))  # doctest: +SKIP
+    >>> primary, other = src.primary_exch()                                                          # doctest: +SKIP
+    >>> primary['T'] = 1                                                                             # doctest: +SKIP
+    >>> other['T'] = 0                                                                               # doctest: +SKIP
+    >>> data = otp.merge([primary, other])                                                           # doctest: +SKIP
+    >>> otp.run(src, symbol_date=otp.date(2003, 12, 1))                                              # doctest: +SKIP
                          Time  PRICE  SIZE EXCHANGE  T
     0 2003-12-01 00:00:00.000   25.2   100        A  0
     1 2003-12-01 00:00:00.001   26.5   150        B  1

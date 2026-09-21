@@ -93,10 +93,11 @@ class OneTickLib:
         """
         Destroy otq.OneTickLib instance and reset singleton class
         """
-        del OneTickLib.__instance
-        gc.collect()
+        obj = OneTickLib.__instance
         OneTickLib.__instance = None
         OneTickLib.__args = None
+        del obj
+        gc.collect()
 
     def set_log_file(self, log_file):
         """

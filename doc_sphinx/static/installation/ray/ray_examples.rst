@@ -68,7 +68,7 @@ The only difference is that you must put arguments inside ``function.remote()`` 
 
         # Create order flow.
         # In practice, it can be take from a CSV file for from a DataFrame.
-        order = otp.Ticks(timezone_for_time='EST5EDT',
+        order = otp.Ticks(timezone_for_time='America/New_York',
                           start=start,
                           end=start + otp.Hour(1),
                           offset = [otp.Milli(x * 500) for x in range(0, num_orders)],
@@ -127,8 +127,8 @@ Remote run approach leads to some usage limitations:
 Using apply() method in remote context
 --------------------------------------
 
-Technical implementation of :doc:`/api/source/apply` method requires user to use :doc:`/api/misc/remote` decorator
-with functions and lambda expressions that will be used as arguments to :doc:`/api/source/apply` method.
+Technical implementation of :meth:`onetick.py.Source.apply` method requires user to use :doc:`/api/misc/remote` decorator
+with functions and lambda expressions that will be used as arguments to :meth:`onetick.py.Source.apply` method.
 
 .. code-block:: python
 

@@ -33,7 +33,7 @@
 <polygon fill="none" stroke="black" points="228,-216.5 228,-237.5 382,-237.5 382,-216.5 228,-216.5"/>
 <text text-anchor="start" x="248" y="-223.3" font-family="Times,serif" font-size="14.00">1969/12/31 19:00:00</text>
 <polygon fill="none" stroke="black" points="382,-216.5 382,-237.5 480,-237.5 480,-216.5 382,-216.5"/>
-<text text-anchor="start" x="402" y="-223.3" font-family="Times,serif" font-size="14.00">EST5EDT</text>
+<text text-anchor="start" x="402" y="-223.3" font-family="Times,serif" font-size="14.00">America/New_York</text>
 <polygon fill="#f2f2f2" stroke="none" points="40,-195.5 40,-216.5 480,-216.5 480,-195.5 40,-195.5"/>
 <polygon fill="none" stroke="black" points="40,-195.5 40,-216.5 480,-216.5 480,-195.5 40,-195.5"/>
 <text text-anchor="start" x="194" y="-202.3" font-family="Times,serif" font-size="14.00">START_EXPRESSION</text>

@@ -143,7 +143,7 @@ def test_real_defaults(monkeypatch):
 
 
 def test_conftest_defaults():
-    assert otp.config['tz'] == 'EST5EDT'
+    assert otp.config['tz'] == 'America/New_York'
     assert otp.config['default_db'] == 'DEMO_L1'
     assert otp.config['default_symbol'] == 'AAPL'
     assert otp.config['default_db_symbol'] == 'DEMO_L1::AAPL'
@@ -154,7 +154,7 @@ def test_conftest_defaults():
 
 def test_deprecated_vars():
     with pytest.warns(FutureWarning):
-        assert otp.DEFAULT_TZ == 'EST5EDT'
+        assert otp.DEFAULT_TZ == 'America/New_York'
     with pytest.warns(FutureWarning):
         assert otp.DEFAULT_DB == 'DEMO_L1'
     with pytest.warns(FutureWarning):

@@ -484,7 +484,7 @@ class Source:
             Batch size set for the query.
             Will be applied only to the main query.
         query_properties: :py:class:`pyomd.QueryProperties` or dict, optional
-            Query properties, such as ONE_TO_MANY_POLICY, ALLOW_GRAPH_REUSE, etc
+            Query properties, see OneTick server documentation for available options.
 
         Returns
         -------
@@ -1018,7 +1018,7 @@ class Source:
         >>> data = otp.merge([data1, data2])
         >>> data.render()  # doctest: +SKIP
 
-        .. graphviz:: ../../static/render_example.dot
+        .. graphviz:: ../../../static/render_example.dot
         """
         warnings.warn("Function otp.Source.render() is deprecated. Use otp.Source.render_otq() instead.", FutureWarning)
         kwargs.setdefault('verbose', True)
@@ -1095,7 +1095,7 @@ class Source:
         >>> data = otp.merge([data1, data2])                                             # doctest: +SKIP
         >>> data.render_otq('./path/to/image.png')                                       # doctest: +SKIP
 
-        .. image:: ../../static/testing/images/render_otq_3.png
+        .. image:: ../../../static/testing/images/render_otq_3.png
         """
 
         if {'file_name', 'file_suffix', 'query_name'} & kwargs.keys():
@@ -1686,7 +1686,7 @@ class Source:
         --------
         Python can't follow low level change of column, e.g. complex query or pertick script can be sink.
 
-        >>> data = otp.Ticks(dict(A=[1, 2], B=["a", "b"]))
+        >>> data = otp.Ticks(A=[1, 2], B=['a', 'b'])
         >>> data.sink(otq.AddField(field='Z', value='5'))
         >>> data.columns(skip_meta_fields=True)
         {'A': <class 'int'>, 'B': <class 'str'>}

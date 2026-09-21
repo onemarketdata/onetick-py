@@ -128,8 +128,8 @@ The field type can be modified. This is done implicitly when values of a differe
     data['X'] = 1              # it is the `int` type
     data['X'] = data['X'] / 2  # here it becomes `float`
 
-or it could be done explicitly using the :meth:`onetick.py.Source.apply` method
-(or equivalently -- :meth:`onetick.py.Source.astype`)
+or it could be done explicitly using the :meth:`onetick.py.Operation.apply` method
+(or equivalently -- :meth:`onetick.py.Operation.astype`)
 
 .. testcode::
 

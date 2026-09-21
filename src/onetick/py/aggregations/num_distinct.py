@@ -75,7 +75,7 @@ def num_distinct(*args, **kwargs):
 
     Examples
     --------
-    >>> data = otp.Ticks(dict(X=[1, 3, 2, 1, 3]))
+    >>> data = otp.Ticks(X=[1, 3, 2, 1, 3])
     >>> data = data.agg({'X': otp.agg.num_distinct('X')})
     >>> otp.run(data)
             Time  X

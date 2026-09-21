@@ -327,8 +327,8 @@ class Operation:
         >>> data['B'] = data['B'].astype(int) + 1
         >>> data['C'] = data['C'].astype(float) + 0.1
         >>> otp.run(data)
-                Time  B   A    C
-        0 2003-12-01  3  1A  3.4
+                Time   A  B    C
+        0 2003-12-01  1A  3  3.4
         """
         return self.apply(to_type)
 
@@ -379,21 +379,21 @@ class Operation:
         This function's result can be used as filter expression:
 
         >>> data = otp.Ticks(A=[1, 2, 3, 0])
-        >>> yes, no = data[data["A"].isin(0, 1)]    # OTdirective: snippet-name: column operations.is in.constant;
-        >>> otp.run(yes)[["A"]]
-           A
-        0  1
-        1  0
+        >>> data = data.where(data['A'].isin(0, 1))    # OTdirective: snippet-name: column operations.is in.constant;
+        >>> otp.run(data)
+                             Time  A
+        0 2003-12-01 00:00:00.000  1
+        1 2003-12-01 00:00:00.003  0
 
         :py:class:`Columns <onetick.py.Column>` and :py:class:`operations <onetick.py.Operation>` are also supported:
 
         >>> # OTdirective: snippet-name: column operations.is in.from fields;
-        >>> data = otp.Ticks(A=["ab", "cv", "bc", "a", "d"], B=["a", "c", "b", "a", "a"])
-        >>> yes, no = data[data["A"].isin(data["B"], data["B"] + "b")]
-        >>> otp.run(yes)[["A", "B"]]
-            A  B
-        0  ab  a
-        1   a  a
+        >>> data = otp.Ticks(A=['ab', 'cv', 'bc', 'a', 'd'], B=['a', 'c', 'b', 'a', 'a'])
+        >>> data = data.where(data['A'].isin(data['B'], data['B'] + 'b'))
+        >>> otp.run(data)
+                             Time   A  B
+        0 2003-12-01 00:00:00.000  ab  a
+        1 2003-12-01 00:00:00.003   a  a
         """
         if items and isinstance(items[0], Sequence) and not isinstance(items[0], str):
             if len(items) > 1:
@@ -506,9 +506,9 @@ class Operation:
         >>> t = otp.Tick(A=-1, B=-2.3)
         >>> t['A'] = abs(t['A'])
         >>> t['B'] = abs(t['B'])
-        >>> otp.run(t)[['A', 'B']]
-           A    B
-        0  1  2.3
+        >>> otp.run(t)
+                Time  A    B
+        0 2003-12-01  1  2.3
         """
         return _Operation(_methods.abs, [self])
 
@@ -601,9 +601,9 @@ class Operation:
         >>> t = otp.Tick(A=1, B=2.3)
         >>> t['A'] = -t['A']
         >>> t['B'] = -t['B']
-        >>> otp.run(t)[['A', 'B']]
-           A    B
-        0 -1 -2.3
+        >>> otp.run(t)
+                Time   A     B
+        0 2003-12-01  -1  -2.3
         """
         return _Operation(_methods.neg, [self])
 
@@ -622,9 +622,9 @@ class Operation:
         >>> t['B'] = t['B'] + 1
         >>> t['C'] = t['C'] + '_suffix'
         >>> t['D'] = t['D'] + otp.Day(1)
-        >>> otp.run(t)[['A', 'B', 'C', 'D']]
-             A    B         C          D
-        0  3.3  3.3  c_suffix 2022-05-13
+        >>> otp.run(t)
+                Time    A    B         C          D
+        0 2003-12-01  3.3  3.3  c_suffix 2022-05-13
         """
         return _Operation(_methods.add, [self, other])
 
@@ -641,9 +641,9 @@ class Operation:
         >>> t['B'] += 1
         >>> t['C'] += '_suffix'
         >>> t['D'] += otp.Day(1)
-        >>> otp.run(t)[['A', 'B', 'C', 'D']]
-             A    B         C          D
-        0  3.3  3.3  c_suffix 2022-05-13
+        >>> otp.run(t)
+                Time    A    B         C          D
+        0 2003-12-01  3.3  3.3  c_suffix 2022-05-13
         """
         return _Operation(_methods.add, [other, self])
 
@@ -661,9 +661,9 @@ class Operation:
         >>> t['A'] = t['A'] - t['B']
         >>> t['B'] = t['B'] - 1
         >>> t['D'] = t['D'] - otp.Day(1)
-        >>> otp.run(t)[['A', 'B', 'D']]
-             A    B          D
-        0 -1.3  1.3 2022-05-11
+        >>> otp.run(t)
+                Time    A    B          D
+        0 2003-12-01 -1.3  1.3 2022-05-11
         """
         return _Operation(_methods.sub, [self, other])
 
@@ -679,9 +679,9 @@ class Operation:
         >>> t['A'] -= t['B']
         >>> t['B'] -= 1
         >>> t['D'] -= otp.Day(1)
-        >>> otp.run(t)[['A', 'B', 'D']]
-             A    B          D
-        0 -1.3  1.3 2022-05-11
+        >>> otp.run(t)
+                Time    A    B          D
+        0 2003-12-01 -1.3  1.3 2022-05-11
         """
         return _Operation(_methods.sub, [other, self])
 
@@ -699,9 +699,9 @@ class Operation:
         >>> t['A'] = t['A'] * t['B']
         >>> t['B'] = t['B'] * 2
         >>> t['C'] = t['C'] * 3
-        >>> otp.run(t)[['A', 'B', 'C']]
-             A    B    C
-        0  2.3  4.6  ccc
+        >>> otp.run(t)
+                Time    A    B    C
+        0 2003-12-01  2.3  4.6  ccc
         """
         return _Operation(_methods.mul, [self, other])
 
@@ -717,9 +717,9 @@ class Operation:
         >>> t['A'] *= t['B']
         >>> t['B'] *= 2
         >>> t['C'] *= 3
-        >>> otp.run(t)[['A', 'B', 'C']]
-             A    B    C
-        0  2.3  4.6  ccc
+        >>> otp.run(t)
+                Time    A    B    C
+        0 2003-12-01  2.3  4.6  ccc
         """
         return _Operation(_methods.mul, [other, self])
 
@@ -736,9 +736,9 @@ class Operation:
         >>> t = otp.Tick(A=1, B=2.3)
         >>> t['A'] = t['A'] / t['B']
         >>> t['B'] = t['B'] / 2
-        >>> otp.run(t)[['A', 'B']]
-                  A     B
-        0  0.434783  1.15
+        >>> otp.run(t)
+                Time         A     B
+        0 2003-12-01  0.434783  1.15
         """
         return _Operation(_methods.div, [self, other])
 
@@ -753,9 +753,9 @@ class Operation:
         >>> t = otp.Tick(A=1, B=2.3)
         >>> t['A'] /= t['B']
         >>> t['B'] /= 2
-        >>> otp.run(t)[['A', 'B']]
-                  A     B
-        0  0.434783  1.15
+        >>> otp.run(t)
+                Time         A     B
+        0 2003-12-01  0.434783  1.15
         """
         return _Operation(_methods.div, [other, self])
 
@@ -772,9 +772,9 @@ class Operation:
         >>> t = otp.Tick(A=3, B=3)
         >>> t['A'] = t['A'] % t['B']
         >>> t['B'] = t['B'] % 2
-        >>> otp.run(t)[['A', 'B']]
-           A  B
-        0  0  1
+        >>> otp.run(t)
+                Time  A  B
+        0 2003-12-01  0  1
         """
         return _Operation(_methods.mod, [self, other])
 
@@ -784,12 +784,12 @@ class Operation:
 
         Examples
         --------
-        >>> t = otp.Ticks(A=range(4))
+        >>> t = otp.Ticks(A=[0, 1, 2, 3])
         >>> t = t.where(~(t['A'] > 1))
-        >>> otp.run(t)[['A']]
-           A
-        0  0
-        1  1
+        >>> otp.run(t)
+                             Time  A
+        0 2003-12-01 00:00:00.000  0
+        1 2003-12-01 00:00:00.001  1
         """
         result = _Operation(_methods.invert, [self])
         return result
@@ -800,11 +800,11 @@ class Operation:
 
         Examples
         --------
-        >>> t = otp.Ticks(A=range(4))
-        >>> t = t.where((t['A'] == 1))
-        >>> otp.run(t)[['A']]
-           A
-        0  1
+        >>> t = otp.Ticks(A=[0, 1, 2, 3])
+        >>> t = t.where(t['A'] == 1)
+        >>> otp.run(t)
+                             Time  A
+        0 2003-12-01 00:00:00.001  1
         """
         result = _Operation(_methods.eq, [self, other])
         return result
@@ -815,13 +815,13 @@ class Operation:
 
         Examples
         --------
-        >>> t = otp.Ticks(A=range(4))
-        >>> t = t.where((t['A'] != 1))
-        >>> otp.run(t)[['A']]
-           A
-        0  0
-        1  2
-        2  3
+        >>> t = otp.Ticks(A=[0, 1, 2, 3])
+        >>> t = t.where(t['A'] != 1)
+        >>> otp.run(t)
+                             Time  A
+        0 2003-12-01 00:00:00.000  0
+        1 2003-12-01 00:00:00.002  2
+        2 2003-12-01 00:00:00.003  3
         """
         result = _Operation(_methods.ne, [self, other])
         return result
@@ -832,12 +832,12 @@ class Operation:
 
         Examples
         --------
-        >>> t = otp.Ticks(A=range(4))
+        >>> t = otp.Ticks(A=[0, 1, 2, 3])
         >>> t = t.where((t['A'] == 1) | (t['A'] == 2))
-        >>> otp.run(t)[['A']]
-           A
-        0  1
-        1  2
+        >>> otp.run(t)
+                             Time  A
+        0 2003-12-01 00:00:00.001  1
+        1 2003-12-01 00:00:00.002  2
         """
         result = _Operation(_methods.or_, [self, other])
         return result
@@ -850,9 +850,9 @@ class Operation:
         --------
         >>> t = otp.Ticks(A=[1, 1], B=[1, 2])
         >>> t = t.where((t['A'] == 1) & (t['B'] == 1))
-        >>> otp.run(t)[['A', 'B']]
-           A  B
-        0  1  1
+        >>> otp.run(t)
+                Time  A  B
+        0 2003-12-01  1  1
         """
         result = _Operation(_methods.and_, [self, other])
         return result
@@ -863,13 +863,13 @@ class Operation:
 
         Examples
         --------
-        >>> t = otp.Ticks(A=range(4))
+        >>> t = otp.Ticks(A=[0, 1, 2, 3])
         >>> t = t.where(t['A'] <= 2)
-        >>> otp.run(t)[['A']]
-           A
-        0  0
-        1  1
-        2  2
+        >>> otp.run(t)
+                             Time  A
+        0 2003-12-01 00:00:00.000  0
+        1 2003-12-01 00:00:00.001  1
+        2 2003-12-01 00:00:00.002  2
         """
         result = _Operation(_methods.le, [self, other])
         return result
@@ -880,12 +880,12 @@ class Operation:
 
         Examples
         --------
-        >>> t = otp.Ticks(A=range(4))
+        >>> t = otp.Ticks(A=[0, 1, 2, 3])
         >>> t = t.where(t['A'] < 2)
-        >>> otp.run(t)[['A']]
-           A
-        0  0
-        1  1
+        >>> otp.run(t)
+                             Time  A
+        0 2003-12-01 00:00:00.000  0
+        1 2003-12-01 00:00:00.001  1
         """
         result = _Operation(_methods.lt, [self, other])
         return result
@@ -896,12 +896,12 @@ class Operation:
 
         Examples
         --------
-        >>> t = otp.Ticks(A=range(4))
+        >>> t = otp.Ticks(A=[0, 1, 2, 3])
         >>> t = t.where(t['A'] >= 2)
-        >>> otp.run(t)[['A']]
-           A
-        0  2
-        1  3
+        >>> otp.run(t)
+                             Time  A
+        0 2003-12-01 00:00:00.002  2
+        1 2003-12-01 00:00:00.003  3
         """
         result = _Operation(_methods.ge, [self, other])
         return result
@@ -912,11 +912,11 @@ class Operation:
 
         Examples
         --------
-        >>> t = otp.Ticks(A=range(4))
+        >>> t = otp.Ticks(A=[0, 1, 2, 3])
         >>> t = t.where(t['A'] > 2)
-        >>> otp.run(t)[['A']]
-           A
-        0  3
+        >>> otp.run(t)
+                             Time  A
+        0 2003-12-01 00:00:00.003  3
         """
         result = _Operation(_methods.gt, [self, other])
         return result

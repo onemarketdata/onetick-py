@@ -59,7 +59,7 @@ def create_cache(
     db: Optional[str] = None,
 ):
     """
-    Create cache via CREATE_CACHE EP
+    Create cache via CREATE_CACHE EP.
 
     If :py:class:`onetick.py.Source` or callable passed as ``query`` parameter,
     cache will be created only for current session.
@@ -132,14 +132,14 @@ def create_cache(
 
     Examples
     --------
-    Simple cache creation from .otq file on OneTick server under ``OTQ_FILE_PATH``
+    Simple cache creation from .otq file on OneTick server under ``OTQ_FILE_PATH``:
 
     >>> otp.create_cache(  # doctest: +SKIP
     ...    cache_name="some_cache", query="CACHE_EXAMPLE.otq::slowquery",
     ...    tick_type="TRD", db="LOCAL",
     ... )
 
-    Cache creation from function
+    Cache creation from function:
 
     >>> def query_func():
     ...    return otp.DataSource("COMMON", tick_type="TRD", symbols="AAPL")

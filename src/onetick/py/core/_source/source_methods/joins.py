@@ -344,33 +344,34 @@ def join_with_collection(
     Examples
     --------
     >>> # OTdirective: snippet-name: Special functions.join with collection.without query;
-    >>> src = otp.Tick(A=1)
-    >>> src.state_vars['TICK_SET'] = otp.state.tick_set('LATEST_TICK', 'B', otp.eval(otp.Tick(B=1, C='STR')))
-    >>> src = src.join_with_collection('TICK_SET')
-    >>> otp.run(src)[["A", "B", "C"]]
-        A  B    C
-    0  1  1  STR
+    >>> data = otp.Tick(A=1)
+    >>> data.state_vars['TICK_SET'] = otp.state.tick_set('LATEST_TICK', 'B', otp.Tick(B=1, C='STR'))
+    >>> data = data.join_with_collection('TICK_SET')
+    >>> otp.run(data)
+            Time  B    C  A
+    0 2003-12-01  1  STR  1
 
     >>> # OTdirective: snippet-name: Special functions.join with collection.with query and params;
-    >>> src = otp.Ticks(A=[1, 2, 3, 4, 5],
-    ...                 B=[2, 2, 3, 3, 3])
-    >>> src.state_vars['TICK_LIST'] = otp.state.tick_list()
-    >>> def fun(tick): tick.state_vars['TICK_LIST'].push_back(tick)
-    >>> src = src.script(fun)
+    >>> data = otp.Ticks(A=[1, 2, 3, 4, 5],
+    ...                  B=[2, 2, 3, 3, 3])
+    >>> data.state_vars['TICK_LIST'] = otp.state.tick_list()
+    >>> def fun(tick):
+    ...     tick.state_vars['TICK_LIST'].push_back(tick)
+    >>> data = data.script(fun)
     >>>
     >>> def join_fun(source, param_b):
-    ...     source = source.agg(dict(VALUE=otp.agg.sum(source['A'])))
+    ...     source = source.agg({'VALUE': otp.agg.sum(source['A'])})
     ...     source['VALUE'] = source['VALUE'] + param_b
     ...     return source
     >>>
-    >>> src = src.join_with_collection('TICK_LIST', join_fun, params=dict(param_b=src['B']))
-    >>> otp.run(src)[["A", "B", "VALUE"]]
-        A  B  VALUE
-    0  1  2      3
-    1  2  2      5
-    2  3  3      9
-    3  4  3     13
-    4  5  3     18
+    >>> data = data.join_with_collection('TICK_LIST', join_fun, params={'param_b': data['B']})
+    >>> otp.run(data)
+                         Time  VALUE  A  B
+    0 2003-12-01 00:00:00.000      3  1  2
+    1 2003-12-01 00:00:00.001      5  2  2
+    2 2003-12-01 00:00:00.002      9  3  3
+    3 2003-12-01 00:00:00.003     13  4  3
+    4 2003-12-01 00:00:00.004     18  5  3
 
     Join last standing quote from each exchange to trades:
 
@@ -387,32 +388,33 @@ def join_with_collection(
     >>> trd['TICK_TYPE'] = 'TRD'
     >>> qte['TICK_TYPE'] = 'QTE'
     >>>
-    >>> trd_qte = trd + qte
-    >>> trd_qte.state_vars['LAST_QUOTE_PER_EXCHANGE'] = otp.state.tick_set(
+    >>> data = otp.merge([trd, qte])
+    >>> data.state_vars['LAST_QUOTE_PER_EXCHANGE'] = otp.state.tick_set(
     ...     'LATEST', 'EXCHANGE',
-    ...     schema=['EXCHANGE', 'ASK_PRICE', 'BID_PRICE'])
+    ...     schema=['EXCHANGE', 'ASK_PRICE', 'BID_PRICE']
+    ... )
     >>>
-    >>> trd_qte = trd_qte.state_vars['LAST_QUOTE_PER_EXCHANGE'].update(where=trd_qte['TICK_TYPE'] == 'QTE',
-    ...                                                                value_fields=['ASK_PRICE', 'BID_PRICE'])
-    >>> trd = trd_qte.where(trd_qte['TICK_TYPE'] == 'TRD')
-    >>> trd.drop(['ASK_PRICE', 'BID_PRICE', 'EXCHANGE'], inplace=True)
-    >>> trd = trd.join_with_collection('LAST_QUOTE_PER_EXCHANGE')
-    >>> otp.run(trd)[['PRICE', 'SIZE', 'EXCHANGE', 'ASK_PRICE', 'BID_PRICE']]
-        PRICE  SIZE EXCHANGE  ASK_PRICE  BID_PRICE
-    0   10.10   100        N      10.20      10.10
-    1   10.10   100        C      10.18      10.17
-    2   10.20    50        N      10.20      10.10
-    3   10.20    50        C      10.18      10.17
-    4   10.20    50        Q      10.18      10.17
-    5   10.15   100        N      10.20      10.10
-    6   10.15   100        C      10.18      10.17
-    7   10.15   100        Q      10.15      10.10
-    8   10.23    60        N      10.32      10.31
-    9   10.23    60        C      10.31      10.23
-    10  10.23    60        Q      10.15      10.10
-    11  10.40   200        N      10.32      10.31
-    12  10.40   200        C      10.44      10.40
-    13  10.40   200        Q      10.15      10.10
+    >>> data = data.state_vars['LAST_QUOTE_PER_EXCHANGE'].update(where=data['TICK_TYPE'] == 'QTE',
+    ...                                                          value_fields=['ASK_PRICE', 'BID_PRICE'])
+    >>> data = data.where(data['TICK_TYPE'] == 'TRD')
+    >>> data = data.drop(['ASK_PRICE', 'BID_PRICE', 'EXCHANGE'])
+    >>> data = data.join_with_collection('LAST_QUOTE_PER_EXCHANGE')
+    >>> otp.run(data)
+                      Time EXCHANGE  ASK_PRICE  BID_PRICE  PRICE  SIZE TICK_TYPE
+    0  2003-12-01 00:00:01        N      10.20      10.10  10.10   100       TRD
+    1  2003-12-01 00:00:01        C      10.18      10.17  10.10   100       TRD
+    2  2003-12-01 00:00:02        N      10.20      10.10  10.20    50       TRD
+    3  2003-12-01 00:00:02        C      10.18      10.17  10.20    50       TRD
+    4  2003-12-01 00:00:02        Q      10.18      10.17  10.20    50       TRD
+    5  2003-12-01 00:00:03        N      10.20      10.10  10.15   100       TRD
+    6  2003-12-01 00:00:03        C      10.18      10.17  10.15   100       TRD
+    7  2003-12-01 00:00:03        Q      10.15      10.10  10.15   100       TRD
+    8  2003-12-01 00:00:04        N      10.32      10.31  10.23    60       TRD
+    9  2003-12-01 00:00:04        C      10.31      10.23  10.23    60       TRD
+    10 2003-12-01 00:00:04        Q      10.15      10.10  10.23    60       TRD
+    11 2003-12-01 00:00:05        N      10.32      10.31  10.40   200       TRD
+    12 2003-12-01 00:00:05        C      10.44      10.40  10.40   200       TRD
+    13 2003-12-01 00:00:05        Q      10.15      10.10  10.40   200       TRD
     """
 
     # check that passed collection is good
@@ -650,113 +652,107 @@ def join_with_query(
     Examples
     --------
     >>> # OTdirective: snippet-name: Special functions.join with query.with an otp data source;
-    >>> d = otp.Ticks(Y=[-1])
-    >>> d = d.update(dict(Y=1), where=(d.Symbol.name == "a"))
+    >>> joined = otp.Ticks(Y=[-1])
+    >>> joined = joined.update(dict(Y=1), where=(joined.Symbol.name == 'a'))
     >>> data = otp.Ticks(X=[1, 2],
-    ...                  S=["a", "b"])
-    >>> res = data.join_with_query(d, how='inner', symbol=data['S'])
-    >>> otp.run(res)[["X", "Y", "S"]]
-       X  Y  S
-    0  1  1  a
-    1  2 -1  b
+    ...                  S=['a', 'b'])
+    >>> data = data.join_with_query(joined, how='inner', symbol=data['S'])
+    >>> otp.run(data)
+                         Time  Y  X  S
+    0 2003-12-01 00:00:00.000  1  1  a
+    1 2003-12-01 00:00:00.001 -1  2  b
 
-    >>> d = otp.Ticks(ADDED=[-1])
-    >>> d = d.update(dict(ADDED=1), where=(d.Symbol.name == "3"))  # symbol name is always string
+    >>> joined = otp.Ticks(ADDED=[-1])
+    >>> joined = joined.update({'ADDED': 1}, where=(joined.Symbol.name == '3'))  # symbol name is always string
     >>> data = otp.Ticks(A=[1, 2], B=[2, 4])
-    >>> res = data.join_with_query(d, how='inner', symbol=(data['A'] + data['B']))  # OTdirective: skip-snippet:;
-    >>> df = otp.run(res)
-    >>> df[["A", "B", "ADDED"]]
-       A  B  ADDED
-    0  1  2      1
-    1  2  4     -1
+    >>> data = data.join_with_query(joined, how='inner', symbol=(data['A'] + data['B']))  # OTdirective: skip-snippet:;
+    >>> otp.run(data)
+                         Time  ADDED  A  B
+    0 2003-12-01 00:00:00.000      1  1  2
+    1 2003-12-01 00:00:00.001     -1  2  4
 
     Constants as symbols are also supported:
 
-    >>> d = otp.Ticks(ADDED=[d.Symbol.name])
+    >>> joined = otp.Ticks(ADDED=[otp.Source.Symbol.name])
     >>> data = otp.Ticks(A=[1, 2], B=[2, 4])
-    >>> res = data.join_with_query(d, how='inner', symbol=1)    # OTdirective: skip-snippet:;
-    >>> df = otp.run(res)
-    >>> df[["A", "B", "ADDED"]]
-       A  B ADDED
-    0  1  2     1
-    1  2  4     1
+    >>> data = data.join_with_query(joined, how='inner', symbol='XX')    # OTdirective: skip-snippet:;
+    >>> otp.run(data)
+                         Time ADDED  A  B
+    0 2003-12-01 00:00:00.000    XX  1  2
+    1 2003-12-01 00:00:00.001    XX  2  4
 
     Function object as query is also supported (Note it will be executed only once in python's code):
 
     >>> def func(symbol):
-    ...     d = otp.Ticks(TYPE=["six"])
-    ...     d = d.update(dict(TYPE="three"), where=(symbol.name == "3"))  # symbol is always converted to string
-    ...     d["TYPE"] = symbol['PREF'] + d["TYPE"] + symbol['POST']
-    ...     return d
+    ...     t = otp.Ticks(TYPE=['six'])
+    ...     t = t.update(dict(TYPE='three'), where=(symbol.name == '3'))  # symbol is always converted to string
+    ...     t['TYPE'] = symbol['PREF'] + t['TYPE'] + symbol['POST']
+    ...     return t
     >>> # OTdirective: snippet-name: Special functions.join with query.with a function
     >>> data = otp.Ticks(A=[1, 2], B=[2, 4])
-    >>> res = data.join_with_query(func, how='inner', symbol=(data['A'] + data['B'], dict(PREF="_", POST="$")))
-    >>> df = otp.run(res)
-    >>> df[["A", "B", "TYPE"]]
-       A  B     TYPE
-    0  1  2  _three$
-    1  2  4    _six$
+    >>> data = data.join_with_query(func, how='inner', symbol=(data['A'] + data['B'], dict(PREF='_', POST='$')))
+    >>> otp.run(data)
+                         Time     TYPE  A  B
+    0 2003-12-01 00:00:00.000  _three$  1  2
+    1 2003-12-01 00:00:00.001    _six$  2  4
 
     It's possible to pass the source itself as a list of symbol parameters, which will make all of its fields
-    accessible through the "symbol" object:
+    accessible through the ``symbol`` object:
 
     >>> def func(symbol):
-    ...     d = otp.Ticks(TYPE=["six"])
-    ...     d["TYPE"] = symbol['PREF'] + d["TYPE"] + symbol['POST']
-    ...     return d
+    ...     t = otp.Ticks(TYPE=['six'])
+    ...     t['TYPE'] = symbol['PREF'] + t['TYPE'] + symbol['POST']
+    ...     return t
     >>> # OTdirective: snippet-name: 'Source' operations.join with query.source as symbol;
-    >>> data = otp.Ticks(A=[1, 2], B=[2, 4], PREF=["_", "$"], POST=["$", "_"])
-    >>> res = data.join_with_query(func, how='inner', symbol=data)
-    >>> df = otp.run(res)
-    >>> df[["A", "B", "TYPE"]]
-       A  B   TYPE
-    0  1  2  _six$
-    1  2  4  $six_
+    >>> data = otp.Ticks(A=[1, 2], B=[2, 4], PREF=['_', '$'], POST=['$', '_'])
+    >>> data = data.join_with_query(func, how='inner', symbol=data)
+    >>> otp.run(data)
+                         Time   TYPE  A  B PREF POST
+    0 2003-12-01 00:00:00.000  _six$  1  2    _    $
+    1 2003-12-01 00:00:00.001  $six_  2  4    $    _
 
     The examples above can be rewritten by using onetick query parameters instead of symbol parameters.
     OTQ parameters are global for query, while symbol parameters can be redefined by bound symbols:
 
     >>> def func(symbol, pref, post):
-    ...     d = otp.Ticks(TYPE=["six"])
-    ...     d = d.update(dict(TYPE="three"), where=(symbol.name == "3"))  # symbol is always converted to string
-    ...     d["TYPE"] = pref + d["TYPE"] + post
-    ...     return d
+    ...     t = otp.Ticks(TYPE=['six'])
+    ...     t = t.update({'TYPE': 'three'}, where=(symbol.name == '3'))  # symbol is always converted to string
+    ...     t['TYPE'] = pref + t['TYPE'] + post
+    ...     return t
     >>> # OTdirective: snippet-name: Special functions.join with query.with a function that takes params;
     >>> data = otp.Ticks(A=[1, 2], B=[2, 4])
-    >>> res = data.join_with_query(func, how='inner', symbol=(data['A'] + data['B']),
-    ...                            params=dict(pref="_", post="$"))
-    >>> df = otp.run(res)
-    >>> df[["A", "B", "TYPE"]]
-       A  B     TYPE
-    0  1  2  _three$
-    1  2  4    _six$
+    >>> data = data.join_with_query(func, how='inner', symbol=(data['A'] + data['B']),
+    ...                             params={'pref': '_', 'post': '$'})
+    >>> otp.run(data)
+                         Time     TYPE  A  B
+    0 2003-12-01 00:00:00.000  _three$  1  2
+    1 2003-12-01 00:00:00.001    _six$  2  4
 
     Some or all onetick query parameters can be column or expression also:
 
     >>> def func(symbol, pref, post):
-    ...     d = otp.Ticks(TYPE=["six"])
-    ...     d = d.update(dict(TYPE="three"), where=(symbol.name == "3"))  # symbol is always converted to string
-    ...     d["TYPE"] = pref + d["TYPE"] + post
-    ...     return d
+    ...     t = otp.Ticks(TYPE=['six'])
+    ...     t = t.update({'TYPE': 'three'}, where=(symbol.name == '3'))  # symbol is always converted to string
+    ...     t['TYPE'] = pref + t['TYPE'] + post
+    ...     return t
     >>> # OTdirective: snippet-name: Special functions.join with query.with a function that takes params from fields;
-    >>> data = otp.Ticks(A=[1, 2], B=[2, 4], PREF=["^", "_"], POST=["!", "$"])
-    >>> res = data.join_with_query(func, how='inner', symbol=(data['A'] + data['B']),
-    ...                            params=dict(pref=data["PREF"] + ".", post=data["POST"]))
-    >>> df = otp.run(res)
-    >>> df[["A", "B", "TYPE"]]
-       A  B      TYPE
-    0  1  2  ^.three!
-    1  2  4    _.six$
+    >>> data = otp.Ticks(A=[1, 2], B=[2, 4], PREF=['^', '_'], POST=['!', '$'])
+    >>> data = data.join_with_query(func, how='inner', symbol=(data['A'] + data['B']),
+    ...                             params={'pref': data['PREF'] + '.', 'post': data['POST']})
+    >>> otp.run(data)
+                         Time      TYPE  A  B PREF POST
+    0 2003-12-01 00:00:00.000  ^.three!  1  2    ^    !
+    1 2003-12-01 00:00:00.001    _.six$  2  4    _    $
 
     You can specify ``start`` and ``end`` time of the query, otherwise time interval of the main query will be used:
 
     >>> # OTdirective: snippet-name: Special functions.join with query.passing start/end times;
-    >>> d = otp.Ticks(Y=[1, 2])
+    >>> joined = otp.Ticks(Y=[1, 2])
     >>> data = otp.Ticks(X=[1, 2])
-    >>> start = otp.datetime(2003, 12, 1, 0, 0, 0, 1000)
-    >>> end = otp.datetime(2003, 12, 1, 0, 0, 0, 3000)
-    >>> res = data.join_with_query(d, how='inner', start=start, end=end)
-    >>> otp.run(res)
+    >>> data = data.join_with_query(joined, how='inner',
+    ...                             start=otp.dt(2003, 12, 1, 0, 0, 0, 1000),
+    ...                             end=otp.dt(2003, 12, 1, 0, 0, 0, 3000))
+    >>> otp.run(data)
                          Time  Y  X
     0 2003-12-01 00:00:00.000  1  1
     1 2003-12-01 00:00:00.000  2  1

@@ -37,7 +37,7 @@ class ReadCache(Source):
         **kwargs,
     ):
         """
-        Make cached query
+        Make cached query.
 
         Cache is initialized on the first read attempt.
 
