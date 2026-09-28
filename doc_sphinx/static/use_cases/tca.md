@@ -279,19 +279,16 @@ csv_input = """TIME,ID,SYMBOL_NAME
 
 df = pd.read_csv(StringIO(csv_input), parse_dates=['TIME'])
 
-# Load symbol list from DataFrame with timestamps
-sym_list = otp.LoadTicksFromDataFrame(df)
-
 # Set the start time and end time of each sub query
-sym_list['_PARAM_START_TIME'] = sym_list['TIMESTAMP']
-sym_list['_PARAM_END_TIME'] = sym_list['TIMESTAMP']
+df['_PARAM_START_TIME'] = df['TIME']
+df['_PARAM_END_TIME'] = df['TIME']
 
 nbbo = otp.DataSource(db='US_COMP_SAMPLE', tick_type='NBBO', back_to_first_tick=86400)
 nbbo = nbbo[['BID_PRICE', 'ASK_PRICE']]
 # Expose the ID parameter from the symbol list
 nbbo['ID'] = nbbo.Symbol['ID', str]
 
-merged_query = otp.merge(nbbo, symbols=sym_list, identify_input_ts=True)
+merged_query = otp.merge(nbbo, symbols=df, identify_input_ts=True)
 
 result = otp.run(
     merged_query,

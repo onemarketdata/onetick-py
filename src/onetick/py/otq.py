@@ -144,6 +144,8 @@ elif otp.__webapi__:
                 token_kwargs['scope'] = scope
 
             kwargs['access_token'] = get_access_token_cached(access_token_url, client_id, client_secret, **token_kwargs)
+        elif access_token:
+            kwargs['access_token'] = access_token
 
         kwargs.setdefault('http_proxy', config.http_proxy)
         kwargs.setdefault('https_proxy', config.https_proxy)

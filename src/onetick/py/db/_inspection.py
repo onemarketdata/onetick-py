@@ -1235,6 +1235,7 @@ def databases(
     fetch_description: Optional[bool] = None,
     as_table: bool = False,
     query_properties: Optional[dict] = None,
+    db: Optional[str] = None,
 ) -> Union[dict[str, DB], pd.DataFrame]:
     """
     Gets all available databases in the ``context``.
@@ -1269,6 +1270,9 @@ def databases(
     query_properties: dict, optional
         Query properties passed to :py:func:`otp.run <onetick.py.run>`,
         see OneTick server documentation for available options.
+    db: str
+        Specifies database name to use when running the query, otherwise
+        :py:attr:`otp.config.default_db <onetick.py.configuration.Config.default_db>` or ``LOCAL`` is used.
 
     See also
     --------
@@ -1327,14 +1331,15 @@ def databases(
     if readable_only:
         node = node >> otq.WhereClause(where='READ_ACCESS = 1')
 
-    left = node.set_node_name('LEFT')
-    right = otq.ShowDbList(**show_db_list_kwargs).tick_type('ANY').set_node_name('RIGHT')
+    right = node.set_node_name('RIGHT')
+
+    left = otq.ShowDbList(**show_db_list_kwargs).tick_type('ANY').set_node_name('LEFT')
     join = otq.Join(
-        left_source='LEFT', join_type='INNER', join_criteria='LEFT.DB_NAME = RIGHT.DATABASE_NAME',
+        left_source='LEFT', join_type='LEFT_OUTER', join_criteria='LEFT.DATABASE_NAME = RIGHT.DB_NAME',
         add_source_prefix=False,
     )
     left >> join << right  # pylint: disable=pointless-statement
-    node = join >> otq.Passthrough('LEFT.TIMESTAMP,RIGHT.TIMESTAMP,DATABASE_NAME', drop_fields=True)
+    node = join >> otq.Passthrough('LEFT.TIMESTAMP,RIGHT.TIMESTAMP', drop_fields=True)
 
     # times bigger than datetime.max are not representable in python
     max_dt = ott.value2str(datetime.max)
@@ -1344,9 +1349,9 @@ def databases(
                                     where=f'not UNDEFINED("INTERVAL_END") and INTERVAL_END > {max_dt}')
 
     # sort alphabetically
-    node = node >> otq.OrderBy(order_by='DB_NAME ASC')
+    node = node >> otq.OrderBy(order_by='DATABASE_NAME ASC')
 
-    safe_params = _get_safe_params_for_running(context=context)
+    safe_params = _get_safe_params_for_running(db=db, context=context)
     if query_properties:
         safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
     dbs = otp.run(node, **safe_params)

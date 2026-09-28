@@ -51,6 +51,16 @@ def test_run_access_token(monkeypatch):
         otp.run(t)
 
 
+@pytest.mark.skipif(not os.getenv('OTP_WEBAPI_TEST_MODE'), reason='WebAPI only test')
+def test_access_token_args(monkeypatch, mocker):
+    monkeypatch.setattr(otp.config, 'access_token', 'abcdefg')
+    spy = mocker.spy(otp.otq, '__original_run')
+    t = otp.Tick(A=1)
+    otp.run(t)
+    assert spy.call_count == 1
+    assert spy.call_args.kwargs['access_token'] == 'abcdefg'
+
+
 # this test is using f_session, so run it first
 @pytest.mark.skipif(os.getenv('OTP_WEBAPI_TEST_MODE', False), reason='test mode fails this test, not necessary to run')
 def test_main_query_generated_filename(f_session, monkeypatch):
@@ -1311,6 +1321,28 @@ def test_symbols_dataframe(session):
     assert df['Y'][0] == end
 
 
+def test_symbols_dataframe_timezone_aware(session):
+    # timezone-aware values are not localized in the timezone of the query, they keep their own
+    timezone = 'America/New_York'
+    start = pd.Timestamp(2022, 1, 2, 13, 14, 15, tz='GMT')
+    end = pd.Timestamp(2022, 1, 2, 23, 24, 25, tz='GMT')
+
+    symbols_df = pd.DataFrame({
+        'SYMBOL_NAME': ['LOCAL::AAPL'],
+        '_PARAM_START_TIME': [start],
+        '_PARAM_END_TIME': [end],
+    })
+
+    t = otp.Tick(
+        X=otp.meta_fields['_START_TIME'],
+        Y=otp.meta_fields['_END_TIME'],
+        db=None,
+    )
+    df = otp.run(t, date=otp.dt(2022, 1, 2), symbols=symbols_df, timezone=timezone)
+    assert df['X'][0].tz_localize(timezone) == start
+    assert df['Y'][0].tz_localize(timezone) == end
+
+
 @pytest.mark.skipif(not tests.compatibility.is_query_auto_termination_time_limit_fixed(),
                     reason="Query auto termination did not work before")
 def test_query_auto_termination_time_limit(session, monkeypatch):
@@ -1321,3 +1353,15 @@ def test_query_auto_termination_time_limit(session, monkeypatch):
     with pytest.raises(Exception, match='Terminated by user'):
         otp.run(t)
     assert time.time() - start < 10
+
+
+@pytest.mark.skipif(not os.getenv('OTP_WEBAPI_TEST_MODE', False),
+                    reason='parameter compression is only supported in webapi')
+def test_parameter_compression(session):
+    data = otp.Tick(A=1)
+    with pytest.raises(Exception, match='compression must be "none","zstd" or "gzip"'):
+        otp.run(data, compression='wrong')
+
+    for compression in ('none', 'zstd', 'gzip'):
+        df = otp.run(data, compression=compression)
+        assert list(df['A']) == [1]

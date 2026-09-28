@@ -168,7 +168,7 @@ class ReadParquet(Source):
             )
         )
 
-        if db and tick_type:
+        if db or tick_type:
             update_node_tick_type(src, tick_type, db)
 
         return src

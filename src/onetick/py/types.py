@@ -2045,7 +2045,6 @@ def value2str(v):
     return str(v)
 
 
-# TODO: maybe can be removed, it is used only in tests now
 def time2nsectime(time, timezone=None):
     """
     Converts complex time types to nsectime timestamp.

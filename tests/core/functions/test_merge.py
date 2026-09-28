@@ -520,3 +520,100 @@ def test_symbol_date(session):
     df = otp.run(data, timezone='GMT')
     assert list(df['SYM_TIME']) == [otp.dt(2022, 1, 1)] * 4
     assert list(df['C']) == [10, 20, 30, 40]
+
+
+class TestMergeSymbolsDataFrame:
+    @pytest.fixture
+    def data(self, session):
+        return otp.DataSource('DB_1', tick_type='TT', schema_policy='manual', schema={'A': int, 'B': int})
+
+    def test_same_as_list_of_symbols(self, data):
+        df = pd.DataFrame({'SYMBOL_NAME': ['A', 'B']})
+
+        from_df = otp.run(otp.merge([data], symbols=df, identify_input_ts=True))
+        from_list = otp.run(otp.merge([data], symbols=['A', 'B'], identify_input_ts=True))
+
+        assert list(from_df['SYMBOL_NAME']) == list(from_list['SYMBOL_NAME'])
+        assert list(from_df['A']) == list(from_list['A'])
+        assert list(from_df['B']) == list(from_list['B'])
+
+    def test_symbol_params(self, data):
+        data['PARAM'] = data.Symbol.get(name='PARAM', dtype=str, default='default')
+        data['MISSING'] = data.Symbol.get(name='NOT_EXISTS', dtype=str, default='default')
+        df = pd.DataFrame({'SYMBOL_NAME': ['A', 'B'], 'PARAM': ['PARAM_A', 'PARAM_B']})
+
+        result = otp.run(otp.merge([data], symbols=df, identify_input_ts=True))
+        assert set(zip(result['SYMBOL_NAME'], result['PARAM'])) == {('A', 'PARAM_A'), ('B', 'PARAM_B')}
+        assert set(result['MISSING']) == {'default'}
+
+    def test_callable_source(self, data):
+        df = pd.DataFrame({'SYMBOL_NAME': ['A', 'B'], 'ID': [1, 2]})
+
+        def func(symbol):
+            data['ID'] = symbol['ID']
+            return data
+
+        result = otp.run(otp.merge([func], symbols=df, identify_input_ts=True))
+        assert set(zip(result['SYMBOL_NAME'], result['ID'])) == {('A', 1), ('B', 2)}
+
+    def test_per_symbol_interval(self, session):
+        start = otp.config.default_start_time
+        df = pd.DataFrame({
+            'SYMBOL_NAME': ['AA', 'BB'],
+            '_PARAM_START_TIME': [start + pd.Timedelta(hours=1), start + pd.Timedelta(hours=2)],
+            '_PARAM_END_TIME': [start + pd.Timedelta(hours=3), start + pd.Timedelta(hours=4)],
+        })
+
+        data = otp.Tick(X=1)
+        data['ST'] = data['_START_TIME']
+        data['ET'] = data['_END_TIME']
+
+        result = otp.run(otp.merge([data], symbols=df, identify_input_ts=True), timezone='GMT')
+        assert list(result['SYMBOL_NAME']) == ['AA', 'BB']
+        assert list(result['ST']) == [start + pd.Timedelta(hours=1), start + pd.Timedelta(hours=2)]
+        assert list(result['ET']) == [start + pd.Timedelta(hours=3), start + pd.Timedelta(hours=4)]
+
+    @pytest.mark.parametrize('timezone', ['GMT', 'EST5EDT', 'Asia/Tokyo'])
+    def test_timezone_from_run(self, session, timezone):
+        start = otp.config.default_start_time
+        df = pd.DataFrame({
+            'SYMBOL_NAME': ['AA'],
+            '_PARAM_START_TIME': [start + pd.Timedelta(hours=1)],
+            '_PARAM_END_TIME': [start + pd.Timedelta(hours=3)],
+        })
+
+        data = otp.Tick(X=1)
+        data['ST'] = data['_START_TIME']
+        data['ET'] = data['_END_TIME']
+        data['TZ'] = data['_TIMEZONE']
+
+        result = otp.run(otp.merge([data], symbols=df), timezone=timezone)
+        assert list(result['ST']) == [start + pd.Timedelta(hours=1)]
+        assert list(result['ET']) == [start + pd.Timedelta(hours=3)]
+        assert list(result['TZ']) == [timezone]
+
+    @pytest.mark.parametrize('timezone', ['EST5EDT', 'Asia/Tokyo'])
+    def test_timezone_aware_keeps_its_own_timezone(self, session, timezone):
+        start = otp.config.default_start_time
+        param_start = pd.Timestamp(start + pd.Timedelta(hours=6), tz='GMT')
+        param_end = pd.Timestamp(start + pd.Timedelta(hours=12), tz='GMT')
+        df = pd.DataFrame({
+            'SYMBOL_NAME': ['AA'],
+            '_PARAM_START_TIME': [param_start],
+            '_PARAM_END_TIME': [param_end],
+        })
+
+        data = otp.Tick(X=1)
+        data['ST'] = data['_START_TIME']
+        data['ET'] = data['_END_TIME']
+
+        result = otp.run(otp.merge([data], symbols=df), timezone=timezone)
+        assert result['ST'][0].tz_localize(timezone) == param_start
+        assert result['ET'][0].tz_localize(timezone) == param_end
+
+    def test_exceptions(self, data):
+        with pytest.raises(ValueError, match='does not contain a SYMBOL_NAME column'):
+            otp.merge([data], symbols=pd.DataFrame({'NOT_SYMBOL_NAME': ['A', 'B']}))
+
+        with pytest.raises(ValueError, match='is empty'):
+            otp.merge([data], symbols=pd.DataFrame({'SYMBOL_NAME': []}))

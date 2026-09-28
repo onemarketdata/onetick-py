@@ -10,6 +10,8 @@ from typing import Union, Optional, Literal
 from collections.abc import Sequence
 from enum import Enum
 
+import pandas as pd
+
 import onetick.py as otp
 from onetick.py.otq import otq
 from onetick.py.configuration import config, default_presort_concurrency
@@ -17,7 +19,9 @@ from onetick.py.core.eval_query import _QueryEvalWrapper
 from onetick.py.core._source._symbol_param import _SymbolParamSource
 from onetick.py.core._source.tmp_otq import TmpOtq
 from onetick.py.core._source.query_parameters import _ExtendedQueryParameters
-from onetick.py.utils import get_type_that_includes, adaptive, default
+from onetick.py.utils import (
+    get_type_that_includes, adaptive, default, get_symbol_source_from_df,
+)
 import onetick.py.types as ott
 from onetick.py.core.column import Column
 from onetick.py.core.column_operations.base import Operation
@@ -74,10 +78,20 @@ def merge(sources, align_schema=True, symbols=None, identify_input_ts=False,
         If set to True, then table is added right after merge.
         We recommended to keep True to prevent problems with
         different tick schemas. Default: True
-    symbols: str, list of str or functions, :class:`Source`, :py:class:`onetick.query.GraphQuery`
+    symbols: str, list of str or functions, :class:`Source`, :pandas:`pandas.DataFrame`,\
+             :py:class:`onetick.query.GraphQuery`
         Symbol(s) to run the query for passed as a string, a list of strings, or as a "symbols" query which results
         include the ``SYMBOL_NAME`` column. The start/end times for the
         symbols query will taken from the :meth:`run` params.
+
+        A :pandas:`pandas.DataFrame` with the ``SYMBOL_NAME`` column can be passed too.
+        Its other columns are interpreted as symbol parameters, and the optional
+        ``_PARAM_START_TIME`` and ``_PARAM_END_TIME`` columns set the query interval per symbol.
+        Note that per symbol intervals should be inside the query interval.
+        Timezone-naive values are interpreted in the timezone passed to
+        :py:func:`otp.run <onetick.py.run>`, while timezone-aware values keep their own timezone.
+        The columns ``offset``, ``time`` and ``timestamp`` (the last one in any case) aren't allowed.
+
         See :ref:`symbols <static/concepts/symbols:Symbols: bound and unbound>` for more details.
     identify_input_ts: bool
         If set to False, the fields *SYMBOL_NAME* and *TICK_TYPE* are not appended to the output ticks.
@@ -231,6 +245,9 @@ def merge(sources, align_schema=True, symbols=None, identify_input_ts=False,
 
     if not sources:
         raise ValueError("Merge should have one or more inputs")
+
+    if isinstance(symbols, pd.DataFrame):
+        symbols = get_symbol_source_from_df(symbols)
 
     output_type = output_type_by_index(sources, output_type_index)
 

@@ -60,3 +60,42 @@ def test_run_with_dataframe_symbols(session):
     assert list(result['A']['SYMBOL_PARAMS']) == ["SYMBOL_PARAM='PARAM_A',TIME='2022-01-01 00:00:00'"]
     assert list(result['B']['X']) == [1]
     assert list(result['B']['SYMBOL_PARAMS']) == ["SYMBOL_PARAM='PARAM_B',TIME='2022-01-02 00:00:00'"]
+
+
+class TestSymbolSourceFromDf:
+    def test_values(self, session):
+        df = pd.DataFrame({'SYMBOL_NAME': ['A', 'B'], 'ID': [1, 2]})
+        result = otp.run(otp.utils.get_symbol_source_from_df(df))
+        assert list(result['SYMBOL_NAME']) == ['A', 'B']
+        assert list(result['ID']) == [1, 2]
+
+    def test_custom_symbol_name_column(self, session):
+        df = pd.DataFrame({'SYM': ['A', 'B'], 'ID': [1, 2]})
+        result = otp.run(otp.utils.get_symbol_source_from_df(df, symbol_name_column='SYM'))
+        assert list(result['SYMBOL_NAME']) == ['A', 'B']
+        assert list(result['ID']) == [1, 2]
+
+    @pytest.mark.parametrize('column', ['OFFSET', 'Offset', 'TIME', 'tIMe'])
+    def test_reserved_names_are_case_sensitive(self, session, column):
+        # only the exact 'offset' and 'time' spellings are reserved
+        df = pd.DataFrame({'SYMBOL_NAME': ['A', 'B'], column: [1, 2]})
+        result = otp.run(otp.utils.get_symbol_source_from_df(df))
+        assert list(result[column]) == [1, 2]
+
+    def test_exceptions(self):
+        with pytest.raises(ValueError, match='does not contain a SYMBOL_NAME column'):
+            otp.utils.get_symbol_source_from_df(pd.DataFrame({'NOT_SYMBOL_NAME': ['A', 'B']}))
+
+        with pytest.raises(ValueError, match='does not contain a SYM column'):
+            otp.utils.get_symbol_source_from_df(pd.DataFrame({'SYMBOL_NAME': ['A']}), symbol_name_column='SYM')
+
+        with pytest.raises(ValueError, match="contains both 'SYM' and 'SYMBOL_NAME' columns"):
+            otp.utils.get_symbol_source_from_df(pd.DataFrame({'SYM': ['A'], 'SYMBOL_NAME': ['B']}),
+                                                symbol_name_column='SYM')
+
+        with pytest.raises(ValueError, match='is empty'):
+            otp.utils.get_symbol_source_from_df(pd.DataFrame({'SYMBOL_NAME': []}))
+
+        for column in ('offset', 'time', 'timestamp', 'Timestamp', 'TIMESTAMP'):
+            with pytest.raises(ValueError, match='are reserved names'):
+                otp.utils.get_symbol_source_from_df(pd.DataFrame({'SYMBOL_NAME': ['A'], column: [1]}))

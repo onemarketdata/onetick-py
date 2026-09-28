@@ -252,7 +252,8 @@ Equivalently, symbol parameters can be accessed by wrapping a function around th
 Time interval per symbol
 ========================
 
-It is allowed to specify query interval per symbol using special fields ``_PARAM_START_TIME_NANOS`` and ``_PARAM_START_TIME_NANOS``
+It is allowed to specify query interval per symbol using special fields ``_PARAM_START_TIME_NANOS`` and ``_PARAM_END_TIME_NANOS``
+(``_PARAM_START_TIME`` and ``_PARAM_END_TIME`` can be used as well)
 
 
 .. doctest::
@@ -270,6 +271,26 @@ It is allowed to specify query interval per symbol using special fields ``_PARAM
             0 2024-02-01 11:30:00  1587813   MSFT}
 
 Note that per symbol intervals should be inside the :ref:`query interval <static/concepts/start_end:Query interval>`.
+
+The same can be done with a :pandas:`pandas.DataFrame` passed as a symbol list to
+:func:`otp.merge <onetick.py.merge>`. Note that timezone-naive values are not localized when the
+query is built: they are interpreted in the timezone passed to :func:`otp.run <onetick.py.run>`.
+Timezone-aware values keep their own timezone instead.
+
+.. doctest::
+
+   >>> custom_symbols = pd.DataFrame({
+   ...     'SYMBOL_NAME': ['AAPL', 'MSFT'],
+   ...     '_PARAM_START_TIME': [otp.dt(2024, 2, 1, 10, 30), otp.dt(2024, 2, 1, 11)],
+   ...     '_PARAM_END_TIME': [otp.dt(2024, 2, 1, 11), otp.dt(2024, 2, 1, 11, 30)],
+   ... })
+   >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD')
+   >>> data = data.agg({'VOLUME': otp.agg.sum('SIZE')})
+   >>> data = otp.merge([data], symbols=custom_symbols, identify_input_ts=True)
+   >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                    Time   VOLUME SYMBOL_NAME TICK_TYPE
+   0 2024-02-01 11:00:00  3283224        AAPL       TRD
+   1 2024-02-01 11:30:00  1587813        MSFT       TRD
 
 Associated symbols
 ==================

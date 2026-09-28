@@ -550,3 +550,14 @@ def _is_read_from_dataframe_supported():
 
 def _is_supported_show_num_orders_at_level():
     return 'show_num_orders_at_level' in otq.ObSnapshot.Parameters.list_parameters()
+
+
+def _is_read_from_iceberg_supported():
+    # 20260410: Implemented OTDEV-36962: Implement READ_FROM_ICEBERG EP
+    return hasattr(otq, 'ReadFromIceberg')
+
+
+def _is_read_from_iceberg_drop_fields_supported():
+    # 20260814: parameter DROP_FIELDS was added to READ_FROM_ICEBERG EP later than the EP itself
+    return (_is_read_from_iceberg_supported()
+            and 'drop_fields' in otq.ReadFromIceberg.Parameters.list_parameters())

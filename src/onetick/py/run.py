@@ -27,7 +27,7 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
                      otp.query, str, otq.EpBase, otq.GraphQuery,
                      otq.ChainQuery, otq.Chainlet, otq.SqlQuery, otp.SqlQuery],
         *,
-        symbols: Union[list[Union[str, otq.Symbol]], otp.Source, str, None] = None,
+        symbols: Union[list[Union[str, otq.Symbol]], otp.Source, str, pd.DataFrame, None] = None,
         start: Union[datetime.datetime, otp.datetime, type[utils.adaptive], None] = utils.adaptive,
         end: Union[datetime.datetime, otp.datetime, type[utils.adaptive], None] = utils.adaptive,
         date: Union[datetime.date, otp.date, None] = None,
@@ -64,7 +64,8 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
         preserve_decimal_flag: Optional[bool] = None,
         # WebAPI only parameters
         bs_ticks: Optional[int] = None,
-        bs_time_msec: Optional[int] = None):
+        bs_time_msec: Optional[int] = None,
+        compression: Optional[str] = None):
     """
     Executes a query and returns its result.
 
@@ -242,7 +243,7 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
         This parameter may not be supported on older OneTick versions.
 
     bs_ticks: int
-        (Used only in WebAPI mode)
+        (Used only in WebAPI mode).
 
         This parameter determines the maximum number of ticks in a batch.
         It shows how often to send a chunk of response.
@@ -263,13 +264,19 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
            We recommend a value between 100 and 10000. Default value is 5000.
 
     bs_time_msec: int
-        (Used only in WebAPI mode)
+        (Used only in WebAPI mode).
 
         Time latency in milliseconds that is used in CEP queries only.
         If during CEP ``bs_ticks`` number of ticks gets accumulated sooner than the ``bs_time_msec`` expires,
         they will be sent immediately.
 
         By default this parameter is 0 which means propagate ticks immediately (i.e., on every tick)
+
+    compression: str
+        (Used only in WebAPI mode).
+
+        The type of compression used when sending the data between client and server.
+        Available values are ``none``, ``gzip`` and ``zstd`` (default).
 
     Returns
     -------
@@ -817,6 +824,9 @@ def run(query: Union[Callable, dict, otp.Source, otp.MultiOutputSource,  # NOSON
 
     if bs_time_msec is not None:
         run_params['bs_time_msec'] = bs_time_msec
+
+    if compression is not None:
+        run_params['compression'] = compression
 
     # some parameters were saved in .otq file, we need to debug them too
     debug_params = dict(run_params, **params_saved_to_otq) if params_saved_to_otq else run_params
