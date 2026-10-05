@@ -48,7 +48,7 @@ Those pseudo-fields are always present and you can access them like that:
 
 
 Parameter ``identify_input_ts`` in :class:`otp.DataSource <onetick.py.DataSource>`
-and :meth:`otp.merge <onetick.py.merge>` can also be used to add them as new columns.
+and :func:`otp.merge <onetick.py.merge>` can also be used to add them as new columns.
 
 
 Symbols: bound and unbound
@@ -56,7 +56,7 @@ Symbols: bound and unbound
 
 There are two ways of setting symbols: **bound** and **unbound**.
 
-Bound symbols are specified when defining a source or with :meth:`otp.merge <onetick.py.merge>`.
+Bound symbols are specified when defining a source or with :func:`otp.merge <onetick.py.merge>`.
 Unbound symbols are set when the query is executed and apply to all sources that do not specify bound symbols.
 Here is an simple example of an unbound symbol:
 
@@ -94,7 +94,7 @@ Contrast this with bound symbols where the ticks are merged into a single flow:
             Time     VOLUME
     0 2024-02-02  104188207
 
-Specifying bound symbols on a source is just a shorthand for the :meth:`otp.merge <onetick.py.merge>` method added right
+Specifying bound symbols on a source is just a shorthand for the :func:`otp.merge <onetick.py.merge>` method added right
 after the source definition.
 
 .. doctest::
@@ -117,7 +117,7 @@ You have to explicitly use :func:`otp.run <onetick.py.run>` to execute the query
 
     otp.run(volume, symbols=['AAPL', 'MSFT', 'AMZN', 'META'], concurrency=8)
 
-For bound symbols, all calculations passed into :meth:`otp.merge <onetick.py.merge>` (``trades`` in example above) run in parallel.
+For bound symbols, all calculations passed into :func:`otp.merge <onetick.py.merge>` (``trades`` in example above) run in parallel.
 Calculations can be made faster by computing as much as possible per symbol before merging them.
 The following  example has the same result as the previous one but it finds the total volume faster as it calculates
 the volume for every symbol independently which can be done in parallel and then  adds up the total.

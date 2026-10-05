@@ -368,3 +368,14 @@ def test_join_ceil(session):
     df = otp.run(data)
     assert list(df['X']) == [1.2]
     assert list(df['Y']) == [2.3]
+
+
+def test_join_on_timestamp(session):
+    a = otp.Ticks(A=[1, 2])
+    b = otp.Ticks(B=[2, 3])
+    data = otp.join(a, b, on=['TIMESTAMP'])
+    df = otp.run(data)
+    assert df.drop(columns='Time').to_dict(orient='list') == {
+        'A': [1, 2],
+        'B': [2, 3],
+    }

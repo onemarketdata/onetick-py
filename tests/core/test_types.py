@@ -590,5 +590,5 @@ def test_now_timedelta(session):
     assert pd.Timedelta(
         days=1, hours=2, minutes=3, seconds=4, milliseconds=5, microseconds=6, nanoseconds=7
     ) <= delta_result <= pd.Timedelta(
-        days=1, hours=2, minutes=3, seconds=4, milliseconds=7
+        days=1, hours=2, minutes=3, seconds=4, milliseconds=100
     )

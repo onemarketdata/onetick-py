@@ -403,7 +403,6 @@ class TestTickList:
         otp.string[1100]('it should be a really long string'),
         otp.string[10]('ads'),
         otp.varstring('ferfre'),
-        otp.decimal(14.1),
         otp.ulong(5),
         otp.uint(6),
         otp.int(3),
@@ -422,26 +421,22 @@ class TestTickList:
 
         data = otp.Tick(A=1)
         data.state_vars["LIST"] = otp.state.tick_list(otp.eval(generate_list))
-        if isinstance(value, otp.decimal):
-            with pytest.raises(TypeError):
-                data.script(update_from_list)
+        data = data.script(update_from_list)
+        if isinstance(value, str) and value.length == 10:
+            assert data.schema['B'] is str
+        elif isinstance(value, (otp.date, otp.datetime)):
+            assert data.schema['B'] is otp.nsectime
         else:
-            data = data.script(update_from_list)
-            if isinstance(value, str) and value.length == 10:
-                assert data.schema['B'] is str
-            elif isinstance(value, (otp.date, otp.datetime)):
-                assert data.schema['B'] is otp.nsectime
-            else:
-                assert data.schema['B'] is type(value)
-            if (
-                isinstance(value, otp.varstring) and
-                not tests.compatibility.is_supported_varstring_in_get_string_value()
-            ):
-                with pytest.raises(Exception):
-                    otp.run(data)
-            else:
-                df = otp.run(data)
-                assert all(df['B'] == [value])
+            assert data.schema['B'] is type(value)
+        if (
+            isinstance(value, otp.varstring) and
+            not tests.compatibility.is_supported_varstring_in_get_string_value()
+        ):
+            with pytest.raises(Exception):
+                otp.run(data)
+        else:
+            df = otp.run(data)
+            assert all(df['B'] == [value])
 
     def test_schema(self, session):
         """

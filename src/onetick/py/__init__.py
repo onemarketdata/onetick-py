@@ -209,6 +209,7 @@ from onetick.py.core.per_tick_script import (
 from onetick.py.callback import CallbackBase
 from onetick.py.sql import SqlQuery
 from onetick.py.run import run, run_async
+from onetick.py._operations._datetime import today, matches_time_filter
 from onetick.py.math import rand, now
 from onetick.py.misc import (
     bit_and, bit_or, bit_at, bit_xor, bit_not,

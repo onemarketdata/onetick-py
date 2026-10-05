@@ -687,7 +687,7 @@ class DataSource(Source):
         If ``symbols`` parameter is omitted, you need to specify unbound symbols for the query in ``symbols``
         parameter of :py:func:`onetick.py.run` function.
 
-        If ``symbols`` parameter is set, :meth:`otp.merge <onetick.py.merge>` is used to merge all passed bound symbols.
+        If ``symbols`` parameter is set, :func:`otp.merge <onetick.py.merge>` is used to merge all passed bound symbols.
         In this case you don't need to specify unbound symbols in :py:func:`onetick.py.run` call.
 
         It's not allowed to specify bound and unbound symbols at the same time.

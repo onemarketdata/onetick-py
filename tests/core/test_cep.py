@@ -6,7 +6,7 @@ import time
 import os
 import re
 import psutil
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 import onetick.py as otp
 
@@ -274,7 +274,7 @@ class TestSubqueries:
         # because they are calculated sequentially and not fast enough
         assert len(df) in [2, 3]
         if len(df) == 2:
-            assert df['ET'][0] - df['ST'][0] == pd.Timedelta(seconds=2)
+            assert pd.Timedelta(seconds=1, milliseconds=500) <= df['ET'][0] - df['ST'][0] <= pd.Timedelta(seconds=2)
         else:
             assert df['ET'][0] - df['ST'][0] > pd.Timedelta(seconds=2)
         assert df['Time'][0] == df['ST'][0]

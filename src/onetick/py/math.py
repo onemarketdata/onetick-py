@@ -175,24 +175,37 @@ def frand(min_value=0, max_value=1, *, seed=None):
 
 
 # TODO: this is not math, let's move it somewhere else
-def now():
+def now(precision: int | _Operation | None = None):
     """
     Returns the current datetime in the timezone of the query.
+
+    Parameters
+    ----------
+    precision: int or :py:class:`~onetick.py.Operation`
+        Determines the milliseconds precision of the returned timestamp value.
+        Valid values are 0-3.
+        Default value is 3.
 
     Returns
     -------
         :py:class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **NOW** OneTick function
+    | **CURRENT_TIME**/**CURRENT_TIMESTAMP** OneTick function
 
     Examples
     --------
     >>> data = otp.Tick(A=1)
     >>> data['NOW'] = otp.now()
     >>> otp.run(data)  # doctest: +SKIP
-            Time  A                     NOW
-    0 2003-12-01  1 2025-09-29 09:09:00.158
+            Time  A                      NOW
+    0 2003-12-01  1  2025-09-29 09:09:00.158
     """
     return _Operation(
-        op_func=lambda: ('NOW()', nsectime),
+        op_func=lambda v: (f'CURRENT_TIME({value2str(v)})' if v is not None else 'NOW()', nsectime),
+        op_params=[precision],
     )
 
 

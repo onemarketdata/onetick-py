@@ -1324,8 +1324,8 @@ def test_symbols_dataframe(session):
 def test_symbols_dataframe_timezone_aware(session):
     # timezone-aware values are not localized in the timezone of the query, they keep their own
     timezone = 'America/New_York'
-    start = pd.Timestamp(2022, 1, 2, 13, 14, 15, tz='GMT')
-    end = pd.Timestamp(2022, 1, 2, 23, 24, 25, tz='GMT')
+    start = pd.Timestamp(2022, 1, 2, 13, 14, 15).tz_localize('GMT')
+    end = pd.Timestamp(2022, 1, 2, 23, 24, 25).tz_localize('GMT')
 
     symbols_df = pd.DataFrame({
         'SYMBOL_NAME': ['LOCAL::AAPL'],

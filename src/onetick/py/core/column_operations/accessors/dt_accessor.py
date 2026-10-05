@@ -3,7 +3,7 @@ from typing import Union, Literal
 from onetick.py import configuration, utils
 from onetick.py import types as ott
 from onetick.py.core.column_operations.accessors._accessor import _Accessor
-from onetick.py.types import datetime, value2str
+from onetick.py.types import value2str
 from onetick.py.docs.utils import docstring, param_doc
 from onetick.py.core.column import _Column
 from onetick.py.core.column_operations.base import _Operation
@@ -545,5 +545,215 @@ class _DtAccessor(_Accessor):
         return _DtAccessor.Formatter(
             op_params=[self._base_column, timezone],
             dtype=int,
+            formatter=formatter,
+        )
+
+    @docstring(parameters=[_timezone_doc], add_self=True)
+    def as_yyyymmddhhmmss(self, timezone=None):
+        """
+        Converts the timestamp into the integer in the form YYYYMMDDhhmmss.
+
+        See Also
+        --------
+        | **AS_YYYYMMDDHHMMSS** OneTick function
+
+        Examples
+        --------
+        >>> data = otp.Ticks(X=[otp.dt(2020, i, i, i, i, i, i) for i in range(1, 5)])
+        >>> data['Y'] = data['X'].dt.as_yyyymmddhhmmss()
+        >>> otp.run(data)[['X', 'Y']]
+                                   X               Y
+        0 2020-01-01 01:01:01.000001  20200101010101
+        1 2020-02-02 02:02:02.000002  20200202020202
+        2 2020-03-03 03:03:03.000003  20200303030303
+        3 2020-04-04 04:04:04.000004  20200404040404
+        """
+        def formatter(column, _timezone):
+            column = ott.value2str(column)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            return f'AS_YYYYMMDDHHMMSS({column},{_timezone})'
+
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, timezone],
+            dtype=int,
+            formatter=formatter,
+        )
+
+    @docstring(parameters=[_timezone_doc], add_self=True)
+    def date_name(self,
+                  date_part: Literal['year', 'quarter', 'month',
+                                     'week', 'weekday', 'day', 'dayofyear',
+                                     'hour', 'minute', 'second',
+                                     'millisecond', 'nanosecond'],
+                  timezone=None):
+        """
+        Returns a number representing the specified ``date_part`` of the specified datetime,
+        interpreted in the specified ``timezone``.
+
+        Parameters
+        ----------
+        date_part: str | Operation | Column
+            Possible values are:
+                'year', 'quarter', 'month',
+                'week', 'weekday', 'day', 'dayofyear',
+                'hour', 'minute', 'second',
+                'millisecond', 'nanosecond'.
+
+        See Also
+        --------
+        | **DATENAME** OneTick function
+
+        Examples
+        --------
+        >>> data = otp.Ticks(X=[otp.dt(2020, 11, 11, 5, 4, 13, 101737, 879)] * 12,
+        ...                  DATE_PART=['year', 'quarter', 'month',
+        ...                             'week', 'weekday', 'day', 'dayofyear',
+        ...                             'hour', 'minute', 'second',
+        ...                             'millisecond', 'nanosecond'])
+        >>> data['DATE_NAME'] = data['X'].dt.date_name(data['DATE_PART'])
+        >>> otp.run(data)[['X', 'DATE_NAME', 'DATE_PART']]
+                                       X  DATE_NAME    DATE_PART
+        0  2020-11-11 05:04:13.101737879       2020         year
+        1  2020-11-11 05:04:13.101737879          4      quarter
+        2  2020-11-11 05:04:13.101737879         11        month
+        3  2020-11-11 05:04:13.101737879         46         week
+        4  2020-11-11 05:04:13.101737879          3      weekday
+        5  2020-11-11 05:04:13.101737879         11          day
+        6  2020-11-11 05:04:13.101737879        315    dayofyear
+        7  2020-11-11 05:04:13.101737879          5         hour
+        8  2020-11-11 05:04:13.101737879          4       minute
+        9  2020-11-11 05:04:13.101737879         13       second
+        10 2020-11-11 05:04:13.101737879          0  millisecond
+        11 2020-11-11 05:04:13.101737879          0   nanosecond
+        """
+        def formatter(column, _date_part, _timezone):
+            column = ott.value2str(column)
+            _date_part = ott.value2str(_date_part)
+            _timezone, _ = self._preprocess_tz_and_format(_timezone, '')
+            return f'DATENAME({_date_part},{column},{_timezone})'
+
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, date_part, timezone],
+            dtype=int,
+            formatter=formatter,
+        )
+
+    def get_nanos_within_msec(self):
+        """
+        Returns number of nanoseconds retained in a millisecond from a timestamp value.
+
+        See Also
+        --------
+        | **GET_NANOS_WITHIN_MSEC** OneTick function
+
+        Examples
+        --------
+        >>> data = otp.Ticks(X=[otp.dt(2022, 5, 1, 15, 0, 6, 123, i) for i in range(10, 17)])
+        >>> data['Y'] = data['X'].dt.get_nanos_within_msec()
+        >>> otp.run(data)[['X', 'Y']]
+                                      X       Y
+        0 2022-05-01 15:00:06.000123010  123010
+        1 2022-05-01 15:00:06.000123011  123011
+        2 2022-05-01 15:00:06.000123012  123012
+        3 2022-05-01 15:00:06.000123013  123013
+        4 2022-05-01 15:00:06.000123014  123014
+        5 2022-05-01 15:00:06.000123015  123015
+        6 2022-05-01 15:00:06.000123016  123016
+        """
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column],
+            dtype=int,
+            formatter=lambda column: f'GET_NANOS_WITHIN_MSEC({ott.value2str(column)})',
+        )
+
+    def get_msecs(self):
+        """
+        Return millisecond-precision timestamp from nanosecond-precision timestamp.
+
+        See Also
+        --------
+        | **GET_MSECS** OneTick function
+
+        Examples
+        --------
+        >>> data = otp.Ticks(X=[otp.dt(2022, 5, 1, 15, 0, 6, i * 1000, 1) for i in range(10)])
+        >>> data['Y'] = data['X'].dt.get_msecs()
+        >>> otp.run(data)[['X', 'Y']]
+                                      X                       Y
+        0 2022-05-01 15:00:06.000000001 2022-05-01 15:00:06.000
+        1 2022-05-01 15:00:06.001000001 2022-05-01 15:00:06.001
+        2 2022-05-01 15:00:06.002000001 2022-05-01 15:00:06.002
+        3 2022-05-01 15:00:06.003000001 2022-05-01 15:00:06.003
+        4 2022-05-01 15:00:06.004000001 2022-05-01 15:00:06.004
+        5 2022-05-01 15:00:06.005000001 2022-05-01 15:00:06.005
+        6 2022-05-01 15:00:06.006000001 2022-05-01 15:00:06.006
+        7 2022-05-01 15:00:06.007000001 2022-05-01 15:00:06.007
+        8 2022-05-01 15:00:06.008000001 2022-05-01 15:00:06.008
+        9 2022-05-01 15:00:06.009000001 2022-05-01 15:00:06.009
+        """
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column],
+            dtype=ott.nsectime,
+            formatter=lambda column: f'GET_MSECS({ott.value2str(column)})',
+        )
+
+    def timestamp_add(self,
+                      date_part: Literal['SQL_TSI_YEAR', 'SQL_TSI_QUARTER', 'SQL_TSI_MONTH', 'SQL_TSI_WEEK',
+                                         'SQL_TSI_DAY', 'SQL_TSI_HOUR', 'SQL_TSI_MINUTE', 'SQL_TSI_SECOND'],
+                      number: int):
+        """
+        Returns the specified datetime with the specified ``number`` interval (signed integer)
+        added to the specified ``date_part`` of that datetime.
+
+        Parameters
+        ----------
+        number: int | Operation | Column
+            Number of intervals to add.
+        date_part: str | Operation | Column
+            Supported values are:
+                'SQL_TSI_YEAR', 'SQL_TSI_QUARTER', 'SQL_TSI_MONTH', 'SQL_TSI_WEEK',
+                'SQL_TSI_DAY', 'SQL_TSI_HOUR', 'SQL_TSI_MINUTE', 'SQL_TSI_SECOND'.
+
+        See Also
+        --------
+        | **TIMESTAMPADD** OneTick function
+
+        Examples
+        --------
+        Add one interval:
+
+        >>> data = otp.Ticks(
+        ...     X=[otp.dt(2020, 11, 12)] * 5,
+        ...     DATE_PART=['SQL_TSI_YEAR', 'SQL_TSI_QUARTER', 'SQL_TSI_MONTH', 'SQL_TSI_WEEK', 'SQL_TSI_DAY']
+        ... )
+        >>> data['Y'] = data['X'].dt.timestamp_add(data['DATE_PART'], 1)
+        >>> otp.run(data)[['X', 'DATE_PART', 'Y']]
+                   X        DATE_PART           Y
+        0 2020-11-12     SQL_TSI_YEAR  2021-11-12
+        1 2020-11-12  SQL_TSI_QUARTER  2021-02-10
+        2 2020-11-12    SQL_TSI_MONTH  2020-12-12
+        3 2020-11-12     SQL_TSI_WEEK  2020-11-19
+        4 2020-11-12      SQL_TSI_DAY  2020-11-13
+
+        Subtract one interval:
+
+        >>> data = otp.Ticks(X=[otp.dt(2020, 11, 11, 5, 4, 13)] * 3,
+        ...                  DATE_PART=['SQL_TSI_HOUR', 'SQL_TSI_MINUTE', 'SQL_TSI_SECOND'])
+        >>> data['Y'] = data['X'].dt.timestamp_add(data['DATE_PART'], -1)
+        >>> otp.run(data)[['X', 'DATE_PART', 'Y']]
+                            X       DATE_PART                    Y
+        0 2020-11-11 05:04:13    SQL_TSI_HOUR  2020-11-11 04:04:13
+        1 2020-11-11 05:04:13  SQL_TSI_MINUTE  2020-11-11 05:03:13
+        2 2020-11-11 05:04:13  SQL_TSI_SECOND  2020-11-11 05:04:12
+        """
+        def formatter(column, _date_part, _number):
+            column = ott.value2str(column)
+            _date_part = ott.value2str(_date_part)
+            _number = ott.value2str(_number)
+            return f'TIMESTAMPADD({_date_part},{number},{column})'
+
+        return _DtAccessor.Formatter(
+            op_params=[self._base_column, date_part, number],
+            dtype=ott.nsectime,
             formatter=formatter,
         )

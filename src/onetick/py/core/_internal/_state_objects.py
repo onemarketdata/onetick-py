@@ -1816,6 +1816,81 @@ class _TickSequenceTickMixin(_TickSequenceTickBase, ABC):
             check_field_name_in_schema(field_name, float, value, schema=self.schema)
         return f'{self}.SET_DOUBLE_VALUE({value2str(field_name)}, {value2str(value)});'
 
+    def get_decimal_value(self, field_name: Union[str, Operation], check_schema=True) -> Operation:
+        """
+        Get value of the decimal ``field_name`` of the tick.
+
+        Parameters
+        ----------
+        field_name: str, :py:class:`otp.Operation <onetick.py.core.column_operations.base.Operation>`
+            String field name or operation which returns field name.
+        check_schema: bool
+            Check that ``field_name`` exists in tick's schema and its type is float.
+            In some cases you may want to disable this behaviour, for example, when tick sequence
+            is updated dynamically in different branches of per-tick script. In this case onetick-py
+            can't deduce if ``field_name`` exists in schema or has the same type.
+
+        Examples
+        --------
+        >>> data = otp.Tick(A=1)
+        >>> data.state_vars['LIST'] = otp.state.tick_list(
+        ...     otp.Ticks(X=[otp.decimal('1.1'), otp.decimal('2.2'), otp.decimal('3.3')])
+        ... )
+        >>> def fun(tick):
+        ...     tick['SUM'] = 0
+        ...     for t in tick.state_vars['LIST']:
+        ...         tick['SUM'] += t.get_decimal_value('X')
+        >>> data = data.script(fun)
+        >>> otp.run(data)
+                Time  A  SUM
+        0 2003-12-01  1  6.6
+        """
+        if check_schema:
+            check_field_name_in_schema(field_name, dtype=ott.decimal, schema=self.schema)
+        return Operation(dtype=ott.decimal,
+                         op_str=f'{self}.GET_DECIMAL_VALUE({value2str(field_name)})')
+
+    def set_decimal_value(self,
+                          field_name: Union[str, Operation],
+                          value: Union[ott.decimal, Operation],
+                          check_schema=True):
+        """
+        Set ``value`` of the decimal ``field_name`` of the tick.
+
+        Parameters
+        ----------
+        field_name: str, :py:class:`otp.Operation <onetick.py.core.column_operations.base.Operation>`
+            String field name or operation which returns field name.
+        value: :class:`~onetick.py.decimal`, \
+               :py:class:`otp.Operation <onetick.py.core.column_operations.base.Operation>`
+            Decimal value to set or operation which return such value.
+        check_schema: bool
+            Check that ``field_name`` exists in tick's schema and its type is the same as the type of ``value``.
+            In some cases you may want to disable this behaviour, for example, when tick sequence
+            is updated dynamically in different branches of per-tick script. In this case onetick-py
+            can't deduce if ``field_name`` exists in schema or has the same type.
+
+        Examples
+        --------
+        >>> data = otp.Tick(A=1)
+        >>> data.state_vars['LIST'] = otp.state.tick_list(
+        ...     otp.Ticks(A=[1, 2, 3], X=[otp.decimal('1.1'), otp.decimal('2.2'), otp.decimal('3.3')])
+        ... )
+        >>> def fun(tick):
+        ...     for t in tick.state_vars['LIST']:
+        ...         t.set_decimal_value('X', otp.decimal('1.1'))
+        >>> data = data.script(fun)
+        >>> data = data.state_vars['LIST'].dump()
+        >>> otp.run(data)
+                             Time  A    X
+        0 2003-12-01 00:00:00.000  1  1.1
+        1 2003-12-01 00:00:00.001  2  1.1
+        2 2003-12-01 00:00:00.002  3  1.1
+        """
+        if check_schema:
+            check_field_name_in_schema(field_name, ott.decimal, value, schema=self.schema)
+        return f'{self}.SET_DECIMAL_VALUE({value2str(field_name)}, {value2str(value)});'
+
     def get_string_value(self, field_name: Union[str, Operation], dtype=str, check_schema=True) -> Operation:
         """
         Get value of the string ``field_name`` of the tick.
@@ -2002,6 +2077,7 @@ class _TickSequenceTickMixin(_TickSequenceTickBase, ABC):
         func_dict = {
             int: self.get_long_value,
             float: self.get_double_value,
+            ott.decimal: self.get_decimal_value,
             str: self.get_string_value,
             nsectime: self.get_datetime_value,
             msectime: self.get_datetime_value,
@@ -2052,6 +2128,7 @@ class _TickSequenceTickMixin(_TickSequenceTickBase, ABC):
         return {
             int: self.set_long_value,
             float: self.set_double_value,
+            ott.decimal: self.set_decimal_value,
             str: self.set_string_value,
             nsectime: self.set_datetime_value,
         }[dtype](field_name, value)

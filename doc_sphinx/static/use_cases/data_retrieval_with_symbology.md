@@ -50,7 +50,7 @@ result = otp.run(data,
 result
 ```
 
-## Tick Retrieval with FIGI Composite Symbol
+## Tick Retrieval with FIGI Composite
 
 Retrieve Trades specifying the Composite FIGI, by prefixing the symbol with ``FGC::::``.
 

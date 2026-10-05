@@ -912,6 +912,9 @@ def join(left, right, on, how='left_outer', rprefix='RIGHT', keep_fields_not_in_
         right.drop(timezone_hack, inplace=True)
 
     for column in on_list:
+        if column == 'TIMESTAMP':
+            # it was already dropped before
+            continue
         result.drop(f'{_RIGHT_NODE_NAME}_{column}', inplace=True)
 
     return result
