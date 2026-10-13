@@ -3,6 +3,7 @@ import sys
 import pytest
 import math
 import datetime
+import decimal
 from functools import partial
 
 import onetick.py as otp
@@ -288,6 +289,19 @@ def test_round():
     assert math.isnan(df['B'][3])
     assert math.isnan(df['C'][3])
     assert math.isnan(df['D'][3])
+
+
+@pytest.mark.skipif(not otp.compatibility._is_preserve_decimal_flag_supported(),
+                    reason='not supported on older OneTick versions')
+def test_decimal_round():
+    t = otp.Ticks(A=[otp.decimal('0.00000000001'), otp.inf, -otp.inf, otp.nan])
+    t['B'] = otp.math.round(t['A'], precision=12)
+    t['C'] = round(t['A'], 12)
+    df = otp.run(t, preserve_decimal_flag=True)
+    assert isinstance(df['B'][0], decimal.Decimal)
+    assert df['B'][0] == decimal.Decimal('0.00000000001')
+    assert isinstance(df['C'][0], decimal.Decimal)
+    assert df['C'][0] == decimal.Decimal('0.00000000001')
 
 
 class TestFloor:

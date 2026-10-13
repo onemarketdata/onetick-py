@@ -707,7 +707,16 @@ class decimal:
     ----------
     value: int, float, str
         The value to initialize decimal from.
+
         Note that float values may be converted with precision lost.
+
+        Special string literals ``NaN`` and ``Infinity`` can also be used.
+
+    See Also
+    --------
+    | **STRING_TO_DECIMAL** OneTick function
+    | **DECIMAL_NAN** OneTick function
+    | **DECIMAL_INFINITY** OneTick function
 
     Examples
     --------
@@ -732,6 +741,13 @@ class decimal:
     >>> otp.run(t)
             Time  A    X
     0 2003-12-01  1  inf
+
+    Special values ``NaN`` and ``Infinity`` can be used when initializing :class:`~onetick.py.types.decimal` values:
+
+    >>> t = otp.Tick(NAN=otp.decimal('NaN'), INF=otp.decimal('Infinity'), NEG_INF=-otp.decimal('Infinity'))
+    >>> otp.run(t)
+            Time  NAN  INF  NEG_INF
+    0 2003-12-01  NaN  inf     -inf
 
     Note that converting from float (first row) may result in losing precision.
     :py:class:`~onetick.py.types.decimal` objects are created from strings or integers, so they don't lose precision:
@@ -815,6 +831,11 @@ class decimal:
             value = self.__value
         else:
             value = str(self.__value)
+            if value.lower() == 'nan':
+                return 'DECIMAL_NAN()'
+            if value.lower() in ('inf', 'infinity'):
+                return 'DECIMAL_INFINITY()'
+
         return f'STRING_TO_DECIMAL({value2str(value)})'
 
     def to_operation(self):

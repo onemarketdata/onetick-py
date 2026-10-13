@@ -1173,7 +1173,7 @@ class TestTypes:
         not tests.compatibility.is_double_nan_supported_when_the_result_type_is_decimal(),
         reason='double NaN is converted to 0 in this OneTick build',
     )
-    @pytest.mark.parametrize("value", [None, otp.nan, otp.raw("DECIMAL_NAN()", otp.decimal)])
+    @pytest.mark.parametrize("value", [None, otp.nan, otp.decimal('nan')])
     def test_decimal_nan(self, value):
         """ check nan-decimal casting to decimal """
         data = otp.Ticks(dict(x=[1, -1]))
@@ -1185,7 +1185,7 @@ class TestTypes:
         assert np.isnan(df["a"][0])
         assert df["a"][1] == 1.5
 
-    @pytest.mark.parametrize("value", [otp.inf, otp.raw("DECIMAL_INFINITY()", otp.decimal)])
+    @pytest.mark.parametrize("value", [otp.inf, otp.decimal('inf')])
     def test_decimal_inf(self, value):
         """ check inf-decimal casting to decimal """
         data = otp.Ticks(dict(x=[1, -1]))

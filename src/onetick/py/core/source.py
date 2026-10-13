@@ -189,7 +189,7 @@ class Source:
         _end=adaptive,
         _base_ep_func=None,
         _has_output=True,
-        query_parameters: QueryParameters = None,
+        query_parameters: QueryParameters | None = None,
         **kwargs,
     ):
 

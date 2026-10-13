@@ -22,7 +22,7 @@ AVAILABLE_SCOPES = (
 
 def var(default_value, scope="query"):
     """
-    Defines a state variable. Supports int, float and string values.
+    Defines a state variable. Supports int, float, :py:class:`~onetick.py.types.decimal` and string values.
 
     Parameters
     ----------

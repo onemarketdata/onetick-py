@@ -17,5 +17,10 @@ Other configuration parameters
 
 See :py:class:`otp.config<onetick.py.configuration.Config>` for details.
 
+For configuration parameters expecting ``boolean`` values you can pass next string values (case-insensitive):
+
+* ``1``, ``true``, ``yes`` for ``True`` values
+* ``0``, ``false``, ``no`` for ``False`` values
+
 .. autodata:: onetick.py.configuration.OptionsTable
    :no-value:

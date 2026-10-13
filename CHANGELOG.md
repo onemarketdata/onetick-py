@@ -10,6 +10,26 @@
 
 ### Removed
 
+## [1.216.0] - 2026-10-13
+
+### Added
+
+- Add `otp.ShowEpList`, `otp.ShowEpInfo` and `otp.ShowFunctionList`
+- Add `otp.ShowSymbologyList` source
+- Add missing OneTick math functions
+
+### Changed
+
+- Parallelize `docs(stable)` job
+
+### Fixed
+
+- Updated documentation about `otp.state.var` and config environment variables
+- Fix `otp.Symbols` not working with native symbology
+- Fix tests with `PRESORT` on latest OneTick versions
+
+### Removed
+
 ## [1.215.0] - 2026-10-05
 
 ### Added

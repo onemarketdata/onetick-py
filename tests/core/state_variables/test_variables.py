@@ -713,3 +713,12 @@ def test_otp_int_with_state_var(session):
     t['SUMSIZE'] = t.state_vars['SUMSIZE']
     df = otp.run(t)
     assert df['SUMSIZE'][0] == 110
+
+
+def test_otp_decimal_state_var(session):
+    t = otp.Ticks({'A': [otp.decimal(1)]})
+    t.state_vars['B'] = otp.state.var(otp.decimal(1))
+    t.state_vars['B'] += t['A']
+    t['C'] = t.state_vars['B']
+    df = otp.run(t)
+    assert df['C'][0] == 2.0

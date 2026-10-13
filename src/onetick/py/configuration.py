@@ -301,6 +301,11 @@ class Config:
     Most of the config vars are optional and have default values,
     but some of them need to be set manually.
 
+    For environment variables with expected boolean values you can specify them as case-insensitive string values:
+
+    * ``1``, ``true`` or ``yes`` for ``True`` value.
+    * ``0``, ``false`` or ``no`` for ``False`` value.
+
     There are also some environment variables that do not have
     corresponding property in ``otp.config`` object:
 

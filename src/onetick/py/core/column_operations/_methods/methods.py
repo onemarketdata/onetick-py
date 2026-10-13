@@ -14,7 +14,10 @@ class DatetimeSubtractionWarning(FutureWarning):
 
 
 def round(prev_op, precision):
-    return MethodResult(f'round_double({str(prev_op)},{str(precision)})', float)
+    if prev_op.dtype is ott.decimal:
+        return MethodResult(f'round_decimal({str(prev_op)},{str(precision)})', ott.decimal)
+    else:
+        return MethodResult(f'round_double({str(prev_op)},{str(precision)})', float)
 
 
 def isin(prev_op, items):

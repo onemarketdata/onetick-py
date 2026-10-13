@@ -446,7 +446,8 @@ class Symbols(Source):
         if not keep_db:
             src["SYMBOL_NAME"] = src["SYMBOL_NAME"].str.regex_replace('.*::', '')
             if params['symbology'] and params['show_original_symbols']:
-                src.schema['ORIGINAL_SYMBOL_NAME'] = str
+                # PY-1665: ORIGINAL_SYMBOL_NAME is not returned if native symbology is used
+                src = src.table(**{'SYMBOL_NAME': str, 'ORIGINAL_SYMBOL_NAME': str}, strict=False)
                 src['ORIGINAL_SYMBOL_NAME'] = src['ORIGINAL_SYMBOL_NAME'].str.regex_replace('.*::', '')  # NOSONAR
 
         return src

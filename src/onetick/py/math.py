@@ -1,5 +1,13 @@
 from onetick.py.core.column_operations.base import _Operation
-from onetick.py.types import value2str, nsectime, get_type_by_objects
+from onetick.py.types import value2str, nsectime, get_type_by_objects, decimal
+
+
+def _decimal_or_float(*args):
+    dtype = get_type_by_objects(args)
+    if dtype is decimal:
+        return decimal
+    else:
+        return float
 
 
 def max(*objs):
@@ -9,11 +17,15 @@ def max(*objs):
 
     Parameters
     ----------
-    objs: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    objs: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **MAX** OneTick function
 
     Examples
     --------
@@ -51,11 +63,15 @@ def min(*objs):
 
     Parameters
     ----------
-    objs: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    objs: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **MIN** OneTick function
 
     Examples
     --------
@@ -95,13 +111,17 @@ def rand(min_value, max_value, seed=None):
 
     Parameters
     ----------
-    min_value: int, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
-    max_value: int, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
-    seed: int, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    min_value: int, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+    max_value: int, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+    seed: int, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **RAND** OneTick function
 
     Examples
     --------
@@ -137,20 +157,25 @@ def frand(min_value=0, max_value=1, *, seed=None):
 
     Parameters
     ----------
-    min_value: float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
-    max_value: float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
-    seed: int, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    min_value: float, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+    max_value: float, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+    seed: int, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
         If not specified, the function produces different values each time a query is invoked.
         If specified, for this seed the function produces the same sequence of values
         each time a query is invoked.
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **FRAND** OneTick function
 
     Examples
     --------
-    >>> data = otp.Tick(A=otp.math.frand())
+    >>> data = otp.Tick(A=1)
+    >>> data['FRAND'] = otp.math.frand()
     >>> otp.run(data)  # doctest: +SKIP
             Time  A     FRAND
     0 2003-12-01  1  0.667519
@@ -181,14 +206,14 @@ def now(precision: int | _Operation | None = None):
 
     Parameters
     ----------
-    precision: int or :py:class:`~onetick.py.Operation`
+    precision: int or :class:`~onetick.py.Operation`
         Determines the milliseconds precision of the returned timestamp value.
         Valid values are 0-3.
         Default value is 3.
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
 
     See Also
     --------
@@ -215,11 +240,11 @@ def ln(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
 
     Examples
     --------
@@ -231,10 +256,11 @@ def ln(value):
 
     See Also
     --------
-    :py:func:`onetick.py.math.exp`
+    | :py:func:`onetick.py.math.exp`
+    | **LOG** OneTick function
     """
     return _Operation(
-        op_func=lambda v: (f'LOG({value2str(v)})', float),
+        op_func=lambda v: (f'LOG({value2str(v)})', _decimal_or_float(v)),
         op_params=[value],
     )
 
@@ -248,11 +274,15 @@ def log10(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **LOG10** OneTick function
 
     Examples
     --------
@@ -263,7 +293,7 @@ def log10(value):
     0 2003-12-01  1    2.0
     """
     return _Operation(
-        op_func=lambda v: (f'LOG10({value2str(v)})', float),
+        op_func=lambda v: (f'LOG10({value2str(v)})', _decimal_or_float(v)),
         op_params=[value],
     )
 
@@ -274,11 +304,11 @@ def exp(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
 
     Examples
     --------
@@ -290,10 +320,11 @@ def exp(value):
 
     See Also
     --------
-    :py:func:`onetick.py.math.ln`
+    | **EXP** OneTick function
+    | :py:func:`onetick.py.math.ln`
     """
     return _Operation(
-        op_func=lambda v: (f'EXP({value2str(v)})', float),
+        op_func=lambda v: (f'EXP({value2str(v)})', _decimal_or_float(v)),
         op_params=[value],
     )
 
@@ -304,11 +335,15 @@ def sqrt(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **SQRT** OneTick function
 
     Examples
     --------
@@ -330,21 +365,25 @@ def sign(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **SIGN** OneTick function
 
     Examples
     --------
-    >>> data = otp.Tick(A=1)
-    >>> data['SIGN_POS'] = otp.math.sign(123)
-    >>> data['SIGN_ZERO'] = otp.math.sign(0)
-    >>> data['SIGN_NEG'] = otp.math.sign(-123)
+    >>> data = otp.Ticks(A=[123, 0, -123])
+    >>> data['SIGN'] = otp.math.sign(data['A'])
     >>> otp.run(data)
-            Time  A  SIGN_POS  SIGN_ZERO  SIGN_NEG
-    0 2003-12-01  1         1          0        -1
+                         Time    A  SIGN
+    0 2003-12-01 00:00:00.000  123     1
+    1 2003-12-01 00:00:00.001    0     0
+    2 2003-12-01 00:00:00.002 -123    -1
     """
     return _Operation(
         op_func=lambda v: (f'SIGN({value2str(v)})', int),
@@ -358,12 +397,16 @@ def pow(base, exponent):
 
     Parameters
     ----------
-    base: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
-    exponent: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    base: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+    exponent: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **POWER** OneTick function
 
     Examples
     --------
@@ -374,7 +417,7 @@ def pow(base, exponent):
     0 2003-12-01  2  1024.0
     """
     return _Operation(
-        op_func=lambda b, e: (f'POWER({value2str(b)}, {value2str(e)})', float),
+        op_func=lambda b, e: (f'POWER({value2str(b)}, {value2str(e)})', _decimal_or_float(b)),
         op_params=[base, exponent],
     )
 
@@ -385,7 +428,11 @@ def pi():
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **PI** OneTick function
 
     Examples
     --------
@@ -406,11 +453,11 @@ def sin(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
 
     Examples
     --------
@@ -422,11 +469,12 @@ def sin(value):
 
     See Also
     --------
-    :py:func:`onetick.py.math.pi`
-    :py:func:`onetick.py.math.asin`
+    | **SIN** OneTick function
+    | :py:func:`onetick.py.math.pi`
+    | :py:func:`onetick.py.math.asin`
     """
     return _Operation(
-        op_func=lambda v: (f'SIN({value2str(v)})', float),
+        op_func=lambda v: (f'SIN({value2str(v)})', _decimal_or_float(v)),
         op_params=[value],
     )
 
@@ -437,11 +485,11 @@ def cos(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
 
     Examples
     --------
@@ -453,11 +501,12 @@ def cos(value):
 
     See Also
     --------
-    :py:func:`onetick.py.math.pi`
-    :py:func:`onetick.py.math.acos`
+    | **COS** OneTick function
+    | :py:func:`onetick.py.math.pi`
+    | :py:func:`onetick.py.math.acos`
     """
     return _Operation(
-        op_func=lambda v: (f'COS({value2str(v)})', float),
+        op_func=lambda v: (f'COS({value2str(v)})', _decimal_or_float(v)),
         op_params=[value],
     )
 
@@ -468,11 +517,11 @@ def tan(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
 
     Examples
     --------
@@ -484,11 +533,12 @@ def tan(value):
 
     See Also
     --------
-    :py:func:`onetick.py.math.pi`
-    :py:func:`onetick.py.math.atan`
+    | **TAN** OneTick function
+    | :py:func:`onetick.py.math.pi`
+    | :py:func:`onetick.py.math.atan`
     """
     return _Operation(
-        op_func=lambda v: (f'TAN({value2str(v)})', float),
+        op_func=lambda v: (f'TAN({value2str(v)})', _decimal_or_float(v)),
         op_params=[value],
     )
 
@@ -499,11 +549,11 @@ def cot(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
 
     Examples
     --------
@@ -515,11 +565,12 @@ def cot(value):
 
     See Also
     --------
-    :py:func:`onetick.py.math.pi`
-    :py:func:`onetick.py.math.acot`
+    | **COT** OneTick function
+    | :py:func:`onetick.py.math.pi`
+    | :py:func:`onetick.py.math.acot`
     """
     return _Operation(
-        op_func=lambda v: (f'COT({value2str(v)})', float),
+        op_func=lambda v: (f'COT({value2str(v)})', _decimal_or_float(v)),
         op_params=[value],
     )
 
@@ -530,11 +581,11 @@ def asin(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
 
     Examples
     --------
@@ -544,7 +595,7 @@ def asin(value):
             Time  A    ASIN
     0 2003-12-01  1  1.5708
 
-    `otp.math.arcsin()` is the alias for `otp.math.asin()`:
+    ``otp.math.arcsin()`` is the alias for :func:`~onetick.py.math.asin`:
 
     >>> data = otp.Tick(A=1)
     >>> data['ASIN'] = otp.math.arcsin(1).round(4)
@@ -554,11 +605,12 @@ def asin(value):
 
     See Also
     --------
-    :py:func:`onetick.py.math.pi`
-    :py:func:`onetick.py.math.sin`
+    | **ASIN** OneTick function
+    | :py:func:`onetick.py.math.pi`
+    | :py:func:`onetick.py.math.sin`
     """
     return _Operation(
-        op_func=lambda v: (f'ASIN({value2str(v)})', float),
+        op_func=lambda v: (f'ASIN({value2str(v)})', _decimal_or_float(v)),
         op_params=[value],
     )
 
@@ -572,11 +624,11 @@ def acos(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
 
     Examples
     --------
@@ -586,7 +638,7 @@ def acos(value):
             Time  A    ACOS
     0 2003-12-01  1  3.1416
 
-    `otp.math.arccos()` is the alias for `otp.math.acos()`:
+    ``otp.math.arccos()`` is the alias for :func:`~onetick.py.math.acos`:
 
     >>> data = otp.Tick(A=1)
     >>> data['ACOS'] = otp.math.arccos(-1).round(4)
@@ -596,11 +648,12 @@ def acos(value):
 
     See Also
     --------
-    :py:func:`onetick.py.math.pi`
-    :py:func:`onetick.py.math.cos`
+    | **ACOS** OneTick function
+    | :py:func:`onetick.py.math.pi`
+    | :py:func:`onetick.py.math.cos`
     """
     return _Operation(
-        op_func=lambda v: (f'ACOS({value2str(v)})', float),
+        op_func=lambda v: (f'ACOS({value2str(v)})', _decimal_or_float(v)),
         op_params=[value],
     )
 
@@ -614,11 +667,11 @@ def atan(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
 
     Examples
     --------
@@ -628,7 +681,7 @@ def atan(value):
             Time  A    ATAN
     0 2003-12-01  1  0.7854
 
-    `otp.math.arctan()` is the alias for `otp.math.atan()`:
+    ``otp.math.arctan()`` is the alias for :func:`~onetick.py.math.atan`:
 
     >>> data = otp.Tick(A=1)
     >>> data['ATAN'] = otp.math.arctan(1).round(4)
@@ -638,11 +691,12 @@ def atan(value):
 
     See Also
     --------
-    :py:func:`onetick.py.math.pi`
-    :py:func:`onetick.py.math.tan`
+    | **ATAN** OneTick function
+    | :py:func:`onetick.py.math.pi`
+    | :py:func:`onetick.py.math.tan`
     """
     return _Operation(
-        op_func=lambda v: (f'ATAN({value2str(v)})', float),
+        op_func=lambda v: (f'ATAN({value2str(v)})', _decimal_or_float(v)),
         op_params=[value],
     )
 
@@ -656,11 +710,11 @@ def acot(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
 
     Examples
     --------
@@ -670,7 +724,7 @@ def acot(value):
             Time  A    ACOT
     0 2003-12-01  1  0.7854
 
-    `otp.math.arccot()` is the alias for `otp.math.acot()`:
+    ``otp.math.arccot()`` is the alias for :func:`~onetick.py.math.acot`:
 
     >>> data = otp.Tick(A=1)
     >>> data['ACOT'] = otp.math.arccot(1).round(4)
@@ -680,16 +734,47 @@ def acot(value):
 
     See Also
     --------
-    :py:func:`onetick.py.math.pi`
-    :py:func:`onetick.py.math.cot`
+    | **ACOT** OneTick function
+    | :py:func:`onetick.py.math.pi`
+    | :py:func:`onetick.py.math.cot`
     """
     return _Operation(
-        op_func=lambda v: (f'ACOT({value2str(v)})', float),
+        op_func=lambda v: (f'ACOT({value2str(v)})', _decimal_or_float(v)),
         op_params=[value],
     )
 
 
 arccot = acot
+
+
+def atn2(y, x):
+    """
+    Returns the principal value of inverse trigonometric function ``arctan`` of ``y/x``.
+
+    Parameters
+    ----------
+    y, x: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+
+    Returns
+    -------
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **ATN2** OneTick function
+
+    Examples
+    --------
+    >>> data = otp.Tick(A=1)
+    >>> data['ATN2'] = otp.math.atn2(1, 1).round(4)  # should return pi/4 ~ 0.7854
+    >>> otp.run(data)
+            Time  A    ATN2
+    0 2003-12-01  1  0.7854
+    """
+    return _Operation(
+        op_func=lambda y, x: (f'ATN2({value2str(y)}, {value2str(x)})', _decimal_or_float(y, x)),
+        op_params=[y, x],
+    )
 
 
 def mod(value1, value2):
@@ -698,20 +783,25 @@ def mod(value1, value2):
 
     Parameters
     ----------
-    value1: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
-    value2: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value1: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+    value2: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **MOD** OneTick function
+    | div
 
     Examples
     --------
-    >>> data = otp.Tick(A=100)
-    >>> data['MOD'] = otp.math.mod(data['A'], 72)
+    >>> data = otp.Tick(A=100, B=72)
+    >>> data['MOD'] = otp.math.mod(data['A'], data['B'])
     >>> otp.run(data)
-            Time    A  MOD
-    0 2003-12-01  100   28
+            Time    A   B  MOD
+    0 2003-12-01  100  72   28
     """
     return _Operation(
         op_func=lambda v1, v2: (f'MOD({value2str(v1)}, {value2str(v2)})', int),
@@ -725,20 +815,25 @@ def div(value1, value2):
 
     Parameters
     ----------
-    value1: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
-    value2: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value1: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+    value2: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **DIV** OneTick function
+    | mod
 
     Examples
     --------
-    >>> data = otp.Tick(A=100)
-    >>> data['DIV'] = otp.math.div(data['A'], 72)
+    >>> data = otp.Tick(A=100, B=72)
+    >>> data['DIV'] = otp.math.div(data['A'], data['B'])
     >>> otp.run(data)
-            Time    A  DIV
-    0 2003-12-01  100    1
+            Time    A   B  DIV
+    0 2003-12-01  100  72    1
     """
     return _Operation(
         op_func=lambda v1, v2: (f'DIV({value2str(v1)}, {value2str(v2)})', int),
@@ -752,20 +847,24 @@ def gcd(value1, value2):
 
     Parameters
     ----------
-    value1: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
-    value2: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value1: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+    value2: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **GCD** OneTick function
 
     Examples
     --------
-    >>> data = otp.Tick(A=99)
-    >>> data['GCD'] = otp.math.gcd(data['A'], 72)
+    >>> data = otp.Tick(A=99, B=72)
+    >>> data['GCD'] = otp.math.gcd(data['A'], data['B'])
     >>> otp.run(data)
-            Time   A  GCD
-    0 2003-12-01  99    9
+            Time   A   B  GCD
+    0 2003-12-01  99  72    9
     """
     return _Operation(
         op_func=lambda v1, v2: (f'GCD({value2str(v1)}, {value2str(v2)})', int),
@@ -784,11 +883,16 @@ def floor(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **FLOOR** OneTick function
+    | ceil
 
     Examples
     --------
@@ -830,11 +934,16 @@ def ceil(value):
 
     Parameters
     ----------
-    value: int, float, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
 
     Returns
     -------
-        :py:class:`~onetick.py.Operation`
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **CEIL** OneTick function
+    | floor
 
     Examples
     --------
@@ -874,6 +983,8 @@ def round(value, precision=0, rounding_method='upward'):
 
     Parameters
     ----------
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+        The value to round.
     precision: int
         Number from -12 to 12.
         Positive precision is precision after the floating point.
@@ -882,6 +993,11 @@ def round(value, precision=0, rounding_method='upward'):
         Used for values that are exactly half-way between two integers (when the fraction part of value is exactly 0.5).
         Available values are **upward**, **downward**, **towards_zero**, **away_from_zero**.
         Default is **upward**.
+
+    See Also
+    --------
+    | **ROUND_DOUBLE** OneTick function
+    | **ROUND_DECIMAL** OneTick function
 
     Examples
     --------
@@ -911,9 +1027,9 @@ def round(value, precision=0, rounding_method='upward'):
     >>> t['ROUND1'] = otp.math.round(t['A'], 1)
     >>> t['ROUND2'] = otp.math.round(t['A'], 2)
     >>> otp.run(t)
-                            Time       A  ROUND1  ROUND2
-    0 2003-12-01 00:00:00.000 -123.45  -123.4 -123.45
-    1 2003-12-01 00:00:00.001  123.45   123.5  123.45
+                         Time       A  ROUND1   ROUND2
+    0 2003-12-01 00:00:00.000 -123.45  -123.4  -123.45
+    1 2003-12-01 00:00:00.001  123.45   123.5   123.45
 
     Negative precision truncates to the number of digits *before* floating point
     (and the fraction part is dropped in this case):
@@ -922,7 +1038,7 @@ def round(value, precision=0, rounding_method='upward'):
     >>> t['ROUND_M1'] = otp.math.round(t['A'], -1)
     >>> t['ROUND_M2'] = otp.math.round(t['A'], -2)
     >>> otp.run(t)
-                            Time       A  ROUND_M1  ROUND_M2
+                         Time       A  ROUND_M1  ROUND_M2
     0 2003-12-01 00:00:00.000 -123.45    -120.0    -100.0
     1 2003-12-01 00:00:00.001  123.45     120.0     100.0
 
@@ -944,7 +1060,125 @@ def round(value, precision=0, rounding_method='upward'):
     supported_rounding_methods = {'upward', 'downward', 'towards_zero', 'away_from_zero'}
     if rounding_method not in supported_rounding_methods:
         raise ValueError(f"Parameter 'rounding_method' must be one of {supported_rounding_methods}")
+
+    def fun(value, precision, rounding_method):
+        dtype = _decimal_or_float(value)
+        args_str = f'{value2str(value)},{value2str(precision)},{value2str(rounding_method)}'
+        if dtype is decimal:
+            return f'ROUND_DECIMAL({args_str})', dtype
+        else:
+            return f'ROUND_DOUBLE({args_str})', dtype
+
     return _Operation(
-        op_func=lambda v, p, r: (f'ROUND_DOUBLE({value2str(v)},{value2str(p)},{value2str(r)})', float),
+        op_func=fun,
         op_params=[value, precision, rounding_method],
+    )
+
+
+def radians(value):
+    """
+    Returns the corresponding angle, in radians, for ``value`` specified in degrees.
+
+    Parameters
+    ----------
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+
+    Returns
+    -------
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **RADIANS** OneTick function
+    | :func:`~onetick.py.math.degrees`
+
+    Examples
+    --------
+    >>> data = otp.Tick(A=1)
+    >>> data['RADIANS'] = otp.math.radians(45).round(4)  # should return pi/4 ~ 0.7854
+    >>> otp.run(data)
+            Time  A  RADIANS
+    0 2003-12-01  1   0.7854
+    """
+    return _Operation(
+        op_func=lambda v: (f'RADIANS({value2str(v)})', _decimal_or_float(v)),
+        op_params=[value],
+    )
+
+
+def degrees(value):
+    """
+    Returns the corresponding angle, in degrees, for ``value`` specified in radians.
+
+    Parameters
+    ----------
+    value: int, float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+
+    Returns
+    -------
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **DEGREES** OneTick function
+    | :func:`~onetick.py.math.radians`
+
+    Examples
+    --------
+    >>> data = otp.Tick(A=1)
+    >>> data['DEGREES'] = otp.math.degrees(otp.math.pi() / 4)  # should return 45
+    >>> otp.run(data)
+            Time  A  DEGREES
+    0 2003-12-01  1     45.0
+    """
+    return _Operation(
+        op_func=lambda v: (f'DEGREES({value2str(v)})', _decimal_or_float(v)),
+        op_params=[value],
+    )
+
+
+def truncate(number, precision=0):
+    """
+    Returns the ``number`` truncated to ``precision`` places right of the decimal point.
+
+    If ``precision`` is negative, the number is truncated to the left of the decimal point.
+
+    Note
+    ----
+    Truncating :class:`otp.nan <onetick.py.nan>` returns NaN
+    and truncating :class:`otp.inf <onetick.py.inf>` returns Infinity.
+
+    Parameters
+    ----------
+    number: float, :class:`~onetick.py.decimal`, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+    precision: int, :class:`~onetick.py.Operation`, :class:`~onetick.py.Column`
+
+    Returns
+    -------
+    :class:`~onetick.py.Operation`
+
+    See Also
+    --------
+    | **TRUNCATE** OneTick function
+
+    Examples
+    --------
+    >>> data = otp.Ticks(A=[1.0, 1.23456, 123.456, 12345.6, otp.nan, otp.inf, -otp.inf])
+    >>> data['TRUNCATED'] = otp.math.truncate(data['A'])
+    >>> data['TRUNCATED_P2'] = otp.math.truncate(data['A'], 2)
+    >>> data['TRUNCATED_M2'] = otp.math.truncate(data['A'], -2)
+    >>> otp.run(data)
+                         Time            A  TRUNCATED  TRUNCATED_P2  TRUNCATED_M2
+    0 2003-12-01 00:00:00.000      1.00000        1.0          1.00           0.0
+    1 2003-12-01 00:00:00.001      1.23456        1.0          1.23           0.0
+    2 2003-12-01 00:00:00.002    123.45600      123.0        123.45         100.0
+    3 2003-12-01 00:00:00.003  12345.60000    12345.0      12345.60       12300.0
+    4 2003-12-01 00:00:00.004          NaN        NaN           NaN           NaN
+    5 2003-12-01 00:00:00.005          inf        inf           inf           inf
+    6 2003-12-01 00:00:00.006         -inf       -inf          -inf          -inf
+    """
+    return _Operation(
+        op_func=lambda number, precision: (f'TRUNCATE({value2str(number)},{value2str(precision)})',
+                                           _decimal_or_float(number)),
+        op_params=[number, precision],
     )

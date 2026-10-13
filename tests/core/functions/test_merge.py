@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import itertools
 from pathlib import Path
@@ -424,7 +425,7 @@ def test_presort(session):
 
     data = otp.merge([t, q], presort=True)
     text = Path(data.to_otq().split('::')[0]).read_text()
-    assert 'PRESORT' in text and 'PRESORT(MAX_CONCURRENCY=' not in text
+    assert 'PRESORT' in text and not re.search(r'PRESORT\(.*MAX_CONCURRENCY=', text)
     df = otp.run(data)
     assert list(df['A']) == [1, 2]
 
@@ -440,7 +441,7 @@ def test_force_presort(session, monkeypatch):
     query_concurrency = otp.configuration.default_query_concurrency()
     presort_concurrency = otp.configuration.default_presort_concurrency()
     assert query_concurrency == presort_concurrency
-    assert f'PRESORT(MAX_CONCURRENCY={presort_concurrency}' in text
+    assert re.search(rf'PRESORT\(.*MAX_CONCURRENCY={presort_concurrency}', text)
     df = otp.run(data)
     assert list(df['A']) == [1, 2]
 

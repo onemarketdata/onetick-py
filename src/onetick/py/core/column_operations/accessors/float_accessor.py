@@ -33,12 +33,16 @@ class _FloatAccessor(_Accessor):
         result: Operation
             String representation of float value.
 
+        See Also
+        --------
+        | **STR** OneTick function
+
         Examples
         --------
 
         >>> data = otp.Ticks(X=[1, 2.17, 10.31861, 3.141593, otp.nan, otp.inf, -otp.inf])
         >>> # OTdirective: snippet-name: float operations.to string.constant precision;
-        >>> data["Y"] = data["X"].float.str(15, 3)
+        >>> data['Y'] = data['X'].float.str(15, 3)
         >>> otp.run(data)
                              Time          X       Y
         0 2003-12-01 00:00:00.000   1.000000   1.000
@@ -55,7 +59,7 @@ class _FloatAccessor(_Accessor):
         ...                  LENGTH=[2, 3, 4, 5],
         ...                  PRECISION=[5, 5, 3, 3])
         >>> # OTdirective: snippet-name: float operations.to string.precision from fields;
-        >>> data["Y"] = data["X"].float.str(data["LENGTH"], data["PRECISION"])
+        >>> data['Y'] = data['X'].float.str(data['LENGTH'], data['PRECISION'])
         >>> otp.run(data)
                              Time          X  LENGTH  PRECISION      Y
         0 2003-12-01 00:00:00.000   1.000000       2          5      1
@@ -110,7 +114,8 @@ class _FloatAccessor(_Accessor):
 
         See Also
         --------
-        eq
+        | eq
+        | **DOUBLE_COMPARE** OneTick function
 
         Examples
         --------
@@ -119,7 +124,7 @@ class _FloatAccessor(_Accessor):
         ...                  OTHER=[2.1, 2.1, 10.32841, 3.14, 6],
         ...                  EPS=[0.01, 0.1, 0.1, 0.0001, 0.01])
         >>> # OTdirective: snippet-name: float operations.approximate comparison.lt|eq|gt;
-        >>> data["Y"] = data["X"].float.cmp(data["OTHER"], data["EPS"])
+        >>> data['Y'] = data['X'].float.cmp(data['OTHER'], data['EPS'])
         >>> otp.run(data)  # doctest: +SKIP
                              Time          X     OTHER     EPS    Y
         0 2003-12-01 00:00:00.000   2.170000   2.10000  0.0100  1.0
@@ -154,7 +159,7 @@ class _FloatAccessor(_Accessor):
 
         See Also
         --------
-        cmp
+        | cmp
 
         Returns
         -------
@@ -167,7 +172,7 @@ class _FloatAccessor(_Accessor):
         ...                  OTHER=[1.01, 2.1, 10.32841, 3.14, 5],
         ...                  DELTA=[0, 1, 0.1, 0.01, 0.001])
         >>> # OTdirective: snippet-name: float operations.approximate comparison.eq;
-        >>> data["Y"] = (1 + data["X"] - 1).float.eq(data["OTHER"], data["DELTA"])
+        >>> data['Y'] = (1 + data['X'] - 1).float.eq(data['OTHER'], data['DELTA'])
         >>> otp.run(data)
                              Time          X     OTHER  DELTA    Y
         0 2003-12-01 00:00:00.000   1.000000   1.01000  0.000  0.0
@@ -185,5 +190,71 @@ class _FloatAccessor(_Accessor):
         return _FloatAccessor.Formatter(
             op_params=[self._base_column, other, delta],
             dtype=bool,
+            formatter=formatter,
+        )
+
+    def to_32nds(self, *, throw_if_not_convertible: bool = True):
+        """
+        Converts double number to *32nds* format string.
+
+        If ``throw_if_not_convertible`` flag is set to True (default),
+        function will throw an exception if it can not convert double to a *32nds* string,
+        otherwise it will return a string whose double implementation is close to the given number.
+
+        Parameters
+        ----------
+        throw_if_not_convertible: bool or :class:`~onetick.py.Operation`
+
+        Returns
+        -------
+        :class:`~onetick.py.Operation`
+
+        See Also
+        --------
+        | **CONVERT_DOUBLE_TO_32NDS** OneTick function
+        | :meth:`~onetick.py.core.column_operations.accessors.str_accessor._StrAccessor.from_32nds`
+
+        Examples
+        --------
+
+        Convert double number to *32nds* format:
+
+        >>> data = otp.Ticks(PRICE=[100.0, 101 + 1/32, 102 + 16/32, 103 + 16.5/32, 104 + 7/256])
+        >>> data['PRICE_32NDS'] = data['PRICE'].float.to_32nds()
+        >>> otp.run(data)
+                             Time       PRICE  PRICE_32NDS
+        0 2003-12-01 00:00:00.000  100.000000       100-00
+        1 2003-12-01 00:00:00.001  101.031250       101-01
+        2 2003-12-01 00:00:00.002  102.500000       102-16
+        3 2003-12-01 00:00:00.003  103.515625      103-16+
+        4 2003-12-01 00:00:00.004  104.027344      104-007
+
+        If the number can't be converted, exception will be raised:
+
+        >>> data = otp.Ticks(PRICE=[100.0 + 1/33])
+        >>> data['PRICE_32NDS'] = data['PRICE'].float.to_32nds()
+        >>> otp.run(data)  # doctest: +ELLIPSIS
+        Traceback (most recent call last):
+        Exception...Can't convert double to 32nds format string...
+
+        In this case parameter ``throw_if_not_convertible=False`` can be set,
+        and unconvertible values will be converted to the closest *32nds* value:
+
+        >>> data = otp.Ticks(PRICE=[100.0 + 1/33])
+        >>> data['PRICE_32NDS'] = data['PRICE'].float.to_32nds(throw_if_not_convertible=False)
+        >>> otp.run(data)
+                Time       PRICE PRICE_32NDS
+        0 2003-12-01  100.030303     100-007
+        """
+        def formatter(column, throw_if_not_convertible):
+            if isinstance(throw_if_not_convertible, bool):
+                throw_if_not_convertible = f"'{str(throw_if_not_convertible).upper()}'"
+            else:
+                throw_if_not_convertible = ott.value2str(throw_if_not_convertible)
+            return f'CONVERT_DOUBLE_TO_32NDS({ott.value2str(column)},{throw_if_not_convertible})'
+
+        return _FloatAccessor.Formatter(
+            op_params=[self._base_column, throw_if_not_convertible],
+            dtype=str,
             formatter=formatter,
         )

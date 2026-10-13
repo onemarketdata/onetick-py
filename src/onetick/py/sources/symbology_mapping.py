@@ -60,6 +60,11 @@ class SymbologyMapping(Source):
             Additional query properties to be set in the resulting .otq file.
             They will be used if they are not overridden by other parameters or in :py:func:`otp.run <onetick.py.run>`.
 
+        See also
+        --------
+        | **SYMBOLOGY_MAPPING** OneTick event processor
+        | :py:class:`onetick.py.ShowSymbologyList`
+
         Examples
         --------
 

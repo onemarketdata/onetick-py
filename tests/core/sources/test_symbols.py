@@ -150,3 +150,11 @@ def test_eval_as_db_param(db):
     symbols = otp.Symbols(db=db_param)
     df = otp.run(symbols)
     assert set(df[pattern]['SYMBOL_NAME']) == {'A', 'B', 'C', 'D'}
+
+
+def test_native_symbology(db):
+    # PY-1665
+    data = otp.Symbols(db=db, symbology='BZX', show_original_symbols=True)
+    df = otp.run(data)
+    assert list(df['SYMBOL_NAME']) == ['A', 'B', 'C', 'D']
+    assert list(df['ORIGINAL_SYMBOL_NAME']) == ['', '', '', '']
