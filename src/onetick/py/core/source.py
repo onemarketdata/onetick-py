@@ -1771,6 +1771,11 @@ class Source:
         show_hidden_ticks,
         show_corrected_ticks,
         correct_tick_filter,
+        byte_present,
+        regex_matches,
+        uptick,
+        value_compare,
+        volume_limit,
     )
     from ._source.source_methods.drops import (  # type: ignore[misc]
         drop,
@@ -1850,6 +1855,12 @@ class Source:
         intercept_data_quality,
         show_symbol_errors,
         intercept_symbol_errors,
+    )
+    from ._source.source_methods.transformers import (  # type: ignore[misc]
+        add_fields_from_symbol_params,
+        mid,
+        interpolate,
+        encoding_converter,
     )
 
 

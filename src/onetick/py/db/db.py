@@ -474,7 +474,14 @@ class DB(_DB):
         Can be set only if ``src`` is set.
         Default value is the same as in :py:meth:`add` method.
     db_properties : :obj:`dict`, optional
-        Properties of the database to add to the locator
+        Properties of the database to add to the locator.
+
+        Some options from :class:`otp.config <onetick.py.configuration.Config>` will be used here by default:
+
+        * :attr:`otp.config.default_symbology <onetick.py.configuration.Config.default_symbology>`
+        * :attr:`otp.config.default_archive_format <onetick.py.configuration.Config.default_archive_format>`
+        * ...
+
     db_locations : :obj:`list` of :obj:`dict`, optional
         A list of locations for the database to add to the locator.
         This parameter is a list, because databases in a locator can have several location sections.
@@ -613,6 +620,8 @@ class DB(_DB):
         properties.setdefault("symbology", configuration.config.default_symbology)
         properties.setdefault("tick_timestamp_type", "NANOS")
         properties.setdefault("archive_compression_type", constants.compression_type.NATIVE_PLUS_ZSTD)
+        if configuration.config.default_archive_format is not None:
+            properties.setdefault("archive_format", configuration.config.default_archive_format)
 
         return self._format_params(properties)
 

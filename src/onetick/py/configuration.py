@@ -1,3 +1,4 @@
+import ast
 import os
 from datetime import datetime
 from typing import Union, Optional
@@ -53,6 +54,22 @@ def parse_bool_or_string(value) -> Union[bool, str]:
         return parsed_value
     else:
         return str(value)
+
+
+def parse_optional_dict(value: str) -> dict | None:
+    value = value.strip()
+    if not value:
+        return None
+    try:
+        parsed_value = ast.literal_eval(value)
+    except Exception:
+        raise ValueError(f"Can't evaluate python dictionary from string: {value!r}")
+    else:
+        if not isinstance(parsed_value, dict):
+            raise ValueError(
+                f'Expected dict as the result of string evaluation, got {parsed_value} {type(parsed_value)}'
+            )
+        return parsed_value
 
 
 def _env_func_concurrency(value: str) -> Optional[int]:
@@ -644,17 +661,26 @@ class Config:
     )
 
     http_proxy = OtpProperty(
-        description='HTTP proxy used for WebAPI requests.',
+        description='HTTP proxy used for WebAPI requests and for obtaining SSO access token.',
         base_default=None,
         allowed_types=str,
         env_var_name='HTTP_PROXY',
     )
 
     https_proxy = OtpProperty(
-        description='HTTPS proxy used for WebAPI requests.',
+        description='HTTPS proxy used for WebAPI requests and for obtaining SSO access token.',
         base_default=None,
         allowed_types=str,
         env_var_name='HTTPS_PROXY',
+    )
+
+    http_headers = OtpProperty(
+        description='A dictionary with HTTP headers used for obtaining SSO access token. '
+                    'If set with an environment variable, string will be parsed as a python dictionary.',
+        base_default=None,
+        allowed_types=dict,
+        env_var_name='OTP_HTTP_HEADERS',
+        env_var_func=parse_optional_dict,
     )
 
     access_token = OtpProperty(
@@ -693,7 +719,8 @@ class Config:
     )
 
     trusted_certificates_file = OtpProperty(
-        description='Either a boolean, in which case it controls whether we verify the server TLS certificate '
+        description='Controls TLS certificate logic for WebAPI requests and for obtaining SSO access token. '
+                    'Either a boolean, in which case it controls whether we verify the server TLS certificate '
                     'or a string with the path to the file with list of '
                     'trusted Certificate Authority certificates for WebAPI requests. '
                     'Default behaviour implies verification is enabled.',
@@ -740,7 +767,7 @@ class Config:
     )
 
     main_query_generated_filename = OtpProperty(
-        description='The name of the .otq file with generated main query executed by otp.run.',
+        description='The name of the .otq file with generated main query executed by :func:`otp.run <onetick.py.run>`.',
         base_default='',
         env_var_name='OTP_MAIN_QUERY_GENERATED_FILENAME',
         allowed_types=str,
@@ -800,7 +827,7 @@ class Config:
     )
 
     print_symbol_errors = OtpProperty(
-        description='When calling otp.run that returns dataframe as result '
+        description='When calling :func:`otp.run <onetick.py.run>` that returns dataframe as result '
                     'print symbol errors from OneTick as python warnings.',
         base_default=True,
         env_var_name='OTP_PRINT_SYMBOL_ERRORS',
@@ -818,6 +845,13 @@ class Config:
         env_var_func=int,
     )
 
+    default_archive_format = OtpProperty(
+        description='Default OneTick archive format set in the locator file. '
+                    'Not set in ``onetick.py`` by default, OneTick will choose its own default value.',
+        base_default=None,
+        allowed_types=str,
+        env_var_name='OTP_DEFAULT_ARCHIVE_FORMAT',
+    )
 
 def get_options_table(cls):
     options_table = ('\n'

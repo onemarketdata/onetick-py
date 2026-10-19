@@ -21,11 +21,23 @@ import onetick.py as otp
 def get_access_token_cached(access_token_url, client_id, client_secret, scope=None):
     if not hasattr(otq, 'get_access_token'):
         raise RuntimeError('Current `onetick.query_webapi` version doesn\'t have `get_access_token` function')
+    access_token_parameters = inspect.signature(otq.get_access_token).parameters.keys()
     kwargs = {}
     if scope is not None:
-        if 'scope' not in inspect.signature(otq.get_access_token).parameters.keys():
+        if 'scope' not in access_token_parameters:
             raise RuntimeError('Parameter `scope` is not supported on used version of OneTick')
         kwargs['scope'] = scope
+
+    # PY-1674, OTDEV-39591: these parameters were not supported before
+    if 'http_proxy' in access_token_parameters:
+        kwargs['http_proxy'] = otp.config.http_proxy or None
+    if 'https_proxy' in access_token_parameters:
+        kwargs['https_proxy'] = otp.config.https_proxy or None
+    if 'trusted_certificate_file' in access_token_parameters:
+        kwargs['trusted_certificate_file'] = otp.config.trusted_certificates_file or None
+    if 'http_headers' in access_token_parameters:
+        kwargs['http_headers'] = otp.config.http_headers or None
+
     return otq.get_access_token(access_token_url, client_id, client_secret, **kwargs)
 
 

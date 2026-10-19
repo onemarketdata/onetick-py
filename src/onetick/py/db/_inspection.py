@@ -216,7 +216,7 @@ class DB:
          'LOCATION': '...',
          'DAY_BOUNDARY_TZ': 'EST5EDT',
          'DAY_BOUNDARY_OFFSET': 0,
-         'ALTERNATIVE_LOCATIONS': ''}
+         'ALTERNATIVE_LOCATIONS': '...'}
         """
         node = otq.DbShowConfig(db_name=self.name, config_type=config_type.upper())
         graph = otq.GraphQuery(node)
@@ -1141,7 +1141,7 @@ class DB:
         >>> db = otp.databases()['US_COMP_SAMPLE']
         >>> db.ref_data(ref_data_type='corp_actions',
         ...             start=otp.dt(2024, 1, 1),
-        ...             end=otp.dt(2024, 4, 1),
+        ...             end=otp.dt(2024, 3, 1),
         ...             symbol_date=otp.dt(2024, 1, 1),
         ...             symbol='AAPL',
         ...             timezone='America/New_York')

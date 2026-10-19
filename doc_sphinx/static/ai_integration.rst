@@ -60,30 +60,28 @@ A `Skill <https://docs.claude.com/en/docs/claude-code/skills>`_
 is just a text file or a folder of instructions
 that Claude Code use automatically when a task matches the skill's description.
 
-.. only:: Internal
+For ``onetick-py`` this means the assistant gets the access
+to the ``onetick-py`` documentation and instructions covering popular use-cases and
+best practices of writing the ``onetick-py`` code.
 
-    For ``onetick-py`` this means the assistant gets the access
-    to the ``onetick-py`` documentation and instructions covering popular use-cases and
-    best practices of writing the ``onetick-py`` code.
+In Claude Skills are distributed as *plugins*.
+OneTick team maintains a Claude plugin *marketplace* that contains different skills.
 
-    In Claude Skills are distributed as *plugins*.
-    OneTick team maintains a Claude plugin *marketplace* that contains different skills.
+See `<https://code.claude.com/docs/en/discover-plugins#add-marketplaces>`_ for details.
 
-    See `<https://code.claude.com/docs/en/discover-plugins#add-marketplaces>`_ for details.
+Install OneTick plugins from Github in Claude Code session:
 
-    Install OneTick plugins from Claude Code session:
+.. code-block:: bash
 
-    .. code-block:: bash
+    /plugin marketplace add git@github.com:onemarketdata/onetick-coding-skills.git
+    /plugin install onetick-py-coding@onetick-coding-skills
+    /reload-plugins
 
-        /plugin marketplace add git@gitlab.sol.onetick.com:solutions/ml-ops/onetick-coding-skills.git
-        /plugin install onetick-py-coding@onetick-coding-skills
-        /reload-plugins
+Once installed, the skill triggers automatically whenever
+you ask Claude to work with ``onetick-py`` code.
 
-    Once installed, the skill triggers automatically whenever
-    you ask Claude to work with ``onetick-py`` code.
-
-    Verify it with ``/plugin`` or ``/skills``
-    or by asking an ``onetick-py`` question and watching Claude consult the bundled reference.
+Verify it with ``/plugin`` or ``/skills``
+or by asking an ``onetick-py`` question and watching Claude consult the bundled reference.
 
 Writing your own skills
 -----------------------

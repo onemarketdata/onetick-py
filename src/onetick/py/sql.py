@@ -6,6 +6,8 @@ class SqlQuery(otq.SqlQuery):
         """
         Constructs SQL query object.
 
+        See more SQL examples on https://sql.docs.sol.onetick.com/.
+
         Parameters
         ----------
         sql_statement:
@@ -26,12 +28,12 @@ class SqlQuery(otq.SqlQuery):
 
         Select two fields from a single tick type and symbol and return first three ticks from a single day:
 
-        >>> otp.run(  # doctest: +SKIP
+        >>> otp.run(
         ...     otp.SqlQuery(
         ...         "select PRICE,SIZE from US_COMP_SAMPLE.TRD"
         ...         " where symbol_name = 'AAPL'"
-        ...         " and start_time = '2024-02-01 00:00:00 America/New_York'"
-        ...         " and end_time = '2024-02-02 00:00:00 America/New_York'"
+        ...         " and TIMESTAMP >= '2024-02-01 00:00:00 America/New_York'"
+        ...         " and TIMESTAMP < '2024-02-02 00:00:00 America/New_York'"
         ...         " limit 3"
         ...     ),
         ... )
@@ -42,14 +44,14 @@ class SqlQuery(otq.SqlQuery):
 
         Join quotes and trades:
 
-        >>> otp.run(  # doctest: +SKIP
+        >>> otp.run(
         ...     otp.SqlQuery(
         ...         "select t.PRICE,q.ASK_PRICE,q.BID_PRICE"
         ...         " from US_COMP_SAMPLE.TRD t join US_COMP_SAMPLE.QTE q"
         ...         " on sametime_as_existing(t.timestamp, q.timestamp, 0) = TRUE"
         ...         " where t.symbol_name = 'AAPL' and q.symbol_name = 'AAPL'"
-        ...         " and start_time = '2024-02-01 00:00:00 America/New_York'"
-        ...         " and end_time = '2024-02-02 00:00:00 America/New_York'"
+        ...         " and TIMESTAMP >= '2024-02-01 00:00:00 America/New_York'"
+        ...         " and TIMESTAMP < '2024-02-02 00:00:00 America/New_York'"
         ...         " limit 2"
         ...     ),
         ... )
@@ -59,13 +61,13 @@ class SqlQuery(otq.SqlQuery):
 
         Calculate average price of trades across several symbols:
 
-        >>> otp.run(  # doctest: +SKIP
+        >>> otp.run(
         ...     otp.SqlQuery(
         ...         "select COUNT(*) as COUNT, AVG(PRICE) as AVG_PRICE"
         ...         " from US_COMP_SAMPLE.TRD"
         ...         " where symbol_name in ('AAPL', 'AAL')"
-        ...         " and start_time = '2024-02-01 00:00:00 America/New_York'"
-        ...         " and end_time = '2024-02-02 00:00:00 America/New_York'",
+        ...         " and TIMESTAMP >= '2024-02-01 00:00:00 America/New_York'"
+        ...         " and TIMESTAMP < '2024-02-02 00:00:00 America/New_York'",
         ...         merge_all_symbols=True
         ...     ),
         ... )

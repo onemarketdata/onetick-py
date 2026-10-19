@@ -710,7 +710,7 @@ def time_filter(
     ----------
     discard_on_match : bool, optional
         If ``True``, then ticks that match the filter will be discarded.
-        Otherwise, only ticks that match the filter will be passed.
+        Otherwise, only ticks that match the filter will be propagated.
     start_time : str or int or :py:class:`datetime.time`, optional
         Start time of the filter, string must be in the format ``HHMMSSmmm`` or ``HH:MM:SS[.mmm]``.
         Default value is 0.
@@ -907,11 +907,11 @@ def skip_bad_tick(
     >>> data = otp.Ticks(X=[10, -11, -15, 11, 9, 10])
     >>> data = data.skip_bad_tick(field=data["X"], jump_threshold=1.2, num_neighbor_ticks=1, use_absolute_values=True)
     >>> otp.run(data)
-                         Time   X
-    0 2003-12-01 00:00:00.000  10
+                         Time    X
+    0 2003-12-01 00:00:00.000   10
     1 2003-12-01 00:00:00.001  -11
-    2 2003-12-01 00:00:00.003  11
-    3 2003-12-01 00:00:00.005  10
+    2 2003-12-01 00:00:00.003   11
+    3 2003-12-01 00:00:00.005   10
     """
     if isinstance(field, _Column):
         field = field.name
@@ -1414,4 +1414,404 @@ def correct_tick_filter(
         ep_kwargs['as_of_time'] = as_of_time
 
     self.sink(otq.CorrectTickFilter(**ep_kwargs))
+    return self
+
+
+@inplace_operation
+def byte_present(
+    self: 'Source',
+    field: str | _Column,
+    /,
+    bytes: list[int | str] | str,
+    *,
+    discard_on_match: bool = False,
+    inplace: bool = False,
+) -> 'Source':
+    """
+    Propagates ticks based on whether the value of the ``field``
+    contains a byte in the set of ``bytes``.
+
+    Parameters
+    ----------
+    field: str, :class:`~onetick.py.Column`
+        The name of the field to apply filter to.
+
+    bytes: list
+        List of bytes values expressed as integers or strings or a comma-separated string.
+        Both hexadecimal and decimal formats are supported.
+        Note that invalid byte values are converted to zero.
+
+    discard_on_match: bool
+        If this parameter is False (default), only ticks that match the filter will be propagated.
+        Otherwise ticks that match the filter will be discarded.
+
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    | **BYTE_PRESENT** OneTick event processor
+    | :meth:`~onetick.py.Source.character_present`
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Propagate only the ticks where field EXCHANGE contains P or Q characters
+    (expressed as ASCII decimal or hex values):
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE', 'EXCHANGE']]
+    >>> data = data.byte_present('EXCHANGE', [0x51, 80])
+    >>> data = data.limit(100)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1), timezone='America/New_York')  # doctest: +ELLIPSIS
+                                Time   PRICE  SIZE EXCHANGE
+    0  2024-02-01 04:00:00.033759205  185.90    16        P
+    1  2024-02-01 04:00:00.169091123  185.90    87        P
+    2  2024-02-01 04:00:00.413581861  185.98     1        P
+    3  2024-02-01 04:00:00.721593975  185.77     6        P
+    4  2024-02-01 04:00:00.721594183  185.76     1        P
+    ..                           ...     ...   ...      ...
+    95 2024-02-01 04:03:25.351272711  185.97     2        Q
+    96 2024-02-01 04:03:25.351544878  185.90   100        Q
+    97 2024-02-01 04:03:25.351546823  185.88   648        Q
+    98 2024-02-01 04:03:25.351553003  185.88   117        Q
+    99 2024-02-01 04:03:25.351703930  185.87   128        P
+    ...
+    """
+    if str(field) not in self.schema:
+        raise ValueError(f"There is no '{field}' column in the schema")
+
+    if isinstance(bytes, str):
+        bytes_str = bytes
+    else:
+        bytes_str = ','.join(str(v) for v in bytes)
+
+    ep = otq.BytePresent(field=str(field), bytes=bytes_str, discard_on_match=discard_on_match)
+    self.sink(ep)
+    return self
+
+
+@inplace_operation
+def regex_matches(
+    self: 'Source',
+    field: str | _Column,
+    /,
+    pattern: str,
+    *,
+    discard_on_match: bool = False,
+    inplace: bool = False,
+) -> 'Source':
+    """
+    Propagates ticks based on whether the value in the ``field`` matches the regular expression ``pattern``.
+
+    Parameters
+    ----------
+    field: str, :class:`~onetick.py.Column`
+        The name of the field to apply filter to.
+
+    pattern: str
+        Pattern to match, expected to be a Perl 5 regular expression.
+
+    discard_on_match: bool
+        If this parameter is False (default), only ticks that match the filter will be propagated.
+        Otherwise ticks that match the filter will be discarded.
+
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    **REGEX_MATCHES** OneTick event processor
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Propagate only the ticks where field EXCHANGE contains P or Q characters:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE', 'EXCHANGE']]
+    >>> data = data.regex_matches('EXCHANGE', 'P|Q')
+    >>> data = data.limit(100)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1), timezone='America/New_York')  # doctest: +ELLIPSIS
+                                Time   PRICE  SIZE EXCHANGE
+    0  2024-02-01 04:00:00.033759205  185.90    16        P
+    1  2024-02-01 04:00:00.169091123  185.90    87        P
+    2  2024-02-01 04:00:00.413581861  185.98     1        P
+    3  2024-02-01 04:00:00.721593975  185.77     6        P
+    4  2024-02-01 04:00:00.721594183  185.76     1        P
+    ..                           ...     ...   ...      ...
+    95 2024-02-01 04:03:25.351272711  185.97     2        Q
+    96 2024-02-01 04:03:25.351544878  185.90   100        Q
+    97 2024-02-01 04:03:25.351546823  185.88   648        Q
+    98 2024-02-01 04:03:25.351553003  185.88   117        Q
+    99 2024-02-01 04:03:25.351703930  185.87   128        P
+    ...
+    """
+    if str(field) not in self.schema:
+        raise ValueError(f"There is no '{field}' column in the schema")
+
+    ep = otq.RegexMatches(field=str(field), pattern=pattern, discard_on_match=discard_on_match)
+    self.sink(ep)
+    return self
+
+
+@inplace_operation
+def uptick(
+    self: 'Source',
+    *,
+    discard_on_match: bool = False,
+    inplace: bool = False,
+) -> 'Source':
+    """
+    Propagates ticks based on its PRICE being strictly greater than that of the previous tick.
+
+    Parameters
+    ----------
+    discard_on_match: bool
+        If this parameter is False (default), only ticks that match the filter will be propagated.
+        Otherwise ticks that match the filter will be discarded.
+
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    **UPTICK** OneTick event processor
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Propagate only the ticks where field PRICE is greater than the PRICE of the previous tick:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE', 'EXCHANGE']]
+    >>> data = data.uptick()
+    >>> data = data.limit(100)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1), timezone='America/New_York')  # doctest: +ELLIPSIS
+                                Time   PRICE  SIZE EXCHANGE
+    0  2024-02-01 04:00:00.011224206  185.50     2        K
+    1  2024-02-01 04:00:00.012928231  185.68    11        K
+    2  2024-02-01 04:00:00.012987210  185.72     5        K
+    3  2024-02-01 04:00:00.033759205  185.90    16        P
+    4  2024-02-01 04:00:00.169091123  185.90    87        P
+    ..                           ...     ...   ...      ...
+    95 2024-02-01 04:12:37.454294671  185.87     1        P
+    96 2024-02-01 04:12:48.042468499  185.86     1        K
+    97 2024-02-01 04:13:15.728879547  185.86     3        Q
+    98 2024-02-01 04:13:26.821715886  185.84     2        K
+    99 2024-02-01 04:13:46.906139654  185.85    30        K
+    ...
+    """
+    if 'PRICE' not in self.schema:
+        raise ValueError("There is no 'PRICE' column in the schema")
+
+    ep = otq.Uptick(discard_on_match=discard_on_match)
+    self.sink(ep)
+    return self
+
+
+@inplace_operation
+def volume_limit(
+    self: 'Source',
+    /,
+    max_volume: int | float,
+    *,
+    propagate_tick_at_crossed_boundary: bool = False,
+    discard_on_match: bool = False,
+    inplace: bool = False,
+) -> 'Source':
+    """
+    Propagates ticks based on the comparison of their total trading volume (the sum of field SIZE)
+    to the value specified by the parameter ``max_volume``.
+
+    Parameters
+    ----------
+    max_volume: int or float
+        The number with maximum trading volume.
+
+    propagate_tick_at_crossed_boundary: bool
+        If True, the last tick that crossed the ``max_volume`` will be propagated, otherwise not.
+        Default is False.
+
+    discard_on_match: bool
+        If this parameter is False (default), only ticks that match the filter will be propagated.
+        Otherwise ticks that match the filter will be discarded.
+
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    **VOLUME_LIMIT** OneTick event processor
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Filter out ticks after the cumulative volume exceeds 10 000 shares:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE', 'EXCHANGE']]
+    >>> data = data.volume_limit(10_000)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1), timezone='America/New_York')  # doctest: +ELLIPSIS
+                                 Time   PRICE  SIZE EXCHANGE
+    0   2024-02-01 04:00:00.008283417  186.50     6        K
+    1   2024-02-01 04:00:00.008290927  185.59     1        K
+    2   2024-02-01 04:00:00.008291153  185.49   107        K
+    3   2024-02-01 04:00:00.010381671  185.49     1        K
+    4   2024-02-01 04:00:00.011224206  185.50     2        K
+    ..                            ...     ...   ...      ...
+    414 2024-02-01 04:20:20.380578855  185.80    50        K
+    415 2024-02-01 04:20:20.380599543  185.82    10        Q
+    416 2024-02-01 04:20:20.380601983  185.81     1        Q
+    417 2024-02-01 04:20:20.380604453  185.80    10        Q
+    418 2024-02-01 04:20:20.380609048  185.79    10        Q
+    ...
+
+    Setting parameter ``propagate_tick_at_crossed_boundary`` will also propagate the tick that crossed the volume limit:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE', 'EXCHANGE']]
+    >>> data = data.volume_limit(10_000, propagate_tick_at_crossed_boundary=True)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1), timezone='America/New_York')  # doctest: +ELLIPSIS
+                                 Time   PRICE  SIZE EXCHANGE
+    0   2024-02-01 04:00:00.008283417  186.50     6        K
+    1   2024-02-01 04:00:00.008290927  185.59     1        K
+    2   2024-02-01 04:00:00.008291153  185.49   107        K
+    3   2024-02-01 04:00:00.010381671  185.49     1        K
+    4   2024-02-01 04:00:00.011224206  185.50     2        K
+    ..                            ...     ...   ...      ...
+    415 2024-02-01 04:20:20.380599543  185.82    10        Q
+    416 2024-02-01 04:20:20.380601983  185.81     1        Q
+    417 2024-02-01 04:20:20.380604453  185.80    10        Q
+    418 2024-02-01 04:20:20.380609048  185.79    10        Q
+    419 2024-02-01 04:20:20.380611535  185.79    70        Q
+    ...
+    """
+    if 'SIZE' not in self.schema:
+        raise ValueError("There is no 'SIZE' column in the schema")
+
+    tick_handling_at_crossed_boundary = 'PROPAGATE' if propagate_tick_at_crossed_boundary else 'DISCARD'
+
+    ep = otq.VolumeLimit(
+        max_volume=max_volume,
+        tick_handling_at_crossed_boundary=tick_handling_at_crossed_boundary,
+        discard_on_match=discard_on_match,
+    )
+    self.sink(ep)
+    return self
+
+
+@inplace_operation
+def value_compare(
+    self: 'Source',
+    field: str | _Column,
+    relationship_to_const: str,
+    value: int | str,
+    /,
+    *,
+    discard_on_match: bool = False,
+    inplace: bool = False,
+) -> 'Source':
+    """
+    Propagates ticks based on whether the value in the ``field``
+    is in the specified ``relationship_to_const`` to the ``value``.
+
+    Parameters
+    ----------
+    field: str, :class:`~onetick.py.Column`
+        The name of the field to apply filter to.
+
+    relationship_to_const: str
+        Relationship to check between the value of the ``field`` and constant ``value``.
+        Supported values:
+
+        * ``lt`` (less),
+        * ``le`` (less or equal),
+        * ``eq`` (equal),
+        * ``ne`` (not equal),
+        * ``ge`` (greater or equal),
+        * ``gt`` (greater).
+
+    value: str, int
+        The value to compare the ``field`` to.
+        Only string and numeric values are supported.
+
+    discard_on_match: bool
+        If this parameter is False (default), only ticks that match the filter will be propagated.
+        Otherwise ticks that match the filter will be discarded.
+
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    **VALUE_COMPARE** OneTick event processor
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Propagate only the ticks where field EXCHANGE equals to P character:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE', 'EXCHANGE']]
+    >>> data = data.value_compare('EXCHANGE', 'eq',  'P')
+    >>> data = data.limit(100)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1), timezone='America/New_York')  # doctest: +ELLIPSIS
+                                Time   PRICE  SIZE EXCHANGE
+    0  2024-02-01 04:00:00.033759205  185.90    16        P
+    1  2024-02-01 04:00:00.169091123  185.90    87        P
+    2  2024-02-01 04:00:00.413581861  185.98     1        P
+    3  2024-02-01 04:00:00.721593975  185.77     6        P
+    4  2024-02-01 04:00:00.721594183  185.76     1        P
+    ..                           ...     ...   ...      ...
+    95 2024-02-01 04:07:38.594705586  185.81    10        P
+    96 2024-02-01 04:07:47.740645808  185.81     7        P
+    97 2024-02-01 04:07:47.740649834  185.81     1        P
+    98 2024-02-01 04:07:58.714205622  185.86     5        P
+    99 2024-02-01 04:07:59.902144628  185.81     7        P
+    ...
+    """
+    if str(field) not in self.schema:
+        raise ValueError(f"There is no '{field}' column in the schema")
+
+    if relationship_to_const not in ('lt', 'le', 'eq', 'ne', 'ge', 'gt'):
+        raise ValueError(f"Not supported value for parameter 'relationship_to_const': {relationship_to_const!r}")
+
+    ep = otq.ValueCompare(
+        field=str(field),
+        relationship_to_const=relationship_to_const.upper(),
+        value=value,
+        discard_on_match=discard_on_match,
+    )
+    self.sink(ep)
     return self

@@ -10,6 +10,27 @@
 
 ### Removed
 
+## [1.217.0] - 2026-10-19
+
+### Added
+
+- Add missing filtering EPs
+- Add `otp.config.default_archive_format` and use it in `otp.DB`
+- Add link to Github `onetick-py` skill in the documentation
+- Add missing transformer EPs
+- Add `otp.config.http_headers`
+- Use new HTTP parameters in `otq.get_access_token`
+
+### Changed
+
+- Change `otp.SqlQuery` examples
+
+### Fixed
+
+- Fix cloud doctests
+
+### Removed
+
 ## [1.216.0] - 2026-10-13
 
 ### Added

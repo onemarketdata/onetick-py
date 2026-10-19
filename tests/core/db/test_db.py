@@ -578,7 +578,7 @@ def test_wrong_day_boundary_tz(f_session, day_boundary_tz, tz, out_of_range_tick
     assert len(df) == len_result
 
 
-def test_raw(session):
+def test_raw(f_session):
     with pytest.raises(ValueError, match="'prefix' must be specified"):
         otp.DB('A', db_raw_data=[{'id': 'PRIMARY_A'}])
     with pytest.raises(ValueError, match="'mount' must be specified"):
@@ -601,8 +601,8 @@ def test_raw(session):
                       'locations': [{'mount': 'mount1'}]}],
         db_feed={'type': 'rawdb', 'raw_source': 'PRIMARY_A'},
     )
-    session.use(db)
-    locator = Path(session.locator.path).read_text()
+    f_session.use(db)
+    locator = Path(f_session.locator.path).read_text()
     assert '<RAW_DB id="PRIMARY_A" prefix="DATA." >' in locator
     assert ('<LOCATION mount="mount1" access_method="file" '
             'start_time="20021230000000" end_time="21000101000000" location=') in locator
@@ -630,3 +630,16 @@ def test_db_properties():
         'archive_compression_type': 'NATIVE_PLUS_ZSTD',
         'tick_timestamp_type': 'NANOS',
     }
+
+
+def test_archive_format(f_session, monkeypatch):
+    db_a = otp.DB('A')
+    monkeypatch.setattr(otp.config, 'default_archive_format', 'parquet_partitioned')
+    db_b = otp.DB('B')
+    db_c = otp.DB('C', db_properties={'archive_format': 'onetick'})
+    f_session.use(db_a, db_b, db_c)
+
+    dbs = otp.databases()
+    assert 'ARCHIVE_FORMAT' not in dbs['A'].show_config()['LOCATOR_STRING']
+    assert 'ARCHIVE_FORMAT="parquet_partitioned"' in dbs['B'].show_config()['LOCATOR_STRING']
+    assert 'ARCHIVE_FORMAT="onetick"' in dbs['C'].show_config()['LOCATOR_STRING']
