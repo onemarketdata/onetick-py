@@ -160,7 +160,7 @@ class TestObSnapshotWide:
         assert len(df) == 2
         assert set(df['BID_PRICE']) == {1, 5}
         assert set(df['BID_SIZE']) == {4, 7}
-        assert set(df['ASK_PRICE'].fillna('nan')) == {2, 'nan'}
+        assert set(df['ASK_PRICE'].astype(object).fillna('nan')) == {2, 'nan'}
         assert set(df['ASK_SIZE']) == {6, 0}
         assert len(set(df['LEVEL'])) > 1
         assert 'X' not in df

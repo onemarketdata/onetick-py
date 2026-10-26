@@ -137,14 +137,14 @@ class TestTime:
         data = otp.Ticks(dict(A=[1, 2, 3, 4, 5], B=[1] * 5, offset=[0, 0, 1, 5, 10]))
         data["DIFF"] = otp.Milli(data["Time"][-1] - data["Time"][1])
         df = otp.run(data)
-        expected = (-1070254800000, -1, -5, -9, 1070254800005)
+        expected = [-1070254800000, -1, -5, -9, 1070254800005]
         assert all(df["DIFF"] == expected)
 
     def test_time_with_forward_lag_in_datepart(self):
         data = otp.Ticks(dict(A=[1, 2, 3, 4, 5], B=[1] * 5, offset=[0, 0, 1, 5, 10]))
         data["DIFF"] = otp.Milli(data["Time"] - data["Time"][1])
         df = otp.run(data)
-        expected = (0, -1, -4, -5, 1070254800010)
+        expected = [0, -1, -4, -5, 1070254800010]
         assert all(df["DIFF"] == expected)
 
     def test_time_with_const(self):

@@ -10,6 +10,24 @@
 
 ### Removed
 
+## [1.218.0] - 2026-10-26
+
+### Added
+
+- Added `otp.Source.update_from_tick_set`
+- Added `otp.Source.show_initialization_ticks` and `otp.Source.intercept_initialization_ticks`
+- Added `otp.Source.hide_ticks_with_status`
+- Added `otp.Source.insert_heartbeat`, `otp.Source.show_heartbeats` and `otp.Source.intercept_heartbeats`
+- Added `otp.Source.show_special_msgs`
+
+### Changed
+
+### Fixed
+
+- Fixed pandas 3.x.x deprecation warnings and compatibility problems
+
+### Removed
+
 ## [1.217.0] - 2026-10-19
 
 ### Added

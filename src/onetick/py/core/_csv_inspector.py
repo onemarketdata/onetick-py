@@ -53,7 +53,7 @@ def inspect_by_pandas(path_to_csv, first_line_is_title=True, names=None, field_d
     forced_title = df.columns.values[0][0] == '#'
     if forced_title:
         # remove hash sign from first column name
-        df.rename(columns={df.columns.values[0]: df.columns.values[0][1:]}, inplace=True)
+        df = df.rename(columns={df.columns.values[0]: df.columns.values[0][1:]})
 
     # check for default types in OneTick format ("columnname type")
     default_types = {}
@@ -76,7 +76,7 @@ def inspect_by_pandas(path_to_csv, first_line_is_title=True, names=None, field_d
                 rename[column] = c[1]
 
     if rename:
-        df.rename(columns=rename, inplace=True)
+        df = df.rename(columns=rename)
 
     # convert pandas types to otp
     columns = {x[0]: _convert_pandas_types(x[1]) for x in dict(df.dtypes).items()}

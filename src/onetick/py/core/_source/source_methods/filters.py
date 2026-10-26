@@ -1246,6 +1246,183 @@ def show_hidden_ticks(self: 'Source', inplace: bool = False) -> 'Source':
 
 
 @inplace_operation
+def hide_ticks_with_status(self: 'Source', inplace: bool = False) -> 'Source':
+    """
+    Makes visible ticks with **TICK_STATUS** not equal to 0 or 8 (which stands for INSERT) invisible,
+    so they are treated the same way all invisible ticks are treated.
+
+    This method has effect that is opposite to the effect of :meth:`~onetick.py.Source.show_hidden_ticks`.
+    It can be used to construct or fix order books, as well as to inject or modify correction/cancellation ticks.
+
+    Parameters
+    ----------
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    | **HIDE_TICKS_WITH_STATUS** OneTick event processor
+    | :meth:`~onetick.py.Source.show_hidden_ticks`
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Hidden ticks with non-zero **TICK_STATUS** can be seen with :meth:`~onetick.py.Source.show_hidden_ticks`:
+
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\\H24')
+    >>> data = data.show_hidden_ticks()
+    >>> data = data[['UPDATE_TYPE', 'PRICE', 'SIZE', 'RECORD_TYPE', 'TICK_STATUS']]
+    >>> data = data.limit(100)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))  # doctest: +ELLIPSIS
+                                Time UPDATE_TYPE     PRICE  SIZE RECORD_TYPE  TICK_STATUS
+    0  2024-02-01 00:00:00.211493687                   NaN     0           B           32
+    1  2024-02-01 00:00:00.211493687           A  17317.75     1           R            0
+    2  2024-02-01 00:00:00.211493687                   NaN     0           E           33
+    3  2024-02-01 00:00:00.211541475                   NaN     0           B           32
+    4  2024-02-01 00:00:00.211541475           D  17317.00     0           R            0
+    ...
+
+    Use this method to make them invisible again:
+
+    >>> data = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\\H24')
+    >>> data = data.show_hidden_ticks()
+    >>> data = data.hide_ticks_with_status()
+    >>> data = data[['UPDATE_TYPE', 'PRICE', 'SIZE', 'RECORD_TYPE', 'TICK_STATUS']]
+    >>> data = data.limit(100)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))  # doctest: +ELLIPSIS
+                                Time UPDATE_TYPE     PRICE  SIZE RECORD_TYPE  TICK_STATUS
+    0  2024-02-01 00:00:00.211493687           A  17317.75     1           R            0
+    1  2024-02-01 00:00:00.211541475           D  17317.00     0           R            0
+    2  2024-02-01 00:00:00.211630059           A  17317.25     1           R            0
+    3  2024-02-01 00:00:00.211642827           A  17317.75     1           R            0
+    4  2024-02-01 00:00:00.211654537           D  17317.25     0           R            0
+    ...
+    """
+    self.sink(otq.HideTicksWithStatus())
+    return self
+
+
+@inplace_operation
+def show_initialization_ticks(self: 'Source', inplace: bool = False) -> 'Source':
+    """
+    Propagates only the ticks that arrived before the start time of the query (initialization ticks)
+    and makes them visible. Normally such ticks are not visible.
+
+    The ticks are propagated in the order opposite to the order of their original timestamps.
+    The timestamp of the ticks is set to the start time of the query.
+    To see the original timestamp, add another field to the tick and assign original timestamp to it
+    before calling this method.
+
+    To avoid affecting results of the event processors which require initialization ticks,
+    while observing the initialization ticks they are receiving,
+    this method should be applied on a separate branch of the query.
+
+    Parameters
+    ----------
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    | **SHOW_INITIALIZATION_TICKS** OneTick event processor
+    | :meth:`~onetick.py.Source.intercept_initialization_ticks`
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Ticks taken from before the start time of the query
+    with ``back_to_first_tick`` parameter are initialization ticks.
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', date=otp.dt(2024, 2, 1),
+    ...                       back_to_first_tick=otp.Day(1), max_back_ticks_to_prepend=100)
+    >>> data = data[['PRICE', 'SIZE']]
+    >>> data['TICK_TIME'] = data['TIMESTAMP']
+    >>> data = data.show_initialization_ticks()
+    >>> otp.run(data)  # doctest: +ELLIPSIS
+             Time     PRICE  SIZE                     TICK_TIME
+    0  2024-02-01  185.6800    10 2024-01-31 19:59:57.877747563
+    1  2024-02-01  185.6999     5 2024-01-31 19:59:53.314804162
+    2  2024-02-01  185.7000   100 2024-01-31 19:59:53.302285347
+    3  2024-02-01  185.6900     1 2024-01-31 19:59:53.019288051
+    4  2024-02-01  185.7000   440 2024-01-31 19:59:51.062739337
+    ...
+    """
+    self.sink(otq.ShowInitializationTicks())
+    return self
+
+
+@inplace_operation
+def intercept_initialization_ticks(self: 'Source', inplace: bool = False) -> 'Source':
+    """
+    Removes initialization ticks (the ticks that arrived before the start time of the query),
+    thus preventing them from delivery to the client application.
+
+    Parameters
+    ----------
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    | **INTERCEPT_INITIALIZATION_TICKS** OneTick event processor
+    | :meth:`~onetick.py.Source.show_initialization_ticks`
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Ticks taken from before the start time of the query
+    with ``back_to_first_tick`` parameter are initialization ticks
+    and can be seen with :meth:`~onetick.py.Source.show_initialization_ticks`:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', date=otp.dt(2024, 2, 1),
+    ...                       back_to_first_tick=otp.Day(1), max_back_ticks_to_prepend=100)
+    >>> data = data[['PRICE', 'SIZE']]
+    >>> data['TICK_TIME'] = data['TIMESTAMP']
+    >>> data = data.show_initialization_ticks()
+    >>> otp.run(data)  # doctest: +ELLIPSIS
+             Time     PRICE  SIZE                     TICK_TIME
+    0  2024-02-01  185.6800    10 2024-01-31 19:59:57.877747563
+    1  2024-02-01  185.6999     5 2024-01-31 19:59:53.314804162
+    2  2024-02-01  185.7000   100 2024-01-31 19:59:53.302285347
+    3  2024-02-01  185.6900     1 2024-01-31 19:59:53.019288051
+    4  2024-02-01  185.7000   440 2024-01-31 19:59:51.062739337
+    ...
+
+    Intercepting initialization ticks will remove them from the data flow:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL', date=otp.dt(2024, 2, 1),
+    ...                       back_to_first_tick=otp.Day(1), max_back_ticks_to_prepend=100)
+    >>> data = data[['PRICE', 'SIZE']]
+    >>> data['TICK_TIME'] = data['TIMESTAMP']
+    >>> data = data.intercept_initialization_ticks()
+    >>> data = data.show_initialization_ticks()
+    >>> otp.run(data)  # doctest: +ELLIPSIS
+    Empty DataFrame
+    ...
+    """
+    self.sink(otq.InterceptInitializationTicks())
+    return self
+
+
+@inplace_operation
 def show_corrected_ticks(self: 'Source', inplace: bool = False) -> 'Source':
     """
     Shows ticks which were corrected or canceled within the interval of the query.
@@ -1814,4 +1991,56 @@ def value_compare(
         discard_on_match=discard_on_match,
     )
     self.sink(ep)
+    return self
+
+
+@inplace_operation
+def intercept_heartbeats(self: 'Source', inplace: bool = False) -> 'Source':
+    """
+    Intercepts heartbeats (timer events), leaving all other events of the time series unchanged.
+
+    Parameters
+    ----------
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    | **INTERCEPT_HEARTBEATS** OneTick event processor
+    | :meth:`~onetick.py.Source.insert_heartbeat`
+    | :meth:`~onetick.py.Source.show_heartbeats`
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Assume we have heartbeats and data quality events in the data flow:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE']]
+    >>> data = data.insert_heartbeat(where=data['SIZE'] > 1000)
+    >>> data = data.insert_data_quality_event('OK', where=data['SIZE'] > 5000)
+
+    Intercepting heartbeats removes only heartbeats, data quality events are left unchanged:
+
+    >>> data = data.intercept_heartbeats()
+    >>> otp.run(data.show_heartbeats(), date=otp.dt(2024, 2, 1))  # doctest: +ELLIPSIS
+    Empty DataFrame
+    ...
+
+    >>> otp.run(data.show_data_quality(), date=otp.dt(2024, 2, 1))  # doctest: +ELLIPSIS
+                                 Time  DATA_QUALITY_TYPE DATA_QUALITY_NAME
+    0   2024-02-01 08:00:00.074574483                  0                OK
+    1   2024-02-01 08:00:00.074937867                  0                OK
+    2   2024-02-01 08:00:00.075738202                  0                OK
+    3   2024-02-01 09:00:06.565175834                  0                OK
+    4   2024-02-01 09:24:20.329799843                  0                OK
+    ...
+    """
+    self.sink(otq.InterceptHeartbeats())
     return self

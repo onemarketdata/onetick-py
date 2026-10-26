@@ -72,7 +72,7 @@ def test_ex_5():
         res.loc[np.isnan(res["ASK_PRICE"]), "ASK_PRICE"] = res["F_ASK_PRICE"]
         res.loc[np.isnan(res["BID_PRICE"]), "BID_PRICE"] = res["F_BID_PRICE"]
 
-        res.dropna(inplace=True)
+        res = res.dropna()
 
         res["MID_PRICE"] = (res.ASK_PRICE + res.BID_PRICE) / 2
 
@@ -99,7 +99,7 @@ def test_ex_5():
     pd_res_a = calc_is(pd.DataFrame(order_data_a), pd.DataFrame(qte_data_a))
     pd_res_b = calc_is(pd.DataFrame(order_data_b), pd.DataFrame(qte_data_b))
     pd_res = pd.concat([pd_res_a, pd_res_b])
-    pd_res.sort_index(axis=0, inplace=True)
+    pd_res = pd_res.sort_index(axis=0)
 
     qte_db = otp.DB("QTE_DB")
     qte_db.add(otp.Ticks(qte_data_a), tick_type="QTE", symbol="A")

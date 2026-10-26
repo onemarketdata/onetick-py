@@ -148,6 +148,9 @@ chapters:
         - file: api/source/hidden/root
           sections:
             - glob: api/source/hidden/*
+            - file: api/source/hidden/heartbeats/root
+              sections:
+                - glob: api/source/hidden/heartbeats/*
         - file: api/source/snapshots/root
           sections:
             - glob: api/source/snapshots/*

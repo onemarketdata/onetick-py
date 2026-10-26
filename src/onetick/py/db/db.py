@@ -1205,7 +1205,7 @@ class RefDB(DB):
 
         def _source_to_str(self, data: 'otp.Source'):
             df = otp.run(data)
-            df.drop(columns=['Time'], inplace=True)
+            df = df.drop(columns=['Time'])
             df = df.to_csv(sep='|', header=False, index=False, date_format='%Y%m%d%H%M%S')
             return df
 

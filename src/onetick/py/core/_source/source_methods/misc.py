@@ -7,6 +7,7 @@ import onetick.py as otp
 from onetick.py import types as ott
 from onetick.py import utils
 from onetick.py.core.column import _Column
+from onetick.py.core.column_operations.base import _Operation
 from onetick.py.otq import otq
 from onetick.py.aggregations._docs import copy_signature
 
@@ -356,6 +357,193 @@ def insert_at_end(
         )
     )
     self.schema.update(**{delimiter_name: int})
+    return self
+
+
+@inplace_operation
+def insert_heartbeat(
+    self: 'Source',
+    where: Optional[Union[str, _Operation]] = None,
+    insert_before: bool = True,
+    inplace: bool = False,
+) -> Optional['Source']:
+    """
+    Injects timer events (heartbeats) into the data flow.
+
+    Heartbeats are not visible in the output of the query,
+    use :meth:`~onetick.py.Source.show_heartbeats` to see them.
+
+    Parameters
+    ----------
+    where: str or :class:`Operation`
+        Specifies a criterion for the selection of ticks whose arrival results in generation of a heartbeat.
+        If this expression returns True, a heartbeat will be inserted into a time series.
+        The expression can also be empty (default), in which case each input tick generates a heartbeat.
+    insert_before: bool
+        If True (default), generated heartbeat will be inserted before the input tick that triggered its creation,
+        otherwise generated heartbeat will be inserted after that input tick.
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    | **INSERT_HEARTBEAT** OneTick event processor
+    | :meth:`~onetick.py.Source.show_heartbeats`
+    | :meth:`~onetick.py.Source.intercept_heartbeats`
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Insert a heartbeat before each tick with *SIZE* bigger than 100.
+    Heartbeats are not visible, so the output is not changed:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE']]
+    >>> data = data.insert_heartbeat(where=data['SIZE'] > 100)
+    >>> data = data.limit(5)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                               Time   PRICE  SIZE
+    0 2024-02-01 04:00:00.008283417  186.50     6
+    1 2024-02-01 04:00:00.008290927  185.59     1
+    2 2024-02-01 04:00:00.008291153  185.49   107
+    3 2024-02-01 04:00:00.010381671  185.49     1
+    4 2024-02-01 04:00:00.011224206  185.50     2
+
+    Now use :meth:`~onetick.py.Source.show_heartbeats` to see inserted heartbeats:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE']]
+    >>> data = data.insert_heartbeat(where=data['SIZE'] > 100)
+    >>> data = data.show_heartbeats()
+    >>> data = data.limit(100)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))  # doctest: +ELLIPSIS
+                                Time                  CURRENT_TIME
+    0  2024-02-01 04:00:00.008291153 2024-02-01 04:00:00.008291153
+    1  2024-02-01 04:00:00.124644495 2024-02-01 04:00:00.124644495
+    2  2024-02-01 04:00:17.426836387 2024-02-01 04:00:17.426836387
+    3  2024-02-01 04:00:25.083671012 2024-02-01 04:00:25.083671012
+    4  2024-02-01 04:03:25.351156225 2024-02-01 04:03:25.351156225
+    ...
+    """
+    self.sink(
+        otq.InsertHeartbeat(
+            where=str(where) if where is not None else '',
+            insert_before=insert_before,
+        )
+    )
+    return self
+
+
+@inplace_operation
+def show_heartbeats(
+    self: 'Source',
+    listen_mode: Literal['active', 'passive'] = 'active',
+    inplace: bool = False,
+) -> Optional['Source']:
+    """
+    Generates a tick per heartbeat (timer event).
+
+    Output ticks have only one field *CURRENT_TIME* which carries the time of the heartbeat.
+
+    Parameters
+    ----------
+    listen_mode: str
+        Heartbeat listening mode, possible values are ``active`` (default) and ``passive``.
+
+        If the listening mode is ``active``, then all possible heartbeats which can be passed to the query
+        are shown.
+        Otherwise heartbeats are shown with the same frequency as they would be passed to the query
+        without this method.
+
+        For example, if a query consists of a single aggregation with time buckets,
+        then it will get a heartbeat once per each bucket interval.
+        But after adding this method with ``active`` listening mode the frequency of heartbeats will increase
+        to the maximal possible value and they will be shown.
+        To see the heartbeats of the same frequency as in the initial query, ``passive`` listening mode
+        should be used.
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    | **SHOW_HEARTBEATS** OneTick event processor
+    | :meth:`~onetick.py.Source.insert_heartbeat`
+    | :meth:`~onetick.py.Source.intercept_heartbeats`
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    Insert a heartbeat before each tick with *SIZE* bigger than 100 and show inserted heartbeats:
+
+    >>> data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE']]
+    >>> data = data.insert_heartbeat(where=data['SIZE'] > 100)
+    >>> data = data.show_heartbeats()
+    >>> data = data.limit(100)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))  # doctest: +ELLIPSIS
+                                Time                  CURRENT_TIME
+    0  2024-02-01 04:00:00.008291153 2024-02-01 04:00:00.008291153
+    1  2024-02-01 04:00:00.124644495 2024-02-01 04:00:00.124644495
+    2  2024-02-01 04:00:17.426836387 2024-02-01 04:00:17.426836387
+    3  2024-02-01 04:00:25.083671012 2024-02-01 04:00:25.083671012
+    4  2024-02-01 04:03:25.351156225 2024-02-01 04:03:25.351156225
+    ...
+    """
+    if listen_mode not in ('active', 'passive'):
+        raise ValueError(f"Parameter 'listen_mode' doesn't support value: {listen_mode}")
+
+    self.sink(otq.ShowHeartbeats(heartbeat_listen_mode=listen_mode.upper()))
+    self.schema.set(**{'CURRENT_TIME': otp.nsectime})
+    return self
+
+
+@inplace_operation
+def show_special_msgs(self: 'Source', inplace: bool = False) -> Optional['Source']:
+    """
+    Shows ticks that represent internal events generated by OneTick analytics to facilitate graph processing.
+
+    Currently, only ticks that represent **PREPARE_FOR_RUNNING_QUERY** events are produced.
+
+    Parameters
+    ----------
+    inplace: bool
+        The flag controls whether operation should be applied inplace or not.
+        If ``inplace=True``, then it returns nothing.
+        Otherwise, method returns a new modified object.
+
+    See also
+    --------
+    **SHOW_SPECIAL_MSGS** OneTick event processor
+
+    Returns
+    -------
+    :class:`Source` or ``None``
+
+    Examples
+    --------
+
+    **PREPARE_FOR_RUNNING_QUERY** event is generated in running queries:
+
+    >>> data = otp.Tick(X=1, bucket_interval=1)
+    >>> data = data.show_special_msgs()
+    >>> otp.run(data, running=True, start=otp.now(), end=otp.now() + otp.Second(1))  # doctest: +ELLIPSIS
+      Time                  MSG_TYPE MSG_VAL
+    0  ... PREPARE_FOR_RUNNING_QUERY
+    """
+    self.sink(otq.ShowSpecialMsgs())
+    self.schema.set(**{'MSG_TYPE': str, 'MSG_VAL': str})
     return self
 
 

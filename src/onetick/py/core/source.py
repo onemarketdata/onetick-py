@@ -1769,6 +1769,9 @@ class Source:
         value_present,
         primary_exch,
         show_hidden_ticks,
+        hide_ticks_with_status,
+        show_initialization_ticks,
+        intercept_initialization_ticks,
         show_corrected_ticks,
         correct_tick_filter,
         byte_present,
@@ -1776,6 +1779,7 @@ class Source:
         uptick,
         value_compare,
         volume_limit,
+        intercept_heartbeats,
     )
     from ._source.source_methods.drops import (  # type: ignore[misc]
         drop,
@@ -1830,6 +1834,9 @@ class Source:
         pause,
         insert_tick,
         insert_at_end,
+        insert_heartbeat,
+        show_heartbeats,
+        show_special_msgs,
         transpose,
         cache,
         pnl_realized,
@@ -1861,6 +1868,7 @@ class Source:
         mid,
         interpolate,
         encoding_converter,
+        update_from_tick_set,
     )
 
 

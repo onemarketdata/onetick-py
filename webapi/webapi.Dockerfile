@@ -46,7 +46,8 @@ RUN sudo -E pip --no-cache-dir install uv
 RUN --mount=type=bind,source=.,target=/onetick-py,rw \
     sudo -E uv pip --no-cache-dir install --system \
                                           --extra-index-url "https://${LOCAL_PIP_URL}" \
-                                          --group "/onetick-py/pyproject.toml:dev" \
+                                          --project "/onetick-py" \
+                                          --group "dev" \
                                           -e "/onetick-py"
 
 # install onetick.query_webapi
