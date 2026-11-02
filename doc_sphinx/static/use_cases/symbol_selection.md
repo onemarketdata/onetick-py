@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Symbol Selection
 
-This section contains 12 examples for Symbol Selection using the `onetick-py`.  
+This section contains examples for Symbol Selection using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -49,6 +49,32 @@ result = otp.run(data,
                  end=otp.dt(2024, 1, 3, 9, 40),
                  timezone='America/New_York',
                  symbols=['CSCO', 'MSFT'])
+result
+```
+
+## Data Retrieval for All Db symbols
+
+If no symbol is specified, data for all symbols in a database can be retrieved
+by merging across every symbol with {class}`otp.Symbols <onetick.py.Symbols>`.  
+The below returns data on the first 1000 symbols.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_SAMPLE_DAILY', tick_type='DAY')
+data = data.where(data['EXCHANGE'] == '')
+
+# Merge the daily record of every symbol in the database into a single stream.
+data = otp.merge([data],
+                 symbols=otp.Symbols(db='US_COMP_SAMPLE_DAILY', for_tick_type='DAY'),
+                 identify_input_ts=True)
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='America/New_York')
 result
 ```
 
@@ -263,5 +289,63 @@ result = otp.run(data,
                  timezone='UTC',
                  symbols='SPCX',
                  symbol_date=otp.dt(2026, 7, 1))
+result
+```
+
+## Data Retrieval with Symbol LIKE
+
+Returns daily OHLCV data for US equities matching a symbol prefix pattern.  
+{class}`otp.Symbols(pattern=...) <onetick.py.Symbols>` selects every symbol
+whose name matches the pattern, the equivalent of SQL's LIKE.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_SAMPLE_DAILY', tick_type='DAY')
+data = data.where(data['EXCHANGE'] == '')
+
+# Merge every symbol starting with AA into a single stream.
+data = otp.merge([data],
+                 symbols=otp.Symbols('US_COMP_SAMPLE_DAILY', pattern='AA%', for_tick_type='DAY'),
+                 identify_input_ts=True)
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 2, 1),
+                 timezone='America/New_York')
+result
+```
+
+## Data Retrieval with Symbol ILIKE (Case Insensitive)
+
+Returns daily OHLCV data for US equities using case-insensitive symbol pattern matching,
+the equivalent of SQL's ILIKE.  
+The {meth}`.str.ilike <onetick.py.core.column_operations.accessors.str_accessor._StrAccessor.ilike>`
+accessor matches a value against a SQL-style pattern while ignoring case, so the
+lowercase pattern `aa%` still matches the upper case symbol names stored in the database.  
+{meth}`.str.like <onetick.py.core.column_operations.accessors.str_accessor._StrAccessor.like>` performs
+the same match case-sensitively, and would return nothing for this pattern.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_SAMPLE_DAILY', tick_type='DAY')
+data = data.where(data['EXCHANGE'] == '')
+
+# Select the symbols case-insensitively: 'aa%' matches AA, AAA, AAAU and so on.
+symbols = otp.Symbols('US_COMP_SAMPLE_DAILY', for_tick_type='DAY')
+symbols = symbols.where(symbols['SYMBOL_NAME'].str.ilike('aa%'))
+
+# Merge every matching symbol into a single stream.
+data = otp.merge([data], symbols=symbols, identify_input_ts=True)
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 2, 1),
+                 timezone='America/New_York')
 result
 ```

@@ -987,7 +987,7 @@ long LOCAL::x = 0;
 string LOCAL::name = "";
 for (TICK_DESCRIPTOR_FIELD LOCAL::field : LOCAL::INPUT_TICK_DESCRIPTOR_FIELDS) {
 LOCAL::name = LOCAL::field.GET_FIELD_NAME();
-if (instr(LOCAL::name, "A") > -1) {
+if (INSTR(LOCAL::name, "A") > -1) {
 LOCAL::x = (LOCAL::x) + (1);
 }
 NAME = LOCAL::name;

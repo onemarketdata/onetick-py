@@ -4,7 +4,7 @@ file_format: mystnb
 
 # TCA (Trade Cost Analysis)
 
-This section contains 18 examples for TCA using the `onetick-py`.  
+This section contains examples for TCA using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -1249,3 +1249,118 @@ result = otp.run(
 )
 result
 ```
+
+## Query Loaded Orders
+
+Retrieve Order Flow from Sample LSE Order Life Cycle Dataset
+
+The sample represents an example of uploading your own order flow.  
+Proprietary data is encrypted, secured and stored in dedicated storage.
+
+```python
+import onetick.py as otp
+
+data = otp.DataSource(db='S_ORDERS_LSE_SAMPLE', tick_type='ORDER')
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 4, 4),
+                 timezone='Europe/London',
+                 symbols='VOD')
+result
+```
+
+{.dataframe}
+|     |                    Time | PRICE |   QTY | PRICE_FILLED | QTY_FILLED |  MIC | CURRENCY |                 ID | STATE | ORDTYPE | SIDE |
+|----:|------------------------:|------:|------:|-------------:|-----------:|-----:|---------:|-------------------:|------:|--------:|-----:|
+|   0 | 2024-01-03 08:08:07.502 | 70.37 | 13542 |          NaN |          0 | XLON |      GBX | 233402424600089290 |     N |   LIMIT |  BUY |
+|   1 | 2024-01-03 08:11:04.275 | 70.37 | 11555 |        70.37 |       1987 | XLON |      GBX | 233402424600089290 |     P |   LIMIT |  BUY |
+|   2 | 2024-01-03 08:11:04.376 | 70.37 |  9670 |          NaN |          0 | XLON |      GBX | 233402424600089290 |   REP |   LIMIT |  BUY |
+|   3 | 2024-01-03 08:11:04.376 | 70.37 |  1987 |          NaN |          0 | XLON |      GBX | 233402424600089290 |   REP |   LIMIT |  BUY |
+|   4 | 2024-01-03 08:11:04.376 | 70.37 |     0 |          NaN |          0 | XLON |      GBX | 233402424600089290 |     C |   LIMIT |  BUY |
+| ... |                     ... |   ... |   ... |          ... |        ... |  ... |      ... |                ... |   ... |     ... |  ... |
+| 995 | 2024-01-17 08:56:19.394 | 67.57 |     0 |          NaN |          0 | XLON |      GBX | 235619040041870520 |     C |   LIMIT | SELL |
+| 996 | 2024-01-17 08:57:09.458 | 67.55 |     0 |          NaN |          0 | XLON |      GBX | 235619040041868215 |     C |   LIMIT |  BUY |
+| 997 | 2024-01-17 08:59:00.237 | 67.49 |   424 |          NaN |          0 | XLON |      GBX | 235619040041878126 |     N |   LIMIT |  BUY |
+| 998 | 2024-01-17 08:59:01.108 | 67.49 |     0 |        67.49 |        424 | XLON |      GBX | 235619040041878126 |     F |   LIMIT |  BUY |
+| 999 | 2024-01-17 09:00:12.019 | 67.50 |  5902 |          NaN |          0 | XLON |      GBX | 235619040041882838 |     N |   LIMIT | SELL |
+
+### Query Loaded Trades
+
+Retrieve Trades from Sample US Trades Dataset.
+
+The sample represents an example of uploading your own trades.  
+Proprietary data is encrypted, secured and stored in dedicated storage.
+
+```python
+import onetick.py as otp
+
+data = otp.DataSource(db='S_ORDERS_US_COMP_SAMPLE', tick_type='TRD')
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 4, 4),
+                 timezone='America/New_York',
+                 symbols='CSCO')
+result
+```
+
+{.dataframe}
+|     |                          Time |  PRICE | SIZE | COUNTRY | EXCHANGE |  ID |  MIC | SIDE |
+|----:|------------------------------:|-------:|-----:|--------:|---------:|----:|-----:|-----:|
+|   0 | 2024-01-03 09:31:08.905124768 | 50.120 |  253 |      US |        Q |   1 | XNAS |  BUY |
+|   1 | 2024-01-03 09:31:11.227255009 | 50.130 |  253 |      US |        Q |   2 | XNAS | SELL |
+|   2 | 2024-01-03 09:32:08.022745023 | 50.080 |  100 |      US |        Q |   3 | XNAS |  BUY |
+|   3 | 2024-01-03 09:32:55.320445732 | 50.050 |  100 |      US |        N |   4 | XNYS |  BUY |
+|   4 | 2024-01-03 09:34:55.054230281 | 50.035 |  100 |      US |        N |   5 | XNYS |  BUY |
+| ... |                           ... |    ... |  ... |     ... |      ... | ... |  ... |  ... |
+| 995 | 2024-01-09 15:50:25.052410161 | 49.830 |  100 |      US |        V | 325 | IEXG | SELL |
+| 996 | 2024-01-09 15:52:31.707691793 | 49.880 |  100 |      US |        Q | 326 | XNAS | SELL |
+| 997 | 2024-01-09 15:52:59.134899330 | 49.885 |  100 |      US |        Q | 327 | XNAS |  BUY |
+| 998 | 2024-01-09 15:53:00.719727293 | 49.890 |  100 |      US |        Q | 328 | XNAS |  BUY |
+| 999 | 2024-01-09 15:53:55.182093776 | 49.900 |  100 |      US |        V | 329 | IEXG | SELL |
+
+### Prevailing Prices for Supplied Trades
+
+Joining Trades recorded in the sample Orders database to the US NBBO.  
+As the dataset refers to US trades, the NBBO is used for benchmarking performance.  
+The prevailing NBBO is associated with each trade
+through an "as of" join with {func}`otp.join_by_time <onetick.py.join_by_time>`.
+
+```python
+import onetick.py as otp
+
+trd = otp.DataSource(db='S_ORDERS_US_COMP_SAMPLE', tick_type='TRD')
+trd = trd[['ID', 'PRICE', 'SIZE', 'SIDE']]
+
+nbbo = otp.DataSource(db='US_COMP_SAMPLE', tick_type='NBBO')
+nbbo['NBBO_TIME'] = nbbo['TIMESTAMP']
+nbbo = nbbo[['NBBO_TIME', 'BID_PRICE', 'ASK_PRICE']]
+
+data = otp.join_by_time([trd, nbbo])
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='America/New_York',
+                 symbols='CSCO')
+result
+```
+
+{.dataframe}
+|     |                          Time |  ID |  PRICE | SIZE | SIDE |                     NBBO_TIME | BID_PRICE | ASK_PRICE |
+|----:|------------------------------:|----:|-------:|-----:|-----:|------------------------------:|----------:|----------:|
+|   0 | 2024-01-03 09:31:08.905124768 |   1 | 50.120 |  253 |  BUY | 2024-01-03 09:31:08.905122317 |     50.12 |     50.13 |
+|   1 | 2024-01-03 09:31:11.227255009 |   2 | 50.130 |  253 | SELL | 2024-01-03 09:31:11.227253076 |     50.13 |     50.14 |
+|   2 | 2024-01-03 09:32:08.022745023 |   3 | 50.080 |  100 |  BUY | 2024-01-03 09:32:08.022723030 |     50.08 |     50.09 |
+|   3 | 2024-01-03 09:32:55.320445732 |   4 | 50.050 |  100 |  BUY | 2024-01-03 09:32:55.320437896 |     50.05 |     50.05 |
+|   4 | 2024-01-03 09:34:55.054230281 |   5 | 50.035 |  100 |  BUY | 2024-01-03 09:34:54.736542914 |     50.03 |     50.04 |
+| ... |                           ... | ... |    ... |  ... |  ... |                           ... |       ... |       ... |
+| 240 | 2024-01-03 15:53:20.026170400 | 241 | 50.520 |  200 |  BUY | 2024-01-03 15:53:20.026168641 |     50.52 |     50.53 |
+| 241 | 2024-01-03 15:53:23.513196427 | 242 | 50.530 |  610 | SELL | 2024-01-03 15:53:23.513195651 |     50.53 |     50.54 |
+| 242 | 2024-01-03 15:53:51.117425606 | 243 | 50.500 |  100 | SELL | 2024-01-03 15:53:51.117425507 |     50.49 |     50.50 |
+| 243 | 2024-01-03 15:54:29.965268792 | 244 | 50.510 |  400 | SELL | 2024-01-03 15:54:29.964939805 |     50.50 |     50.51 |
+| 244 | 2024-01-03 15:54:52.546921833 | 245 | 50.480 |  100 | SELL | 2024-01-03 15:54:52.546919802 |     50.47 |     50.48 |

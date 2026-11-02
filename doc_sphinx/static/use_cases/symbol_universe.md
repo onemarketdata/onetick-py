@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Symbol Universe
 
-This section contains 1 example for Symbol_Universe using the `onetick-py`.  
+This section contains examples for Symbol_Universe using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -52,3 +52,48 @@ result
 | 435 | 2026-08-06 09:33:24.818265881 |                |         0 |    I |    0 |        T | ... |            - |          I |     | 1969-12-31 19:00:00.000000000 |   0 |        AAAU |       TRD |
 
 436 rows x 26 columns
+
+## Symbol Universe for DB
+
+Returns static symbol information and security descriptors for all London Stock Exchange instruments.  
+The `SYMBOL_UNIVERSE` database's `STAT` table is queried by symbol pattern,
+matching every `SYMBOL_NAME` starting with `'LSE '`.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='SYMBOL_UNIVERSE', tick_type='STAT')
+
+# Merge every SYMBOL_UNIVERSE entry starting with 'LSE ' into a single stream.
+data = otp.merge([data],
+                 symbols=otp.Symbols('SYMBOL_UNIVERSE', pattern='LSE %', for_tick_type='STAT'),
+                 identify_input_ts=True)
+data = data.limit(100)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='UTC')
+result
+```
+
+## Symbol Universe for DB and Sec Type
+
+Returns static symbol information and security descriptors for London Stock Exchange equity instruments,
+filtered to the `LSE Equity` classification.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='SYMBOL_UNIVERSE', tick_type='STAT')
+data = data.limit(100)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='UTC',
+                 symbols='LSE Equity')
+result
+```

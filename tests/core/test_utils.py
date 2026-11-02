@@ -7,7 +7,6 @@ import onetick.py as otp
 import importlib
 import datetime
 import pandas as pd
-import dateutil.tz
 import zoneinfo
 
 from pathlib import Path
@@ -89,7 +88,6 @@ def test_keep_everything_generated(obj_class):
     (datetime.datetime(2022, 1, 1), None),
     (datetime.datetime(2022, 1, 1, tzinfo=datetime.timezone.utc), 'UTC'),
     (datetime.datetime(2022, 1, 1, tzinfo=zoneinfo.ZoneInfo('Europe/London')), 'Europe/London'),
-    (datetime.datetime(2022, 1, 1, tzinfo=dateutil.tz.gettz('Asia/Yerevan')), 'Asia/Yerevan'),
     (datetime.datetime(2022, 1, 1, tzinfo=zoneinfo.ZoneInfo('Europe/Kyiv')), 'Europe/Kyiv'),
     (pd.Timestamp(2022, 1, 1), None),
     (pd.Timestamp(2022, 1, 1).tz_localize('America/New_York'), 'America/New_York'),
@@ -102,13 +100,22 @@ def test_get_timezone_from_datetime(dt, tz):
     assert otp.utils.get_timezone_from_datetime(dt) == tz
 
 
-@pytest.mark.parametrize('dt,tz', [
-    (datetime.datetime(2022, 1, 1, tzinfo=dateutil.tz.gettz('America/New_York')), 'America/New_York'),
-    (datetime.datetime(2022, 1, 1, tzinfo=dateutil.tz.gettz('America/Chicago')), 'America/Chicago'),
-])
+def test_get_timezone_from_datetime_dateutil():
+    dateutil = pytest.importorskip('dateutil')
+    assert otp.utils.get_timezone_from_datetime(
+        datetime.datetime(2022, 1, 1, tzinfo=dateutil.tz.gettz('Asia/Yerevan'))
+    ) == 'Asia/Yerevan'
+
+
 @pytest.mark.xfail(sys.platform == 'win32', reason='May return wrong timezone on Windows')
-def test_get_timezone_from_dateutil_tz_on_windows(dt, tz):
-    assert otp.utils.get_timezone_from_datetime(dt) == tz
+def test_get_timezone_from_dateutil_tz_on_windows():
+    dateutil = pytest.importorskip('dateutil')
+    assert otp.utils.get_timezone_from_datetime(
+        datetime.datetime(2022, 1, 1, tzinfo=dateutil.tz.gettz('America/New_York'))
+    ) == 'America/New_York'
+    assert otp.utils.get_timezone_from_datetime(
+        datetime.datetime(2022, 1, 1, tzinfo=dateutil.tz.gettz('America/Chicago'))
+    ) == 'America/Chicago'
 
 
 def test_cool_tmp_names(monkeypatch):

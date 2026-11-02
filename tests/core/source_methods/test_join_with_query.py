@@ -5,7 +5,6 @@ import zoneinfo
 from datetime import datetime
 from functools import partial
 
-import dateutil
 import numpy as np
 import pandas as pd
 import pytest
@@ -1161,7 +1160,7 @@ class TestStartEnd:
             result["E"] = result._END_TIME
             return result
 
-        create_time = partial(otp.datetime, tzinfo=dateutil.tz.gettz("GMT"))
+        create_time = partial(otp.datetime, tzinfo=zoneinfo.ZoneInfo("GMT"))
         time_ts = [create_time(2017, 1, 3, 8), create_time(2019, 1, 3, 9)]
         data = otp.Ticks(dict(A=["a", "b"], TIME_ST=time_ts))
         source = data.join_with_query(query, start=data.TIMESTAMP - otp.Second(10), end=data.TIME_ST)

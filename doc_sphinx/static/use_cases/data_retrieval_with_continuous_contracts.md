@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Data Retrieval with Continuous Contracts
 
-This section contains 6 examples for Data Retrieval with Continuous Contracts using the `onetick-py`.  
+This section contains examples for Data Retrieval with Continuous Contracts using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py

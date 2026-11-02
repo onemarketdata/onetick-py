@@ -6,7 +6,6 @@ import zoneinfo
 from typing import Optional
 from contextlib import suppress
 
-import dateutil.tz
 import tzlocal
 
 import onetick.py as otp
@@ -17,6 +16,7 @@ def get_tzfile_by_name(timezone):
         try:
             timezone = zoneinfo.ZoneInfo(timezone)
         except zoneinfo.ZoneInfoNotFoundError:
+            import dateutil.tz
             timezone = dateutil.tz.gettz(timezone)
     return timezone
 
@@ -41,26 +41,28 @@ def get_timezone_from_datetime(dt) -> Optional[str]:
             return tzinfo.zone
     if isinstance(tzinfo, zoneinfo.ZoneInfo):
         return tzinfo.key
-    if isinstance(tzinfo, dateutil.tz.tzlocal):
-        return get_local_timezone_name()
-    if isinstance(tzinfo, dateutil.tz.tzstr) and hasattr(tzinfo, '_s'):
-        return tzinfo._s
-    if isinstance(tzinfo, dateutil.tz.tzfile):
+    with suppress(ModuleNotFoundError):
+        import dateutil.tz
+        if isinstance(tzinfo, dateutil.tz.tzlocal):
+            return get_local_timezone_name()
+        if isinstance(tzinfo, dateutil.tz.tzstr) and hasattr(tzinfo, '_s'):
+            return tzinfo._s
+        if isinstance(tzinfo, dateutil.tz.tzfile):
+            if sys.platform == 'win32':
+                warnings.warn(
+                    "It's not recommended to use dateutil.tz timezones on Windows platform. "
+                    "Function 'get_timezone_from_datetime' can't guarantee correct results in this case. "
+                    "Please, use zoneinfo timezones instead."
+                )
+            if hasattr(tzinfo, '_filename'):
+                if tzinfo._filename == '/etc/localtime':
+                    return get_local_timezone_name()
+                for timezone in zoneinfo.available_timezones():
+                    if tzinfo._filename.endswith(timezone):
+                        return timezone
         if sys.platform == 'win32':
-            warnings.warn(
-                "It's not recommended to use dateutil.tz timezones on Windows platform. "
-                "Function 'get_timezone_from_datetime' can't guarantee correct results in this case. "
-                "Please, use zoneinfo timezones instead."
-            )
-        if hasattr(tzinfo, '_filename'):
-            if tzinfo._filename == '/etc/localtime':
-                return get_local_timezone_name()
-            for timezone in zoneinfo.available_timezones():
-                if tzinfo._filename.endswith(timezone):
-                    return timezone
-    if sys.platform == 'win32':
-        if isinstance(tzinfo, dateutil.tz.win.tzwin) and hasattr(tzinfo, '_name'):
-            return tzinfo._name
+            if isinstance(tzinfo, dateutil.tz.win.tzwin) and hasattr(tzinfo, '_name'):
+                return tzinfo._name
     raise ValueError(f"Can't get timezone name from datetime '{dt}' with tzinfo {tzinfo}")
 
 

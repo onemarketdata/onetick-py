@@ -10,6 +10,25 @@
 
 ### Removed
 
+## [1.219.0] - 2026-11-02
+
+### Added
+
+- Add parameters `username` and `password` to all database inspection functions
+- Add more use-cases from OneTick Cloud to the documentation
+- Add `otp.Source` methods `trd_quote_join`, `trd_ob_join`, `trd_vs_mid` and `trd_vs_quote`
+- Add missing string functions
+
+### Changed
+
+- Remove `dateutil` from dependencies
+
+### Fixed
+
+- Fix looking back for database schema when `start` parameter is specified
+
+### Removed
+
 ## [1.218.0] - 2026-10-26
 
 ### Added

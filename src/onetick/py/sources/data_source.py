@@ -424,6 +424,11 @@ class DataSource(Source):
 
                 # PY-1555: setting include_memdb=False to not get schema from memory dbs, they can have limited schema
                 db_obj = _inspection.DB(_db)
+                if schema_policy == self.POLICY_TOLERANT and start:
+                    # looking back 5 days from the specified start date
+                    # to get the schema even if start date itself doesn't have data
+                    start = db_obj.last_not_empty_date(start, days_back=5, tick_type=_tt, include_memdb=False)
+
                 db_schema = {}
                 try:
                     db_schema = db_obj.schema(date=start, tick_type=_tt, include_memdb=False)

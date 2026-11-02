@@ -418,7 +418,7 @@ class Ranking(_KeepTs):
     _ALLOWED_RANK_BY = {'asc', 'desc'}
     _ALLOWED_SHOW_RANK_AS = {'order', 'percentile_standard', 'percent_le_values', 'percent_lt_values'}
 
-    def __init__(self, rank_by, *args, show_rank_as='ORDER', include_tick=False, **kwargs):
+    def __init__(self, rank_by, *args, show_rank_as='order', include_tick=False, **kwargs):
         super().__init__(_Column('TIMESTAMP'), *args, **kwargs)
 
         if isinstance(rank_by, str):

@@ -594,10 +594,10 @@ class _DtAccessor(_Accessor):
         ----------
         date_part: str | Operation | Column
             Possible values are:
-                'year', 'quarter', 'month',
-                'week', 'weekday', 'day', 'dayofyear',
-                'hour', 'minute', 'second',
-                'millisecond', 'nanosecond'.
+                ``year``, ``quarter``, ``month``,
+                ``week``, ``weekday``, ``day``, ``dayofyear``,
+                ``hour``, ``minute``, ``second``,
+                ``millisecond``, ``nanosecond``.
 
         See Also
         --------

@@ -1551,7 +1551,7 @@ def ranking(*args, **kwargs):
         sorting direction. Default direction is ``desc``.
     show_rank_as: str
 
-        - ``order``: calculate number that represents the position of the tick in the sort order
+        - ``order`` (default): calculate number that represents the position of the tick in the sort order
         - ``percent_le_values``: calculate the percentage of ticks that have higher or equal value
           of the position in the sort order, relative to the tick
         - ``percent_lt_values``: calculate the percentage of ticks that have higher value

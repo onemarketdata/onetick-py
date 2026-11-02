@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Rates
 
-This section contains 1 example for Rates using the `onetick-py`.  
+This section contains examples for Rates using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -50,3 +50,39 @@ result  # Display results
 | 629 | 2026-07-28 20:00:00 | 3.7313 |
 
 630 rows x 2 columns
+
+## Return All Interest Rate Symbols
+
+Returning all Interest Rate Symbols and their associated Name that are available on a specific date.
+
+```python
+import onetick.py as otp
+
+data = otp.DataSource(db='RATES', tick_type='STAT')
+
+# Merge every symbol in the database into a single stream, the equivalent of SYMBOL_NAME LIKE '%'.
+data = otp.merge([data],
+                 symbols=otp.Symbols(db='RATES', for_tick_type='STAT'),
+                 identify_input_ts=True)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='UTC')
+result
+```
+
+{.dataframe}
+|    |       Time |                           NAME |    OID | OMDSEQ | SEC_TYPE | SYMBOL_NAME | TICK_TYPE |
+|---:|-----------:|-------------------------------:|-------:|-------:|---------:|------------:|----------:|
+|  0 | 2024-01-03 |           BGCR(1ST PERCENTILE) | 741852 |      0 |     RATE |     BGCR_1P |      STAT |
+|  1 | 2024-01-03 |          BGCR(25TH PERCENTILE) | 741853 |      0 |     RATE |    BGCR_25P |      STAT |
+|  2 | 2024-01-03 |          BGCR(75TH PERCENTILE) | 742081 |      0 |     RATE |    BGCR_75P |      STAT |
+|  3 | 2024-01-03 |          BGCR(99TH PERCENTILE) | 742170 |      0 |     RATE |    BGCR_99P |      STAT |
+|  4 | 2024-01-03 | BROAD GENERAL COLL RATE (BGCR) | 741857 |      0 |     RATE |   BGCR_RATE |      STAT |
+| .. |        ... |                            ... |    ... |    ... |      ... |         ... |       ... |
+| 31 | 2024-01-03 |          TGCR(25TH PERCENTILE) | 742089 |      0 |     RATE |    TGCR_25P |      STAT |
+| 32 | 2024-01-03 |          TGCR(75TH PERCENTILE) | 742090 |      0 |     RATE |    TGCR_75P |      STAT |
+| 33 | 2024-01-03 |          TGCR(99TH PERCENTILE) | 742173 |      0 |     RATE |    TGCR_99P |      STAT |
+| 34 | 2024-01-03 | TRI-PARTY GEN COLL RATE (TGCR) | 741861 |      0 |     RATE |   TGCR_RATE |      STAT |
+| 35 | 2024-01-03 | TOKYO OVERNIGHT AVG RATE (TONA | 742868 |      0 |     RATE |   TONA_RATE |      STAT |

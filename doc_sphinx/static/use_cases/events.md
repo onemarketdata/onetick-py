@@ -2,9 +2,9 @@
 file_format: mystnb
 ---
 
-# Earnings Events Analysis
+# Events
 
-This section contains 6 examples for Events using the `onetick-py`.  
+This section contains examples for Events using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py

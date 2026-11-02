@@ -999,7 +999,6 @@ class DocMetaclass(type):
 
 
 def copy_method(obj, mimic=True, drop_examples=False):
-
     """
     Decorator to copy aggregation function as method
 

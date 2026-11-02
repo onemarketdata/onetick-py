@@ -1780,6 +1780,8 @@ class Source:
         value_compare,
         volume_limit,
         intercept_heartbeats,
+        trd_vs_mid,
+        trd_vs_quote,
     )
     from ._source.source_methods.drops import (  # type: ignore[misc]
         drop,
@@ -1854,6 +1856,8 @@ class Source:
         append,
         diff,
         lee_and_ready,
+        trd_quote_join,
+        trd_ob_join,
         estimate_ts_delay,
     )
     from ._source.source_methods.data_quality import (  # type: ignore[misc]

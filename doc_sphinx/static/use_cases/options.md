@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Options
 
-This section contains 16 examples for Options using the `onetick-py`.  
+This section contains examples for Options using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -99,7 +99,7 @@ day = day[['VOLUME', 'OPEN_INT']]
 stat = otp.DataSource(db='US_OPTIONS_EOD_SAMPLE', tick_type='STAT', back_to_first_tick=86400)
 stat = stat[['UNDERLYING_SYMBOL', 'EXPIRATION_DATE', 'STRIKE_PRICE', 'CALL_PUT_IND']]
 
-# Join each daily tick to the prevailing static record (asof join).
+# Join each daily tick to the prevailing static record ("as of" join).
 joined = otp.join_by_time([day, stat])
 
 # Split Volume and Open Interest into Call and Put buckets based on the Call/Put Indicator.
@@ -161,7 +161,7 @@ day = day[['VOLUME', 'OPEN_INT']]
 stat = otp.DataSource(db='US_OPTIONS_EOD_SAMPLE', tick_type='STAT', back_to_first_tick=86400)
 stat = stat[['UNDERLYING_SYMBOL', 'EXPIRATION_DATE', 'STRIKE_PRICE', 'CALL_PUT_IND']]
 
-# Join each daily tick to the prevailing static record (asof join).
+# Join each daily tick to the prevailing static record ("as of" join).
 joined = otp.join_by_time([day, stat])
 
 # Split Volume and Open Interest into Call and Put buckets based on the Call/Put Indicator.
@@ -222,7 +222,7 @@ trd = trd[['SIZE']]
 stat = otp.DataSource(db='US_OPTIONS_SAMPLE', tick_type='STAT', back_to_first_tick=86400)
 stat = stat[['UNDERLYING_SYMBOL', 'EXPIRATION_DATE', 'STRIKE_PRICE', 'CALL_PUT_IND']]
 
-# Join each trade to the prevailing static record (asof join).
+# Join each trade to the prevailing static record ("as of" join).
 joined = otp.join_by_time([trd, stat])
 
 # Trade Size is the traded volume; split it into Call and Put buckets.
@@ -296,7 +296,7 @@ trd = trd[['SIZE']]
 stat = otp.DataSource(db='US_OPTIONS_SAMPLE', tick_type='STAT', back_to_first_tick=86400)
 stat = stat[['UNDERLYING_SYMBOL', 'EXPIRATION_DATE', 'STRIKE_PRICE', 'CALL_PUT_IND']]
 
-# Join each trade to the prevailing static record (asof join).
+# Join each trade to the prevailing static record ("as of" join).
 joined = otp.join_by_time([trd, stat])
 
 # Trade Size is the traded volume; split it into Call and Put buckets.
@@ -375,7 +375,7 @@ stat = stat[['UNDERLYING_SYMBOL', 'EXPIRATION_DATE', 'STRIKE_PRICE', 'CALL_PUT_I
 # Restrict the static records to the selected expiration.
 stat = stat.where(stat['EXPIRATION_DATE'] == '20270115')
 
-# Join each daily tick to the prevailing static record (asof join).
+# Join each daily tick to the prevailing static record ("as of" join).
 joined = otp.join_by_time([day, stat])
 
 # Merge every matching AAPL contract into a single stream.
@@ -395,7 +395,7 @@ result
 
 ## OPRA Daily Volume, Open Interest and Greeks for Selected Underlying and Expiry returned as a straddle configuration
 
-OPRA Daily Volume, Open Interest and Greeks for Selected Underlying and Expiry returned as a straddle configuration.  
+OPRA Daily Volume Open Interest and Greeks for Selected Underlying and Expiry returned as a straddle configuration.  
 OPRA Daily data is retrieved from the ``US_OPTIONS_EOD`` database.  
 Here the sample database ``US_OPTIONS_EOD_SAMPLE`` is used.  
 Retrieves end-of-day pricing, Volume, Open Interest and Greeks (Implied Volatility, Delta, Gamma, Theta and Vega),
@@ -422,7 +422,7 @@ stat = stat[['UNDERLYING_SYMBOL', 'EXPIRATION_DATE', 'STRIKE_PRICE', 'CALL_PUT_I
 # Restrict the static records to the selected expiration.
 stat = stat.where(stat['EXPIRATION_DATE'] == '20270115')
 
-# Join each daily tick to the prevailing static record (asof join).
+# Join each daily tick to the prevailing static record ("as of" join).
 joined = otp.join_by_time([day, stat])
 
 # Build Call ('C') and Put ('P') columns per metric; the opposite side is NaN so it is ignored by the average.
@@ -499,7 +499,7 @@ stat = stat[['UNDERLYING_SYMBOL', 'EXPIRATION_DATE', 'STRIKE_PRICE', 'CALL_PUT_I
 # Restrict the static records to the selected expiration.
 stat = stat.where(stat['EXPIRATION_DATE'] == '20270115')
 
-# Join each prevailing option trade to the prevailing static record (asof join).
+# Join each prevailing option trade to the prevailing static record ("as of" join).
 joined = otp.join_by_time([trd, stat])
 
 # Keep only the last (prevailing) tick up to the snapshot time, per option contract.
@@ -517,7 +517,7 @@ underlying = underlying[['PRICE']]
 underlying = underlying.rename({'PRICE': 'UNDERLYING_PRICE'})
 underlying = underlying.last()
 
-# Join the option snapshot to the prevailing underlying price (asof join).
+# Join the option snapshot to the prevailing underlying price ("as of" join).
 result_src = otp.join_by_time([options, underlying])
 
 # Moneyness is the strike price relative to the underlying price.
@@ -533,7 +533,7 @@ result = otp.run(
 result
 ```
 
-## OPRA Prevailing or Snapshot Options Prices at a specified time, for a specified underlying
+## OPRA Prevailing or Snapshot Options Prices at a specified time for a specified underlying
 
 OPRA Trade data is retrieved from the ``US_OPTIONS`` database.  
 Here the sample database ``US_OPTIONS_SAMPLE`` is used.  
@@ -557,7 +557,7 @@ trd = trd[['PRICE', 'SIZE']]
 stat = otp.DataSource(db='US_OPTIONS_SAMPLE', tick_type='STAT', back_to_first_tick=86400)
 stat = stat[['UNDERLYING_SYMBOL', 'EXPIRATION_DATE', 'STRIKE_PRICE', 'CALL_PUT_IND']]
 
-# Join each prevailing trade to the prevailing static record (asof join).
+# Join each prevailing trade to the prevailing static record ("as of" join).
 joined = otp.join_by_time([trd, stat])
 
 # Keep only the last (prevailing) tick up to the snapshot time.

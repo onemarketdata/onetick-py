@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Corrections and Time Travel
 
-This section contains 5 examples for Corrections and Time Travel using the `onetick-py`.  
+This section contains examples for Corrections and Time Travel using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py

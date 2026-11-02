@@ -399,6 +399,199 @@ def lee_and_ready(self: 'Source', qte: 'Source',
     return result
 
 
+def trd_quote_join(
+    self: 'Source', qte: 'Source',
+    quote_delay: float = 0.0,
+    go_back_to_first_quote: float = 0.0,
+) -> 'Source':
+    """
+    Joins trades with prevailing quotes.
+
+    Appends each trade tick with all fields of the prevailing quote tick.
+
+    This method expects two sources as its input: source of trades (``self``) and source of quotes (``qte``).
+
+    Fields in the output ticks are prefixed with the name of the source they came from:
+    fields from trades source are prefixed with ``TRD.``, fields from ``qte`` source are prefixed with ``QTE.``.
+    Also field **QTE.TIMESTAMP** with the timestamp of the joined quote is added.
+
+    Parameters
+    ----------
+    qte: :class:`Source`
+        The source of quotes.
+    quote_delay: int, float
+        The minimum number of seconds that needs to elapse between the trade and the quote
+        before the quote can be considered for a join with the trade.
+    go_back_to_first_quote: int, float
+        Specifies how far back (in seconds) to look for an existing quote
+        when the first trade precedes the first quote.
+
+    Returns
+    -------
+    :class:`Source`
+
+    See Also
+    --------
+    **TRD_QUOTE_JOIN** OneTick event processor
+
+    Examples
+    --------
+
+    Add fields of the prevailing quote to each trade:
+
+    >>> trd = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> trd = trd[['PRICE', 'SIZE']]
+    >>> qte = otp.DataSource('US_COMP_SAMPLE', tick_type='QTE', symbols='AAPL')
+    >>> qte = qte[['ASK_PRICE', 'BID_PRICE']]
+    >>> data = trd.trd_quote_join(qte)
+    >>> data = data.limit(5)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1), timezone='America/New_York')
+                               Time  TRD.PRICE  TRD.SIZE                 QTE.TIMESTAMP  QTE.ASK_PRICE  QTE.BID_PRICE
+    0 2024-02-01 04:00:00.008283417     186.50         6 2024-02-01 04:00:00.007607483         187.02         185.49
+    1 2024-02-01 04:00:00.008290927     185.59         1 2024-02-01 04:00:00.007607483         187.02         185.49
+    2 2024-02-01 04:00:00.008291153     185.49       107 2024-02-01 04:00:00.007607483         187.02         185.49
+    3 2024-02-01 04:00:00.010381671     185.49         1 2024-02-01 04:00:00.010349268         185.80         185.45
+    4 2024-02-01 04:00:00.011224206     185.50         2 2024-02-01 04:00:00.010686602         185.80         185.45
+
+    Use parameter ``quote_delay`` to join trades only with the quotes that are at least 1 millisecond older:
+
+    >>> trd = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> trd = trd[['PRICE', 'SIZE']]
+    >>> qte = otp.DataSource('US_COMP_SAMPLE', tick_type='QTE', symbols='AAPL')
+    >>> qte = qte[['ASK_PRICE', 'BID_PRICE']]
+    >>> data = trd.trd_quote_join(qte, quote_delay=0.001)
+    >>> data = data.limit(5)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1), timezone='America/New_York')
+                               Time  TRD.PRICE  TRD.SIZE                 QTE.TIMESTAMP  QTE.ASK_PRICE  QTE.BID_PRICE
+    0 2024-02-01 04:00:00.008283417     186.50         6 2024-02-01 04:00:00.006738266         187.02         185.45
+    1 2024-02-01 04:00:00.008290927     185.59         1 2024-02-01 04:00:00.006738266         187.02         185.45
+    2 2024-02-01 04:00:00.008291153     185.49       107 2024-02-01 04:00:00.006738266         187.02         185.45
+    3 2024-02-01 04:00:00.010381671     185.49         1 2024-02-01 04:00:00.008713028         185.80         185.45
+    4 2024-02-01 04:00:00.011224206     185.50         2 2024-02-01 04:00:00.008713028         185.80         185.45
+    """
+    if quote_delay < 0:
+        raise ValueError("Parameter 'quote_delay' must be non-negative")
+    if go_back_to_first_quote < 0:
+        raise ValueError("Parameter 'go_back_to_first_quote' must be non-negative")
+
+    schema = {f'TRD.{field}': dtype for field, dtype in self.schema.items()}
+    schema.update({f'QTE.{field}': dtype for field, dtype in qte.schema.items()})
+    schema['QTE.TIMESTAMP'] = otp.nsectime
+
+    result = otp.Source(
+        node=otq.TrdQuoteJoin(
+            quote_delay=quote_delay,
+            go_back_to_first_quote=go_back_to_first_quote,
+        ),
+        schema=schema,
+    )
+    __copy_sources_on_merge_or_join(result, (self, qte), names=('TRD', 'QTE'))
+
+    return result
+
+
+def trd_ob_join(
+    self: 'Source',
+    ob: 'Source',
+    order_book_delay: float = 0.0,
+    max_levels: Optional[int] = None,
+    max_initialization_days: Optional[int] = None,
+) -> 'Source':
+    r"""
+    Joins trades with the prevailing order book statistics.
+
+    Appends each trade tick with size-weighted price and total size
+    computed over a specified number of order book levels prevailing at the time.
+
+    This method expects two sources as its input: source of trades (``self``) and source of order book ticks (``ob``).
+
+    Parameters
+    ----------
+    ob: :class:`Source`
+        The source of order book ticks.
+    order_book_delay: int, float
+        The minimum number of seconds that needs to elapse between the trade and the order book state
+        before the order book state can be considered for a join with the trade.
+    max_levels: int
+        The number of levels of the prevailing order book to join to the trade tick.
+        If not set, all levels are used.
+    max_initialization_days: int
+        This parameter specifies how many days back the event processor should go in order to find
+        the latest full state of the book.
+        When set, this parameter takes precedence over the configuration parameter BOOKS.MAX_INITIALIZATION_DAYS.
+
+    Returns
+    -------
+    :class:`Source`
+
+    See Also
+    --------
+    **TRD_OB_JOIN** OneTick event processor
+
+    Examples
+    --------
+
+    Add size-weighted price and total size of 5 levels of the prevailing order book to each trade:
+
+    >>> trd = otp.DataSource(db='CME_SAMPLE', tick_type='TRD', symbols=r'NQ\H24')
+    >>> trd = trd[['PRICE', 'SIZE']]
+    >>> ob = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')
+    >>> data = trd.trd_ob_join(ob, max_levels=5)
+    >>> data = data.limit(5)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                               Time     PRICE  SIZE  ASK_VWAP      BID_VWAP  ASK_SIZE  BID_SIZE
+    0 2024-02-01 00:00:01.201009991  17317.25     1   17315.0  17314.196429        20        14
+    1 2024-02-01 00:00:01.201009991  17317.25     1   17315.0  17314.196429        20        14
+    2 2024-02-01 00:00:01.201261213  17317.25     1   17315.0  17313.961538        20        13
+    3 2024-02-01 00:00:01.202871635  17317.25     1   17315.0  17314.275000        20        10
+    4 2024-02-01 00:00:02.331632419  17317.75     1   17315.0  17316.714286        20         7
+
+    Use parameter ``order_book_delay`` to join trades only with the order book state that is at least 1 second older:
+
+    >>> trd = otp.DataSource(db='CME_SAMPLE', tick_type='TRD', symbols=r'NQ\H24')
+    >>> trd = trd[['PRICE', 'SIZE']]
+    >>> ob = otp.DataSource(db='CME_SAMPLE', tick_type='PRL_FULL', symbols=r'NQ\H24')
+    >>> data = trd.trd_ob_join(ob, max_levels=5, order_book_delay=1)
+    >>> data = data.limit(6)
+    >>> otp.run(data, date=otp.dt(2024, 2, 1))
+                               Time     PRICE  SIZE  ASK_VWAP   BID_VWAP  ASK_SIZE  BID_SIZE
+    0 2024-02-01 00:00:01.201009991  17317.25     1       NaN        NaN         0         0
+    1 2024-02-01 00:00:01.201009991  17317.25     1       NaN        NaN         0         0
+    2 2024-02-01 00:00:01.201261213  17317.25     1       NaN        NaN         0         0
+    3 2024-02-01 00:00:01.202871635  17317.25     1       NaN        NaN         0         0
+    4 2024-02-01 00:00:02.331632419  17317.75     1   17315.0  17314.475        20        10
+    5 2024-02-01 00:00:02.331632419  17317.75     1   17315.0  17314.475        20        10
+    """
+    if order_book_delay < 0:
+        raise ValueError("Parameter 'order_book_delay' must be non-negative")
+    if max_levels is not None and max_levels < 1:
+        raise ValueError("Parameter 'max_levels' must be greater than zero")
+    if max_initialization_days is not None and max_initialization_days < 0:
+        raise ValueError("Parameter 'max_initialization_days' must be non-negative")
+
+    ep_kwargs = {}
+    if max_levels is not None:
+        ep_kwargs['max_levels'] = max_levels
+    if max_initialization_days is not None:
+        ep_kwargs['max_initialization_days'] = max_initialization_days
+
+    schema = self.schema.copy()
+    schema.update(**{
+        'ASK_VWAP': float,
+        'BID_VWAP': float,
+        'ASK_SIZE': int,
+        'BID_SIZE': int,
+    })
+
+    result = otp.Source(
+        node=otq.TrdObJoin(order_book_delay=order_book_delay, **ep_kwargs),
+        schema=schema,
+    )
+    __copy_sources_on_merge_or_join(result, (self, ob), names=('TRD', 'OB'))
+
+    return result
+
+
 _smallest_time_granularity_msec_name_doc = param_doc(
     name='smallest_time_granularity_msec',
     annotation=int,

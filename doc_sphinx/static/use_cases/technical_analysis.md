@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Technical Analysis
 
-This section contains 34 examples for Technical Analysis using the `onetick-py`.  
+This section contains examples for Technical Analysis using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -939,7 +939,7 @@ Returns the Rate of Change (ROC) indicator over a lookback of 7 one-minute bars.
 ``LAST_N_BACK`` is the bar LAST 7 bars earlier.
 
 ```text
- ROC = 100 * (LAST - LAST_N_BACK) / LAST_N_BACK
+ROC = 100 * (LAST - LAST_N_BACK) / LAST_N_BACK
 ```
 
 ```{code-cell} ipython3
@@ -1629,8 +1629,8 @@ result
 ## VPIN
 
 Volume Synchronized Probability of Informed Trading (VPIN) from Trade Data.  
-Volume bins are formed every 100,000 share.  
-``BUY_VOLUME`` is SIZE where AGGRESSOR_SIDE = 'B', ``SELL_VOLUME`` where AGGRESSOR_SIDE = 'S'.  
+Volume bins are formed every 100 000 shares.  
+``BUY_VOLUME`` is `SIZE` where `AGGRESSOR_SIDE = 'B'`, ``SELL_VOLUME`` where `AGGRESSOR_SIDE = 'S'`.  
 VPIN is the rolling average of ``BIN_IMBALANCE`` over the last 50 bins.
 
 ```{code-cell} ipython3
@@ -1652,8 +1652,8 @@ data['VOL_BIN'] = otp.math.floor(data['ACC_VOLUME'] / 100000)
 # Aggregate each volume bin
 data = data.agg(
     {
-        'BIN_START': otp.agg.first('Time'),
-        'BIN_END': otp.agg.last('Time'),
+        'BIN_START': otp.agg.first_time(),
+        'BIN_END': otp.agg.last_time(),
         'TRADE_COUNT': otp.agg.count(),
         'VOLUME': otp.agg.sum('SIZE'),
         'BUY_VOLUME': otp.agg.sum('BUY_VOLUME'),
@@ -1673,7 +1673,7 @@ data = data.agg(
     running=True,
     bucket_interval=50,
     bucket_units='ticks',
-    all_fields=True
+    all_fields=True,
 )
 
 data = data[['VOL_BIN', 'BIN_START', 'BIN_END', 'TRADE_COUNT', 'VOLUME',
@@ -1687,5 +1687,150 @@ result = otp.run(
     symbols='VOD'
 )
 
+result
+```
+
+## Death & Golden Cross Events Identification
+
+Identifying the Golden and Death Crosses for a specified Symbol across a 2 Year Time Period from Daily Data.
+
+Retrieves Daily Data for the specified Symbol `HD` (Home Depot).  
+Calculates 50 and 200 period (day) moving averages as running aggregates with `bucket_units='seconds'`
+(`bucket_interval` given as a multiple of 86400,
+since `bucket_units='days'/'months'` are not supported for sliding-window aggregation).  
+Calculates the prior values for the moving averages using `column[-1]` (record-based lag).  
+Uses {meth}`~onetick.py.Source.apply` to return the price
+when the Golden Cross and Death Cross occur, otherwise {class}`otp.nan <onetick.py.nan>`.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_DAILY', tick_type='DAY')
+data = data.where(data['EXCHANGE'] == '')
+data = data[['CLOSE', 'VOLUME']]
+
+# Calculate the short and long moving averages
+data = data.agg({'SMA50_CLOSE': otp.agg.average('CLOSE')},
+                running=True, bucket_interval=50 * 86400, bucket_units='seconds', all_fields=True)
+data = data.agg({'SMA200_CLOSE': otp.agg.average('CLOSE')},
+                running=True, bucket_interval=200 * 86400, bucket_units='seconds', all_fields=True)
+
+# Calculate the prior values for the moving averages
+data['PRIOR_SMA50_CLOSE'] = data['SMA50_CLOSE'][-1]
+data['PRIOR_SMA200_CLOSE'] = data['SMA200_CLOSE'][-1]
+
+# Identify the Golden and Death Crosses, returning the price when they occur, otherwise otp.nan
+def golden_cross(row):
+    if row['SMA50_CLOSE'] > row['SMA200_CLOSE'] and row['PRIOR_SMA50_CLOSE'] < row['PRIOR_SMA200_CLOSE']:
+        return row['CLOSE']
+    return otp.nan
+
+def death_cross(row):
+    if row['SMA50_CLOSE'] < row['SMA200_CLOSE'] and row['PRIOR_SMA50_CLOSE'] > row['PRIOR_SMA200_CLOSE']:
+        return row['CLOSE']
+    return otp.nan
+
+data['GOLDEN_CROSS_PRICE'] = data.apply(golden_cross)
+data['DEATH_CROSS_PRICE'] = data.apply(death_cross)
+
+data = data[['CLOSE', 'VOLUME', 'SMA50_CLOSE', 'SMA200_CLOSE', 'PRIOR_SMA50_CLOSE', 'PRIOR_SMA200_CLOSE',
+             'GOLDEN_CROSS_PRICE', 'DEATH_CROSS_PRICE']]
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 1),
+                 end=otp.dt(2026, 1, 1),
+                 timezone='America/New_York',
+                 symbols='HD')
+result
+```
+
+### Death Cross Events for the Mag7
+
+Retrieves Daily Data for AAPL, MSFT, AMZN, GOOG, META, NVDA and TSLA.  
+Calculates 50 and 200 period (day) moving averages as running aggregates with `bucket_units='seconds'`
+(`bucket_interval` given as a multiple of 86400,
+since `bucket_units='days'/'months'` are not supported for sliding-window aggregation),
+and the prior values using `column[-1]` (record-based lag).  
+The per-symbol computation is built once, then merged across the symbol list with {func}`otp.merge <onetick.py.merge>`,
+so each symbol's moving averages run independently before being combined into one result.  
+Filters to bars where the short moving average crosses below the long moving average.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+MAG7 = ['AAPL', 'MSFT', 'AMZN', 'GOOG', 'META', 'NVDA', 'TSLA']
+
+data = otp.DataSource(db='US_COMP_DAILY', tick_type='DAY')
+data = data.where(data['EXCHANGE'] == '')
+data = data[['CLOSE', 'VOLUME']]
+
+# Calculate the short and long moving averages
+data = data.agg({'SMA50_CLOSE': otp.agg.average('CLOSE')},
+                running=True, bucket_interval=50 * 86400, bucket_units='seconds', all_fields=True)
+data = data.agg({'SMA200_CLOSE': otp.agg.average('CLOSE')},
+                running=True, bucket_interval=200 * 86400, bucket_units='seconds', all_fields=True)
+
+# Calculate the prior values for the moving averages
+data['PRIOR_SMA50_CLOSE'] = data['SMA50_CLOSE'][-1]
+data['PRIOR_SMA200_CLOSE'] = data['SMA200_CLOSE'][-1]
+
+# Merge every Mag7 symbol's moving average stream into a single result.
+merged = otp.merge([data], symbols=MAG7, identify_input_ts=True)
+
+# Filter on when the moving averages cross (Death Cross)
+merged = merged.where((merged['SMA50_CLOSE'] < merged['SMA200_CLOSE']) &
+                      (merged['PRIOR_SMA50_CLOSE'] > merged['PRIOR_SMA200_CLOSE']))
+
+result = otp.run(merged,
+                 start=otp.dt(2024, 1, 1),
+                 end=otp.dt(2026, 1, 1),
+                 timezone='America/New_York')
+result
+```
+
+### Golden Cross Events for the Mag7
+
+Retrieves Daily Data for AAPL, MSFT, AMZN, GOOG, META, NVDA and TSLA.  
+Calculates 50 and 200 period (day) moving averages as running aggregates with `bucket_units='seconds'`
+(`bucket_interval` given as a multiple of 86400,
+since `bucket_units='days'/'months'` are not supported for sliding-window aggregation),
+and the prior values using `column[-1]` (record-based lag).  
+The per-symbol computation is built once, then merged across the symbol list with {func}`otp.merge <onetick.py.merge>`,
+so each symbol's moving averages run independently before being combined into one result.  
+Filters to bars where the short moving average crosses above the long moving average.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+MAG7 = ['AAPL', 'MSFT', 'AMZN', 'GOOG', 'META', 'NVDA', 'TSLA']
+
+data = otp.DataSource(db='US_COMP_DAILY', tick_type='DAY')
+data = data.where(data['EXCHANGE'] == '')
+data = data[['CLOSE', 'VOLUME']]
+
+# Calculate the short and long moving averages
+data = data.agg({'SMA50_CLOSE': otp.agg.average('CLOSE')},
+                running=True, bucket_interval=50 * 86400, bucket_units='seconds', all_fields=True)
+data = data.agg({'SMA200_CLOSE': otp.agg.average('CLOSE')},
+                running=True, bucket_interval=200 * 86400, bucket_units='seconds', all_fields=True)
+
+# Calculate the prior values for the moving averages
+data['PRIOR_SMA50_CLOSE'] = data['SMA50_CLOSE'][-1]
+data['PRIOR_SMA200_CLOSE'] = data['SMA200_CLOSE'][-1]
+
+# Merge every Mag7 symbol's moving average stream into a single result.
+merged = otp.merge([data], symbols=MAG7, identify_input_ts=True)
+
+# Filter on when the moving averages cross (Golden Cross)
+merged = merged.where((merged['SMA50_CLOSE'] > merged['SMA200_CLOSE']) &
+                      (merged['PRIOR_SMA50_CLOSE'] < merged['PRIOR_SMA200_CLOSE']))
+
+result = otp.run(merged,
+                 start=otp.dt(2024, 1, 1),
+                 end=otp.dt(2026, 1, 1),
+                 timezone='America/New_York')
 result
 ```

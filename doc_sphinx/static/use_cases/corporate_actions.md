@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Corporate Actions
 
-This section contains 7 examples for Corporate Actions using the `onetick-py`.  
+This section contains examples for Corporate Actions using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -162,11 +162,13 @@ result
 
 2869 rows x 10 columns
 
-## Retrieving OQD Corporate Actions for Bloomberg Symbol
+## Retrieving OQD Corporate Actions for Symbol
 
-Quering corporate action history from OQD.  
-Specifically ``OQD_CACT_SAMPLE``, and table ``CACS``, for two symbols.  
-Bloomberg symbols have been specified using the prefix ``BSYM::::``.
+Quering Corporate Actions Schedule from OQD.  
+Uses `BSYM::::` symbology to query using Bloomberg tickers (e.g., `WMT US Equity`, `AAPL US Equity`).  
+Returns all corporate action schedule fields for the specified symbols and date range.  
+`symbol_date` resolves the ticker to the instrument in effect on that date.  
+(Note: the `OQD_CACT_SAMPLE` database's corporate actions tick type is `CACS`.)
 
 ```python
 import onetick.py as otp
@@ -177,7 +179,7 @@ result = otp.run(data,
                  end=otp.dt(2024, 4, 1),
                  timezone='UTC',
                  symbols=['BSYM::::WMT US Equity', 'BSYM::::AAPL US Equity'],
-                 symbol_date=otp.dt.now())
+                 symbol_date=otp.dt(2024, 3, 1))
 result
 ```
 

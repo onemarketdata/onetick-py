@@ -561,3 +561,8 @@ def _is_read_from_iceberg_drop_fields_supported():
     # 20260814: parameter DROP_FIELDS was added to READ_FROM_ICEBERG EP later than the EP itself
     return (_is_read_from_iceberg_supported()
             and 'drop_fields' in otq.ReadFromIceberg.Parameters.list_parameters())
+
+
+def _is_show_last_descriptor_supported():
+    # OTDEV-37283
+    return hasattr(otq, 'DbShowLastTickDescriptor')

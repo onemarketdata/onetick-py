@@ -5,7 +5,6 @@ import warnings
 
 from datetime import timedelta
 from collections import defaultdict
-from dateutil.relativedelta import relativedelta
 from typing import Union, Optional
 from uuid import uuid4
 
@@ -124,7 +123,7 @@ def write_to_db(src: 'otp.Source',
     if execute:
         if not start or not end:
             start = getattr(date, 'ts', date)
-            end = start + relativedelta(days=1)
+            end = start + pandas.Timedelta(days=1)
         return otp.run(writer, start=start, end=end, timezone=timezone)
     return writer
 

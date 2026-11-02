@@ -1,6 +1,8 @@
 import onetick.py.types as ott
 from onetick.py.core.column_operations.base import _Operation
 
+__all__ = ['matches_time_filter', 'today']
+
 
 def today(timezone: str | _Operation | None = None):
     """
@@ -62,9 +64,9 @@ def matches_time_filter(start_time: int | str | _Operation,
 
         Accepted formats:
 
-        * HHMMSS: For example, 093000 for 9:30 AM
-        * HHMMSSmmm: For example, 093000000 for 9:30:00.000 AM.
-        * HH:MM:SS[.mmm]: For example, "09:30:00.000" for 9:30 AM.
+        * *HHMMSS*: For example, 093000 for 9:30 AM
+        * *HHMMSSmmm*: For example, 093000000 for 9:30:00.000 AM.
+        * *HH:MM:SS[.mmm]*: For example, "09:30:00.000" for 9:30 AM.
 
     timezone: str | :py:class:`~onetick.py.Operation`
         The timezone to use.

@@ -2,6 +2,7 @@ import os
 import time
 import datetime
 import decimal
+import zoneinfo
 from pathlib import Path
 from onetick.py.configuration import nothing
 
@@ -11,8 +12,6 @@ import pandas as pd
 import pytest
 import re
 from io import StringIO
-
-from dateutil.tz import gettz
 
 import onetick.py as otp
 from onetick.py.types import time2nsectime
@@ -364,13 +363,13 @@ class TestTime:
         X = otp.Ticks(X=[1])
         otp.run(X, symbol_date=date)  # check there are no errors TODO: actual case
 
-    @pytest.mark.parametrize("tzinfo", [gettz("EST5EDT"), None])
+    @pytest.mark.parametrize("tzinfo", [zoneinfo.ZoneInfo("EST5EDT"), None])
     def test_timezones_with_datetime(self, session, db, tzinfo):
         assert isinstance(otp.config['default_start_time'], datetime.datetime)
         assert isinstance(otp.config['default_end_time'], datetime.datetime)
         self._check_timezones(db, otp.config['default_start_time'], otp.config['default_end_time'], tzinfo)
 
-    @pytest.mark.parametrize("tzinfo", [gettz("EST5EDT"), None])
+    @pytest.mark.parametrize("tzinfo", [zoneinfo.ZoneInfo("EST5EDT"), None])
     @pytest.mark.parametrize("start, end", [(otp.dt(otp.config['default_start_time']),
                                              otp.dt(otp.config['default_end_time'])),
                                             (pd.Timestamp(otp.config['default_start_time']),
@@ -966,9 +965,9 @@ def test_query_params(session, use_file, escaped, quotes):
 @pytest.mark.parametrize('datetime_with_timezone', [
     otp.dt(2022, 1, 1, tz='UTC'),
     otp.dt(2022, 1, 1, tz='EST5EDT'),
-    datetime.datetime(2022, 1, 1, 0, 0, 0, tzinfo=gettz('UTC')),
-    datetime.datetime(2022, 1, 1, 0, 0, 0, tzinfo=gettz('EST5EDT')),
-    datetime.datetime(2022, 1, 1, 0, 0, 0, tzinfo=gettz('America/New_York')),
+    datetime.datetime(2022, 1, 1, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo('UTC')),
+    datetime.datetime(2022, 1, 1, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo('EST5EDT')),
+    datetime.datetime(2022, 1, 1, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo('America/New_York')),
 ])
 def test_start_end_timezone(session, run_timezone, datetime_with_timezone):
     tick = otp.Tick(DATE=datetime_with_timezone)

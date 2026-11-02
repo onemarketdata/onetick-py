@@ -14,7 +14,8 @@ def _get_onetick_bool_string(value: bool) -> str:
 
 
 class _StrAccessor(_Accessor):
-    """ Accessor for string functions
+    """
+    Accessor for string functions
 
     >>> data = otp.Ticks(X=['some string'])
     >>> data["Y"] = data["X"].str.<function_name>() # doctest: +SKIP
@@ -65,6 +66,12 @@ class _StrAccessor(_Accessor):
             If equals to `ms`, constructs a millisecond-granularity timestamp from a millisecond-granularity
             string. It has the following format: < milliseconds since 1970/01/01 GMT >.
 
+        See also
+        --------
+        | **PARSE_NSECTIME** OneTick function
+        | **MSEC_STR_TO_NSECTIME** OneTick function
+        | **GET_MSECS** OneTick function
+
         Returns
         -------
         Operation
@@ -100,7 +107,7 @@ class _StrAccessor(_Accessor):
                 column_str = ott.value2str(column)
                 tz_str, format_str = self._preprocess_tz_and_format(tz, fmt)
                 format_str = format_str.replace('%f', '%J')
-                return f'parse_nsectime({format_str},{column_str},{tz_str})'
+                return f'PARSE_NSECTIME({format_str},{column_str},{tz_str})'
 
             return _StrAccessor.Formatter(
                 op_params=[self._base_column, format, timezone],
@@ -145,6 +152,10 @@ class _StrAccessor(_Accessor):
         Operation
             token at position ``n`` or empty string.
 
+        See also
+        --------
+        | **TOKEN** OneTick function
+
         Examples
         -------
         >>> # OTdirective: snippet-name: string.token;
@@ -175,10 +186,10 @@ class _StrAccessor(_Accessor):
         return _StrAccessor.Formatter(
             op_params=[self._base_column, sep, n],
             dtype=self._base_column.dtype,
-            formatter=lambda column, sep, n: f'token({ott.value2str(column)},{ott.value2str(n)},{ott.value2str(sep)})'
+            formatter=lambda column, sep, n: f'TOKEN({ott.value2str(column)},{ott.value2str(n)},{ott.value2str(sep)})'
         )
 
-    def match(self, pat, case=True):
+    def match(self, pat, case=True, *, utf8: bool = False):
         r"""
         Match the text against a regular expression specified in the ``pat`` parameter.
 
@@ -188,12 +199,19 @@ class _StrAccessor(_Accessor):
             A pattern specified via the POSIX extended regular expression syntax.
         case: bool
             If ``True``, then regular expression is case-sensitive.
+        utf8: bool
+            If set, then UTF-8 format is supported.
 
         Returns
         -------
         Operation
             ``True`` if the match was successful, ``False`` otherwise.
             Note that boolean Operation is converted to float if added as a column.
+
+        See also
+        --------
+        | **REGEX_MATCH** OneTick function
+        | **REGEX_MATCH_UTF8** OneTick function
 
         Examples
         --------
@@ -226,10 +244,11 @@ class _StrAccessor(_Accessor):
         ..                           ...      ...   ...   ...      ...
         """
         caseless = _get_onetick_bool_string(not case)
+        fun = 'REGEX_MATCH_UTF8' if utf8 else 'REGEX_MATCH'
         return _StrAccessor.Formatter(
             op_params=[self._base_column, pat],
             dtype=bool,
-            formatter=lambda column, pat: f'regex_match({ott.value2str(column)},{ott.value2str(pat)},{caseless})',
+            formatter=lambda column, pat: f'{fun}({ott.value2str(column)},{ott.value2str(pat)},{caseless})',
         )
 
     def len(self):
@@ -243,6 +262,10 @@ class _StrAccessor(_Accessor):
             If a null-character (byte with value ``0``) is present in the string,
             its position (0-based) is returned.
 
+        See also
+        --------
+        | **STRLEN** OneTick function
+
         Examples
         --------
         >>> # OTdirective: snippet-name: string.len;
@@ -255,9 +278,9 @@ class _StrAccessor(_Accessor):
         """
         return _StrAccessor.Formatter(op_params=[self._base_column],
                                       dtype=int,
-                                      formatter=lambda column: f'strlen({ott.value2str(column)})')
+                                      formatter=lambda column: f'STRLEN({ott.value2str(column)})')
 
-    def contains(self, substr):
+    def contains(self, substr, *, utf8: bool = False):
         """
         Check if the string contains ``substr``.
 
@@ -270,12 +293,19 @@ class _StrAccessor(_Accessor):
         ----------
         substr: str or Column or Operation
             A substring to search for within the string.
+        utf8: bool
+            If set, then UTF-8 format is supported.
 
         Returns
         -------
         Operation
             ``True`` if the string contains the substring, ``False`` otherwise.
             Note that boolean Operation is converted to float if added as a column.
+
+        See also
+        --------
+        | **INSTR** OneTick function
+        | **INSTR_UTF8** OneTick function
 
         Examples
         --------
@@ -308,10 +338,11 @@ class _StrAccessor(_Accessor):
                 Time      X
         0 2003-12-01  Hello
         """
+        fun = 'INSTR_UTF8' if utf8 else 'INSTR'
         return _StrAccessor.Formatter(
             op_params=[self._base_column, substr],
             dtype=bool,
-            formatter=lambda column, substr: f'instr({ott.value2str(column)}, {ott.value2str(substr)}) > -1',
+            formatter=lambda column, substr: f'{fun}({ott.value2str(column)}, {ott.value2str(substr)}) > -1',
         )
 
     def trim(self):
@@ -325,7 +356,8 @@ class _StrAccessor(_Accessor):
 
         See Also
         --------
-        :meth:`ltrim`, :meth:`rtrim`
+        | **TRIM** OneTick function
+        | :meth:`ltrim`, :meth:`rtrim`
 
         Examples
         --------
@@ -339,7 +371,7 @@ class _StrAccessor(_Accessor):
         """
         return _StrAccessor.Formatter(op_params=[self._base_column],
                                       dtype=self._base_column.dtype,
-                                      formatter=lambda column: f'trim({ott.value2str(column)})')
+                                      formatter=lambda column: f'TRIM({ott.value2str(column)})')
 
     def ltrim(self):
         """
@@ -352,11 +384,12 @@ class _StrAccessor(_Accessor):
 
         See Also
         --------
-        :meth:`trim`, :meth:`rtrim`
+        | **LTRIM** OneTick function
+        | :meth:`trim`, :meth:`rtrim`
         """
         return _StrAccessor.Formatter(op_params=[self._base_column],
                                       dtype=self._base_column.dtype,
-                                      formatter=lambda column: f'ltrim({ott.value2str(column)})')
+                                      formatter=lambda column: f'LTRIM({ott.value2str(column)})')
 
     def rtrim(self):
         """
@@ -369,20 +402,31 @@ class _StrAccessor(_Accessor):
 
         See Also
         --------
-        :meth:`ltrim`, :meth:`trim`
+        | **RTRIM** OneTick function
+        | :meth:`ltrim`, :meth:`trim`
         """
         return _StrAccessor.Formatter(op_params=[self._base_column],
                                       dtype=self._base_column.dtype,
-                                      formatter=lambda column: f'rtrim({ott.value2str(column)})')
+                                      formatter=lambda column: f'RTRIM({ott.value2str(column)})')
 
-    def lower(self):
+    def lower(self, *, utf8: bool = False):
         """
         Convert a string to lower case.
+
+        Parameters
+        ----------
+        utf8: bool
+            If set, then UTF-8 format is supported.
 
         Returns
         -------
         Operation
             Lowercased string
+
+        See Also
+        --------
+        | **LOWER** OneTick function
+        | **LOWER_UTF8** OneTick function
 
         Examples
         --------
@@ -394,18 +438,29 @@ class _StrAccessor(_Accessor):
         0 2003-12-01 00:00:00.000   HeLlO   hello
         1 2003-12-01 00:00:00.001  wOrLd!  world!
         """
+        fun = 'LOWER_UTF8' if utf8 else 'LOWER'
         return _StrAccessor.Formatter(op_params=[self._base_column],
                                       dtype=self._base_column.dtype,
-                                      formatter=lambda column: f'lower({ott.value2str(column)})')
+                                      formatter=lambda column: f'{fun}({ott.value2str(column)})')
 
-    def upper(self):
+    def upper(self, *, utf8: bool = False):
         """
         Converts a string to upper case.
+
+        Parameters
+        ----------
+        utf8: bool
+            If set, then UTF-8 format is supported.
 
         Returns
         -------
         Operation
             Uppercased string
+
+        See Also
+        --------
+        | **UPPER** OneTick function
+        | **UPPER_UTF8** OneTick function
 
         Examples
         --------
@@ -417,9 +472,10 @@ class _StrAccessor(_Accessor):
         0 2003-12-01 00:00:00.000   HeLlO   HELLO
         1 2003-12-01 00:00:00.001  wOrLd!  WORLD!
         """
+        fun = 'UPPER_UTF8' if utf8 else 'UPPER'
         return _StrAccessor.Formatter(op_params=[self._base_column],
                                       dtype=self._base_column.dtype,
-                                      formatter=lambda column: f'upper({ott.value2str(column)})')
+                                      formatter=lambda column: f'{fun}({ott.value2str(column)})')
 
     def replace(self, pat, repl):
         """
@@ -436,6 +492,10 @@ class _StrAccessor(_Accessor):
         -------
         Operation
             String with ``pat`` replaced by ``repl``.
+
+        See Also
+        --------
+        | **REPLACE** OneTick function
 
         Examples
         --------
@@ -471,11 +531,11 @@ class _StrAccessor(_Accessor):
             dtype=self._base_column.dtype,
             formatter=(
                 lambda column, pat, repl:
-                f'replace({ott.value2str(column)}, {ott.value2str(pat)}, {ott.value2str(repl)})'
+                f'REPLACE({ott.value2str(column)}, {ott.value2str(pat)}, {ott.value2str(repl)})'
             ),
         )
 
-    def regex_replace(self, pat, repl, *, replace_every=False, caseless=False):
+    def regex_replace(self, pat, repl, *, replace_every=False, caseless=False, utf8: bool = False):
         r"""
         Search for occurrences (case dependent) of ``pat`` and replace with ``repl``.
 
@@ -490,6 +550,8 @@ class _StrAccessor(_Accessor):
             If ``replace_every`` flag is set to ``True``, all matches will be replaced, if ``False`` only the first one.
         caseless: bool
             If the ``caseless`` flag is set to ``True``, matching is case-insensitive.
+        utf8: bool
+            If set, then UTF-8 format is supported.
 
         Returns
         -------
@@ -498,7 +560,9 @@ class _StrAccessor(_Accessor):
 
         See Also
         --------
-        :meth:`extract`
+        | **REGEX_REPLACE** OneTick function
+        | **REGEX_REPLACE_UTF8** OneTick function
+        | :meth:`extract`
 
         Examples
         --------
@@ -533,10 +597,11 @@ class _StrAccessor(_Accessor):
         """
         replace_every = _get_onetick_bool_string(replace_every)
         caseless = _get_onetick_bool_string(caseless)
+        fun = 'REGEX_REPLACE_UTF8' if utf8 else 'REGEX_REPLACE'
         return _StrAccessor.Formatter(
             op_params=[self._base_column, pat, repl],
             dtype=self._base_column.dtype,
-            formatter=lambda column, pat, repl: f'regex_replace({ott.value2str(column)}, {ott.value2str(pat)},'
+            formatter=lambda column, pat, repl: f'{fun}({ott.value2str(column)}, {ott.value2str(pat)},'
                                                 f' {ott.value2str(repl)}, {replace_every}, {caseless})',
         )
 
@@ -549,12 +614,17 @@ class _StrAccessor(_Accessor):
         sub: str or Column or Operation
             Substring to find.
         start: int or Column or Operation
-            Starting position to find.
+            Starting position (0-based) to find.
 
         Returns
         -------
         Operation
             The starting position of the substring or ``-1`` if it is not found.
+
+        See Also
+        --------
+        | **LOCATE** OneTick function
+        | :meth:`position`
 
         Examples
         --------
@@ -625,6 +695,10 @@ class _StrAccessor(_Accessor):
         Operation
             String repeated ``repeats`` times.
 
+        See Also
+        --------
+        | **REPEAT** OneTick function
+
         Examples
         --------
         >>> # OTdirective: snippet-name: string.repeat;
@@ -679,10 +753,10 @@ class _StrAccessor(_Accessor):
         return _StrAccessor.Formatter(
             op_params=[self._base_column, repeats],
             dtype=self._base_column.dtype,
-            formatter=lambda column, repeats: f'repeat({ott.value2str(column)}, {ott.value2str(repeats)})',
+            formatter=lambda column, repeats: f'REPEAT({ott.value2str(column)}, {ott.value2str(repeats)})',
         )
 
-    def extract(self, pat, rewrite=r"\0", caseless=False):
+    def extract(self, pat, rewrite=r"\0", caseless=False, *, utf8: bool = False):
         r"""
         Match the string against a regular expression specified by ``pat`` and return the first match.
         The ``rewrite`` parameter can optionally be used to arrange the matched substrings and embed them within the
@@ -699,6 +773,8 @@ class _StrAccessor(_Accessor):
             matches the corresponding parenthesized group (e.g., ``\u1`` converts ``\1`` to uppercase).
         caseless: bool
             If the ``caseless`` flag is set to ``True``, matching is case-insensitive.
+        utf8: bool
+            If set, then UTF-8 format is supported.
 
         Returns
         -------
@@ -707,7 +783,9 @@ class _StrAccessor(_Accessor):
 
         See Also
         --------
-        regex_replace
+        | **REGEX_EXTRACT** OneTick function
+        | **REGEX_EXTRACT_UTF8** OneTick function
+        | regex_replace
 
         Examples
         --------
@@ -753,16 +831,17 @@ class _StrAccessor(_Accessor):
         1 2003-12-01 00:00:00.001  Ms. smITh  Ms. Smith
         """
         caseless = _get_onetick_bool_string(caseless)
+        fun = 'REGEX_EXTRACT_UTF8' if utf8 else 'REGEX_EXTRACT'
         return _StrAccessor.Formatter(
             op_params=[self._base_column, pat, rewrite],
             dtype=self._base_column.dtype,
             formatter=(
                 lambda column, pat, rewrite:
-                f'regex_extract({ott.value2str(column)}, {ott.value2str(pat)}, {ott.value2str(rewrite)}, {caseless})'
+                f'{fun}({ott.value2str(column)}, {ott.value2str(pat)}, {ott.value2str(rewrite)}, {caseless})'
             ),
         )
 
-    def substr(self, start, n_bytes=None, rtrim=False):
+    def substr(self, start, n_bytes=None, rtrim=False, *, utf8: bool = False):
         """
         Return ``n_bytes`` characters starting from ``start``.
 
@@ -781,11 +860,18 @@ class _StrAccessor(_Accessor):
         rtrim: bool
             If set to ``True``, original string will be trimmed from the right side
             before getting the substring, this can be useful with negative ``start`` index.
+        utf8: bool
+            If set, then UTF-8 format is supported.
 
         Returns
         -------
         Operation
             Substring of string (``n_bytes`` length starting with ``start``).
+
+        See Also
+        --------
+        | **SUBSTR** OneTick function
+        | **SUBSTR_UTF8** OneTick function
 
         Examples
         --------
@@ -803,13 +889,14 @@ class _StrAccessor(_Accessor):
         if rtrim:
             column = column.str.rtrim()
 
+        fun = 'SUBSTR_UTF8' if utf8 else 'SUBSTR'
         if n_bytes is None:
             return _StrAccessor.Formatter(
                 op_params=[column, start],
                 dtype=self._base_column.dtype,
                 formatter=(
                     lambda column, start:
-                    f'substr({ott.value2str(column)}, {ott.value2str(start)})'
+                    f'{fun}({ott.value2str(column)}, {ott.value2str(start)})'
                 ),
             )
         else:
@@ -818,7 +905,7 @@ class _StrAccessor(_Accessor):
                 dtype=self._base_column.dtype,
                 formatter=(
                     lambda column, start, n_bytes:
-                    f'substr({ott.value2str(column)}, {ott.value2str(start)}, {ott.value2str(n_bytes)})'
+                    f'{fun}({ott.value2str(column)}, {ott.value2str(start)}, {ott.value2str(n_bytes)})'
                 ),
             )
 
@@ -831,6 +918,11 @@ class _StrAccessor(_Accessor):
         ----------
         i: int or Column or Operation
             Index of the character to find.
+
+        See Also
+        --------
+        | **BYTE_AT** OneTick function
+        | **CHAR** OneTick function
 
         Examples
         --------
@@ -846,12 +938,12 @@ class _StrAccessor(_Accessor):
         It is possible to use syntax with indexer to call this method:
 
         >>> data = otp.Ticks(X=['abcdef', '12345     ', 'qw'])
-        >>> data['THIRD'] = data['X'].str[1]
+        >>> data['SECOND'] = data['X'].str[1]
         >>> otp.run(data)
-                             Time           X THIRD
-        0 2003-12-01 00:00:00.000      abcdef     b
-        1 2003-12-01 00:00:00.001  12345          2
-        2 2003-12-01 00:00:00.002          qw     w
+                             Time           X  SECOND
+        0 2003-12-01 00:00:00.000      abcdef       b
+        1 2003-12-01 00:00:00.001  12345            2
+        2 2003-12-01 00:00:00.002          qw       w
         """
         return _StrAccessor.Formatter(
             op_params=[self._base_column, i],
@@ -871,6 +963,10 @@ class _StrAccessor(_Accessor):
         other: str or Column or Operation
             String to concatenate with.
 
+        See Also
+        --------
+        | **CONCAT** OneTick function
+
         Examples
         --------
         >>> data = otp.Ticks(X=['X1', 'X2', 'X3'], Y=['Y1', 'Y2', 'Y3'])
@@ -888,7 +984,7 @@ class _StrAccessor(_Accessor):
             formatter=lambda column, other: f'CONCAT({ott.value2str(column)}, {ott.value2str(other)})',
         )
 
-    def insert(self, start, length, value):
+    def insert(self, start, length, value, *, utf8: bool = False):
         """
         Returns a string where ``length`` characters have been deleted from string,
         beginning at ``start``, and where ``value`` has been inserted into string, beginning at ``start``.
@@ -901,6 +997,13 @@ class _StrAccessor(_Accessor):
             Number if characters to remove.
         value: str or Column or Operation
             String to insert.
+        utf8: bool
+            If set, then UTF-8 format is supported.
+
+        See Also
+        --------
+        | **INSERT** OneTick function
+        | **INSERT_UTF8** OneTick function
 
         Examples
         --------
@@ -934,17 +1037,18 @@ class _StrAccessor(_Accessor):
         1 2003-12-01 00:00:00.001    bbbbb     bbb
         2 2003-12-01 00:00:00.002     cccc      cc
         """
+        fun = 'INSERT_UTF8' if utf8 else 'INSERT'
         return _StrAccessor.Formatter(
             op_params=[self._base_column, start, length, value],
             dtype=self._base_column.dtype,
             formatter=(
                 lambda column, start, length, value:
-                f'INSERT({ott.value2str(column)}, {ott.value2str(start)},'
+                f'{fun}({ott.value2str(column)}, {ott.value2str(start)},'
                 f' {ott.value2str(length)}, {ott.value2str(value)})'
             ),
         )
 
-    def first(self, count=1):
+    def first(self, count=1, *, utf8: bool = False):
         """
         Returns first ``count`` symbols.
 
@@ -952,6 +1056,13 @@ class _StrAccessor(_Accessor):
         ----------
         count: int or Column or Operation
             Number of first symbols to return. Default: 1
+        utf8: bool
+            If set, then UTF-8 format is supported.
+
+        See also
+        --------
+        | **LEFT** OneTick function
+        | **LEFT_UTF8** OneTick function
 
         Examples
         --------
@@ -964,10 +1075,11 @@ class _StrAccessor(_Accessor):
         1 2003-12-01 00:00:00.001  bac   1     b       b
         2 2003-12-01 00:00:00.002  cba  10     c     cba
         """
+        fun = 'LEFT_UTF8' if utf8 else 'LEFT'
         return _StrAccessor.Formatter(
             op_params=[self._base_column, count],
             dtype=str,
-            formatter=lambda column, count: f'LEFT({ott.value2str(column)}, {ott.value2str(count)})',
+            formatter=lambda column, count: f'{fun}({ott.value2str(column)}, {ott.value2str(count)})',
         )
 
     def last(self, count=1):
@@ -978,6 +1090,10 @@ class _StrAccessor(_Accessor):
         ----------
         count: int or Column or Operation
             Number of last symbols to return. Default: 1
+
+        See also
+        --------
+        | :meth:`substr`
 
         Examples
         --------
@@ -990,8 +1106,10 @@ class _StrAccessor(_Accessor):
         1 2003-12-01 00:00:00.001  bac  1    c      c
         2 2003-12-01 00:00:00.002  cba  9    a    cba
         """
-        # RIGHT function works strange with negative index
-        # RIGHT_UTF8 works fine but it is not supported by old builds
+        # RIGHT function works VERY strange
+        # it counts offset from the end of the string array, not from the first NULL character
+        # string[64] X; RIGHT(X, 2) returns bytes 63, 64 instead of last two bytes of the string
+        # using SUBSTR instead
         return _StrAccessor.Formatter(
             op_params=[self._base_column, count],
             dtype=self._base_column.dtype,
@@ -999,6 +1117,61 @@ class _StrAccessor(_Accessor):
                 lambda column, count:
                 'SUBSTR({0}, MAX(STRLEN({0})-{1}, 0))'.format(ott.value2str(column), ott.value2str(count))
             ),
+        )
+
+    def right_from_end(self, count, /, *, utf8: bool = False):
+        """
+        Returns last ``count`` characters, counted from the end of the string array (even after the NULL-character).
+
+        For getting last characters from the end of the string (before NULL-character), use :meth:`last`.
+
+        Parameters
+        ----------
+        count: int or Column or Operation
+            Number of last characters to return.
+        utf8: bool
+            If set, then UTF-8 format is supported.
+
+        See also
+        --------
+        | **RIGHT** OneTick function
+        | **RIGHT_UTF8** OneTick function
+        | :meth:`last`
+
+        Examples
+        --------
+
+        This method returns the characters from the end of string array, not string itself, which may be unexpected.
+        Default string type in OneTick has size of 64,
+        so getting the last characters for short strings will give you nothing.
+
+        In this case we are using short strings and big offsets to get the result:
+
+        >>> data = otp.Ticks(X=['hello', 'everyone'])
+        >>> data['RIGHT_1'] = data['X'].str.right_from_end(1)
+        >>> data['RIGHT_59'] = data['X'].str.right_from_end(59)
+        >>> data['RIGHT_62'] = data['X'].str.right_from_end(62)
+        >>> otp.run(data)
+                             Time         X  RIGHT_1  RIGHT_59  RIGHT_62
+        0 2003-12-01 00:00:00.000     hello                          llo
+        1 2003-12-01 00:00:00.001  everyone                one    eryone
+
+        Alternatively, method :meth:`rtrim` can be used to trim the right part of the string before using this method,
+        to achieve result similar to method :meth:`last`:
+
+        >>> data = otp.Ticks(X=['hello', 'everyone'])
+        >>> data['RIGHT_1_RTRIM'] = data['X'].str.rtrim().str.right_from_end(1)
+        >>> data['RIGHT_5_RTRIM'] = data['X'].str.rtrim().str.right_from_end(5)
+        >>> otp.run(data)
+                             Time         X  RIGHT_1_RTRIM  RIGHT_5_RTRIM
+        0 2003-12-01 00:00:00.000     hello              o          hello
+        1 2003-12-01 00:00:00.001  everyone              e          ryone
+        """
+        fun = 'RIGHT_UTF8' if utf8 else 'RIGHT'
+        return _StrAccessor.Formatter(
+            op_params=[self._base_column, count],
+            dtype=self._base_column.dtype,
+            formatter=lambda column, count: f'{fun}({ott.value2str(column)},{ott.value2str(count)})',
         )
 
     def startswith(self, value):
@@ -1072,6 +1245,12 @@ class _StrAccessor(_Accessor):
             Start position for slice operation.
         stop: int or Column or Operation, optional
             Stop position for slice operation.
+
+        See also
+        --------
+        | :meth:`first`
+        | :meth:`last`
+        | :meth:`substr`
 
         Examples
         --------
@@ -1177,6 +1356,10 @@ class _StrAccessor(_Accessor):
             ``True`` if the match was successful, ``False`` otherwise.
             Note that boolean Operation is converted to float if added as a column.
 
+        See also
+        --------
+        | **LIKE** OneTick operator
+
         Examples
         --------
 
@@ -1262,6 +1445,10 @@ class _StrAccessor(_Accessor):
         Operation
             ``True`` if the match was successful, ``False`` otherwise.
             Note that boolean Operation is converted to float if added as a column.
+
+        See also
+        --------
+        | **ILIKE** OneTick operator
 
         Examples
         --------
@@ -1393,4 +1580,40 @@ class _StrAccessor(_Accessor):
             op_params=[self._base_column, throw_if_not_convertible],
             dtype=float,
             formatter=formatter,
+        )
+
+    def position(self, substring, /, *, utf8: bool = False):
+        """
+        Returns the position (0-based) of ``substring`` in this column.
+
+        If ``substring`` was not found, -1 is returned.
+
+        Parameters
+        ----------
+        substring: str or Column or Operation
+        utf8: bool
+            If set, then UTF-8 format is supported.
+
+        See also
+        --------
+        | **POSITION** OneTick function
+        | **POSITION_UTF8** OneTick function
+        | :meth:`find`
+
+        Examples
+        --------
+
+        >>> data = otp.Ticks(X=['ananas', 'banana', 'potato'])
+        >>> data['Y'] = data['X'].str.position('ana')
+        >>> otp.run(data)
+                             Time       X   Y
+        0 2003-12-01 00:00:00.000  ananas   0
+        1 2003-12-01 00:00:00.001  banana   1
+        2 2003-12-01 00:00:00.002  potato  -1
+        """
+        fun = 'POSITION_UTF8' if utf8 else 'POSITION'
+        return _StrAccessor.Formatter(
+            op_params=[self._base_column, substring],
+            dtype=int,
+            formatter=lambda column, substring: f'{fun}({ott.value2str(substring)},{ott.value2str(column)}) - 1',
         )

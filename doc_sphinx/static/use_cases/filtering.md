@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Filtering
 
-This section contains 13 examples for Filtering using the `onetick-py`.  
+This section contains examples for Filtering using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -349,5 +349,53 @@ result = otp.run(data,
                  end=otp.dt(2024, 1, 4),
                  timezone='Europe/London',
                  symbols='VOD')
+result
+```
+
+## Filter on Text Field with ILIKE - Case Insensitive
+
+Returns all trade fields for trades on a specific exchange with case-insensitive matching.  
+{meth}`.str.ilike <onetick.py.core.column_operations.accessors.str_accessor._StrAccessor.ilike>`
+performs a case-insensitive SQL-style pattern match on the exchange code,
+matching any exchange starting with 'n' or 'N' (NYSE).
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD')
+# Exchange is NYSE
+data = data.where(data['EXCHANGE'].str.ilike('n%'))
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='UTC',
+                 symbols='CSCO')
+result
+```
+
+## Filter on Text Field with LIKE - Case Sensitive
+
+Returns all trade fields for trades on a specific exchange matching a case-sensitive pattern.  
+{meth}`.str.like <onetick.py.core.column_operations.accessors.str_accessor._StrAccessor.like>`
+performs a SQL-style pattern match on the exchange code,
+matching any exchange starting with 'N' (NYSE).  
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD')
+# Exchange is NYSE
+data = data.where(data['EXCHANGE'].str.like('N%'))
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='UTC',
+                 symbols='CSCO')
 result
 ```

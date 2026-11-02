@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Time Series
 
-This section contains 14 examples for Time Series using the `onetick-py`.  
+This section contains examples for Time Series using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -310,7 +310,7 @@ result = otp.run(
 result  # Display results
 ```
 
-## Slope & Intercept between Symbols
+### Slope & Intercept between Symbols
 
 Query 1-minute bars for ``CSCO`` and ``SPY``, then compute linear regression.  
 Returns slope and intercept of ``CSCO`` price vs ``SPY`` price relationship.
@@ -356,24 +356,17 @@ Returns first 1000 trades for specified time interval in `America/New_York` time
 
 import onetick.py as otp
 
-# Define the schema for trade ticks (manual schema policy)
-trade_schema = {
-    'PRICE': float,   # Trade price
-    'SIZE': int,      # Trade size/volume
-    'COND': str,      # Trade condition
-    'EXCHANGE': str,  # Exchange identifier
-}
-
-# Define the time interval
-start = otp.dt(2024, 1, 3, 9, 30)  # Start: January 3, 2024 at 9:30 AM
-end = otp.dt(2024, 1, 3, 9, 40)    # End:   January 3, 2024 at 9:40 AM
-
 # Create the DataSource for AAPL trades
 trades = otp.DataSource(
     db='US_COMP_SAMPLE',     # US composite trades database
     tick_type='TRD',         # Trade tick type
     schema_policy='manual',  # Manually specify schema
-    schema=trade_schema,     # Use defined schema above
+    schema={
+        'PRICE': float,   # Trade price
+        'SIZE': int,      # Trade size/volume
+        'COND': str,      # Trade condition
+        'EXCHANGE': str,  # Exchange identifier
+    },
 )
 
 # Limit to 1000 rows
@@ -381,11 +374,11 @@ trades = trades.limit(1000)
 
 # Run the query for AAPL in the specified interval and timezone
 result = otp.run(
-    trades,                       # Trade data source
-    symbols=['AAPL'],             # Apple stock symbol
-    start=start,                  # Query start time
-    end=end,                      # Query end time
-    timezone='America/New_York',  # Eastern timezone (IANA format)
+    trades,                          # Trade data source
+    symbols=['AAPL'],                # Apple stock symbol
+    start=otp.dt(2024, 1, 3, 9, 30), # Query start time - January 3, 2024 at 9:30 AM
+    end=otp.dt(2024, 1, 3, 9, 40),   # Query end time   - January 3, 2024 at 9:40 AM
+    timezone='America/New_York',     # Eastern timezone (IANA format)
 )
 
 result  # Display results
@@ -393,7 +386,8 @@ result  # Display results
 
 ## Trade Statistics for Symbol List Grouped By Calendar Market Activity
 
-Aggregating Trades for a list of Symbols across Venues, including Calendar Information using ``mkt_activity()``.  
+Aggregating Trades for a list of Symbols across Venues,
+including Calendar Information using {meth}`~onetick.py.Source.mkt_activity`.  
 MktActivity returns:
 ``Rb`` [Pre Market], ``Rr`` [Trading], ``Ra`` [Post Market], ``R1`` [Morning], ``Rx`` [Lunch], ``R2`` [Afternoon].  
 Combining Output into a single result set.
@@ -451,5 +445,331 @@ result = otp.run(merged,
                  start=otp.datetime(2024, 1, 3),
                  end=otp.datetime(2024, 1, 4),
                  timezone='Europe/London')
+result
+```
+
+## Correlation between Symbols
+
+Returns the correlation coefficient between two different securities over 1-minute bars.  
+Joins `CSCO` and `SPY` 1-minute trade data on matching timestamps
+with {func}`otp.join_by_time(..., match_if_identical_times=True) <onetick.py.join_by_time>`,
+then applies the `CORRELATION` aggregate on the two bar closing prices (`LAST` field) across the whole period.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+cscobar = otp.DataSource(db='US_COMP_BARS', tick_type='TRD_1M', symbols='CSCO')
+cscobar = cscobar[['LAST']]
+
+spybar = otp.DataSource(db='US_COMP_BARS', tick_type='TRD_1M', symbols='SPY')
+spybar['SPY_LAST'] = spybar['LAST']
+spybar = spybar[['SPY_LAST']]
+
+# Only join bars with identical timestamps, matching "t.TIMESTAMP = i.TIMESTAMP".
+data = otp.join_by_time([cscobar, spybar], match_if_identical_times=True)
+
+data = data.agg({'CORR_PAIR': otp.agg.correlation('LAST', 'SPY_LAST')})
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='UTC')
+result
+```
+
+## Dynamic Bar Creation with Bucket Start Time
+
+Returns OHLC prices, volume metrics, and the first trade timestamp per 5-minute bucket.  
+`bucket_time='start'` assigns each bucket its start time rather than its end time (the default),
+for consistent bar alignment, and {func}`otp.agg.first_time <onetick.py.agg.first_time>`
+captures the timestamp of the first trade in the bucket.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD')
+data = data[['PRICE', 'SIZE']]
+
+data = data.agg({
+    'FIRST_TIME': otp.agg.first_time(),
+    'FIRST_PRICE': otp.agg.first('PRICE'),
+    'HIGH_PRICE': otp.agg.max('PRICE'),
+    'LOW_PRICE': otp.agg.min('PRICE'),
+    'LAST_PRICE': otp.agg.last('PRICE'),
+    'SUM_SIZE': otp.agg.sum('SIZE'),
+    'TRADE_COUNT': otp.agg.count(),
+}, bucket_interval=300, bucket_time='start')
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3, 9, 30),
+                 end=otp.dt(2024, 1, 4, 16, 0),
+                 timezone='UTC',
+                 symbols='CSCO')
+result
+```
+
+## Dynamic Bar Creation with Fill Forward
+
+Returns OHLC prices with the last price filled forward into 5-minute buckets.  
+Uses `bucket_interval` to group trades and aggregate functions for FIRST / MAX / MIN / LAST / VWAP / SUM / COUNT.  
+The LAST aggregate is filled forward for buckets without trades by setting `time_series_type='state_ts'`,
+which carries the latest value from a prior bucket into an empty one.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD')
+data = data[['PRICE', 'SIZE']]
+# Filter Trades to those with large size
+data = data.where(data['SIZE'] > 1000)
+
+data = data.agg({
+    'FIRST_PRICE': otp.agg.first('PRICE'),
+    'HIGH_PRICE': otp.agg.max('PRICE'),
+    'LOW_PRICE': otp.agg.min('PRICE'),
+    'LAST_PRICE': otp.agg.last('PRICE', time_series_type='state_ts'),
+    'VWAP_PRICE': otp.agg.vwap('PRICE', 'SIZE'),
+    'VOLUME': otp.agg.sum('SIZE'),
+    'TRADE_COUNT': otp.agg.count(),
+}, bucket_interval=300)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3, 9, 30),
+                 end=otp.dt(2024, 1, 3, 16, 0),
+                 timezone='America/New_York',
+                 symbols='HD')
+result
+```
+
+## Prevailing Price
+
+Returns all trades for a specific symbol and timestamp, looking back with `back_to_first_tick` as the initial
+lookback window in seconds, then querying a zero-length window at the point in time of interest.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='LSE_SAMPLE', tick_type='TRD', back_to_first_tick=60)
+data = data.last()
+
+as_of = otp.dt(2024, 1, 3, 9, 10, 0)
+result = otp.run(data,
+                 start=as_of,
+                 end=as_of,
+                 timezone='UTC',
+                 symbols='VOD')
+result
+```
+
+## TWAS Across Period
+
+Returns the Time-Weighted Average Spread (TWAS) across the specified time range.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='LSE_SAMPLE', tick_type='QTE')
+
+data['SPREAD'] = data['ASK_PRICE'] - data['BID_PRICE']
+data = data.agg({'SPREAD': otp.agg.tw_average('SPREAD')})
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3, 8),
+                 end=otp.dt(2024, 1, 4, 16),
+                 timezone='UTC',
+                 symbols='VOD')
+result
+```
+
+### TWAS By Exchange
+
+Returns the Time-Weighted Average Spread (TWAS) by exchange across the specified time range.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='QTE')
+
+data['SPREAD'] = data['ASK_PRICE'] - data['BID_PRICE']
+data = data.agg({'SPREAD': otp.agg.tw_average('SPREAD')}, group_by=['EXCHANGE'])
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3, 8),
+                 end=otp.dt(2024, 1, 4, 16),
+                 timezone='UTC',
+                 symbols='CSCO')
+result
+```
+
+### TWAS in 5 Min Buckets
+
+Returns the Time-Weighted Average Spread (TWAS) aggregated into 5-minute buckets.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='LSE_SAMPLE', tick_type='QTE')
+
+data['SPREAD'] = data['ASK_PRICE'] - data['BID_PRICE']
+data = data.agg({'SPREAD': otp.agg.tw_average('SPREAD')}, bucket_interval=300)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3, 8),
+                 end=otp.dt(2024, 1, 4, 16),
+                 timezone='UTC',
+                 symbols='VOD')
+result
+```
+
+### TWAS with 1 Min Rolling Window
+
+Returns the Time-Weighted Average Spread (TWAS) over a rolling 60-second time window, recalculated at every quote.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='LSE_SAMPLE', tick_type='QTE')
+
+data['SPREAD'] = data['ASK_PRICE'] - data['BID_PRICE']
+data = data.agg({'ROLLING_SPREAD_1_MIN': otp.agg.tw_average('SPREAD')},
+                running=True, bucket_interval=60, bucket_units='seconds')
+
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3, 8),
+                 end=otp.dt(2024, 1, 4, 16),
+                 timezone='UTC',
+                 symbols='VOD')
+result
+```
+
+## Tick Shifts (Lag & Lead)
+
+Returns current and lagged/leading trade data for analyzing trade sequences.  
+`column[-N]` returns the value of that column N ticks back (SQL's `LAG`),
+and `column[N]` returns the value N ticks forward (SQL's `LEAD`).
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='LSE_SAMPLE', tick_type='TRD')
+data = data[['PRICE', 'SIZE', 'TRADE_ID', 'TRADE_VENUE']]
+
+data['PRICE_1_BACK'] = data['PRICE'][-1]
+data['TRADE_ID_1_BACK'] = data['TRADE_ID'][-1]
+data['PRICE_5_BACK'] = data['PRICE'][-5]
+data['TRADE_ID_5_BACK'] = data['TRADE_ID'][-5]
+data['PRICE_1_FWD'] = data['PRICE'][1]
+data['TRADE_ID_1_FWD'] = data['TRADE_ID'][1]
+data['PRICE_5_FWD'] = data['PRICE'][5]
+data['TRADE_ID_5_FWD'] = data['TRADE_ID'][5]
+
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3, 8),
+                 end=otp.dt(2024, 1, 4, 16),
+                 timezone='UTC',
+                 symbols='VOD')
+result
+```
+
+### Tick Shifts - Nested (Lag & Lead)
+
+Returns mid-price (calculated as `(BID + ASK) / 2`) with lagged and leading mid-prices,
+using `column[-N]` for LAG and `column[N]` for LEAD.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='LSE_SAMPLE', tick_type='QTE')
+data['MID_PRICE'] = (data['BID_PRICE'] + data['ASK_PRICE']) / 2
+data = data[['MID_PRICE']]
+
+data['MID_PRICE_1_BACK'] = data['MID_PRICE'][-1]
+data['MID_PRICE_5_BACK'] = data['MID_PRICE'][-5]
+data['MID_PRICE_1_FWD'] = data['MID_PRICE'][1]
+data['MID_PRICE_5_FWD'] = data['MID_PRICE'][5]
+
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3, 8),
+                 end=otp.dt(2024, 1, 4, 16),
+                 timezone='UTC',
+                 symbols='VOD')
+result
+```
+
+## Calculate Rolling Trade Statistics
+
+Rolling statistics across the period calculate the Volume Weighted Average Price (VWAP), High and Low, and
+accumulated Volume at every point in time.  
+`running=True` with the default `bucket_interval=0` accumulates from
+the query start up to each tick, matching SQL's `OVER(order by TIMESTAMP asc)` with no explicit window frame.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD')
+data = data[['PRICE', 'SIZE']]
+
+data = data.agg({
+    'ROLLING_VWAP_PRICE': otp.agg.vwap('PRICE', 'SIZE'),
+    'ROLLING_HIGH_PRICE': otp.agg.max('PRICE'),
+    'ROLLING_LOW_PRICE': otp.agg.min('PRICE'),
+    'ACCUM_SIZE': otp.agg.sum('SIZE'),
+}, running=True, all_fields=True)
+
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3, 9, 30),
+                 end=otp.dt(2024, 1, 3, 16, 0),
+                 timezone='America/New_York',
+                 symbols='CSCO')
+result
+```
+
+### Calculate High Low Range Rolling Trade Statistics
+
+Rolling statistics across the period calculate the rolling High and Low at every point in time.  
+`running=True` with the default `bucket_interval=0` accumulates from the query start up to each tick,
+matching SQL's `OVER(order by TIMESTAMP asc)` with no explicit window frame.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_SAMPLE', tick_type='TRD')
+data = data[['PRICE', 'SIZE']]
+
+data = data.agg({
+    'ROLLING_HIGH_PRICE': otp.agg.max('PRICE'),
+    'ROLLING_LOW_PRICE': otp.agg.min('PRICE'),
+}, running=True, all_fields=True)
+
+data['ROLLING_HIGH_LOW_RANGE'] = data['ROLLING_HIGH_PRICE'] - data['ROLLING_LOW_PRICE']
+data = data[['PRICE', 'SIZE', 'ROLLING_HIGH_PRICE', 'ROLLING_LOW_PRICE', 'ROLLING_HIGH_LOW_RANGE']]
+
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3, 9, 30),
+                 end=otp.dt(2024, 1, 3, 16, 0),
+                 timezone='America/New_York',
+                 symbols='CSCO')
 result
 ```

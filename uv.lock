@@ -2048,7 +2048,6 @@ dependencies = [
     { name = "pandas", version = "2.2.1", source = { registry = "https://pip.sol.onetick.com/" }, marker = "python_full_version == '3.12.*'" },
     { name = "pandas", version = "2.3.0", source = { registry = "https://pip.sol.onetick.com/" }, marker = "python_full_version == '3.13.*'" },
     { name = "pandas", version = "2.3.3", source = { registry = "https://pip.sol.onetick.com/" }, marker = "python_full_version >= '3.14'" },
-    { name = "python-dateutil" },
     { name = "python-dotenv" },
     { name = "tzdata" },
     { name = "tzlocal" },
@@ -2101,7 +2100,6 @@ dev = [
     { name = "sphinx-reredirects", version = "1.1.0", source = { registry = "https://pip.sol.onetick.com/" }, marker = "python_full_version >= '3.11'" },
     { name = "sphinx-togglebutton" },
     { name = "sphinxcontrib-spelling" },
-    { name = "types-python-dateutil" },
     { name = "types-pyyaml" },
     { name = "typing-extensions" },
 ]
@@ -2109,12 +2107,10 @@ lint = [
     { name = "mypy" },
     { name = "pylint" },
     { name = "ruff" },
-    { name = "types-python-dateutil" },
     { name = "types-pyyaml" },
 ]
 mypy = [
     { name = "mypy" },
-    { name = "types-python-dateutil" },
     { name = "types-pyyaml" },
 ]
 
@@ -2135,7 +2131,6 @@ requires-dist = [
     { name = "pandas", marker = "python_full_version == '3.13.*' and extra == 'strict'", specifier = "==2.3.0" },
     { name = "pandas", marker = "python_full_version == '3.14.*' and extra == 'strict'", specifier = "==2.3.3" },
     { name = "polars", marker = "extra == 'polars'", specifier = ">=1.12.0" },
-    { name = "python-dateutil", specifier = ">=2.8.2" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "tzdata", specifier = ">=2022.5" },
     { name = "tzlocal", specifier = ">=4.2" },
@@ -2167,7 +2162,6 @@ dev = [
     { name = "sphinx-reredirects", specifier = ">=0.1.3" },
     { name = "sphinx-togglebutton", specifier = ">=0.4.4" },
     { name = "sphinxcontrib-spelling", specifier = ">=8.0.0" },
-    { name = "types-python-dateutil", specifier = ">=2.9.0.20260124" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20250915" },
     { name = "typing-extensions", specifier = ">=4.15.0" },
 ]
@@ -2175,12 +2169,10 @@ lint = [
     { name = "mypy", specifier = ">=2.0.0" },
     { name = "pylint", specifier = ">=3.3.9" },
     { name = "ruff", specifier = ">=0.16.0" },
-    { name = "types-python-dateutil", specifier = ">=2.9.0.20260124" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20250915" },
 ]
 mypy = [
     { name = "mypy", specifier = ">=2.0.0" },
-    { name = "types-python-dateutil", specifier = ">=2.9.0.20260124" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20250915" },
 ]
 
@@ -3759,15 +3751,6 @@ source = { registry = "https://pip.sol.onetick.com/" }
 sdist = { url = "https://files.pythonhosted.org/packages/eb/79/72064e6a701c2183016abbbfedaba506d81e30e232a68c9f0d6f6fcd1574/traitlets-5.14.3.tar.gz", hash = "sha256:9ed0579d3502c94b4b3732ac120375cda96f923114522847de4b3bb98b96b6b7", size = 161621, upload-time = "2024-04-19T11:11:49.746Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/00/c0/8f5d070730d7836adc9c9b6408dec68c6ced86b304a9b26a14df072a6e8c/traitlets-5.14.3-py3-none-any.whl", hash = "sha256:b74e89e397b1ed28cc831db7aea759ba6640cb3de13090ca145426688ff1ac4f", size = 85359, upload-time = "2024-04-19T11:11:46.763Z" },
-]
-
-[[package]]
-name = "types-python-dateutil"
-version = "2.9.0.20260402"
-source = { registry = "https://pip.sol.onetick.com/" }
-sdist = { url = "https://files.pythonhosted.org/packages/a7/30/c5d9efbff5422b20c9551dc5af237d1ab0c3d33729a9b3239a876ca47dd4/types_python_dateutil-2.9.0.20260402.tar.gz", hash = "sha256:a980142b9966713acb382c467e35c5cc4208a2f91b10b8d785a0ae6765df6c0b", size = 16941, upload-time = "2026-04-02T04:18:35.834Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e6/d7/fe753bf8329c8c3c1addcba1d2bf716c33898216757abb24f8b80f82d040/types_python_dateutil-2.9.0.20260402-py3-none-any.whl", hash = "sha256:7827e6a9c93587cc18e766944254d1351a2396262e4abe1510cbbd7601c5e01f", size = 18436, upload-time = "2026-04-02T04:18:34.806Z" },
 ]
 
 [[package]]

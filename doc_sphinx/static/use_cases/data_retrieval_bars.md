@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Data Retrieval - Bars
 
-This section contains 3 examples for Data Retrieval - Bars using the `onetick-py`.  
+This section contains examples for Data Retrieval - Bars using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -60,5 +60,26 @@ result = otp.run(data,
                  end=otp.dt(2024, 1, 3, 16, 1),
                  timezone='America/New_York',
                  symbols='CSCO')
+result
+```
+
+## Trade Daily Bars
+
+Returns aggregated Daily OHLCV (Open, High, Low, Close, Volume) data for a specified symbol and date range.
+
+LSE Trade Daily Bars Including Volume Split by Trade Type.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='LSE_SAMPLE_DAILY', tick_type='DAY')
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 2, 4),
+                 timezone='UTC',
+                 symbols='VOD')
 result
 ```

@@ -4,7 +4,6 @@ import random
 import zoneinfo
 from functools import partial
 
-import dateutil
 import pandas as pd
 import pytest
 
@@ -48,8 +47,8 @@ class TestTimestamp:
     @pytest.mark.parametrize(
         'timestamp',
         [
-            otp.datetime(1970, 1, 1, tzinfo=dateutil.tz.gettz("EST5EDT")).timestamp(),
-            otp.datetime(2032, 1, 1, tzinfo=dateutil.tz.gettz("EST5EDT")).timestamp(),
+            otp.datetime(1970, 1, 1, tzinfo=zoneinfo.ZoneInfo("EST5EDT")).timestamp(),
+            otp.datetime(2032, 1, 1, tzinfo=zoneinfo.ZoneInfo("EST5EDT")).timestamp(),
             1225606727,  # ambiguous dst time
             'random',
         ],
@@ -57,8 +56,8 @@ class TestTimestamp:
     def test_random_timestamp(self, timestamp):
         if timestamp == 'random':
             timestamp = random.randrange(
-                int(otp.datetime(1970, 1, 1, tzinfo=dateutil.tz.gettz("EST5EDT")).timestamp()),
-                int(otp.datetime(2032, 1, 1, tzinfo=dateutil.tz.gettz("EST5EDT")).timestamp()),
+                int(otp.datetime(1970, 1, 1, tzinfo=zoneinfo.ZoneInfo("EST5EDT")).timestamp()),
+                int(otp.datetime(2032, 1, 1, tzinfo=zoneinfo.ZoneInfo("EST5EDT")).timestamp()),
             )
         # otp generates timestamp with seconds
         timestamp = pd.Timestamp(timestamp, tz="EST5EDT", unit="s")
@@ -72,10 +71,10 @@ class TestTimestamp:
 
     @pytest.mark.parametrize("timezone", ["GMT", "EST5EDT"])
     def test_datetime_timezone_aware_plus(self, timezone):
-        d = datetime.datetime(2022, 1, 1, 0, 0, 0, tzinfo=dateutil.tz.gettz(timezone))
+        d = datetime.datetime(2022, 1, 1, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo(timezone))
         d2 = d + otp.Day(1)
-        assert d2.tzinfo == dateutil.tz.gettz(timezone)
-        assert d2 == datetime.datetime(2022, 1, 2, 0, 0, 0, tzinfo=dateutil.tz.gettz(timezone))
+        assert d2.tzinfo == zoneinfo.ZoneInfo(timezone)
+        assert d2 == datetime.datetime(2022, 1, 2, 0, 0, 0, tzinfo=zoneinfo.ZoneInfo(timezone))
 
 
 class TestDatetime:
@@ -91,6 +90,7 @@ class TestDatetime:
         assert otp.datetime(2019, 12, 4).timestamp() == df["x"][1].timestamp()
 
     def test_dst_with_dateutil(self):
+        dateutil = pytest.importorskip('dateutil')
         d0 = otp.dt(2019, 4, 12, tzinfo=dateutil.tz.gettz("EST5EDT"))
         d1 = otp.dt(2019, 12, 4, tzinfo=dateutil.tz.gettz("EST5EDT"))
 
@@ -102,7 +102,7 @@ class TestDatetime:
         assert otp.datetime(2019, 12, 4).timestamp() == df["x"][1].timestamp()
 
     def test_high_precision(self):
-        d = otp.dt(2019, 4, 12, 1, 2, 3, 456789, tzinfo=dateutil.tz.gettz("GMT"))
+        d = otp.dt(2019, 4, 12, 1, 2, 3, 456789, tzinfo=zoneinfo.ZoneInfo("GMT"))
 
         data = otp.Ticks(dict(x=[d]))
 
@@ -172,7 +172,7 @@ class TestDatetime:
     @pytest.mark.parametrize("method", ["__add__", "__sub__"])
     def test_operations_with_int_is_not_supported(self, method):
         with pytest.raises(TypeError, match=r"unsupported operand type\(s\)"):
-            d0 = otp.dt(2019, 4, 12, 4, 5, 7, tzinfo=dateutil.tz.gettz("GMT"))
+            d0 = otp.dt(2019, 4, 12, 4, 5, 7, tzinfo=zoneinfo.ZoneInfo("GMT"))
             method = getattr(d0, method)
             method(1)
 
@@ -190,7 +190,7 @@ class TestDatetime:
 class TestAssignment:
     def test(self):
         data = otp.Ticks(dict(X=[1]))
-        data["T"] = otp.dt(2019, 4, 12, 1, 2, 3, 456789, tzinfo=dateutil.tz.gettz('GMT'))
+        data["T"] = otp.dt(2019, 4, 12, 1, 2, 3, 456789, tzinfo=zoneinfo.ZoneInfo('GMT'))
         df = otp.run(data, timezone='GMT')
         expected = ("2019-04-12 01:02:03.456789",)
         assert all(str(a) == e for a, e in zip(df["T"], expected))
@@ -206,7 +206,7 @@ class TestDateAdd:
             date_parts[otp.Hour],
             date_parts[otp.Minute],
             date_parts[otp.Second],
-            tzinfo=dateutil.tz.gettz("GMT"),
+            tzinfo=zoneinfo.ZoneInfo("GMT"),
         )
 
         datepart1, datepart2 = random.sample(tuple(date_parts.keys()), k=2)
@@ -228,7 +228,7 @@ class TestDateAdd:
                 date_parts1[otp.Hour],
                 date_parts1[otp.Minute],
                 date_parts1[otp.Second],
-                tzinfo=dateutil.tz.gettz("GMT"),
+                tzinfo=zoneinfo.ZoneInfo("GMT"),
             ).timestamp()
             == df["y"][0].timestamp()
         )
@@ -243,28 +243,28 @@ class TestDateAdd:
                 date_parts2[otp.Hour],
                 date_parts2[otp.Minute],
                 date_parts2[otp.Second],
-                tzinfo=dateutil.tz.gettz("GMT"),
+                tzinfo=zoneinfo.ZoneInfo("GMT"),
             ).timestamp()
             == df["x"][0].timestamp()
         )
         assert df["x"][0].timestamp() != d0.timestamp()
 
     def test_quarter_and_week(self):
-        d0 = otp.dt(2019, 4, 12, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2019, 4, 12, tzinfo=zoneinfo.ZoneInfo("GMT"))
 
         data = otp.Ticks(dict(x=[d0]))
         data["y"] = data["x"] + otp.Quarter(1)
         data["z"] = data["x"] + otp.Week(4)
         data["x"] += otp.Quarter(4)
         df = otp.run(data, timezone="GMT")
-        assert otp.datetime(2019, 7, 12, tzinfo=dateutil.tz.gettz("GMT")).timestamp() == df["y"][0].timestamp()
-        assert otp.datetime(2019, 5, 10, tzinfo=dateutil.tz.gettz("GMT")).timestamp() == df["z"][0].timestamp()
-        assert otp.datetime(2020, 4, 12, tzinfo=dateutil.tz.gettz("GMT")).timestamp() == df["x"][0].timestamp()
+        assert otp.datetime(2019, 7, 12, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp() == df["y"][0].timestamp()
+        assert otp.datetime(2019, 5, 10, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp() == df["z"][0].timestamp()
+        assert otp.datetime(2020, 4, 12, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp() == df["x"][0].timestamp()
 
     def test_synonymous_datepart(self):
-        d0 = otp.dt(2019, 4, 12, 1, 15, 18, tzinfo=dateutil.tz.gettz("GMT"))
-        d1 = otp.dt(2003, 5, 10, 14, 8, 1, tzinfo=dateutil.tz.gettz("GMT"))
-        d2 = otp.dt(2015, 8, 11, 8, 1, 6, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2019, 4, 12, 1, 15, 18, tzinfo=zoneinfo.ZoneInfo("GMT"))
+        d1 = otp.dt(2003, 5, 10, 14, 8, 1, tzinfo=zoneinfo.ZoneInfo("GMT"))
+        d2 = otp.dt(2015, 8, 11, 8, 1, 6, tzinfo=zoneinfo.ZoneInfo("GMT"))
 
         data = otp.Ticks(dict(x=[d0, d1, d2]))
         data["y"] = data["x"] + otp.Year(1)
@@ -288,22 +288,22 @@ class TestDateAdd:
         assert all(data["ms"] == data["s2"])
 
     def test_add_int(self):
-        d0 = otp.dt(2019, 4, 12, 4, 5, 7, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2019, 4, 12, 4, 5, 7, tzinfo=zoneinfo.ZoneInfo("GMT"))
         data = otp.Ticks(dict(x=[d0]))
         data["x"] += 10000
         df = otp.run(data, timezone="GMT")
         assert (
-            otp.datetime(2019, 4, 12, 4, 5, 17, tzinfo=dateutil.tz.gettz("GMT")).timestamp() == df["x"][0].timestamp()
+            otp.datetime(2019, 4, 12, 4, 5, 17, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp() == df["x"][0].timestamp()
         )
 
     def test_add_str(self):
-        d0 = otp.dt(2019, 4, 12, 4, 5, 7, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2019, 4, 12, 4, 5, 7, tzinfo=zoneinfo.ZoneInfo("GMT"))
         data = otp.Ticks(dict(x=[d0]))
         with pytest.raises(TypeError):
             data["x"] += "dst"
 
     def test_time_nanos(self):
-        d = otp.dt(2019, 4, 12, 4, 5, 7, tzinfo=dateutil.tz.gettz("GMT"))
+        d = otp.dt(2019, 4, 12, 4, 5, 7, tzinfo=zoneinfo.ZoneInfo("GMT"))
         data = otp.Ticks(dict(x=[1]))
 
         assert data.Time.dtype is otp.nsectime
@@ -315,16 +315,16 @@ class TestDateAdd:
         assert (df["Time"][0]).timestamp() == (d.start + otp.Nano(1)).timestamp()
 
     def test_negative_value(self):
-        d0 = otp.dt(2019, 4, 12, 4, 5, 7, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2019, 4, 12, 4, 5, 7, tzinfo=zoneinfo.ZoneInfo("GMT"))
         data = otp.Ticks(dict(x=[d0]))
         data["y"] = data["x"] + otp.Quarter(-1)
         data["z"] = data["x"] + otp.Milli(-1)
         data["x"] += otp.Year(-1)
         df = otp.run(data, timezone="GMT")
-        assert otp.datetime(2018, 4, 12, 4, 5, 7, tzinfo=dateutil.tz.gettz("GMT")).timestamp() == df["x"][0].timestamp()
-        assert otp.datetime(2019, 1, 12, 4, 5, 7, tzinfo=dateutil.tz.gettz("GMT")).timestamp() == df["y"][0].timestamp()
+        assert otp.datetime(2018, 4, 12, 4, 5, 7, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp() == df["x"][0].timestamp()
+        assert otp.datetime(2019, 1, 12, 4, 5, 7, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp() == df["y"][0].timestamp()
         assert (
-            otp.datetime(2019, 4, 12, 4, 5, 6, 999 * 1000, tzinfo=dateutil.tz.gettz("GMT")).timestamp()
+            otp.datetime(2019, 4, 12, 4, 5, 6, 999 * 1000, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp()
             == df["z"][0].timestamp()
         )
 
@@ -336,7 +336,7 @@ class TestDateAdd:
         assert isinstance(d1, otp.datetime)
 
     def test_columns_as_param(self):
-        d0 = otp.dt(2014, 2, 1, 3, 55, 14, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2014, 2, 1, 3, 55, 14, tzinfo=zoneinfo.ZoneInfo("GMT"))
         data = otp.Ticks(dict(DATE=[d0] * 3, VAL=[1, 0, -1]))
         data["DIFF"] = data["DATE"] + otp.Minute(data["VAL"])
         df = otp.run(data, timezone="GMT")
@@ -344,7 +344,7 @@ class TestDateAdd:
         assert all(str(actual) == e for actual, e in zip(df["DIFF"], expected))
 
     def test_expression_as_param(self):
-        d0 = otp.dt(2014, 2, 1, 3, 55, 14, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2014, 2, 1, 3, 55, 14, tzinfo=zoneinfo.ZoneInfo("GMT"))
         data = otp.Ticks(dict(DATE=[d0] * 3, VAL=[1, 0, -1]))
         data["DIFF"] = data["DATE"] + otp.Minute(data["VAL"] + 1)
         df = otp.run(data, timezone="GMT")
@@ -372,45 +372,45 @@ class TestDateAdd:
 
 class TestDateDiff:
     def test(self):
-        d0 = otp.dt(2019, 4, 12, 4, 5, 7, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2019, 4, 12, 4, 5, 7, tzinfo=zoneinfo.ZoneInfo("GMT"))
         data = otp.Ticks(dict(x=[d0]))
         data["y"] = data["x"] - otp.Quarter(1)
         data["z"] = data["x"] - otp.Milli(1)
         data["t"] = d0 - otp.Nano(1)
         data["x"] -= otp.Year(1)
         df = otp.run(data, timezone="GMT")
-        assert otp.datetime(2018, 4, 12, 4, 5, 7, tzinfo=dateutil.tz.gettz("GMT")).timestamp() == df["x"][0].timestamp()
-        assert otp.datetime(2019, 1, 12, 4, 5, 7, tzinfo=dateutil.tz.gettz("GMT")).timestamp() == df["y"][0].timestamp()
+        assert otp.datetime(2018, 4, 12, 4, 5, 7, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp() == df["x"][0].timestamp()
+        assert otp.datetime(2019, 1, 12, 4, 5, 7, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp() == df["y"][0].timestamp()
         assert (
-            otp.datetime(2019, 4, 12, 4, 5, 6, 999 * 1000, tzinfo=dateutil.tz.gettz("GMT")).timestamp()
+            otp.datetime(2019, 4, 12, 4, 5, 6, 999 * 1000, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp()
             == df["z"][0].timestamp()
         )
         assert (d0 - otp.Nano(1)).timestamp() == df["t"][0].timestamp()
 
     def test_double_negative(self):
-        d0 = otp.dt(2014, 2, 1, 3, 55, 14, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2014, 2, 1, 3, 55, 14, tzinfo=zoneinfo.ZoneInfo("GMT"))
         data = otp.Ticks(dict(x=[d0]))
         data["y"] = data["x"] - otp.Minute(-1)
         data["x"] -= otp.Month(-1)
         df = otp.run(data, timezone="GMT")
         assert (
-            otp.datetime(2014, 2, 1, 3, 56, 14, tzinfo=dateutil.tz.gettz("GMT")).timestamp() == df["y"][0].timestamp()
+            otp.datetime(2014, 2, 1, 3, 56, 14, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp() == df["y"][0].timestamp()
         )
         assert (
-            otp.datetime(2014, 3, 1, 3, 55, 14, tzinfo=dateutil.tz.gettz("GMT")).timestamp() == df["x"][0].timestamp()
+            otp.datetime(2014, 3, 1, 3, 55, 14, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp() == df["x"][0].timestamp()
         )
 
     def test_zero_n(self):
-        d0 = otp.dt(2014, 2, 1, 3, 55, 14, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2014, 2, 1, 3, 55, 14, tzinfo=zoneinfo.ZoneInfo("GMT"))
         data = otp.Ticks(dict(x=[d0]))
         data["y"] = data["x"] - otp.Minute(0)
         data["x"] += otp.Month(0)
         df = otp.run(data, timezone="GMT")
         assert (
-            otp.datetime(2014, 2, 1, 3, 55, 14, tzinfo=dateutil.tz.gettz("GMT")).timestamp() == df["y"][0].timestamp()
+            otp.datetime(2014, 2, 1, 3, 55, 14, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp() == df["y"][0].timestamp()
         )
         assert (
-            otp.datetime(2014, 2, 1, 3, 55, 14, tzinfo=dateutil.tz.gettz("GMT")).timestamp() == df["x"][0].timestamp()
+            otp.datetime(2014, 2, 1, 3, 55, 14, tzinfo=zoneinfo.ZoneInfo("GMT")).timestamp() == df["x"][0].timestamp()
         )
 
     def test_arithmetic_ops_return_otp_datetime(self):
@@ -430,7 +430,7 @@ class TestDateDiff:
         assert str(d1) == "0 days 00:00:00"
 
     def test_columns_as_param(self):
-        d0 = otp.dt(2014, 2, 1, 3, 55, 14, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2014, 2, 1, 3, 55, 14, tzinfo=zoneinfo.ZoneInfo("GMT"))
         data = otp.Ticks(dict(DATE=[d0] * 3, VAL=[1, 0, -1]))
         data["DIFF"] = data["DATE"] - otp.Hour(data["VAL"])
         df = otp.run(data, timezone="GMT")
@@ -438,7 +438,7 @@ class TestDateDiff:
         assert all(str(actual) == e for actual, e in zip(df["DIFF"], expected))
 
     def test_columns_int_expression(self):
-        d0 = otp.dt(2014, 2, 1, 3, 55, 14, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2014, 2, 1, 3, 55, 14, tzinfo=zoneinfo.ZoneInfo("GMT"))
         data = otp.Ticks(dict(DATE=[d0] * 3, VAL=[1, 0, -1], VAL2=[1, 2, -2]))
         data["VAL3"] = data["VAL"] - data["VAL2"]
         data["DIFF1"] = data["DATE"] - otp.Hour(data["VAL"] - data["VAL2"])
@@ -449,7 +449,7 @@ class TestDateDiff:
         assert all(df["DIFF1"] == df["DIFF2"])
 
     def test_columns_expression_with_dates(self):
-        dt = partial(otp.dt, 2014, 2, 1, tzinfo=dateutil.tz.gettz("GMT"))
+        dt = partial(otp.dt, 2014, 2, 1, tzinfo=zoneinfo.ZoneInfo("GMT"))
         d = dt(3)
         data = otp.Ticks(dict(DATE=[d] * 2, DATE1=[dt(4), dt(5)], DATE2=[dt(5), dt(4)]))
         data["DATE"] += otp.Hour(data["DATE2"] - data["DATE1"])
@@ -458,7 +458,7 @@ class TestDateDiff:
         assert all(str(actual) == e for actual, e in zip(df["DATE"], expected))
 
     def test_complex_columns_expression_with_dates_and_ints(self):
-        dt = partial(otp.dt, 2014, 2, 1, tzinfo=dateutil.tz.gettz("GMT"))
+        dt = partial(otp.dt, 2014, 2, 1, tzinfo=zoneinfo.ZoneInfo("GMT"))
         d = dt(3)
         data = otp.Ticks(dict(DATE=[d] * 2, DATE1=[dt(4), dt(5)], DATE2=[dt(5), dt(4)], VAL=[1, 2]))
         with pytest.raises(ValueError, match="Date arithmetic operations (.*) are not accepted"):
@@ -484,8 +484,8 @@ class TestDateDiff:
 
 class TestDatePartDiff:
     def test_hour(self):
-        d0 = otp.dt(2019, 4, 12, 16, 15, 18, tzinfo=dateutil.tz.gettz("GMT"))
-        d1 = otp.dt(2019, 4, 12, 1, 15, 18, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2019, 4, 12, 16, 15, 18, tzinfo=zoneinfo.ZoneInfo("GMT"))
+        d1 = otp.dt(2019, 4, 12, 1, 15, 18, tzinfo=zoneinfo.ZoneInfo("GMT"))
 
         data = otp.Ticks(dict(x=[d0], y=[d1]))
         data["d"] = otp.Hour(data["x"] - data["y"])
@@ -493,8 +493,8 @@ class TestDatePartDiff:
         assert all(df["d"] == [15])
 
     def test_year(self):
-        d0 = otp.dt(2019, 4, 12, 16, 15, 18, tzinfo=dateutil.tz.gettz("GMT"))
-        d1 = otp.dt(2014, 5, 6, 10, 17, 11, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2019, 4, 12, 16, 15, 18, tzinfo=zoneinfo.ZoneInfo("GMT"))
+        d1 = otp.dt(2014, 5, 6, 10, 17, 11, tzinfo=zoneinfo.ZoneInfo("GMT"))
 
         data = otp.Ticks(dict(x=[d0], y=[d1]))
         data["d"] = otp.Year(data["x"] - data["y"])
@@ -502,8 +502,8 @@ class TestDatePartDiff:
         assert all(df["d"] == [4])
 
     def test_nano_and_zero(self):
-        d0 = otp.dt(2019, 4, 12, 16, 15, 18, tzinfo=dateutil.tz.gettz("GMT"))
-        d1 = otp.dt(2019, 4, 12, 16, 15, 18, tzinfo=dateutil.tz.gettz("GMT"))
+        d0 = otp.dt(2019, 4, 12, 16, 15, 18, tzinfo=zoneinfo.ZoneInfo("GMT"))
+        d1 = otp.dt(2019, 4, 12, 16, 15, 18, tzinfo=zoneinfo.ZoneInfo("GMT"))
 
         data = otp.Ticks(dict(x=[d0], y=[d1]))
         data["d"] = otp.Nano(data["x"] - data["y"])

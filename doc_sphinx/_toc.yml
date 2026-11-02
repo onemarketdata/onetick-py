@@ -45,6 +45,7 @@ chapters:
         - file: static/use_cases/data_retrieval_tick
         - file: static/use_cases/data_retrieval_with_continuous_contracts
         - file: static/use_cases/data_retrieval_with_symbology
+        - file: static/use_cases/joins
         - file: static/use_cases/corrections_and_time_travel
         - file: static/use_cases/composites
         - file: static/use_cases/crypto
@@ -220,6 +221,12 @@ chapters:
         - file: api/functions/math/root
           sections:
             - glob: api/functions/math/*
+        - file: api/functions/datetime/root
+          sections:
+            - glob: api/functions/datetime/*
+        - file: api/functions/string/root
+          sections:
+            - glob: api/functions/string/*
         - file: api/functions/misc/root
           sections:
             - glob: api/functions/misc/*

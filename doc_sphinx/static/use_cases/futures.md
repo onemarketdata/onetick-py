@@ -4,7 +4,7 @@ file_format: mystnb
 
 # Futures
 
-This section contains 10 examples for Futures using the `onetick-py`.  
+This section contains examples for Futures using the `onetick-py`.  
 Each example is a self-contained script that can be run against the OneTick Cloud sample databases.
 
 ```{literalinclude} webapi_configuration.py
@@ -309,7 +309,7 @@ day = day[['VOLUME', 'OPEN_INT']]
 stat = otp.DataSource(db='NYMEX_DAILY', tick_type='STAT', back_to_first_tick=86400)
 stat = stat[['EXPIRATION_DATE']]
 
-# Join each daily tick to the prevailing static record (asof join).
+# Join each daily tick to the prevailing static record ("as of" join).
 joined = otp.join_by_time([day, stat])
 
 # Merge every matching CL futures contract into a single stream.

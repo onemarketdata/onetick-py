@@ -1,12 +1,12 @@
 import itertools
 import warnings
+import zoneinfo
 from collections import defaultdict
 from typing import Union, Optional, Literal
 from datetime import date as dt_date, datetime, timedelta, timezone as dt_timezone
 from functools import wraps
 
 import pandas as pd
-from dateutil.tz import gettz
 
 import onetick.py as otp
 from onetick.py import configuration, utils
@@ -57,6 +57,13 @@ def _method_cache(meth):
     return wrapper
 
 
+def _check_common_run_kwargs(**kwargs) -> dict:
+    for k in kwargs:
+        if k not in ('username', 'alternative_username', 'password'):
+            raise ValueError(f"Parameter '{k}' is not supported")
+    return kwargs
+
+
 class DB:
 
     """
@@ -88,7 +95,8 @@ class DB:
         return self.name
 
     @_method_cache
-    def access_info(self, deep_scan=False, username=None, query_properties=None) -> Union[pd.DataFrame, dict]:
+    def access_info(self, deep_scan=False, username=None, query_properties=None,
+                    **run_kwargs) -> Union[pd.DataFrame, dict]:
         """
         Get access info for this database and ``username``.
 
@@ -113,6 +121,9 @@ class DB:
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
             see OneTick server documentation for available options.
+        run_kwargs:
+            Parameters passed directly to :py:func:`otp.run <onetick.py.run>`.
+            Only ``username``, ``alternative_username`` and ``password`` are supported.
 
         See also
         --------
@@ -165,7 +176,10 @@ class DB:
         safe_params = _get_safe_params_for_running(self)
         if query_properties:
             safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
-        df = otp.run(graph, username=username, **safe_params)
+
+        run_kwargs = _check_common_run_kwargs(**run_kwargs)
+
+        df = otp.run(graph, username=username, **safe_params, **run_kwargs)
         if not df.empty:
             df = df.drop(columns='Time')
         if deep_scan:
@@ -173,7 +187,8 @@ class DB:
         return dict(df.iloc[0] if not df.empty else {})
 
     def show_config(self, config_type: Literal['locator_entry', 'db_time_intervals'] = 'locator_entry',
-                    query_properties: Optional[dict] = None) -> dict:
+                    query_properties: Optional[dict] = None,
+                    **run_kwargs) -> dict:
         """
         Shows the specified configuration for a database.
 
@@ -190,6 +205,9 @@ class DB:
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
             see OneTick server documentation for available options.
+        run_kwargs:
+            Parameters passed directly to :py:func:`otp.run <onetick.py.run>`.
+            Only ``username``, ``alternative_username`` and ``password`` are supported.
 
         See also
         --------
@@ -223,7 +241,10 @@ class DB:
         safe_params = _get_safe_params_for_running(self)
         if query_properties:
             safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
-        df = otp.run(graph, **safe_params)
+
+        run_kwargs = _check_common_run_kwargs(**run_kwargs)
+
+        df = otp.run(graph, **safe_params, **run_kwargs)
         if df.empty:
             raise ValueError(f"Can't get config for database '{self.name}'")
         df = df.drop(columns='Time')
@@ -235,7 +256,10 @@ class DB:
         Minimum start date set in ACL for current user.
         Returns None if not set.
         """
-        access_info = self.access_info()
+        return self._min_acl_start_date()
+
+    def _min_acl_start_date(self, **run_kwargs) -> Optional[dt_date]:
+        access_info = self.access_info(**run_kwargs)
         if not access_info:
             return None
         if access_info['MIN_START_DATE_SET'] == 0:
@@ -248,14 +272,17 @@ class DB:
         Maximum end date set in ACL for current user.
         Returns None if not set.
         """
-        access_info = self.access_info()
+        return self._max_acl_end_date()
+
+    def _max_acl_end_date(self, **run_kwargs) -> Optional[dt_date]:
+        access_info = self.access_info(**run_kwargs)
         if not access_info:
             return None
         if access_info['MAX_END_DATE_SET'] == 0:
             return None
         return _datetime2date(access_info['MAX_END_DATE_MSEC'])
 
-    def _fit_time_interval_in_acl(self, start, end, timezone='GMT') -> tuple[datetime, datetime]:
+    def _fit_time_interval_in_acl(self, start, end, timezone='GMT', **run_kwargs) -> tuple[datetime, datetime]:
         """
         Returns the part of time interval between ``start`` and ``end`` that fits ACL start/end time rules.
         ``start`` and ``end`` objects are considered to be timezone-naive and will be localized in ``timezone``.
@@ -266,28 +293,30 @@ class DB:
         start = otp.dt(utils.convert_timezone(start, timezone, 'GMT'))
         end = otp.dt(utils.convert_timezone(end, timezone, 'GMT'))
 
-        if self.min_acl_start_date is not None:
-            if end < otp.dt(self.min_acl_start_date):
+        min_acl_start_date = self._min_acl_start_date(**run_kwargs)
+        if min_acl_start_date is not None:
+            if end < otp.dt(min_acl_start_date):
                 # fully not intersecting intervals
                 raise ValueError(f'Date {start.date()} {timezone} violates ACL rules for the database {self.name}:'
-                                 f' minimum start time is {otp.dt(self.min_acl_start_date)} GMT.')
+                                 f' minimum start time is {otp.dt(min_acl_start_date)} GMT.')
             # partly intersecting intervals, choose the part not violating ACL
-            start = max(start, otp.dt(self.min_acl_start_date))
+            start = max(start, otp.dt(min_acl_start_date))
 
-        if self.max_acl_end_date is not None:
-            if start >= otp.dt(self.max_acl_end_date):
+        max_acl_end_date = self._max_acl_end_date(**run_kwargs)
+        if max_acl_end_date is not None:
+            if start >= otp.dt(max_acl_end_date):
                 # fully not intersecting intervals
                 raise ValueError(f'Date {start.date()} {timezone} violates ACL rules for the database {self.name}:'
-                                 f' maximum (exclusive) end time is {otp.dt(self.max_acl_end_date)} GMT.')
+                                 f' maximum (exclusive) end time is {otp.dt(max_acl_end_date)} GMT.')
             # partly intersecting intervals, choose the part not violating ACL
-            end = min(end, otp.dt(self.max_acl_end_date))
+            end = min(end, otp.dt(max_acl_end_date))
 
         # convert back to timezone
         start = utils.convert_timezone(start, 'GMT', timezone)
         end = utils.convert_timezone(end, 'GMT', timezone)
         return start, end
 
-    def _fit_date_in_acl(self, date, timezone='GMT') -> tuple[datetime, datetime]:
+    def _fit_date_in_acl(self, date, timezone='GMT', **run_kwargs) -> tuple[datetime, datetime]:
         """
         Returns the part of ``date`` time interval that fits ACL start/end time rules.
         ``date`` object is considered to be timezone-naive and will be localized in ``timezone``.
@@ -297,13 +326,15 @@ class DB:
         date = _datetime2date(date)
         start = otp.dt(date)
         end = start + otp.Day(1)
-        return self._fit_time_interval_in_acl(start, end, timezone)
+        return self._fit_time_interval_in_acl(start, end, timezone, **run_kwargs)
 
     @_method_cache
-    def _show_configured_time_ranges(self):
+    def _show_configured_time_ranges(self, **run_kwargs):
         LOGGER.info('_show_configured_time_ranges')
         graph = otq.GraphQuery(otq.DbShowConfiguredTimeRanges(db_name=self.name).tick_type("ANY")
                                >> otq.Table(fields='long START_DATE, long END_DATE'))
+
+        run_kwargs = _check_common_run_kwargs(**run_kwargs)
         result = otp.run(graph,
                          symbols=f'{self.name}::',
                          # start and end time and timezone don't matter for this query, use some constants
@@ -311,7 +342,8 @@ class DB:
                          end=db_constants.DEFAULT_END_DATE,
                          timezone='GMT',
                          context=self.context,
-                         **_get_params_to_ignore_acl_violation())
+                         **_get_params_to_ignore_acl_violation(),
+                         **run_kwargs)
         return result
 
     def _show_last_tick_descriptor(
@@ -324,6 +356,7 @@ class DB:
         include_memdb: bool = True,
         show_inaccessible_data_start: Optional[bool] = None,
         query_properties: Optional[dict] = None,
+        **run_kwargs,
     ) -> pd.DataFrame:
         """
         This event processor shows the last tick descriptor for the given ``tick_type``.
@@ -371,6 +404,9 @@ class DB:
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
             see OneTick server documentation for available options.
+        run_kwargs:
+            Parameters passed directly to :py:func:`otp.run <onetick.py.run>`.
+            Only ``username``, ``alternative_username`` and ``password`` are supported.
         """
         LOGGER.info('_show_last_tick_descriptor')
 
@@ -395,13 +431,15 @@ class DB:
         if query_properties:
             safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
 
+        run_kwargs = _check_common_run_kwargs(**run_kwargs)
         return otp.run(otq.GraphQuery(ep),
                        symbols=f'{self.name}::',
                        **kwargs,
                        context=self.context,
-                       **safe_params)
+                       **safe_params,
+                       **run_kwargs)
 
-    def _set_intervals(self):
+    def _set_intervals(self, **run_kwargs):
         """
         Finds all date ranges from locators.
         These intervals are required to find all possible dates with data.
@@ -410,10 +448,10 @@ class DB:
         """
 
         if self._locator_date_ranges is None:
-            result = self._show_configured_time_ranges()
+            result = self._show_configured_time_ranges(**run_kwargs)
             date_ranges = []
 
-            tz_gmt = gettz('GMT')
+            tz_gmt = zoneinfo.ZoneInfo('GMT')
             for inx in range(len(result)):
                 start_date = result['START_DATE'][inx]
                 # On Windows datetime.fromtimestamp throws an OSError for negative values
@@ -449,7 +487,7 @@ class DB:
             if start and end:
                 self._locator_date_ranges.append((start, end))
 
-    def _show_loaded_time_ranges(self, start, end, only_last=False, prefer_speed_over_accuracy=False):
+    def _show_loaded_time_ranges(self, start, end, only_last=False, prefer_speed_over_accuracy=False, **run_kwargs):
         LOGGER.info('_show_loaded_time_ranges')
         kwargs = {}
         # PY-1421: we aim to make this query as fast as possible
@@ -471,6 +509,8 @@ class DB:
             eps = eps >> otq.LastTick()
 
         graph = otq.GraphQuery(eps)
+
+        run_kwargs = _check_common_run_kwargs(**run_kwargs)
         result = otp.run(graph,
                          symbols=f'{self.name}::',
                          start=start,
@@ -478,7 +518,8 @@ class DB:
                          # self._locator_date_ranges are in GMT
                          timezone='GMT',
                          context=self.context,
-                         **_get_params_to_ignore_acl_violation())
+                         **_get_params_to_ignore_acl_violation(),
+                         **run_kwargs)
 
         dates = []
         # every record contains consequent intervals of data on disk
@@ -496,7 +537,7 @@ class DB:
 
         return dates
 
-    def __split_loaded_time_ranges(self, locator_start, locator_end, only_last):
+    def __split_loaded_time_ranges(self, locator_start, locator_end, only_last, **run_kwargs):
         # locator date range can be very big, so splitting it in smaller parts
         # (because _show_loaded_time_ranges() can be very slow for big time ranges)
         # it is especially useful when we only need the last date
@@ -506,7 +547,7 @@ class DB:
         while locator_start < start:
             start = end - timedelta(days=delta)
             start = max(locator_start, start)
-            loaded_dates = self._show_loaded_time_ranges(start, end, only_last=only_last)
+            loaded_dates = self._show_loaded_time_ranges(start, end, only_last=only_last, **run_kwargs)
             if only_last and loaded_dates:
                 return [loaded_dates[-1]]
             dates = loaded_dates + dates
@@ -516,9 +557,9 @@ class DB:
                 delta *= 2
         return dates
 
-    def __get_dates(self, only_last=False, respect_acl=False, check_index_file=utils.adaptive):
+    def __get_dates(self, only_last=False, respect_acl=False, check_index_file=utils.adaptive, **run_kwargs):
         """ Returns list of dates in GMT timezone with data """
-        self._set_intervals()
+        self._set_intervals(**run_kwargs)
 
         dates = []
         today = datetime.now(tz=dt_timezone.utc).date()
@@ -533,7 +574,8 @@ class DB:
 
             if respect_acl:
                 try:
-                    locator_start, locator_end = self._fit_time_interval_in_acl(locator_start, locator_end)
+                    locator_start, locator_end = self._fit_time_interval_in_acl(locator_start, locator_end,
+                                                                                **run_kwargs)
                 except ValueError:
                     # fully not intersecting intervals, trying next locator date range
                     continue
@@ -545,7 +587,8 @@ class DB:
             try:
                 loaded_dates = self._show_loaded_time_ranges(locator_start, locator_end,
                                                              only_last=only_last,
-                                                             prefer_speed_over_accuracy=prefer_speed_over_accuracy)
+                                                             prefer_speed_over_accuracy=prefer_speed_over_accuracy,
+                                                             **run_kwargs)
             except Exception as e:
                 # parameter prefer_speed_over_accuracy is not supported on all OneTick versions and servers
                 if check_index_file is not utils.adaptive:
@@ -553,7 +596,7 @@ class DB:
                         "Parameter 'check_index_file' is not supported by the API or OneTick server"
                     ) from e
                 # in this case we fall back to splitting the locator range into smaller parts to increase speed
-                loaded_dates = self.__split_loaded_time_ranges(locator_start, locator_end, only_last)
+                loaded_dates = self.__split_loaded_time_ranges(locator_start, locator_end, only_last, **run_kwargs)
 
             if only_last and loaded_dates:
                 return loaded_dates[-1]
@@ -564,7 +607,7 @@ class DB:
 
         return dates
 
-    def dates(self, respect_acl=False, check_index_file=utils.adaptive):
+    def dates(self, respect_acl=False, check_index_file=utils.adaptive, **run_kwargs):
         """
         Returns list of dates in GMT timezone for which data is available.
 
@@ -581,6 +624,9 @@ class DB:
             but where there is actually no data.
             By default this option is set to False if it is supported by API and the server,
             otherwise it is set to True.
+        run_kwargs:
+            Parameters passed directly to :py:func:`otp.run <onetick.py.run>`.
+            Only ``username``, ``alternative_username`` and ``password`` are supported.
 
         Returns
         -------
@@ -593,20 +639,21 @@ class DB:
         >>> db.dates()  # doctest: +ELLIPSIS
         [datetime.date(2024, 1, 2), ..., datetime.date(2024, 3, 28)]
         """
-        return self.__get_dates(respect_acl=respect_acl, check_index_file=check_index_file)
+        return self.__get_dates(respect_acl=respect_acl, check_index_file=check_index_file, **run_kwargs)
 
-    def last_not_empty_date(self, last_date, days_back, timezone=None, tick_type=None, include_memdb=True):
+    def last_not_empty_date(self, last_date, days_back, timezone=None, tick_type=None, include_memdb=True,
+                            **run_kwargs):
         """
         Find first day that has data
         starting from ``last_date`` and going ``days_back`` number of days back.
         """
-        min_locator_date = self.min_locator_date()
+        min_locator_date = self.min_locator_date(**run_kwargs)
         for i in range(days_back + 1):
             date = _datetime2date(last_date - timedelta(days=i))
             if date < min_locator_date:
                 break
             try:
-                tick_types = self.tick_types(date, timezone=timezone, include_memdb=include_memdb)
+                tick_types = self.tick_types(date, timezone=timezone, include_memdb=include_memdb, **run_kwargs)
             except ValueError:
                 # acl date violation
                 break
@@ -635,8 +682,9 @@ class DB:
         return self.get_last_date()
 
     def get_last_date(self, tick_type=None, timezone=None, show_warnings=True, check_index_file=utils.adaptive,
-                      include_memdb: bool = True):
-        last_date = self.__get_dates(only_last=True, respect_acl=True, check_index_file=check_index_file)
+                      include_memdb: bool = True,
+                      **run_kwargs):
+        last_date = self.__get_dates(only_last=True, respect_acl=True, check_index_file=check_index_file, **run_kwargs)
         if last_date is None:
             return None
         # It might happen that database loading processes is configured
@@ -648,7 +696,7 @@ class DB:
         # We only scan 5 previous days to cover weekends + possible conjuncted holidays.
         # According to the official NYSE calendar there are no more than 5 closed days.
         date = self.last_not_empty_date(last_date, days_back=5, tick_type=tick_type, timezone=timezone,
-                                        include_memdb=include_memdb)
+                                        include_memdb=include_memdb, **run_kwargs)
         if date is None:
             if show_warnings:
                 warnings.warn(
@@ -659,7 +707,8 @@ class DB:
         return date
 
     def tick_types(self, date=None, timezone=None, query_properties: Optional[dict] = None,
-                   include_memdb: bool = True) -> list[str]:
+                   include_memdb: bool = True,
+                   **run_kwargs) -> list[str]:
         """
         Returns list of tick types for the ``date``.
 
@@ -676,6 +725,9 @@ class DB:
             Setting this parameter to True will return result from memory databases too.
             Otherwise only the archive databases will be used.
             Default is True.
+        run_kwargs:
+            Parameters passed directly to :py:func:`otp.run <onetick.py.run>`.
+            Only ``username``, ``alternative_username`` and ``password`` are supported.
 
         Returns
         -------
@@ -689,7 +741,7 @@ class DB:
         ['DAY', 'IND', 'LULD', 'MKT', 'NBBO', 'QTE', 'STAT', 'TRD']
         """
         if date is None:
-            date = self.get_last_date(timezone=timezone, include_memdb=include_memdb)
+            date = self.get_last_date(timezone=timezone, include_memdb=include_memdb, **run_kwargs)
 
         if timezone is None:
             timezone = configuration.config.tz
@@ -705,27 +757,29 @@ class DB:
 
         # PY-458: don't use cache, it can return different result in some cases
         result = self._show_tick_types(use_cache=False, date=date, timezone=timezone, show_schema=show_schema,
-                                       query_properties=query_properties, include_memdb=include_memdb)
+                                       query_properties=query_properties, include_memdb=include_memdb,
+                                       **run_kwargs)
         if len(result) == 0:
             return []
 
         return result['TICK_TYPE_NAME'].unique().tolist()
 
-    def min_locator_date(self):
-        self._set_intervals()
+    def min_locator_date(self, **run_kwargs):
+        self._set_intervals(**run_kwargs)
         min_date = min(obj[0] for obj in self._locator_date_ranges)
         return _datetime2date(min_date)
 
-    def _get_first_locator_interval(self) -> tuple:
-        self._set_intervals()
+    def _get_first_locator_interval(self, **run_kwargs) -> tuple:
+        self._set_intervals(**run_kwargs)
         return self._locator_date_ranges[0]
 
-    def _get_last_locator_interval(self) -> tuple:
-        self._set_intervals()
+    def _get_last_locator_interval(self, **run_kwargs) -> tuple:
+        self._set_intervals(**run_kwargs)
         return self._locator_date_ranges[-1]
 
     @_method_cache
-    def _show_tick_types(self, date, timezone, use_cache, show_schema, query_properties=None, include_memdb=True):
+    def _show_tick_types(self, date, timezone, use_cache, show_schema, query_properties=None, include_memdb=True,
+                         **run_kwargs):
         LOGGER.info('_show_tick_types')
         ep = otq.DbShowTickTypes(use_cache=use_cache,
                                  show_schema=show_schema,
@@ -733,16 +787,20 @@ class DB:
         safe_params = _get_params_to_ignore_acl_violation()
         if query_properties:
             safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
+
+        run_kwargs = _check_common_run_kwargs(**run_kwargs)
         return otp.run(ep,
                        symbols=f'{self.name}::',
                        date=date,
                        timezone=timezone,
                        context=self.context,
-                       **safe_params)
+                       **safe_params,
+                       **run_kwargs)
 
     def schema(self, date=None, tick_type=None, timezone=None, check_index_file=utils.adaptive,
                query_properties: Optional[dict] = None,
-               include_memdb: bool = True) -> dict[str, type]:
+               include_memdb: bool = True,
+               **run_kwargs) -> dict[str, type]:
         """
         Gets the schema of the database.
 
@@ -772,6 +830,9 @@ class DB:
             Setting this parameter to True will return result from memory databases too.
             Otherwise only the archive databases will be used.
             Default is True.
+        run_kwargs:
+            Parameters passed directly to :py:func:`otp.run <onetick.py.run>`.
+            Only ``username``, ``alternative_username`` and ``password`` are supported.
 
         Returns
         -------
@@ -805,7 +866,8 @@ class DB:
                 result = self._show_last_tick_descriptor(tick_type=tick_type,
                                                          date=date,
                                                          timezone=timezone,
-                                                         include_memdb=include_memdb)
+                                                         include_memdb=include_memdb,
+                                                         **run_kwargs)
             except Exception:
                 # DbShowLastTickDescriptor is not supported on client or server
                 pass
@@ -817,11 +879,11 @@ class DB:
 
         if date is None:
             date = self.get_last_date(tick_type=tick_type, timezone=timezone, check_index_file=check_index_file,
-                                      include_memdb=include_memdb)
+                                      include_memdb=include_memdb, **run_kwargs)
         if timezone is None:
             timezone = configuration.config.tz
         if tick_type is None:
-            tick_types = self.tick_types(date=date, timezone=timezone)
+            tick_types = self.tick_types(date=date, timezone=timezone, **run_kwargs)
             if len(tick_types) == 0:
                 raise ValueError("No tick types has found and specified")
             if len(tick_types) > 1:
@@ -843,9 +905,9 @@ class DB:
         )
         # PY-458, BEXRTS-1220, PY-1421
         # the results of the query may vary depending on using use_cache parameter, so we are trying both
-        result = self._show_tick_types(use_cache=False, **kwargs)
+        result = self._show_tick_types(use_cache=False, **kwargs, **run_kwargs)
         if result.empty:
-            result = self._show_tick_types(use_cache=True, **kwargs)
+            result = self._show_tick_types(use_cache=True, **kwargs, **run_kwargs)
 
         if not result.empty:
             result = result[result['TICK_TYPE_NAME'] == tick_type]
@@ -922,7 +984,8 @@ class DB:
 
     def symbols(self, date=None, timezone=None, tick_type=None, pattern='.*',
                 query_properties: Optional[dict] = None,
-                include_memdb: bool = True) -> list[str]:
+                include_memdb: bool = True,
+                **run_kwargs) -> list[str]:
         """
         Finds a list of available symbols in the database
 
@@ -943,6 +1006,9 @@ class DB:
             Setting this parameter to True will return result from memory databases too.
             Otherwise only the archive databases will be used.
             Default is True.
+        run_kwargs:
+            Parameters passed directly to :py:func:`otp.run <onetick.py.run>`.
+            Only ``username``, ``alternative_username`` and ``password`` are supported.
 
         Examples
         --------
@@ -951,8 +1017,11 @@ class DB:
         ['AAL', 'AAPL']
         """
         LOGGER.info('symbols')
+
+        run_kwargs = _check_common_run_kwargs(**run_kwargs)
+
         if date is None:
-            date = self.get_last_date(timezone=timezone, include_memdb=include_memdb)
+            date = self.get_last_date(timezone=timezone, include_memdb=include_memdb, **run_kwargs)
         if timezone is None:
             timezone = configuration.config.tz
         if tick_type is None:
@@ -969,7 +1038,8 @@ class DB:
                          end=date + timedelta(days=1),
                          timezone=timezone,
                          context=self.context,
-                         query_properties=query_properties)
+                         query_properties=query_properties,
+                         **run_kwargs)
 
         if len(result) == 0:
             return []
@@ -983,6 +1053,7 @@ class DB:
         date=None,
         timezone='GMT',
         query_properties: Optional[dict] = None,
+        **run_kwargs,
     ) -> pd.DataFrame:
         """
         This method shows various stats about the queried symbol,
@@ -1026,6 +1097,9 @@ class DB:
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
             see OneTick server documentation for available options.
+        run_kwargs:
+            Parameters passed directly to :py:func:`otp.run <onetick.py.run>`.
+            Only ``username``, ``alternative_username`` and ``password`` are supported.
 
         Note
         ----
@@ -1052,6 +1126,8 @@ class DB:
         """
         node = otq.ShowArchiveStats()
         graph = otq.GraphQuery(node)
+
+        run_kwargs = _check_common_run_kwargs(**run_kwargs)
         df = otp.run(graph,
                      symbols=f'{self.name}::',
                      start=start,
@@ -1059,7 +1135,8 @@ class DB:
                      date=date,
                      timezone=timezone,
                      context=self.context,
-                     query_properties=query_properties)
+                     query_properties=query_properties,
+                     **run_kwargs)
         return df
 
     def ref_data(
@@ -1072,6 +1149,7 @@ class DB:
         timezone=utils.default,
         symbol: str = '',
         query_properties: Optional[dict] = None,
+        **run_kwargs,
     ) -> pd.DataFrame:
         """
         Shows reference data for the specified security and reference data type.
@@ -1105,6 +1183,9 @@ class DB:
         query_properties: dict, optional
             Query properties passed to :py:func:`otp.run <onetick.py.run>`,
             see OneTick server documentation for available options.
+        run_kwargs:
+            Parameters passed directly to :py:func:`otp.run <onetick.py.run>`.
+            Only ``username``, ``alternative_username`` and ``password`` are supported.
 
         See also
         --------
@@ -1152,6 +1233,8 @@ class DB:
         ref_data_type = ref_data_type.upper()
         node = otq.RefData(ref_data_type=ref_data_type)
         graph = otq.GraphQuery(node)
+
+        run_kwargs = _check_common_run_kwargs(**run_kwargs)
         df = otp.run(graph,
                      symbols=f'{self.name}::{symbol}',
                      symbol_date=symbol_date,
@@ -1160,7 +1243,8 @@ class DB:
                      date=date,
                      timezone=timezone,
                      context=self.context,
-                     query_properties=query_properties)
+                     query_properties=query_properties,
+                     **run_kwargs)
         return df
 
 
@@ -1230,12 +1314,14 @@ def _get_params_to_ignore_acl_violation() -> dict:
 
 
 def databases(
-    context=utils.default, derived: bool = False,
+    context=utils.default,
+    derived: bool | dict = False,
     readable_only: bool = False,
     fetch_description: Optional[bool] = None,
     as_table: bool = False,
     query_properties: Optional[dict] = None,
     db: Optional[str] = None,
+    **run_kwargs,
 ) -> Union[dict[str, DB], pd.DataFrame]:
     """
     Gets all available databases in the ``context``.
@@ -1273,6 +1359,9 @@ def databases(
     db: str
         Specifies database name to use when running the query, otherwise
         :py:attr:`otp.config.default_db <onetick.py.configuration.Config.default_db>` or ``LOCAL`` is used.
+    run_kwargs:
+        Parameters passed directly to :py:func:`otp.run <onetick.py.run>`.
+        Only ``username``, ``alternative_username`` and ``password`` are supported.
 
     See also
     --------
@@ -1351,10 +1440,12 @@ def databases(
     # sort alphabetically
     node = node >> otq.OrderBy(order_by='DATABASE_NAME ASC')
 
+    run_kwargs = _check_common_run_kwargs(**run_kwargs)
+
     safe_params = _get_safe_params_for_running(db=db, context=context)
     if query_properties:
         safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
-    dbs = otp.run(node, **safe_params)
+    dbs = otp.run(node, **safe_params, **run_kwargs)
     if as_table:
         return dbs
 
@@ -1375,7 +1466,7 @@ def databases(
         kwargs: dict = derived if isinstance(derived, dict) else {}
         kwargs.setdefault('context', context)
         db_dict.update(
-            derived_databases(**kwargs)
+            derived_databases(**kwargs, **run_kwargs)
         )
     return db_dict
 
@@ -1388,6 +1479,7 @@ def derived_databases(
     db_discovery_scope='query_host_only',
     as_table: bool = False,
     query_properties: Optional[dict] = None,
+    **run_kwargs,
 ) -> dict[str, DB]:
     """
     Gets available derived databases.
@@ -1430,6 +1522,9 @@ def derived_databases(
     query_properties: dict, optional
         Query properties passed to :py:func:`otp.run <onetick.py.run>`,
         see OneTick server documentation for available options.
+    run_kwargs:
+        Parameters passed directly to :py:func:`otp.run <onetick.py.run>`.
+        Only ``username``, ``alternative_username`` and ``password`` are supported.
 
     See also
     --------
@@ -1457,15 +1552,18 @@ def derived_databases(
         db_discovery_scope=db_discovery_scope,
     )
     ep = ep.tick_type('ANY')
+
+    run_kwargs = _check_common_run_kwargs(**run_kwargs)
+
     if start and end:
         db_name = db or otp.config.get('default_db', 'LOCAL')
         dbs = otp.run(ep, symbols=f'{db_name}::', start=start, end=end, context=context,
-                      query_properties=query_properties)
+                      query_properties=query_properties, **run_kwargs)
     else:
         safe_params = _get_safe_params_for_running(db, context)
         if query_properties:
             safe_params['query_properties'] = safe_params.get('query_properties', {}) | query_properties
-        dbs = otp.run(ep, **safe_params)
+        dbs = otp.run(ep, **safe_params, **run_kwargs)
     if as_table:
         return dbs
     if len(dbs) == 0:
