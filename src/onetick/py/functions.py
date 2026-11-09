@@ -643,6 +643,8 @@ def join(left, right, on, how='left_outer', rprefix='RIGHT', keep_fields_not_in_
         If it is list of strings, then ticks with same ``on`` fields will be joined.
 
         If :py:class:`~onetick.py.Operation` then only ticks on which the condition evaluates to True will be joined.
+        Time-based join functions :func:`otp.ops.sametime <onetick.py.ops.sametime>` and
+        :func:`otp.ops.sametime_as_existing <onetick.py.ops.sametime_as_existing>` can be used in this condition.
     how: 'inner' or 'left_outer'
         Joining type.
         Inner join will only produce ticks that matched the ``on`` condition.
@@ -679,7 +681,9 @@ def join(left, right, on, how='left_outer', rprefix='RIGHT', keep_fields_not_in_
 
     See also
     --------
-    **JOIN** OneTick event processor
+    | **JOIN** OneTick event processor
+    | :func:`otp.ops.sametime <onetick.py.ops.sametime>`
+    | :func:`otp.ops.sametime_as_existing <onetick.py.ops.sametime_as_existing>`
 
     Examples
     --------
@@ -775,6 +779,20 @@ def join(left, right, on, how='left_outer', rprefix='RIGHT', keep_fields_not_in_
     >>> otp.run(data)
                              Time  A  B  C
         0 2003-12-01 00:00:00.001  2  6  7
+
+    Use :func:`otp.ops.sametime <onetick.py.ops.sametime>` to join each tick
+    with the tick from the other source that arrived immediately before it:
+
+    >>> left = otp.Ticks(A=[1, 2, 3], offset=[0, 2, 4])
+    >>> right = otp.Ticks(B=[10, 20, 30], offset=[1, 3, 5])
+    >>> data = otp.join(left, right, on=otp.ops.sametime(left['Time'], right['Time']), how='inner')
+    >>> otp.run(data)
+                         Time  A   B
+    0 2003-12-01 00:00:00.001  1  10
+    1 2003-12-01 00:00:00.002  2  10
+    2 2003-12-01 00:00:00.003  2  20
+    3 2003-12-01 00:00:00.004  3  20
+    4 2003-12-01 00:00:00.005  3  30
 
     Use parameter ``output_type_index`` to specify which input class to use to create output object.
     It may be useful in case some custom user class was used as input:

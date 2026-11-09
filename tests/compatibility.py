@@ -261,3 +261,9 @@ def is_query_auto_termination_time_limit_fixed():
     # OTDEV-38967: Query auto termination time limit query property should have a string value
     return _is_min_build_or_version(None, None,
                                     20260814120000)
+
+
+def is_date_name_fixed():
+    # OTDEV-39669: DATENAME returns 0 for millisecond and nanosecond date part
+    return _is_min_build_or_version(None, None,
+                                    20260924120000, min_update_number=2)

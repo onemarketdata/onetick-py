@@ -272,3 +272,20 @@ def test_replace_parameters(m_session):
             str_replaced_op = str_replaced_op.replace(column, f'PREFIX.{column}')
         str_node_name_prefix_op = str(_add_node_name_prefix_to_columns_in_operation(op, t))
         assert str_replaced_op == str_node_name_prefix_op
+
+
+def test_date_name(m_session):
+    X = [otp.dt(2020, 11, 11, 5, 4, 13, 101737, 879)] * 12
+    DATE_PART = ['year', 'quarter', 'month',
+                 'week', 'weekday', 'day', 'dayofyear',
+                 'hour', 'minute', 'second',
+                 'millisecond', 'nanosecond']
+    data = otp.Ticks(X=X, DATE_PART=DATE_PART)
+    data['DATE_NAME'] = data['X'].dt.date_name(data['DATE_PART'])
+    df = otp.run(data)
+    assert list(df['X']) == X
+    assert list(df['DATE_PART']) == DATE_PART
+    if tests.compatibility.is_date_name_fixed():
+        assert list(df['DATE_NAME']) == [2020, 4, 11, 46, 3, 11, 315, 5, 4, 13, 101, 101737879]
+    else:
+        assert list(df['DATE_NAME']) == [2020, 4, 11, 46, 3, 11, 315, 5, 4, 13, 0, 0]

@@ -10,6 +10,20 @@
 
 ### Removed
 
+## [1.220.0] - 2026-11-09
+
+### Added
+
+- Added functions `otp.ops.sametime` and `otp.ops.sametime_as_existing`
+
+### Changed
+
+### Fixed
+
+- Fixed tests on latest OneTick version
+
+### Removed
+
 ## [1.219.0] - 2026-11-02
 
 ### Added

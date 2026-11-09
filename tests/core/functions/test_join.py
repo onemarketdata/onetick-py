@@ -379,3 +379,79 @@ def test_join_on_timestamp(session):
         'A': [1, 2],
         'B': [2, 3],
     }
+
+
+class TestSametime:
+    def test_inner(self, session):
+        left = otp.Ticks(A=[1, 2, 3], offset=[0, 2, 4])
+        right = otp.Ticks(B=[10, 20, 30], offset=[1, 3, 5])
+        data = otp.join(left, right, on=otp.ops.sametime(left['Time'], right['Time']), how='inner')
+        df = otp.run(data)
+        assert list(df['Time']) == [otp.dt(2003, 12, 1) + otp.Milli(i) for i in range(1, 6)]
+        assert list(df['A']) == [1, 2, 2, 3, 3]
+        assert list(df['B']) == [10, 10, 20, 20, 30]
+
+    @pytest.mark.parametrize('keep_zero_duration_ticks,expected_a,expected_b', [
+        (None, [1, 2, 2, 3, 3], [10, 10, 20, 20, 30]),
+        (True, [1, 2, 2, 3, 3], [10, 10, 20, 20, 30]),
+        (False, [1, 2, 3], [10, 20, 30]),
+    ])
+    def test_keep_zero_duration_ticks(self, session, keep_zero_duration_ticks, expected_a, expected_b):
+        left = otp.Ticks(A=[1, 2, 3])
+        right = otp.Ticks(B=[10, 20, 30])
+        on = otp.ops.sametime(left['TIMESTAMP'], right['TIMESTAMP'], keep_zero_duration_ticks=keep_zero_duration_ticks)
+        data = otp.join(left, right, on=on, how='inner')
+        df = otp.run(data)
+        assert list(df['A']) == expected_a
+        assert list(df['B']) == expected_b
+
+    def test_with_other_condition(self, session):
+        left = otp.Ticks(A=[1, 2, 3], offset=[0, 2, 4])
+        right = otp.Ticks(B=[10, 20, 30], offset=[1, 3, 5])
+        on = otp.ops.sametime(left['Time'], right['Time']) & (left['A'] * 10 == right['B'])
+        data = otp.join(left, right, on=on, how='inner')
+        df = otp.run(data)
+        assert list(df['A']) == [1, 2, 3]
+        assert list(df['B']) == [10, 20, 30]
+
+    def test_wrong_column(self):
+        left = otp.Tick(A=1)
+        right = otp.Tick(B=1)
+        with pytest.raises(ValueError, match='left_time'):
+            otp.ops.sametime(left['A'], right['Time'])
+        with pytest.raises(ValueError, match='right_time'):
+            otp.ops.sametime(left['Time'], right['B'])
+
+
+class TestSametimeAsExisting:
+    @pytest.mark.parametrize('delay_msec,expected_b', [
+        (2, [10, 20, 30]),
+        (0, [20, 30, 40]),
+        (-2, [30, 40, 40]),
+    ])
+    def test_delay(self, session, delay_msec, expected_b):
+        left = otp.Ticks(A=[1, 2, 3], offset=[3, 5, 7])
+        right = otp.Ticks(B=[10, 20, 30, 40], offset=[0, 2, 4, 6])
+        on = otp.ops.sametime_as_existing(left['Time'], right['Time'], delay_msec)
+        data = otp.join(left, right, on=on)
+        df = otp.run(data)
+        assert list(df['A']) == [1, 2, 3]
+        assert list(df['B']) == expected_b
+
+    def test_wrong_column(self):
+        left = otp.Tick(A=1)
+        right = otp.Tick(B=1)
+        with pytest.raises(ValueError, match='left_time'):
+            otp.ops.sametime_as_existing(left['A'], right['Time'], 1)
+        with pytest.raises(ValueError, match='right_time'):
+            otp.ops.sametime_as_existing(left['Time'], right['B'], 1)
+
+    def test_wrong_delay(self):
+        left = otp.Tick(A=1)
+        right = otp.Tick(B=1)
+        with pytest.raises(TypeError, match='delay_msec'):
+            otp.ops.sametime_as_existing(left['Time'], right['Time'], 1.5)
+        with pytest.raises(TypeError, match='delay_msec'):
+            otp.ops.sametime_as_existing(left['Time'], right['Time'], '1')
+        with pytest.raises(TypeError, match='delay_msec'):
+            otp.ops.sametime_as_existing(left['Time'], right['Time'], True)

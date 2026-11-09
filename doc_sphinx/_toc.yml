@@ -227,6 +227,9 @@ chapters:
         - file: api/functions/string/root
           sections:
             - glob: api/functions/string/*
+        - file: api/functions/join/root
+          sections:
+            - glob: api/functions/join/*
         - file: api/functions/misc/root
           sections:
             - glob: api/functions/misc/*
