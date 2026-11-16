@@ -196,6 +196,7 @@ class _Aggregation(ABC):
         pass
 
     DEFAULT_OUTPUT_NAME = 'VALUE'
+    DEFAULT_APPLY_NAME: str | None = None
 
     FIELDS_MAPPING = {
         "column_name": "INPUT_FIELD_NAME",
@@ -209,6 +210,7 @@ class _Aggregation(ABC):
         "boundary_tick_bucket": "BOUNDARY_TICK_BUCKET",
         "group_by": "GROUP_BY",
         "groups_to_display": "GROUPS_TO_DISPLAY",
+        "output_field_name": "OUTPUT_FIELD_NAME",
     }
     FIELDS_DEFAULT = {
         "running": False,
@@ -221,6 +223,7 @@ class _Aggregation(ABC):
         "boundary_tick_bucket": "new",
         "group_by": [],
         "groups_to_display": "all",
+        "output_field_name": None,
     }
 
     FIELDS_TO_SKIP: list = []   # attr listed here won't be used in self.__str__
@@ -241,7 +244,8 @@ class _Aggregation(ABC):
                  boundary_tick_bucket: str = "new",
                  group_by: Optional[Union[list, str, _Operation]] = None,
                  groups_to_display: str = "all",
-                 overwrite_output_field: bool = False):
+                 overwrite_output_field: bool = False,
+                 output_field_name: str | None = None):
         """
         Abstract method that implements common logic for aggregations
         """
@@ -326,6 +330,7 @@ class _Aggregation(ABC):
 
         self._param_validation()
         self.bucket_time = f'BUCKET_{self.bucket_time.upper()}'
+        self.output_field_name = output_field_name
 
     @staticmethod
     def _attr2str(value) -> str:
@@ -386,6 +391,9 @@ class _Aggregation(ABC):
             name: self.output_field_type or src.schema[self.column_name]
         }
 
+    def _get_output_name(self, name: str | None = None):
+        return name or self.output_field_name or self.DEFAULT_APPLY_NAME or self.column_name
+
     @operation_gb
     @operation_replacer
     @output_column_overwriter
@@ -407,7 +415,7 @@ class _Aggregation(ABC):
             src = src.copy()
         else:
             res = src.copy()
-        out_name = name or self.column_name
+        out_name = self._get_output_name(name)
         schema = self._get_common_schema(src, out_name)
         # it's important to validate input schema before sinking
         self._modify_source(res)
@@ -603,7 +611,7 @@ class _ExpectLargeInts(_Aggregation):
         self.null_int_val = null_int_val
 
     def apply(self, src: 'Source', name: Optional[str] = None) -> 'Source':
-        out_name = name or self.column_name
+        out_name = self._get_output_name(name)
         res, col, convert_back = self._ts_to_long(src, str(out_name))
         res = super().apply(res, col.tmp_out_column)
         if not convert_back:

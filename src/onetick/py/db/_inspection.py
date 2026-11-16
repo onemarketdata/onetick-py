@@ -1117,12 +1117,12 @@ class DB:
 
         >>> db = otp.databases()['US_COMP_SAMPLE']
         >>> db.show_archive_stats(date=otp.dt(2024, 2, 1))  # doctest: +ELLIPSIS
-                         Time  COMPRESSION_TYPE TIME_RANGE_VALIDITY LOWEST_LOADED_DATETIME HIGHEST_LOADED_DATETIME  ...\
-              TOTAL_TICKS  TOTAL_SYMBOLS   TOTAL_SIZE  ARCHIVE_MODIFICATION_TIME NATIVE_COMPR_HEADERS_SIZE
-        0 2024-02-01 00:00:00  NATIVE_PLUS_GZIP               VALID    2024-01-31 05:00:00     2024-02-01 01:15:00  ...\
-                777458840           3371  10091704128        2025-11-05 06:09:55                        -1
-        1 2024-02-01 05:00:00  NATIVE_PLUS_GZIP               VALID    2024-02-01 05:00:00     2024-02-02 01:15:00  ...\
-                826170303           3308  10603315515        2025-11-05 06:08:18                        -1
+                         Time      DATE  COMPRESSION_TYPE TIME_RANGE_VALIDITY LOWEST_LOADED_DATETIME  ... \
+                          TOTAL_TICKS  TOTAL_SYMBOLS   TOTAL_SIZE  ARCHIVE_MODIFICATION_TIME  NATIVE_COMPR_HEADERS_SIZE
+        0 2024-02-01 00:00:00  20240131  NATIVE_PLUS_GZIP               VALID    2024-01-31 05:00:00  ... \
+                            777458840           3371  10091704128        2025-11-05 06:09:55                         -1
+        1 2024-02-01 05:00:00  20240201  NATIVE_PLUS_GZIP               VALID    2024-02-01 05:00:00  ... \
+                            826170303           3308  10603315515        2025-11-05 06:08:18                         -1
         """
         node = otq.ShowArchiveStats()
         graph = otq.GraphQuery(node)

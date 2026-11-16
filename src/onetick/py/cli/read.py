@@ -73,7 +73,11 @@ def parser_impl(parser: argparse.ArgumentParser):
     time_group.add_argument('--tz', help='Time zone of the query. Default is local time zone.')
 
     rows_group = parser.add_argument_group('Rows')
-    rows_group.add_argument('--limit', help='Number of rows to return. Default is all.', type=int)
+    rows_group.add_argument('--limit',
+                            help=('Number of rows to return. '
+                                  'Positive number gets rows from the start, negative -- from the end. '
+                                  'By default all rows are returned.'),
+                            type=int)
 
     columns_group = parser.add_argument_group('Columns')
     columns_group = columns_group.add_mutually_exclusive_group()
@@ -181,12 +185,13 @@ def __run_impl(args: argparse.Namespace):
         data.sink(otq.Passthrough(fields=args.columns_regex, throw_for_missing_fields=False, use_regex=True))
 
     if args.limit is not None:
-        if args.limit < 0:
-            raise ValueError(f"Parameter --limit can't be negative {args.limit}")
-        try:
-            data = data.limit(args.limit)
-        except RuntimeError:
-            data = data[:args.limit]
+        if args.limit >= 0:
+            try:
+                data = data.limit(args.limit)
+            except RuntimeError:
+                data = data[:args.limit]
+        else:
+            data = data[args.limit:]
 
     if args.output == 'count':
         data = otp.agg.count().apply(data)

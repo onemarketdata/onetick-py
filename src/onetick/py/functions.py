@@ -26,6 +26,16 @@ import onetick.py.types as ott
 from onetick.py.core.column import Column
 from onetick.py.core.column_operations.base import Operation
 from onetick.py.core.cut_builder import _QCutBuilder, _CutBuilder
+from .aggregations._docs import (
+    _bucket_interval_doc,
+    _bucket_units_doc,
+    _bucket_time_doc,
+    _bucket_end_condition_doc,
+    _boundary_tick_bucket_doc,
+    _running_doc,
+)
+from onetick.py.docs.utils import docstring
+from onetick.py.aggregations._base import get_bucket_interval_from_datepart
 
 
 __all__ = ['apply', 'apply_query', 'coalesce', 'corp_actions', 'cut', 'format', 'join', 'join_by_time', 'merge', 'qcut']
@@ -2502,4 +2512,127 @@ def join_with_aggregated_window(
 
     # adding table to convert types in schema, e.g. float to int
     result._add_table(strict=False)
+    return result
+
+
+@docstring(parameters=[
+    _bucket_interval_doc,
+    _bucket_units_doc,
+    _bucket_time_doc,
+    _bucket_end_condition_doc,
+    _boundary_tick_bucket_doc,
+    _running_doc,
+])
+def ts_add(
+    sources,
+    input_field_name: str | None = None,
+    /,
+    *,
+    # common aggregation parameters
+    bucket_interval: int | ott.OTPBaseTimeOffset = 0,
+    bucket_units: str | None = None,
+    bucket_time: str = 'end',
+    bucket_end_condition: Operation | None = None,
+    boundary_tick_bucket: str = 'new',
+    running: bool = False,
+    # merge symbols
+    symbols=None,
+):
+    """
+    Computes the sum of fields' latest values across multiple series.
+
+    Outputs a time series of ticks with the summed field **VALUE**
+    and the field named **NUM_SYMBOLS** containing the number of values that went into computing the sum.
+
+    Parameters
+    ----------
+    sources: :class:`~onetick.py.Source` or list of :class:`~onetick.py.Source`
+        One or more aggregated sources.
+    input_field_name: str
+        The name of the input field to sum.
+        Default is 'PRICE'.
+    symbols: str, list of str, :class:`Source`, :pandas:`pandas.DataFrame`
+        Symbol name or list of symbol names or the first-stage query
+        representing the symbols used to sum the value across.
+
+    See also
+    --------
+    **TS_ADD** OneTick event processor
+
+    Examples
+    --------
+
+    Get the sum of latest hourly SIZE values from two sources:
+
+    >>> aapl = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> msft = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='MSFT')
+    >>> data = otp.ts_add([aapl, msft], 'SIZE', bucket_interval=otp.Hour(1))
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 9, 30), end=otp.dt(2024, 2, 1, 16), timezone='America/New_York')
+                     Time  VALUE  NUM_SYMBOLS
+    0 2024-02-01 10:30:00  124.0            2
+    1 2024-02-01 11:30:00    6.0            2
+    2 2024-02-01 12:30:00   52.0            2
+    3 2024-02-01 13:30:00   51.0            2
+    4 2024-02-01 14:30:00   31.0            2
+    5 2024-02-01 15:30:00    6.0            2
+    6 2024-02-01 16:00:00   14.0            2
+
+    Get the sum of latest hourly SIZE values from three symbols:
+
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
+    >>> data = otp.ts_add(data, 'SIZE', bucket_interval=otp.Hour(1), symbols=['AAPL', 'MSFT', 'NVDA'])
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 9, 30), end=otp.dt(2024, 2, 1, 16), timezone='America/New_York')
+                     Time  VALUE  NUM_SYMBOLS
+    0 2024-02-01 10:30:00  125.0            3
+    1 2024-02-01 11:30:00   13.0            3
+    2 2024-02-01 12:30:00   53.0            3
+    3 2024-02-01 13:30:00   61.0            3
+    4 2024-02-01 14:30:00   32.0            3
+    5 2024-02-01 15:30:00    8.0            3
+    6 2024-02-01 16:00:00   78.0            3
+
+    Use this together with other aggregations to aggregate across symbols.
+    For example, hourly total traded volume (sum of SIZE) across symbols starting with A:
+
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
+    >>> data = data.agg({'VOLUME': otp.agg.sum('SIZE')}, bucket_interval=otp.Hour(1))
+    >>> symbols = otp.Symbols('US_COMP_SAMPLE', for_tick_type='TRD', pattern='A%')
+    >>> data = otp.ts_add(data, 'VOLUME', bucket_interval=otp.Hour(1), symbols=symbols)
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 9, 30), end=otp.dt(2024, 2, 1, 16), timezone='America/New_York')
+                     Time       VALUE  NUM_SYMBOLS
+    0 2024-02-01 10:30:00  74155047.0           50
+    1 2024-02-01 11:30:00  43958426.0           50
+    2 2024-02-01 12:30:00  36254186.0           50
+    3 2024-02-01 13:30:00  39337805.0           50
+    4 2024-02-01 14:30:00  38059030.0           50
+    5 2024-02-01 15:30:00  41425091.0           50
+    6 2024-02-01 16:00:00  46796480.0           50
+    """
+    if not isinstance(sources, list):
+        sources = [sources]
+    output_type = type(sources[0])
+
+    if isinstance(bucket_interval, ott.OTPBaseTimeOffset):
+        bucket_interval, bucket_units = get_bucket_interval_from_datepart(bucket_interval)
+
+    ep = otq.TsAdd(
+        bucket_interval=bucket_interval,
+        bucket_interval_units=bucket_units.upper() if bucket_units is not None else '',
+        bucket_time=f'BUCKET_{bucket_time.upper()}',
+        bucket_end_criteria=str(bucket_end_condition) if bucket_end_condition is not None else '',
+        boundary_tick_bucket=boundary_tick_bucket.upper(),
+        is_running_aggr=running,
+        input_field_name=input_field_name or '',
+    )
+
+    if isinstance(symbols, pd.DataFrame):
+        symbols = get_symbol_source_from_df(symbols)
+
+    tmp_otq = TmpOtq()
+    ep = apply_symbol_to_ep(ep, symbols, tmp_otq)
+    result = output_type(node=ep)
+    result._tmp_otq.merge(tmp_otq)
+    __copy_sources_on_merge_or_join(result, sources, symbols=symbols, output_type_index=0)
+
+    result.schema.set(**{'VALUE': float, 'NUM_SYMBOLS': int})
     return result

@@ -51,9 +51,9 @@ class Docstring:
             name, prefix = next_name, next_prefix
         return docstring
 
-    def get_sig(self, add_self=False):
+    def get_parameter_names(self, add_self=False) -> list[str]:
         """
-        Get signature from existing documentation string.
+        Get list of parameter names from existing documentation string.
         """
         text = self.docstring.get('Parameters')
         if not text:
@@ -67,7 +67,7 @@ class Docstring:
             name, _, _ = line.partition(':')
             if name == 'self' and not add_self:
                 continue
-            parameters.append(Parameter(name=name, kind=Parameter.POSITIONAL_OR_KEYWORD))
+            parameters.append(name)
         return parameters
 
     def __setitem__(self, key, value):

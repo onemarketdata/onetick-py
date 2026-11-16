@@ -1754,3 +1754,23 @@ class TestPartitionEvenlyIntoGroups:
     def test_exceptions(self):
         with pytest.raises(ValueError, match='number_of_groups'):
             PartitionEvenlyIntoGroups(field_to_partition='TEST', weight_field='SIZE', number_of_groups=-10)
+
+
+def test_output_field_name():
+    data = otp.Ticks(X=[1, 2, 3, 4])
+    # default output field name is the same as input field name
+    agg = otp.agg.sum('X').apply(data)
+    df = otp.run(agg)
+    assert list(df['X']) == [10]
+    # init parameter output_field_name overrides it
+    agg = otp.agg.sum('X', output_field_name='XXX').apply(data)
+    df = otp.run(agg)
+    assert list(df['XXX']) == [10]
+    # apply parameter name overrides it
+    agg = otp.agg.sum('X', output_field_name='XXX').apply(data, name='YYY')
+    df = otp.run(agg)
+    assert list(df['YYY']) == [10]
+    # otp.Source.agg dictionary key overrides it
+    agg = data.agg({'ZZZ': otp.agg.sum('X', output_field_name='XXX')})
+    df = otp.run(agg)
+    assert list(df['ZZZ']) == [10]

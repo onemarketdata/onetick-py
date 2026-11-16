@@ -173,7 +173,8 @@ _modify_stack_info_in_onetick_query()
 from onetick.py import functions, aggregations
 from onetick.py.functions import (
     concat, join, join_by_time, apply_query, apply, cut, qcut, merge, coalesce, corp_actions, format,
-    join_with_aggregated_window
+    join_with_aggregated_window,
+    ts_add,
 )
 from onetick.py.types import (
     msectime, nsectime, string, nan, inf, datetime, date, dt, varstring,

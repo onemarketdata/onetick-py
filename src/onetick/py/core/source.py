@@ -1731,6 +1731,11 @@ class Source:
         implied_vol, option_price,
         linear_regression, partition_evenly_into_groups,
         process_by_group,
+        tw_spread,
+        order_by_aggr,
+        correlation_by_rank,
+        prevailing_price,
+        ts_subtract,
     )
     from ._source.source_methods.joins import (  # type: ignore[misc]
         _process_keep_time_param,

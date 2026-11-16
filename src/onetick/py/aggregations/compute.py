@@ -12,7 +12,7 @@ import onetick.py as otp
 
 from ._base import _Aggregation, operation_gb, operation_replacer, _MultiColumnAggregation
 from onetick.py.aggregations.other import (
-    FirstTick, LastTick, OptionPrice, Ranking, Percentile, PortfolioPrice, MultiPortfolioPrice,
+    FirstTick, LastTick, OptionPrice, Ranking, Percentile, PortfolioPrice, MultiPortfolioPrice, OrderByAggr,
 )
 from onetick.py.aggregations.high_low import HighTick, LowTick
 from onetick.py.aggregations.generic import Generic
@@ -94,6 +94,10 @@ class Compute(_Aggregation):
     def _validate_aggregation(self, aggr: _Aggregation):
         if not isinstance(aggr, _Aggregation):
             raise TypeError(f"It is allowed to pass only aggregations, but got '{type(aggr)}'")
+
+        if isinstance(aggr, OrderByAggr):
+            raise ValueError('Using order_by_aggr aggregation in otp.Source.agg method is not supported. '
+                             'Use otp.agg.order_by_aggr.apply() or otp.Source.order_by_aggr() methods.')
 
         if isinstance(aggr, Ranking):
             raise ValueError('Using ranking aggregation in otp.Source.agg method is not supported. '

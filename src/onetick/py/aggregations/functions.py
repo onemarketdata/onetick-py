@@ -9,7 +9,8 @@ from .other import (First, Last, FirstTime, LastTime, Count, Vwap, FirstTick,
                     Median, Correlation, OptionPrice, Ranking, Variance,
                     Percentile, FindValueForPercentile, ExpWAverage, ExpTwAverage,
                     StandardizedMoment, PortfolioPrice, MultiPortfolioPrice, Return, ImpliedVol,
-                    LinearRegression, PartitionEvenlyIntoGroups)
+                    LinearRegression, PartitionEvenlyIntoGroups, TimeWeightedSpread, OrderByAggr,
+                    CorrelationByRank)
 from .order_book import (ObSnapshot, OB_SNAPSHOT_DOC_PARAMS,
                          ObSnapshotWide, OB_SNAPSHOT_WIDE_DOC_PARAMS,
                          ObSnapshotFlat, OB_SNAPSHOT_FLAT_DOC_PARAMS,
@@ -71,7 +72,8 @@ from ._docs import (_column_doc,
                     _independent_variable_field_name_doc,
                     _field_to_partition_doc,
                     _weight_field_doc,
-                    _number_of_groups_doc)
+                    _number_of_groups_doc,
+                    _output_field_name_doc)
 
 from onetick.py.docs.utils import docstring, param_doc
 
@@ -114,7 +116,8 @@ def compute(*args, **kwargs):
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc,
-                       _time_series_type_doc, _large_ints_doc, _null_int_val_doc, _expect_decimals_doc])
+                       _time_series_type_doc, _large_ints_doc, _null_int_val_doc, _expect_decimals_doc,
+                       _output_field_name_doc])
 def max(*args, **kwargs):
     """
     Return maximum value of input ``column``
@@ -137,7 +140,8 @@ def max(*args, **kwargs):
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc,
-                       _time_series_type_doc, _large_ints_doc, _null_int_val_doc, _expect_decimals_doc])
+                       _time_series_type_doc, _large_ints_doc, _null_int_val_doc, _expect_decimals_doc,
+                       _output_field_name_doc])
 def min(*args, **kwargs):
     """
     Return minimum value of input ``column``.
@@ -213,7 +217,7 @@ def low_tick(*args, **kwargs):
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc,
-                       _selection_doc, _time_series_type_doc])
+                       _selection_doc, _time_series_type_doc, _output_field_name_doc])
 def high_time(*args, **kwargs):
     """
     Returns timestamp of tick with highest value of input field.
@@ -237,7 +241,7 @@ def high_time(*args, **kwargs):
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc,
-                       _selection_doc, _time_series_type_doc])
+                       _selection_doc, _time_series_type_doc, _output_field_name_doc])
 def low_time(*args, **kwargs):
     """
     Returns timestamp of tick with lowest value of input field.
@@ -262,7 +266,7 @@ def low_time(*args, **kwargs):
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc,
                        _large_ints_doc, _null_int_val_doc, _expect_decimals_doc,
-                       _skip_tick_if_doc, _time_series_type_doc])
+                       _skip_tick_if_doc, _time_series_type_doc, _output_field_name_doc])
 def first(*args, **kwargs):
     """
     Return first value of input field.
@@ -288,7 +292,7 @@ def first(*args, **kwargs):
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc,
                        _large_ints_doc, _null_int_val_doc, _expect_decimals_doc,
-                       _skip_tick_if_doc, _time_series_type_doc])
+                       _skip_tick_if_doc, _time_series_type_doc, _output_field_name_doc])
 def last(*args, **kwargs):
     """
     Return last value of input field.
@@ -312,7 +316,7 @@ def last(*args, **kwargs):
 @docstring(parameters=[_running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc,
-                       _time_series_type_doc])
+                       _time_series_type_doc, _output_field_name_doc])
 def first_time(*args, **kwargs):
     """
     Return timestamp of first tick.
@@ -336,7 +340,7 @@ def first_time(*args, **kwargs):
 @docstring(parameters=[_running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
                        _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc,
-                       _time_series_type_doc])
+                       _time_series_type_doc, _output_field_name_doc])
 def last_time(*args, **kwargs):
     """
     Return timestamp of last tick.
@@ -358,7 +362,7 @@ def last_time(*args, **kwargs):
 
 @docstring(parameters=[_running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc, _bucket_units_doc,
                        _bucket_end_condition_doc, _end_condition_per_group_doc, _boundary_tick_bucket_doc,
-                       _group_by_doc, _groups_to_display_doc])
+                       _group_by_doc, _groups_to_display_doc, _output_field_name_doc])
 def count(*args, **kwargs):
     """
     Returns number of ticks.
@@ -391,7 +395,7 @@ _size_doc = param_doc(name='size_column',
 
 @docstring(parameters=[_price_doc, _size_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
-                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc])
+                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _output_field_name_doc])
 def vwap(*args, **kwargs):
     """
     Returns volume weighted average price.
@@ -414,7 +418,7 @@ def vwap(*args, **kwargs):
 
 @docstring(parameters=[_running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
-                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc])
+                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _output_field_name_doc])
 def correlation(*args, **kwargs):
     """
     Returns Pearson correlation coefficient value between two numeric fields.
@@ -536,7 +540,8 @@ def distinct(*args, **kwargs):
 
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
-                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _expect_decimals_doc])
+                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _expect_decimals_doc,
+                       _output_field_name_doc])
 def sum(*args, **kwargs):
     r"""
     Implement sum aggregation.
@@ -582,7 +587,7 @@ def sum(*args, **kwargs):
 
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
-                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc])
+                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _output_field_name_doc])
 def average(*args, **kwargs):
     """
     Implement average aggregation.
@@ -626,7 +631,8 @@ def mean(*args, **kwargs):
 
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
-                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _biased_doc])
+                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _biased_doc,
+                       _output_field_name_doc])
 def stddev(*args, **kwargs):
     """
     Implement standard deviation aggregation.
@@ -649,7 +655,8 @@ def stddev(*args, **kwargs):
 
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
-                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _time_series_type_w_doc])
+                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _time_series_type_w_doc,
+                       _output_field_name_doc])
 def tw_average(*args, **kwargs):
     """
     Returns time weighted average of input field.
@@ -680,7 +687,8 @@ def tw_average(*args, **kwargs):
 
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
-                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _expect_decimals_doc])
+                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _expect_decimals_doc,
+                       _output_field_name_doc])
 def median(*args, **kwargs):
     """
     Implement median aggregation.
@@ -1525,6 +1533,7 @@ def option_price(*args, **kwargs):
     _group_by_doc,
     _groups_to_display_doc,
     _end_condition_per_group_doc,
+    _keep_timestamp_doc,
 ])
 def ranking(*args, **kwargs):
     """
@@ -1603,7 +1612,7 @@ def ranking(*args, **kwargs):
 
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
-                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc])
+                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _output_field_name_doc])
 def variance(*args, **kwargs):
     """
     Implement variance aggregation.
@@ -1645,6 +1654,7 @@ def variance(*args, **kwargs):
     _group_by_doc,
     _groups_to_display_doc,
     _end_condition_per_group_doc,
+    _output_field_name_doc,
 ])
 def percentile(*args, **kwargs):
     """
@@ -1733,6 +1743,7 @@ def percentile(*args, **kwargs):
     _group_by_doc,
     _groups_to_display_doc,
     _end_condition_per_group_doc,
+    _output_field_name_doc,
 ])
 def find_value_for_percentile(*args, **kwargs):
     """
@@ -1823,6 +1834,7 @@ def find_value_for_percentile(*args, **kwargs):
     _groups_to_display_doc,
     _end_condition_per_group_doc,
     _time_series_type_w_doc,
+    _output_field_name_doc,
 ])
 def exp_w_average(*args, **kwargs):
     """
@@ -1881,6 +1893,7 @@ def exp_w_average(*args, **kwargs):
     _group_by_doc,
     _groups_to_display_doc,
     _end_condition_per_group_doc,
+    _output_field_name_doc,
 ])
 def exp_tw_average(*args, **kwargs):
     """
@@ -1928,7 +1941,8 @@ def exp_tw_average(*args, **kwargs):
 
 @docstring(parameters=[_column_doc, _running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
                        _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
-                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _degree_doc])
+                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc, _degree_doc,
+                       _output_field_name_doc])
 def standardized_moment(*args, **kwargs):
     """
     ``STANDARDIZED_MOMENT`` aggregation.
@@ -2167,8 +2181,7 @@ def return_ep(*args, **kwargs):
                        _interest_rate_doc, _price_field_doc, _option_price_field_doc,
                        _method_doc, _precision_doc, _value_for_non_converge_doc, _option_type_field_doc,
                        _strike_price_field_doc, _days_in_year_doc, _days_till_expiration_field_doc,
-                       _expiration_date_field_doc,
-                       ])
+                       _expiration_date_field_doc, _output_field_name_doc])
 def implied_vol(*args, **kwargs):
     """
     ``IMPLIED_VOL`` aggregation.
@@ -2314,3 +2327,217 @@ def partition_evenly_into_groups(*args, **kwargs):
     3 2003-12-04                  D         2
     """
     return PartitionEvenlyIntoGroups(*args, **kwargs)
+
+
+@docstring(parameters=[_running_doc, _all_fields_doc, _bucket_interval_doc, _bucket_time_doc,
+                       _bucket_units_doc, _bucket_end_condition_doc, _end_condition_per_group_doc,
+                       _boundary_tick_bucket_doc, _group_by_doc, _groups_to_display_doc,
+                       _output_field_name_doc])
+def tw_spread(*args, **kwargs):
+    """
+    For each bucket, computes the time-weighted spread between the ``BID_PRICE`` and the ``ASK_PRICE``.
+
+    Parameters
+    ----------
+    in_basis_points: bool
+        Determines if the spread is to be converted to basis points (percentage of mid-quote) -- default,
+        or absolute monetary units.
+    positive_spread_only: bool
+        When set to True (default), only ticks with positive spread will be used in the computation.
+
+    See also
+    --------
+    | **TW_SPREAD** OneTick event processor
+    | :func:`tw_average`
+
+    Examples
+    --------
+
+    Using aggregation as a :meth:`otp.Source.tw_spread <onetick.py.Source.tw_spread>` method:
+
+    By default only the positive spreads are used and the result is calculated in basis points:
+
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='QTE', symbols='AAPL')
+    >>> data = data.tw_spread(output_field_name='TW_SPREAD', bucket_interval=otp.Hour(1))
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 9, 30), end=otp.dt(2024, 2, 1, 16), timezone='America/New_York')
+                     Time  TW_SPREAD
+    0 2024-02-01 10:30:00  60.110560
+    1 2024-02-01 11:30:00  27.862491
+    2 2024-02-01 12:30:00  19.548332
+    3 2024-02-01 13:30:00  26.548615
+    4 2024-02-01 14:30:00  26.854572
+    5 2024-02-01 15:30:00  24.714366
+    6 2024-02-01 16:00:00  12.483197
+
+    Using in :meth:`~onetick.py.Source.agg` method with other aggregations.
+
+    Using all spreads and calculating results in absolute monetary units, basically
+    getting the same result as with :func:`tw_average`
+
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='QTE', symbols='AAPL')
+    >>> data['SPREAD'] = data['ASK_PRICE'] - data['BID_PRICE']
+    >>> data = data.agg({
+    ...     'TW_SPREAD': otp.agg.tw_spread(in_basis_points=False, positive_spread_only=False),
+    ...     'TW_AVERAGE': otp.agg.tw_average('SPREAD'),
+    ... }, bucket_interval=otp.Hour(1))
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 9, 30), end=otp.dt(2024, 2, 1, 16), timezone='America/New_York')
+                     Time  TW_SPREAD  TW_AVERAGE
+    0 2024-02-01 10:30:00   1.095853    1.095853
+    1 2024-02-01 11:30:00   0.520080    0.520080
+    2 2024-02-01 12:30:00   0.365623    0.365623
+    3 2024-02-01 13:30:00   0.497084    0.497084
+    4 2024-02-01 14:30:00   0.502917    0.502917
+    5 2024-02-01 15:30:00   0.464956    0.464956
+    6 2024-02-01 16:00:00   0.127003    0.127003
+    """
+    return TimeWeightedSpread(*args, **kwargs)
+
+
+@docstring(parameters=[
+    _bucket_interval_doc,
+    _bucket_units_doc,
+    _running_doc,
+    _bucket_time_doc,
+    _bucket_end_condition_doc,
+    _boundary_tick_bucket_doc,
+    _group_by_doc,
+    _groups_to_display_doc,
+    _end_condition_per_group_doc,
+    _keep_timestamp_doc,
+])
+def order_by_aggr(*args, **kwargs):
+    """
+    For each bucket propagates at most ``num_ticks`` sorted ticks,
+    where sorting is done using the specified set of ``order_by`` fields.
+
+    See also
+    --------
+    **ORDER_BY_AGGR** OneTick event processor
+
+    Parameters
+    ----------
+    order_by: str or list or dict
+        Set of fields to sort by.
+        Can be one field specified by string, list of fields or dictionary with field names
+        as keys and ``asc`` or ``desc`` string literals as values. Latter allows to specify
+        sorting direction. Default direction is ``desc``.
+    num_ticks: int
+        The number of sorted ticks to be propagated for each bucket.
+        Special value ``ALL`` will propagate every tick in each bucket.
+        Default: 1.
+
+    Examples
+    --------
+
+    Get the biggest price every hour:
+
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE']]
+    >>> data = data.order_by_aggr('PRICE', bucket_interval=otp.Hour(1))
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 9, 30), end=otp.dt(2024, 2, 1, 16), timezone='America/New_York')
+                               Time     PRICE  SIZE
+    0 2024-02-01 10:29:46.337467789  186.1800   100
+    1 2024-02-01 10:53:56.130163522  192.4200     6
+    2 2024-02-01 12:21:16.907282289  188.6050   375
+    3 2024-02-01 12:58:30.442440693  192.6000   200
+    4 2024-02-01 14:26:03.462445251  186.1667    96
+    5 2024-02-01 14:44:08.734358075  190.9400    48
+    6 2024-02-01 15:59:44.208724181  186.9500     1
+
+    Get two biggest prices every hour and also sort by size
+    (note that parameter ``keep_timestamp=False`` should be set to keep the sorting,
+    otherwise original timestamps will be kept and the sorting will be done by them):
+
+    >>> data = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = data[['PRICE', 'SIZE']]
+    >>> data = data.order_by_aggr(
+    ...     {'PRICE': 'desc', 'SIZE': 'desc'},
+    ...     num_ticks=2,
+    ...     bucket_interval=otp.Hour(1),
+    ...     keep_timestamp=False,
+    ... )
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 9, 30), end=otp.dt(2024, 2, 1, 16), timezone='America/New_York')
+                      Time     PRICE   SIZE                     TICK_TIME
+    0  2024-02-01 10:30:00  186.1800    150 2024-02-01 10:29:46.337479730
+    1  2024-02-01 10:30:00  186.1800    100 2024-02-01 10:29:46.337467789
+    2  2024-02-01 11:30:00  192.4200      6 2024-02-01 10:53:56.130163522
+    3  2024-02-01 11:30:00  186.3100    200 2024-02-01 10:47:44.894150035
+    4  2024-02-01 12:30:00  188.6050    375 2024-02-01 12:21:16.907282289
+    5  2024-02-01 12:30:00  186.3000     43 2024-02-01 12:09:07.300341874
+    6  2024-02-01 13:30:00  192.6000    200 2024-02-01 12:58:30.442440693
+    7  2024-02-01 13:30:00  186.4400   1000 2024-02-01 12:55:48.679609428
+    8  2024-02-01 14:30:00  186.1667     96 2024-02-01 14:26:03.462445251
+    9  2024-02-01 14:30:00  186.1666     48 2024-02-01 14:26:03.462235331
+    10 2024-02-01 15:30:00  190.9400     48 2024-02-01 14:44:08.734358075
+    11 2024-02-01 15:30:00  186.8000    100 2024-02-01 15:26:16.993395799
+    12 2024-02-01 16:00:00  186.9500  10564 2024-02-01 15:59:44.208768253
+    13 2024-02-01 16:00:00  186.9500   2600 2024-02-01 15:59:44.208757524
+    """
+    return OrderByAggr(*args, **kwargs)
+
+
+@docstring(parameters=[
+    _bucket_interval_doc,
+    _bucket_units_doc,
+    _running_doc,
+    _bucket_time_doc,
+    _bucket_end_condition_doc,
+    _boundary_tick_bucket_doc,
+    _group_by_doc,
+    _groups_to_display_doc,
+    _end_condition_per_group_doc,
+    _output_field_name_doc,
+])
+def correlation_by_rank(*args, **kwargs):
+    """
+    Computes the Spearman rank correlation value between two numeric fields in the aggregation bucket.
+
+    Parameters
+    ----------
+    column_name_1: str
+        The name of the field in the input stream whose value is to be used by the aggregation
+    column_name_2: str
+        The name of the field in the input stream whose value is to be used by the aggregation
+    input_is_ranks: bool
+        Can be set if input fields contains ranks (see :func:`ranking`).
+        Default is False.
+
+    See also
+    --------
+    **CORRELATION_BY_RANK** OneTick event processor
+
+    Examples
+    --------
+    Using aggregation as a :meth:`otp.Source.correlation_by_rank <onetick.py.Source.correlation_by_rank>` method:
+
+    >>> data = otp.Ticks(X=[106, 100, 86, 101, 99, 103, 97, 113, 112, 110],
+    ...                  Y=[7, 27, 2, 50, 28, 29, 20, 12, 6, 17])
+    >>> data = data.correlation_by_rank('X', 'Y')
+    >>> otp.run(data)
+            Time  CORRELATION_BY_RANK
+    0 2003-12-04            -0.175758
+
+    Using in :meth:`~onetick.py.Source.agg` method with other aggregations:
+
+    >>> data = otp.Ticks(X=[106, 100, 86, 101, 99, 103, 97, 113, 112, 110],
+    ...                  Y=[7, 27, 2, 50, 28, 29, 20, 12, 6, 17])
+    >>> data = data.agg({
+    ...     'CBR': otp.agg.correlation_by_rank('X', 'Y'),
+    ...     'SUM_X': otp.agg.sum('X'),
+    ... })
+    >>> otp.run(data)
+            Time       CBR  SUM_X
+    0 2003-12-04 -0.175758   1027
+
+    Parameter ``input_is_ranks`` can be used if inputs are rankings:
+
+    >>> data = otp.Ticks(X=[106, 100, 86, 101, 99, 103, 97, 113, 112, 110],
+    ...                  Y=[7, 27, 2, 50, 28, 29, 20, 12, 6, 17])
+    >>> data = data.ranking('X').rename({'RANKING': 'RANKING_X'})
+    >>> data = data.ranking('Y').rename({'RANKING': 'RANKING_Y'})
+    >>> data = data.correlation_by_rank('RANKING_X', 'RANKING_Y', input_is_ranks=True)
+    >>> otp.run(data)
+            Time  CORRELATION_BY_RANK
+    0 2003-12-04            -0.175758
+    """
+    return CorrelationByRank(*args, **kwargs)

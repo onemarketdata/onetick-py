@@ -10,6 +10,25 @@
 
 ### Removed
 
+## [1.221.0] - 2026-11-16
+
+### Added
+
+- Add coverage from all stable test jobs
+- Add `otp.agg.tw_spread` and `otp.Source.tw_spread`
+- Add `otp.agg.order_by_aggr` and `otp.Source.order_by_aggr`
+- Add `otp.agg.correlation_by_rank` and `otp.Source.correlation_by_rank`
+- Add `otp.Source.prevailing_price`, `otp.ts_add`, `otp.Source.ts_subtract`
+- Add parameter `output_field_name` to aggregations and aggregation `otp.Source` methods
+
+### Changed
+
+### Fixed
+
+- Fix doctests for `show_archive_stats`
+
+### Removed
+
 ## [1.220.0] - 2026-11-09
 
 ### Added

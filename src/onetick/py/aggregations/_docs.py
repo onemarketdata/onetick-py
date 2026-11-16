@@ -979,6 +979,19 @@ _number_of_groups_doc = param_doc(
     ''',
     annotation=int,
 )
+_output_field_name_doc = param_doc(
+    name='output_field_name',
+    desc="""
+    Output field name of the aggregation.
+
+    If not set, then, depending on the type of aggregation,
+    either the input field name will be used (if there is only one input of the aggregation),
+    or the new column with some predefined name will be created
+    (usually ``VALUE`` or uppercased name of the aggregation).
+    """,
+    annotation=str | None,
+    default=None,
+)
 
 
 class DocMetaclass(type):

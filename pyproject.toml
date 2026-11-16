@@ -126,3 +126,7 @@ mypy = [
     "mypy>=2.0.0",
     "types-pyyaml>=6.0.12.20250915",
 ]
+
+
+[tool.coverage.run]
+data_file = "$OTP_COVERAGE_DATA_FILE"

@@ -78,14 +78,13 @@ class Last(First):
 class Count(_Aggregation):
     NAME = "NUM_TICKS"
     EP = otq.NumTicks
+
+    DEFAULT_APPLY_NAME = 'VALUE'
     FIELDS_TO_SKIP = ["column_name"]
     output_field_type = int
 
     def __init__(self, *args, **kwargs):
         super().__init__(_Column("TIMESTAMP"), *args, **kwargs)
-
-    def apply(self, src, name: str = 'VALUE', *args, **kwargs):
-        return super().apply(src, name, *args, **kwargs)
 
 
 class Vwap(_Aggregation):
@@ -93,6 +92,7 @@ class Vwap(_Aggregation):
     NAME = "VWAP"
     EP = otq.Vwap
 
+    DEFAULT_APPLY_NAME = 'VWAP'
     FIELDS_MAPPING = deepcopy(_Aggregation.FIELDS_MAPPING)
     FIELDS_MAPPING['price_column'] = 'PRICE_FIELD_NAME'
     FIELDS_MAPPING['size_column'] = 'SIZE_FIELD_NAME'
@@ -122,15 +122,13 @@ class Vwap(_Aggregation):
                 raise TypeError(f"Aggregation `{self.NAME}` require {self.require_type} types, "
                                 f"got {src.schema[column]}")
 
-    def apply(self, src: 'Source', name: str = 'VWAP', *args, **kwargs) -> 'Source':
-        return super().apply(src, name, *args, **kwargs)
-
 
 class Correlation(_Aggregation):
 
     NAME = 'CORRELATION'
     EP = otq.Correlation
 
+    DEFAULT_APPLY_NAME = 'CORRELATION'
     FIELDS_MAPPING = deepcopy(_Aggregation.FIELDS_MAPPING)
     FIELDS_MAPPING['column_name_1'] = 'INPUT_FIELD1_NAME'
     FIELDS_MAPPING['column_name_2'] = 'INPUT_FIELD2_NAME'
@@ -156,9 +154,6 @@ class Correlation(_Aggregation):
             if src.schema[column] not in self.require_type:
                 raise TypeError(f"Aggregation `{self.NAME}` require {self.require_type} types, "
                                 f"got {src.schema[column]}")
-
-    def apply(self, src: 'Source', name: str = 'CORRELATION', *args, **kwargs) -> 'Source':
-        return super().apply(src, name, *args, **kwargs)
 
 
 class FirstTick(_AggregationTSType, _KeepTs, _AllColumnsAggregation):
@@ -317,6 +312,7 @@ class OptionPrice(_Aggregation):
     NAME = 'OPTION_PRICE'
     EP = otq.OptionPrice
 
+    DEFAULT_APPLY_NAME = 'VALUE'
     FIELDS_MAPPING = deepcopy(_Aggregation.FIELDS_MAPPING)
     FIELDS_MAPPING['volatility'] = 'VOLATILITY'
     FIELDS_MAPPING['interest_rate'] = 'INTEREST_RATE'
@@ -387,9 +383,6 @@ class OptionPrice(_Aggregation):
         self.days_till_expiration_field_name = days_till_expiration_field_name
         self.expiration_date_field_name = expiration_date_field_name
         self.underlying_price_field_name = underlying_price_field_name
-
-    def apply(self, src: 'Source', name: str = 'VALUE', *args, **kwargs) -> 'Source':
-        return super().apply(src, name, *args, **kwargs)
 
     def _get_output_schema(self, src: 'Source', name: Optional[str] = None) -> dict:
         output_schema = super()._get_output_schema(src, name=name)
@@ -467,6 +460,8 @@ class Ranking(_KeepTs):
 class Variance(_Aggregation):
     NAME = 'VARIANCE'
     EP = otq.Variance
+
+    DEFAULT_APPLY_NAME = 'VARIANCE'
     output_field_type = float
     FIELDS_MAPPING = deepcopy(_Aggregation.FIELDS_MAPPING)
     FIELDS_MAPPING['biased'] = 'BIASED'
@@ -478,9 +473,6 @@ class Variance(_Aggregation):
                  *args, **kwargs):
         super().__init__(column, *args, **kwargs)
         self.biased = biased
-
-    def apply(self, src: 'Source', name: str = 'VARIANCE', *args, **kwargs) -> 'Source':
-        return super().apply(src, name, *args, **kwargs)
 
 
 class Percentile(_Aggregation):
@@ -700,7 +692,7 @@ class PortfolioPrice(_Aggregation, _MultiColumnAggregation):
         else:
             res = src.copy()
 
-        out_name = name or self.column_name
+        out_name = self._get_output_name(name)
         schema = self._get_common_schema(src, out_name)
         # it's important to validate input schema before sinking
         self._modify_source(res)
@@ -864,6 +856,7 @@ class ImpliedVol(_Aggregation):
     NAME = 'IMPLIED_VOL'
     EP = otq.ImpliedVol
 
+    DEFAULT_APPLY_NAME = 'VALUE'
     FIELDS_MAPPING = deepcopy(_Aggregation.FIELDS_MAPPING)
     FIELDS_MAPPING['interest_rate'] = 'INTEREST_RATE'
     FIELDS_MAPPING['price_field_name'] = 'PRICE_FIELD_NAME'
@@ -892,7 +885,7 @@ class ImpliedVol(_Aggregation):
     FIELDS_DEFAULT['days_till_expiration_field_name'] = ''
     FIELDS_DEFAULT['expiration_date_field_name'] = ''
 
-    FIELDS_TO_SKIP = ['column_name', 'output_field_name']
+    FIELDS_TO_SKIP = ['column_name']
 
     output_field_type = float
 
@@ -953,7 +946,7 @@ class ImpliedVol(_Aggregation):
         self.days_till_expiration_field_name = days_till_expiration_field
         self.expiration_date_field_name = expiration_date_field
 
-        super().__init__(_Column(price_field), *args, **kwargs)
+        super().__init__(_Column('TIMESTAMP'), *args, **kwargs)
 
     def validate_input_columns(self, src: 'Source'):
         columns_to_check: dict[str, tuple[Union[str, _Column], Union[tuple, type]]] = {
@@ -982,9 +975,6 @@ class ImpliedVol(_Aggregation):
                     f"Aggregation `{self.NAME}` require column `{column}` from parameter `{parameter}` "
                     f"to be {required_type}, got {src.schema[column]}"
                 )
-
-    def apply(self, src: 'Source', name: str = 'VALUE', *args, **kwargs) -> 'Source':
-        return super().apply(src, name, *args, **kwargs)
 
 
 class LinearRegression(_Aggregation, _MultiColumnAggregation):
@@ -1090,3 +1080,113 @@ class PartitionEvenlyIntoGroups(_Aggregation, _MultiColumnAggregation):
             'FIELD_TO_PARTITION': str,
             'GROUP_ID': int,
         }
+
+
+class TimeWeightedSpread(_FloatAggregation):
+    NAME = 'TW_SPREAD'
+    EP = otq.TwSpread
+    output_field_type = float
+
+    DEFAULT_APPLY_NAME = 'TW_SPREAD'
+
+    FIELDS_MAPPING = deepcopy(_Aggregation.FIELDS_MAPPING)
+    FIELDS_MAPPING['in_basis_points'] = 'IN_BASIS_POINTS'
+    FIELDS_MAPPING['positive_spread_only'] = 'POSITIVE_SPREAD_ONLY'
+
+    FIELDS_DEFAULT = deepcopy(_Aggregation.FIELDS_DEFAULT)
+    FIELDS_DEFAULT['in_basis_points'] = True
+    FIELDS_DEFAULT['positive_spread_only'] = True
+
+    FIELDS_TO_SKIP = ['column_name']
+
+    def __init__(self, *args,
+                 in_basis_points: bool = True,
+                 positive_spread_only: bool = True,
+                 **kwargs):
+
+        self.in_basis_points = in_basis_points
+        self.positive_spread_only = positive_spread_only
+        super().__init__(_Column('TIMESTAMP'), *args, **kwargs)
+
+    def validate_input_columns(self, src: 'Source'):
+        super().validate_input_columns(src)
+        for column in ('ASK_PRICE', 'BID_PRICE'):
+            if column not in src.schema:
+                raise TypeError(f"Aggregation `{self.NAME}` uses column `{column}` as input, which doesn't exist")
+
+
+class OrderByAggr(_KeepTs):
+    NAME = 'ORDER_BY_AGGR'
+    EP = otq.OrderByAggr
+    FIELDS_TO_SKIP = ['column_name', 'output_field_name', 'all_fields']
+    FIELDS_MAPPING = deepcopy(_KeepTs.FIELDS_MAPPING)
+    FIELDS_MAPPING.update({
+        'order_by': 'ORDER_BY',
+        'num_ticks': 'NUM_TICKS',
+    })
+    FIELDS_DEFAULT = deepcopy(_KeepTs.FIELDS_DEFAULT)
+    FIELDS_DEFAULT.update({
+        'order_by': None,
+        'num_ticks': 1,
+    })
+    _ALLOWED_ORDER_BY = {'asc', 'desc'}
+
+    _validations_to_skip = ['running_all_fields']
+
+    def __init__(self, order_by, *args, num_ticks=1, **kwargs):
+        super().__init__(_Column('TIMESTAMP'), *args, all_fields=True, **kwargs)
+
+        if isinstance(order_by, str):
+            order_by = [order_by]
+        if not isinstance(order_by, dict):
+            order_by = {column: 'desc' for column in order_by}
+        for k in order_by:
+            order_by[k] = order_by[k].lower()
+        order_by_values = set(order_by.values())
+        diff = order_by_values.difference(self._ALLOWED_ORDER_BY)
+        if diff:
+            raise ValueError(f"Only {self._ALLOWED_ORDER_BY} values of parameter 'order_by' are allowed, got {diff}.")
+        self._order_by = order_by
+        self.order_by = ','.join(f'{k} {w}' for k, w in self._order_by.items())
+        self.num_ticks = num_ticks
+
+    def apply(self, src):
+        return super().apply(src=src)
+
+    def validate_input_columns(self, src: 'Source'):
+        for col in self._order_by:
+            if col not in src.schema:
+                raise TypeError(f"{self.NAME} aggregation uses column '{col}' as input, which doesn't exist")
+
+
+class CorrelationByRank(_Aggregation):
+
+    NAME = 'CORRELATION_BY_RANK'
+    EP = otq.CorrelationByRank
+
+    DEFAULT_APPLY_NAME = 'CORRELATION_BY_RANK'
+
+    FIELDS_MAPPING = deepcopy(_Aggregation.FIELDS_MAPPING)
+    FIELDS_MAPPING['column_name_1'] = 'INPUT_FIELD1_NAME'
+    FIELDS_MAPPING['column_name_2'] = 'INPUT_FIELD2_NAME'
+    FIELDS_MAPPING['input_is_ranks'] = 'INPUT_IS_RANKS'
+
+    FIELDS_TO_SKIP: list = ['column_name']
+
+    output_field_type = float
+    require_type = (int, float)
+
+    def __init__(self,
+                 column_name_1: str,
+                 column_name_2: str,
+                 input_is_ranks: bool = False,
+                 *args, **kwargs):
+        super().__init__(_Column('TIMESTAMP'), *args, **kwargs)  # type: ignore
+        self.column_name_1 = str(column_name_1)
+        self.column_name_2 = str(column_name_2)
+        self.input_is_ranks = input_is_ranks
+
+    def validate_input_columns(self, src: 'Source'):
+        for column in [self.column_name_1, self.column_name_2]:
+            if column not in src.schema:
+                raise TypeError(f"Aggregation `{self.NAME}` uses column `{column}` as input, which doesn't exist")

@@ -27,6 +27,7 @@ class NumDistinct(_Aggregation):
     NAME = 'NUM_DISTINCT'
     EP = None  # will be set in __init__ dynamically
 
+    DEFAULT_APPLY_NAME = 'VALUE'
     FIELDS_MAPPING = deepcopy(_Aggregation.FIELDS_MAPPING)
     FIELDS_MAPPING['keys'] = 'KEYS'
 
@@ -49,9 +50,6 @@ class NumDistinct(_Aggregation):
     @property
     def keys(self):
         return ott.value2str(','.join(self._keys))
-
-    def apply(self, src, name='VALUE'):
-        return super().apply(src, name)
 
     def validate_input_columns(self, src: 'Source'):
         for column in self._keys:

@@ -1,5 +1,5 @@
 import warnings
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, Optional
 
 from onetick import py as otp
 import onetick.py.types as ott
@@ -17,8 +17,11 @@ from onetick.py.aggregations._docs import (
     _running_doc,
     copy_method,
 )
+from onetick.py.aggregations._base import get_bucket_interval_from_datepart
+from onetick.py.core.column_operations.base import Operation
 from onetick.py.docs.utils import docstring, param_doc
 from onetick.py.otq import otq
+from onetick.py.functions import __copy_sources_on_merge_or_join
 
 from .misc import inplace_operation
 
@@ -864,3 +867,290 @@ def process_by_group(
         return output_sources[0]
     else:
         return tuple(output_sources)
+
+
+@copy_method(aggregations.functions.tw_spread)
+def tw_spread(self: 'Source', *args, **kwargs):
+    # method implementation is copied by decorator
+    pass
+
+
+@copy_method(aggregations.functions.order_by_aggr)
+def order_by_aggr(self: 'Source', *args, **kwargs):
+    # method implementation is copied by decorator
+    pass
+
+
+@copy_method(aggregations.functions.correlation_by_rank)
+def correlation_by_rank(self: 'Source', *args, **kwargs):
+    # method implementation is copied by decorator
+    pass
+
+
+@docstring(parameters=[
+    _bucket_interval_doc,
+    _bucket_units_doc,
+    _bucket_time_doc,
+    _bucket_end_condition_doc,
+    _boundary_tick_bucket_doc,
+    _running_doc,
+])
+def prevailing_price(
+    self: 'Source',
+    quotes: Optional['Source'] = None,
+    /,
+    *,
+    input_field_name: str | None = None,
+    output_field_name: str = 'VALUE',
+    backfill_flag: bool = True,
+    # common aggregation parameters
+    bucket_interval: int | ott.OTPBaseTimeOffset = 0,
+    bucket_units: str | None = None,
+    bucket_time: str = 'end',
+    bucket_end_condition: Operation | None = None,
+    boundary_tick_bucket: str = 'new',
+    running: bool = False,
+) -> 'Source':
+    """
+    Computes prevailing security price using either:
+
+    * trade prices
+    * quote prices
+    * both trade and quote prices
+    * closing price from the previous business day.
+
+    If a time series of trades is the only input,
+    then the *latest trade price* is considered to be the prevailing price.
+    This time series must contain field **PRICE** or ``input_field_name``.
+
+    If a time series of quotes is the only input,
+    then the *latest mid-quote price* is considered to be the prevailing price.
+    This time series must contain fields **ASK_PRICE** and **BID_PRICE** and be of tick type **QTE**.
+
+    If both trade and quote time series are the inputs,
+    then the latest mid-quote price is considered the prevailing price until the first trade tick arrives.
+    After the trade tick arrives, the price of the latest trade tick is considered the prevailing price.
+
+    Closing price may come from a symbol parameter **CLOSING_PRICE**.
+    Note that in order to be valid, this price must be adjusted for corporate actions
+    that happened between corresponding close and start time of the query.
+    If the previous day's closing price is set,
+    it is considered to be the prevailing price at the start time of the query.
+
+    Parameters
+    ----------
+    self: :class:`~onetick.py.Source`
+        The source of trades or quotes.
+    quotes: :class:`~onetick.py.Source`
+        Optional source of quotes.
+    input_field_name: str
+        The name of the input field with the price.
+    output_field_name: str
+        The name of the output field with the resulting prevailing price.
+    backfill_flag: bool
+        If set to True, the prevailing price at the query start time is assumed to be
+        the price of the very first tick in this input time series.
+
+    See also
+    --------
+    **PREVAILING_PRICE** OneTick event processor
+
+    Examples
+    --------
+
+    Getting hourly prevailing price from trades only:
+
+    >>> trd = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
+    >>> trd = trd.prevailing_price(bucket_interval=otp.Hour(1), output_field_name='PREVAIL')
+    >>> otp.run(trd, symbols='AAPL',
+    ...         start=otp.dt(2024, 2, 1, 9, 30), end=otp.dt(2024, 2, 1, 16), timezone='America/New_York')
+                     Time   PREVAIL
+    0 2024-02-01 09:30:00  186.1100
+    1 2024-02-01 10:30:00  186.1100
+    2 2024-02-01 11:30:00  185.4000
+    3 2024-02-01 12:30:00  185.8957
+    4 2024-02-01 13:30:00  185.7350
+    5 2024-02-01 14:30:00  185.9781
+    6 2024-02-01 15:30:00  186.6512
+    7 2024-02-01 16:00:00  186.8312
+
+    Getting hourly prevailing price from quotes only:
+
+    >>> qte = otp.DataSource('US_COMP_SAMPLE', tick_type='QTE')
+    >>> qte = qte.prevailing_price(bucket_interval=otp.Hour(1), output_field_name='PREVAIL')
+    >>> otp.run(qte, symbols='AAPL',
+    ...         start=otp.dt(2024, 2, 1, 9, 30), end=otp.dt(2024, 2, 1, 16), timezone='America/New_York')
+                     Time  PREVAIL
+    0 2024-02-01 09:30:00  184.070
+    1 2024-02-01 10:30:00  186.000
+    2 2024-02-01 11:30:00  185.400
+    3 2024-02-01 12:30:00  188.000
+    4 2024-02-01 13:30:00  185.750
+    5 2024-02-01 14:30:00  185.975
+    6 2024-02-01 15:30:00  188.750
+    7 2024-02-01 16:00:00  186.895
+
+    Getting hourly prevailing price from trades and quotes:
+
+    >>> trd = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD')
+    >>> qte = otp.DataSource('US_COMP_SAMPLE', tick_type='QTE')
+    >>> data = trd.prevailing_price(qte, bucket_interval=otp.Hour(1), output_field_name='PREVAIL')
+    >>> otp.run(data, symbols='AAPL',
+    ...         start=otp.dt(2024, 2, 1, 9, 30), end=otp.dt(2024, 2, 1, 16), timezone='America/New_York')
+                     Time   PREVAIL
+    0 2024-02-01 09:30:00  186.1100
+    1 2024-02-01 10:30:00  186.1100
+    2 2024-02-01 11:30:00  185.4000
+    3 2024-02-01 12:30:00  185.8957
+    4 2024-02-01 13:30:00  185.7350
+    5 2024-02-01 14:30:00  185.9781
+    6 2024-02-01 15:30:00  186.6512
+    7 2024-02-01 16:00:00  186.8312
+    """
+    output_type = type(self)
+
+    if isinstance(bucket_interval, ott.OTPBaseTimeOffset):
+        bucket_interval, bucket_units = get_bucket_interval_from_datepart(bucket_interval)
+
+    ep = otq.PrevailingPrice(
+        bucket_interval=bucket_interval,
+        bucket_interval_units=bucket_units.upper() if bucket_units is not None else '',
+        bucket_time=f'BUCKET_{bucket_time.upper()}',
+        bucket_end_criteria=str(bucket_end_condition) if bucket_end_condition is not None else '',
+        boundary_tick_bucket=boundary_tick_bucket.upper(),
+        is_running_aggr=running,
+        input_field_name=input_field_name or '',
+        output_field_name=output_field_name,
+        backfill_flag=backfill_flag,
+    )
+
+    if quotes is None:
+        result = self.copy()
+        result.sink(ep)
+    else:
+        result = output_type(node=ep)
+        __copy_sources_on_merge_or_join(result, (self, quotes), output_type_index=0)
+
+    result.schema.set(**{output_field_name: float})
+    return result
+
+
+@docstring(parameters=[
+    _bucket_interval_doc,
+    _bucket_units_doc,
+    _bucket_time_doc,
+    _bucket_end_condition_doc,
+    _boundary_tick_bucket_doc,
+    _running_doc,
+    _group_by_doc,
+    _groups_to_display_doc,
+    _end_condition_per_group_doc,
+])
+def ts_subtract(
+    self: 'Source',
+    other: 'Source',
+    /,
+    input_field1_name: str | None = None,
+    input_field2_name: str | None = None,
+    *,
+    output_field_name: str = 'VALUE',
+    keep_zero_duration_ticks: bool = False,
+    # common aggregation parameters
+    bucket_interval: int | ott.OTPBaseTimeOffset = 0,
+    bucket_units: str | None = None,
+    bucket_time: str = 'end',
+    bucket_end_condition: Operation | None = None,
+    boundary_tick_bucket: str = 'new',
+    running: bool = False,
+    group_by: str | list[str] | None = None,
+    groups_to_display: str = 'all',
+    end_condition_per_group: bool = False,
+) -> 'Source':
+    """
+    Computes the difference of the latest values of some attribute between two input time series.
+
+    Parameters
+    ----------
+    self: :class:`~onetick.py.Source`
+        The source to subtract from.
+    other: :class:`~onetick.py.Source`
+        The source which is subtracted.
+    input_field1_name: str
+        The name of the input field from the first source.
+        Default is 'PRICE'.
+    input_field2_name: str
+        The name of the input field from the second source.
+        Default is 'PRICE'.
+    output_field_name: str
+        The name of the output field with the resulting value.
+        Default is 'VALUE'.
+    keep_zero_duration_ticks: bool
+        When set to False (default), output ticks that last 0 time are discarded from the output.
+
+    See also
+    --------
+    **TS_SUBTRACT** OneTick event processor
+
+    Examples
+    --------
+
+    Get the difference between hourly latest PRICEs from two sources:
+
+    >>> msft = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='MSFT')
+    >>> aapl = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> data = msft.ts_subtract(aapl, bucket_interval=otp.Hour(1))
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 9, 30), end=otp.dt(2024, 2, 1, 16), timezone='America/New_York')
+                               Time     VALUE
+    0 2024-02-01 10:29:59.997936089  220.5120
+    1 2024-02-01 11:29:59.858866634  218.5100
+    2 2024-02-01 12:29:59.718284221  217.2611
+    3 2024-02-01 13:29:59.705246762  218.1350
+    4 2024-02-01 14:29:59.530457056  218.1838
+    5 2024-02-01 15:29:59.918287654  217.1988
+    6 2024-02-01 15:59:59.990260269  216.9000
+
+    Get the difference in hourly total traded volume (sum of SIZE) between two symbols:
+
+    >>> msft = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='MSFT')
+    >>> msft = msft.agg({'VOLUME': otp.agg.sum('SIZE')}, bucket_interval=otp.Hour(1))
+    >>> aapl = otp.DataSource('US_COMP_SAMPLE', tick_type='TRD', symbols='AAPL')
+    >>> aapl = aapl.agg({'VOLUME': otp.agg.sum('SIZE')}, bucket_interval=otp.Hour(1))
+    >>> data = msft.ts_subtract(aapl, bucket_interval=otp.Hour(1), keep_zero_duration_ticks=True,
+    ...                         input_field1_name='VOLUME', input_field2_name='VOLUME', output_field_name='VOLUME_DIFF')
+    >>> otp.run(data, start=otp.dt(2024, 2, 1, 9, 30), end=otp.dt(2024, 2, 1, 16), timezone='America/New_York')
+                     Time  VOLUME_DIFF
+    0 2024-02-01 10:30:00   -1381839.0
+    1 2024-02-01 11:30:00   -1915864.0
+    2 2024-02-01 12:30:00   -2303645.0
+    3 2024-02-01 13:30:00   -2140783.0
+    4 2024-02-01 14:30:00   -2811234.0
+    5 2024-02-01 15:30:00   -3847929.0
+    6 2024-02-01 16:00:00   -4147889.0
+    """
+
+    if isinstance(bucket_interval, ott.OTPBaseTimeOffset):
+        bucket_interval, bucket_units = get_bucket_interval_from_datepart(bucket_interval)
+
+    ep = otq.TsSubtract(
+        bucket_interval=bucket_interval,
+        bucket_interval_units=bucket_units.upper() if bucket_units is not None else '',
+        bucket_time=f'BUCKET_{bucket_time.upper()}',
+        bucket_end_criteria=str(bucket_end_condition) if bucket_end_condition is not None else '',
+        boundary_tick_bucket=boundary_tick_bucket.upper(),
+        is_running_aggr=running,
+        group_by=','.join(list(map(str, group_by or []))),
+        groups_to_display=groups_to_display.upper(),
+        bucket_end_per_group=end_condition_per_group,
+        input_field1_name=input_field1_name or '',
+        input_field2_name=input_field2_name or '',
+        output_field_name=output_field_name,
+        keep_zero_duration_ticks=keep_zero_duration_ticks,
+    )
+
+    output_type = type(self)
+
+    result = output_type(node=ep)
+    __copy_sources_on_merge_or_join(result, (self, other), output_type_index=0)
+
+    result.schema.set(**{output_field_name: float})
+    return result
