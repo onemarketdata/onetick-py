@@ -618,3 +618,12 @@ class TestMergeSymbolsDataFrame:
 
         with pytest.raises(ValueError, match='is empty'):
             otp.merge([data], symbols=pd.DataFrame({'SYMBOL_NAME': []}))
+
+
+def test_symbols_string(session):
+    data = otp.Tick(A=1, db='LOCAL', tick_type='ANY')
+    data['S'] = data.Symbol.name
+    data = otp.merge([data], symbols='AAPL')
+    df = otp.run(data, date=otp.dt(2024, 1, 3), timezone='America/New_York')
+    assert list(df['A']) == [1]
+    assert list(df['S']) == ['AAPL']

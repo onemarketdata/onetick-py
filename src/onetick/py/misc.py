@@ -241,23 +241,29 @@ class _HashCodeOperator(_Operation):
         'default': string[16],
     }
 
-    def __init__(self, value, hash_type):
+    def __init__(self, value, hash_type, as_int):
         if hash_type not in self.HASH_TYPES:
             raise ValueError(f'Incorrect hash_type was passed: {hash_type}')
 
-        dtype = self.HASH_TYPES[hash_type]
+        hash_dtype = self.HASH_TYPES[hash_type]
 
         def _repr(_value, _hash_type):
             _value = value2str(_value)
             _hash_type = value2str(_hash_type.upper())
+            if as_int:
+                fun = 'COMPUTE_HASH_CODE'
+                dtype = int
+            else:
+                fun = 'COMPUTE_HASH_CODE_STR'
+                dtype = hash_dtype
 
-            return f'COMPUTE_HASH_CODE_STR({_value}, {_hash_type})', dtype
+            return f'{fun}({_value}, {_hash_type})', dtype
 
         super().__init__(op_func=_repr,
                          op_params=[value, hash_type])
 
 
-def hash_code(value, hash_type):
+def hash_code(value, hash_type, *, as_int: bool = False):
     """
     Returns hexadecimal encoded hash code for the specified string with the specified hash function.
 
@@ -270,19 +276,25 @@ def hash_code(value, hash_type):
     value: str, :py:class:`~onetick.py.Operation`, :py:class:`~onetick.py.Column`
         value to calculate hash from
     hash_type: str
-        one of following hash types:
+        These hash types are supported only with ``as_int=False``:
 
         * `sha_1`
         * `sha_224`
         * `sha_256`
         * `sha_384`
         * `sha_512`
+
+        These hash types are supported with any value of ``as_int``:
+
         * `lookup3`
         * `metro_hash_64`
         * `city_hash_64`
         * `murmur_hash_64`
+        * `blake2b_64`
         * `sum_of_bytes`
         * `default`
+    as_int: bool
+        If True, then integer value is returned instead of string.
 
     Returns
     -------
@@ -290,17 +302,26 @@ def hash_code(value, hash_type):
 
     See also
     --------
-    **COMPUTE_HASH_CODE_STR** OneTick built-in function
+    | **COMPUTE_HASH_CODE_STR** OneTick built-in function
+    | **COMPUTE_HASH_CODE** OneTick built-in function
 
     Examples
     --------
     Basic example:
 
     >>> data = otp.Tick(A=1)
-    >>> data['HASH'] = otp.hash_code('some_string', 'sha_224')
+    >>> data['HASH'] = otp.hash_code('some_string', 'metro_hash_64')
     >>> otp.run(data)
-            Time  A                                                      HASH
-    0 2003-12-01  1  12d3f96511450121e6343b5ace065ec9de7b2a946b86f7dfab8ac51f
+            Time  A              HASH
+    0 2003-12-01  1  cb72458d8cdb7ab1
+
+    Some types of hashes can be returned as integers as well:
+
+    >>> data = otp.Tick(A=1)
+    >>> data['HASH'] = otp.hash_code('some_string', 'metro_hash_64', as_int=True)
+    >>> otp.run(data)
+            Time  A                  HASH
+    0 2003-12-01  1  -5657968585125563701
 
     You can also pass :py:class:`~onetick.py.Operation` as a ``value`` parameter:
 
@@ -320,7 +341,7 @@ def hash_code(value, hash_type):
             Time        A                                     Fixed                                       Var
     0 2003-12-01  example  bdab82ec533c09646e45f15dc4e7ad2d2d1a8ff1  c3499c2729730a7f807efb8676a92dcb6f8a3f8f
     """
-    return _HashCodeOperator(value, hash_type)
+    return _HashCodeOperator(value, hash_type, as_int)
 
 
 def get_symbology_mapping(dest_symbology, src_symbology=None, symbol=None, timestamp=None):

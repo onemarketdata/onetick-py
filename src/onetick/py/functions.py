@@ -55,7 +55,10 @@ def apply_symbol_to_ep(base_ep, symbol, tmp_otq, symbol_date=None):
     from onetick.py.core.source import _Source
     from onetick.py.sources import query as otp_query
 
-    if isinstance(symbol, _QueryEvalWrapper):
+    if isinstance(symbol, str):
+        # PY-1690: WebAPI treats bound symbol strings as file names, using list
+        symbol = [symbol]
+    elif isinstance(symbol, _QueryEvalWrapper):
         symbol = symbol.to_eval_string(tmp_otq=tmp_otq, symbol_date=symbol_date)
     elif isinstance(symbol, otp_query):
         if symbol_date is not None:

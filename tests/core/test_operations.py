@@ -9,6 +9,9 @@ import onetick.py.types as ott
 from onetick.py.core.column_operations import _methods
 from onetick.py.core.column_operations.base import _Operation
 
+import tests
+from conftest import doctest_compare
+
 
 def _test_numeric_op(make_op_and_check, op_sign, int_op_dtype, float_op_dtype):
     a = make_op_and_check(1, 2, f"(1) {op_sign} (2)", int_op_dtype)
@@ -441,3 +444,38 @@ def test_double_join(session):
 
     assert str(op) == '(((ID) = (ID)) AND ((ID) = (ID))) AND ((ID) = (ID))'
     assert df2.equals(df1)
+
+
+@pytest.mark.skipif(not tests.compatibility.is_map_range_supported(), reason="Not supported on older OneTick versions")
+def test_map_range(session):
+    data = otp.Ticks(HOUR=list(range(0, 25, 3)))
+    data['LABEL'] = otp.ops.map_range(data['HOUR'], {'pre-open': (4, 9), 'market': (9, 16)})
+    df = otp.run(data)
+    assert doctest_compare("""
+                         Time  HOUR     LABEL
+    0 2003-12-01 00:00:00.000     0
+    1 2003-12-01 00:00:00.001     3
+    2 2003-12-01 00:00:00.002     6  pre-open
+    3 2003-12-01 00:00:00.003     9    market
+    4 2003-12-01 00:00:00.004    12    market
+    5 2003-12-01 00:00:00.005    15    market
+    6 2003-12-01 00:00:00.006    18
+    7 2003-12-01 00:00:00.007    21
+    8 2003-12-01 00:00:00.008    24
+    """, str(df))
+
+    data = otp.Ticks(HOUR=list(range(0, 25, 3)))
+    data['LABEL'] = otp.ops.map_range(data['HOUR'], {'pre-open': (4, 9), 'market': (9, 16)}, default='closed')
+    df = otp.run(data)
+    assert doctest_compare("""
+                         Time  HOUR     LABEL
+    0 2003-12-01 00:00:00.000     0    closed
+    1 2003-12-01 00:00:00.001     3    closed
+    2 2003-12-01 00:00:00.002     6  pre-open
+    3 2003-12-01 00:00:00.003     9    market
+    4 2003-12-01 00:00:00.004    12    market
+    5 2003-12-01 00:00:00.005    15    market
+    6 2003-12-01 00:00:00.006    18    closed
+    7 2003-12-01 00:00:00.007    21    closed
+    8 2003-12-01 00:00:00.008    24    closed
+    """, str(df))

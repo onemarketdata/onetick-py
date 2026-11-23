@@ -1675,7 +1675,7 @@ class Source:
 
         .. deprecated:: 1.14.9
 
-        Please use the :property:`Source.schema` to access and adjust the schema.
+        Please use the :attr:`Source.schema` to access and adjust the schema.
 
         Parameters
         ----------

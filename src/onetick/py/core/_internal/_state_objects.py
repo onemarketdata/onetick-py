@@ -264,10 +264,23 @@ class _StateBase(ABC):
 
 
 class _StateColumn(_StateBase, _Column):
+    """
+    The object returned when accessing state variable with :attr:`onetick.py.Source.state_vars`.
+
+    Examples
+    --------
+    >>> data = otp.Tick(A=1)
+    >>> data.state_vars['X'] = 1
+    >>> data.state_vars['X']
+    StateColumn(STATE::X, <class 'int'>)
+    """
 
     def __init__(self, name, dtype, obj_ref, default_value, scope):
         _Column.__init__(self, name, dtype, obj_ref)
         _StateBase.__init__(self, name, scope, default_value, obj_ref=obj_ref)
+
+    def __repr__(self):
+        return f'StateColumn({str(self)}, {self.dtype})'
 
     def __len__(self):
         if issubclass(self.dtype, str):
@@ -293,6 +306,42 @@ class _StateColumn(_StateBase, _Column):
         if 'action' in kwargs:
             raise ValueError("Parameter 'action' can only be used with tick sequences")
         return super().modify_from_query(*args, **kwargs)
+
+    def atomic_add(self, value: int | float | Operation):
+        """
+        Atomically adds ``value`` to the state variable and returns the new value.
+
+        Only available for variables with ``scope='cross_symbol'``.
+
+        Parameters
+        ----------
+        value: int or float or :class:`~onetick.py.Operation`
+
+        Returns
+        -------
+        :class:`~onetick.py.Operation`
+
+        See Also
+        --------
+        | **ATOMIC_ADD** OneTick function
+
+        Examples
+        --------
+        >>> data = otp.Tick(A=1)
+        >>> data.state_vars['B'] = otp.state.var(1, scope='cross_symbol')
+        >>> data['OLD_B'] = data.state_vars['B']
+        >>> data['ATOMIC_ADD_B'] = data.state_vars['B'].atomic_add(2)
+        >>> data['NEW_B'] = data.state_vars['B']
+        >>> otp.run(data)
+                Time  A  OLD_B  ATOMIC_ADD_B  NEW_B
+        0 2003-12-01  1      1             3      3
+        """
+        if self.scope.lower() != 'cross_symbol':
+            raise ValueError("Method atomic_add() is only available for state variables with 'cross_symbol' scope")
+        return Operation(
+            op_func=lambda value: (f'ATOMIC_ADD({str(self)}, {ott.value2str(value)})', self.dtype),
+            op_params=[value],
+        )
 
 
 def inplace_operation(method):

@@ -3,7 +3,11 @@
 
 import os
 import gc
+import sys
+import ctypes
 import inspect
+import faulthandler
+import secrets
 from enum import Enum
 
 if os.getenv('OTP_WEBAPI', default='').lower() not in ('0', 'false', 'no', ''):
@@ -33,6 +37,34 @@ class LoggingLevel(Enum):
     LOW = otq.OneTickLib.LOGGING_LEVEL_LOW
     MEDIUM = otq.OneTickLib.LOGGING_LEVEL_MEDIUM
     MAX = otq.OneTickLib.LOGGING_LEVEL_MAX
+
+
+# set by OneTickLib.enable_crash_stacks()
+_crash_file = _log_link = _signal_stack = None
+
+
+class _StackT(ctypes.Structure):
+    _fields_ = [('ss_sp', ctypes.c_void_p), ('ss_flags', ctypes.c_int), ('ss_size', ctypes.c_size_t)]
+
+
+def _link_log_file(log_file=None):
+    if not _log_link:
+        return
+    if not log_file:
+        try:
+            os.remove(_log_link)
+        except FileNotFoundError:
+            pass
+        return
+    # create a uniquely named link and rename it over the old one:
+    # rename(2) is atomic, so readers never see a missing path
+    tmp_link = f'{_log_link}.{os.getpid()}.{secrets.token_hex(4)}.tmp'
+    os.symlink(os.path.abspath(log_file), tmp_link)
+    try:
+        os.replace(tmp_link, _log_link)
+    except OSError:
+        os.remove(tmp_link)
+        raise
 
 
 class OneTickLib:
@@ -73,7 +105,17 @@ class OneTickLib:
             if not args:
                 args = (None,)
             OneTickLib.__args = args
-            OneTickLib.__instance = otq.OneTickLib(*args)
+            if _crash_file is None:
+                OneTickLib.__instance = otq.OneTickLib(*args)
+            else:
+                # otq.OneTickLib installs OneTick's crash handler and drops the one of faulthandler.
+                # disable() restores the handler faulthandler replaced, so it has to be called before that.
+                # Enabled again, faulthandler writes the Python traceback and then calls OneTick's handler.
+                faulthandler.disable()
+                try:
+                    OneTickLib.__instance = otq.OneTickLib(*args)
+                finally:
+                    faulthandler.enable(_crash_file)
             if log_file:
                 self.set_log_file(log_file)
         elif args != OneTickLib.__args and args:
@@ -98,6 +140,7 @@ class OneTickLib:
         OneTickLib.__args = None
         del obj
         gc.collect()
+        _link_log_file()
 
     def set_log_file(self, log_file):
         """
@@ -106,6 +149,7 @@ class OneTickLib:
         :param log_file: path to log file
         """
         OneTickLib.__instance.set_log_file(str(log_file))
+        _link_log_file(log_file)
         if hasattr(OneTickLib.__instance, 'close_log_file_in_destructor'):
             # we need to check it to prevent failing CI on the builds that do not have this feature
             OneTickLib.__instance.close_log_file_in_destructor()
@@ -142,3 +186,33 @@ class OneTickLib:
             pyomd.OneTickLib.override_config_value(config_parameter_name, config_parameter_value)
         except NameError:
             raise RuntimeError('This method is not available in WebAPI mode')
+
+    @staticmethod
+    def enable_crash_stacks(file=sys.stderr, log_link=None):
+        """
+        Report both stacks when the process crashes (SIGSEGV, SIGBUS, SIGABRT) inside OneTick:
+        :py:mod:`faulthandler` writes the Python traceback to ``file``,
+        OneTick writes the C++ stack to its log file.
+
+        Call it from the main thread before the OneTickLib object is constructed.
+        On platforms other than Linux and in WebAPI mode it only enables :py:mod:`faulthandler`.
+
+        :param file: file object or file descriptor for the Python traceback
+        :param log_link: path of a symbolic link to keep pointing to the current OneTick log file,
+            which for :py:class:`otp.Session <onetick.py.Session>` is a temporary file.
+            The link is removed when the OneTickLib object is destroyed, so it is left only if the process dies.
+        """
+        global _crash_file, _log_link, _signal_stack
+        faulthandler.enable(file)
+        if sys.platform != 'linux' or 'pyomd' not in globals():
+            return
+        # OneTick's handler is off by default in API processes on Linux
+        OneTickLib.override_config_value('ENABLE_ASYNC_LOGGER_SIGNAL_HANDLERS', 'true')
+        # it runs on the alternate signal stack of faulthandler (16 KB) and needs up to 62 KB: set a 1 MB one
+        _signal_stack = ctypes.create_string_buffer(1 << 20)
+        stack = _StackT(ctypes.addressof(_signal_stack), 0, len(_signal_stack))
+        if ctypes.CDLL(None, use_errno=True).sigaltstack(ctypes.byref(stack), None) != 0:
+            raise OSError(ctypes.get_errno(), 'sigaltstack failed')
+        _crash_file = file
+        _log_link = log_link and os.path.abspath(log_link)
+        _link_log_file()

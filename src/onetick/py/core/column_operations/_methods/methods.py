@@ -20,10 +20,11 @@ def round(prev_op, precision):
         return MethodResult(f'round_double({str(prev_op)},{str(precision)})', float)
 
 
-def isin(prev_op, items):
+def isin(prev_op, items, rtrim: bool = False):
     if not items:
         raise ValueError("Method isin() can't be used without values")
-    op_str = f'IN({str(prev_op)}, {",".join(value2str(i) for i in items)})'
+    fun = 'IN_WITH_STRING_TRIM' if rtrim else 'IN'
+    op_str = f'{fun}({str(prev_op)}, {",".join(value2str(i) for i in items)})'
     return MethodResult(op_str, bool)
 
 

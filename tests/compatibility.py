@@ -267,3 +267,21 @@ def is_date_name_fixed():
     # OTDEV-39669: DATENAME returns 0 for millisecond and nanosecond date part
     return _is_min_build_or_version(None, None,
                                     20260924120000, min_update_number=2)
+
+
+def is_map_range_supported():
+    # OTDEV-39097: Add MAP_RANGE built-in function
+    return _is_min_build_or_version(None, None,
+                                    20260814120000)
+
+
+def is_special_symbols_supported():
+    # 20260715: Implemented OTDEV-38806: Add support of special symbol name _ALL_SYMBOLS_
+    # 20260904: Fixed OTDEV-39390: _ALL_SYMBOLS_ without a db prefix should use the db name from the tick type
+    # 20260918: Implemented OTDEV-39366: Support _ALL_DATA_ symbol for OneTick archives(non-parquet)
+    # Not supported in release 1.26 (rel_1_26_20261022184432): such symbols are treated as non-existent ones
+    # BUILD_rel_20260924_update1:
+    # 20261002: Fixed OTDEV-39650: _ALL_DATA_ queries might fail with a "meta_data does not exist" error
+    # if the queried range contains days with no loaded archive
+    return _is_min_build_or_version(None, None,
+                                    20260924120000, min_update_number=1)

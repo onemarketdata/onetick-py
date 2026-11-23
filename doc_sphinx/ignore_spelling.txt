@@ -112,6 +112,7 @@ parallelize
 parallelized
 parallelizes
 parallelizing
+partitioner
 picoseconds
 plugin
 plugins
@@ -182,4 +183,5 @@ vwap
 whitelist
 whitelisted
 whitespace
+whitespaces
 efs

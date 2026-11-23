@@ -78,6 +78,65 @@ result = otp.run(data,
 result
 ```
 
+### Data Retrieval for All Db symbols with `_ALL_SYMBOLS_`
+
+The special symbol `_ALL_SYMBOLS_` is replaced by OneTick with every symbol of the database,
+so there is no need to query the list of symbols with {class}`otp.Symbols <onetick.py.Symbols>`.  
+The below returns data on the first 1000 symbols, like the previous example.  
+The symbol names in the `SYMBOL_NAME` column include the database name, the same way it is set in the symbol.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_SAMPLE_DAILY', tick_type='DAY')
+data = data.where(data['EXCHANGE'] == '')
+
+# _ALL_SYMBOLS_ is replaced with every symbol of the database,
+# merge their daily records into a single stream.
+data = otp.merge([data],
+                 symbols='US_COMP_SAMPLE_DAILY::_ALL_SYMBOLS_',
+                 identify_input_ts=True)
+data = data.limit(1000)
+
+result = otp.run(data,
+                 start=otp.dt(2024, 1, 3),
+                 end=otp.dt(2024, 1, 4),
+                 timezone='America/New_York')
+result
+```
+
+### Data Retrieval for All Db symbols with `_ALL_DATA_`
+
+The special symbol `_ALL_DATA_` returns the ticks of all symbols of the database at once, as a single time series.  
+The ticks are returned in the order they are stored and all of them have the query start time as their timestamp.  
+The symbol and the original timestamp of each tick are returned in the added `SYMBOL_NAME` and `TICK_TIME` fields.  
+Not all databases support `_ALL_DATA_`.  
+The below returns the first 1000 minute bars of the `US_COMP_SAMPLE_BARS` database.
+
+```{code-cell} ipython3
+
+import onetick.py as otp
+
+data = otp.DataSource(db='US_COMP_SAMPLE_BARS', tick_type='TRD_1M')
+
+# SYMBOL_NAME and TICK_TIME fields are added to every tick by _ALL_DATA_,
+# add them to the schema to use them in the query.
+data.schema.update(SYMBOL_NAME=str, TICK_TIME=otp.nsectime)
+data = data[['SYMBOL_NAME', 'TICK_TIME', 'FIRST', 'HIGH', 'LOW', 'LAST', 'VOLUME']]
+data = data.limit(1000)
+
+# _ALL_DATA_ must be the only symbol of the query
+result = otp.run(data,
+                 start=otp.dt(2024, 2, 1, 9, 31),
+                 end=otp.dt(2024, 2, 1, 9, 36),
+                 timezone='America/New_York',
+                 symbols='_ALL_DATA_')
+result
+```
+
+See {ref}`Special symbols <static/concepts/symbols:Special symbols>` for more details and limitations.
+
 ## Data Retrieval with Symbol Mask
 
 Retrieve Data for symbols matched by pattern.

@@ -102,7 +102,6 @@ class Column(_Operation):
         raise TypeError("It is not allowed to use columns in if-else and while clauses")
 
     def __getitem__(self, item):
-
         """
         Provides an ability to get values from future or past ticks.
 
@@ -113,7 +112,7 @@ class Column(_Operation):
         - Positive - future ticks
 
         Boundary values will be defaulted. For instance for ``item=-1`` first tick value will be defaulted
-        (there is no tick before first tick)
+        (there is no tick before first tick).
 
         Parameters
         ----------
@@ -123,6 +122,10 @@ class Column(_Operation):
         Returns
         -------
         Operation
+
+        See Also
+        --------
+        | :meth:`tick_shift`
 
         Examples
         --------
@@ -146,6 +149,178 @@ class Column(_Operation):
             return self
 
         return _LagOperator(self, item)
+
+    def tick_shift(
+        self,
+        offset: int,
+        /,
+        *,
+        group_by: str | list[str] | None = None,
+    ):
+        """
+        Returns the value of this column from a tick preceding the current one by ``offset``.
+
+        Boundary values will be set to the default value by type: 0 for integers, empty string for strings, etc.
+
+        Parameters
+        ----------
+        offset: int
+            Non negative offset looking back from the current tick.
+        group_by: str | list[str]
+            Specifies a field name or a list of field names,
+            in which case ``offset`` is counted among the ticks with same values of the specified fields.
+
+        Returns
+        -------
+        :class:`~onetick.py.Operation`
+
+        See Also
+        --------
+        | :meth:`__getitem__`
+        | **TICK_SHIFT** OneTick function
+
+        Examples
+        --------
+        >>> data = otp.Ticks(A=[1, 2, 3, 4, 5, 6, 7, 8, 9], B=[1, 1, 1, 2, 2, 3, 3, 2, 3])
+        >>> data['A1'] = data['A'].tick_shift(1)
+        >>> data['A1_GROUP_BY_B'] = data['A'].tick_shift(1, group_by='B')
+        >>> otp.run(data)
+                             Time  A  B  A1  A1_GROUP_BY_B
+        0 2003-12-01 00:00:00.000  1  1   0              0
+        1 2003-12-01 00:00:00.001  2  1   1              1
+        2 2003-12-01 00:00:00.002  3  1   2              2
+        3 2003-12-01 00:00:00.003  4  2   3              0
+        4 2003-12-01 00:00:00.004  5  2   4              4
+        5 2003-12-01 00:00:00.005  6  3   5              0
+        6 2003-12-01 00:00:00.006  7  3   6              6
+        7 2003-12-01 00:00:00.007  8  2   7              5
+        8 2003-12-01 00:00:00.008  9  3   8              7
+        """
+        if offset < 0:
+            raise ValueError("Parameter 'offset' must be non-negative")
+
+        def fun(offset, group_by):
+            params_str = f'{ott.value2str(str(self))},{ott.value2str(offset)}'
+            if group_by is not None:
+                if not isinstance(group_by, list):
+                    group_by = [group_by]
+                group_by_str = ','.join(str(f) for f in group_by)
+                if group_by_str:
+                    params_str += f',{ott.value2str(group_by_str)}'
+
+            return f'TICK_SHIFT({params_str})', self.dtype
+
+        return _Operation(
+            op_func=fun,
+            op_params=[offset, group_by],
+        )
+
+    def time_shift(
+        self,
+        shift_time: int | float,
+        /,
+        *,
+        selection_criteria: str | None = None,
+        timestamp_field: str = 'TIMESTAMP',
+        group_by: str | list[str] | None = None,
+    ):
+        """
+        Returns the value of the specified field, from a tick,
+        whose timestamp differs from current tick's timestamp by ``shift_time``.
+
+        If ``shift_time`` is negative, it returns the value for the preceding tick,
+        and if ``shift_time`` is positive, succeeding ticks (those that have not arrived yet) are considered.
+
+        For shifts crossing the boundaries of query time range default values by type will be returned:
+        0 for numbers, empty strings for strings etc.
+
+        Parameters
+        ----------
+        shift_time: int or float
+            Integer values are treated as milliseconds
+            and float values are treated as ``milliseconds[.nanoseconds]`` format.
+
+            .. note::
+
+                Positive shift times are allowed only when adding fields and in per-tick script.
+
+        selection_criteria: str
+            Possible values for the criteria parameter are:
+
+            * *last_before*
+            * *last_at_or_before* (default for negative shift times)
+            * *first_after*
+            * *first_at_or_after* (default for positive shift times)
+
+        timestamp_field: str
+            Specifies an alternative timestamp field name
+            (values in this field are assumed to be in non-decreasing order).
+
+            By default the tick's TIMESTAMP field is used.
+
+        group_by: str | list[str]
+            Specifies a field name or a list of field names,
+            in which case selection is performed among the ticks with same values of the specified fields.
+
+            .. note::
+
+                This parameter can be set only with negative time shifts.
+
+        Returns
+        -------
+        :class:`~onetick.py.Operation`
+
+        See Also
+        --------
+        | :meth:`tick_shift`
+        | **TIME_SHIFT** OneTick function
+
+        Examples
+        --------
+        >>> data = otp.Ticks(A=[1, 2, 3, 4, 5, 6, 7, 8, 9], B=[1, 1, 1, 2, 2, 3, 3, 2, 3])
+        >>> data['A1_AT'] = data['A'].time_shift(1, selection_criteria='first_at_or_after')
+        >>> data['A1_AFTER'] = data['A'].time_shift(1, selection_criteria='first_after')
+        >>> data['AM1_AT_GROUP_BY_B'] = data['A'].time_shift(-1, group_by='B', timestamp_field='TIMESTAMP')
+        >>> otp.run(data)
+                             Time  A  B  A1_AT  A1_AFTER  AM1_AT_GROUP_BY_B
+        0 2003-12-01 00:00:00.000  1  1      2         3                  0
+        1 2003-12-01 00:00:00.001  2  1      3         4                  1
+        2 2003-12-01 00:00:00.002  3  1      4         5                  2
+        3 2003-12-01 00:00:00.003  4  2      5         6                  0
+        4 2003-12-01 00:00:00.004  5  2      6         7                  4
+        5 2003-12-01 00:00:00.005  6  3      7         8                  0
+        6 2003-12-01 00:00:00.006  7  3      8         9                  6
+        7 2003-12-01 00:00:00.007  8  2      9         0                  5
+        8 2003-12-01 00:00:00.008  9  3      0         0                  7
+        """
+        if selection_criteria:
+            if selection_criteria not in ('last_before', 'last_at_or_before', 'first_after', 'first_at_or_after'):
+                raise ValueError(f"Wrong value for parameter 'selection_criteria': {selection_criteria}")
+
+        if timestamp_field is not None and self.obj_ref is not None and str(timestamp_field) not in self.obj_ref.schema:
+            raise ValueError(f"Field set in parameter 'timestamp_field' is not in schema: {timestamp_field}")
+
+        def fun(shift_time, selection_criteria, timestamp_field, group_by):
+            params_str = f'{ott.value2str(str(self))},{ott.value2str(shift_time)}'
+            if selection_criteria is None:
+                selection_criteria = ''
+            params_str += f',{ott.value2str(selection_criteria.upper())}'
+            if not timestamp_field:
+                timestamp_field = 'TIMESTAMP'
+            params_str += f',{ott.value2str(str(timestamp_field))}'
+            if group_by is not None:
+                if not isinstance(group_by, list):
+                    group_by = [group_by]
+                group_by_str = ','.join(str(f) for f in group_by)
+                if group_by_str:
+                    params_str += f',{ott.value2str(group_by_str)}'
+
+            return f'TIME_SHIFT({params_str})', self.dtype
+
+        return _Operation(
+            op_func=fun,
+            op_params=[shift_time, selection_criteria, timestamp_field, group_by],
+        )
 
     def cumsum(self):
         """
